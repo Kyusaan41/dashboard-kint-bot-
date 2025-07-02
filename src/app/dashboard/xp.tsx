@@ -1,55 +1,57 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getXP, getXPByUser, updateXP } from '@/utils/api';
+// On importe le bon nom de fonction pour le classement
+import { getXPLeaderboard, getXPByUser, updateXP } from '@/utils/api';
+
+// On définit un type pour les données du classement
+type XPData = {
+    userId: string;
+    xp: number;
+    username?: string; // Le nom d'utilisateur est optionnel mais utile
+};
 
 export default function XPDashboard() {
-  const [xpData, setXPData] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
+    const [xpData, setXpData] = useState<XPData[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getXP().then(data => {
-      setXPData(data);
-      setLoading(false);
-    });
-  }, []);
+    useEffect(() => {
+        const fetchXPData = async () => {
+            try {
+                // On appelle la bonne fonction pour récupérer le classement
+                const leaderboard = await getXPLeaderboard();
+                setXpData(leaderboard);
+            } catch (error) {
+                console.error("Erreur lors de la récupération du classement XP:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  const handleXPChange = async (userId: string, newXP: number) => {
-    try {
-      await updateXP(userId, newXP);
-      const updatedUserXP = await getXPByUser(userId);
-      setXPData(prev => ({ ...prev, [userId]: updatedUserXP }));
-    } catch (err) {
-      console.error('Erreur lors de la mise à jour XP:', err);
+        fetchXPData();
+    }, []);
+
+    if (loading) {
+        return <div className="text-center text-gray-400">Chargement du classement XP...</div>;
     }
-  };
 
-  if (loading) return <p className="p-6 text-white">Chargement...</p>;
-
-  return (
-    <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-6">Gestion des XP</h1>
-      <ul className="space-y-4">
-        {Object.entries(xpData).map(([userId, xp]) => (
-          <li key={userId} className="bg-gray-800 rounded p-4 flex justify-between items-center">
-            <span>{userId} : {xp} XP</span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleXPChange(userId, xp + 10)}
-                className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded"
-              >
-                +10
-              </button>
-              <button
-                onClick={() => handleXPChange(userId, xp - 10)}
-                className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded"
-              >
-                -10
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+    return (
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-cyan-400 mb-4">Classement par Points d'Expérience</h2>
+            <ul className="space-y-2">
+                {xpData.length > 0 ? (
+                    xpData.map((user, index) => (
+                        <li key={user.userId} className="flex justify-between items-center bg-gray-700 p-3 rounded-md transition hover:bg-gray-600">
+                            <span className="font-medium">
+                                {index + 1}. {user.username || user.userId}
+                            </span>
+                            <span className="font-semibold text-yellow-400">{user.xp} XP</span>
+                        </li>
+                    ))
+                ) : (
+                    <p className="text-gray-500">Aucune donnée de classement à afficher.</p>
+                )}
+            </ul>
+        </div>
+    );
 }
