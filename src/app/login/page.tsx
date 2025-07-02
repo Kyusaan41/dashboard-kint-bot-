@@ -12,13 +12,13 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#202225] p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#202225] p-4 overflow-hidden">
       <div className="flex flex-col items-center space-y-6 text-center">
         
-        {/* L'image de la grenouille, maintenant chargée localement */}
-        <div className="relative w-64 h-64">
+        {/* L'image de la grenouille, maintenant avec son animation */}
+        <div className="relative w-64 h-64 animate-sway"> {/* <-- MODIFICATION ICI */}
           <Image 
-            src="/frog-mascot.png" // <-- CORRECTION ICI
+            src="/frog-mascot.png"
             alt="Grenouille qui danse avec une pancarte KINT By Kyû"
             layout="fill"
             objectFit="contain"
