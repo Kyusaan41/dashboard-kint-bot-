@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Award, BarChart2, Coins, Crown, Gift, MessageSquare, Star, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-// --- Définition des Types ---
+// --- Définition des Types pour une meilleure clarté du code ---
 type UserStats = {
   currency: number;
   currencyRank: number | null;
@@ -16,70 +16,76 @@ type UserStats = {
   pointsRank: number | null;
   equippedTitle: string | null;
 };
-type Title = { id: string, name: string };
 type Success = { id: string; name: string; };
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
 type MessageData = { day: string; messages: number; };
 
+// --- Le Composant Principal de la Page ---
 export default function DashboardHomePage() {
   const { data: session, status } = useSession();
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [availableTitles, setAvailableTitles] = useState<Title[]>([]);
   const [successes, setSuccesses] = useState<Success[]>([]);
   const [patchNotes, setPatchNotes] = useState<PatchNote | null>(null);
   const [messageData, setMessageData] = useState<MessageData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // State pour le modal des titres
+  const [availableTitles, setAvailableTitles] = useState<string[]>([]);
   const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    if (status === 'authenticated' && session?.user?.id) {
-      try {
-        const [statsRes, messagesRes, successRes, patchnoteRes, titlesRes] = await Promise.all([
-          fetch(`/api/stats/me`),
-          fetch(`/api/messages/${session.user.id}`),
-          fetch(`/api/success/${session.user.id}`),
-          fetch(`/api/patchnote`),
-          fetch(`/api/titres/${session.user.id}`)
-        ]);
-
-        const statsData = await statsRes.json();
-        const messagesData = await messagesRes.json();
-        const successData = await successRes.json();
-        const patchnoteData = await patchnoteRes.json();
-        const titlesData = await titlesRes.json();
-
-        setStats(statsData);
-        setSuccesses(successData.succes || []);
-        setPatchNotes(patchnoteData);
-        setAvailableTitles(titlesData.titresPossedes || []);
-        setSelectedTitle(statsData.equippedTitle || '');
-        
-        const formattedMessageData = (messagesData.messagesLast7Days || []).map((count: number, index: number) => ({
-          day: `Jour ${index + 1}`,
-          messages: count,
-        }));
-        setMessageData(formattedMessageData);
-
-      } catch (error) {
-        console.error("Erreur de chargement du dashboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
+  // --- Chargement de toutes les données nécessaires ---
   useEffect(() => {
-    fetchData();
+    if (status === 'authenticated' && session?.user?.id) {
+      const fetchData = async () => {
+        try {
+          // On lance tous les appels en parallèle pour optimiser le temps de chargement
+          const [
+            statsRes, 
+            messagesRes, 
+            successRes, 
+            patchnoteRes, 
+            titlesRes
+          ] = await Promise.all([
+            fetch(`/api/stats/me`),
+            fetch(`/api/messages/${session.user.id}`),
+            fetch(`/api/success/${session.user.id}`),
+            fetch(`/api/patchnote`),
+            fetch(`/api/titres/${session.user.id}`)
+          ]);
+
+          // On traite les réponses JSON
+          const statsData = await statsRes.json();
+          const messagesData = await messagesRes.json();
+          const successData = await successRes.json();
+          const patchnoteData = await patchnoteRes.json();
+          const titlesData = await titlesRes.json();
+
+          // On met à jour l'état de notre composant
+          setStats(statsData);
+          setSuccesses(successData.succes || []);
+          setPatchNotes(patchnoteData);
+          setAvailableTitles(titlesData.titresPossedes || []);
+          setSelectedTitle(statsData.equippedTitle || '');
+          
+          // On formate les données pour le graphique
+          const formattedMessageData = (messagesData.messagesLast7Days || []).map((count: number, index: number) => ({
+            day: `Jour ${index + 1}`,
+            messages: count,
+          }));
+          setMessageData(formattedMessageData);
+
+        } catch (error) {
+          console.error("Erreur de chargement des données du dashboard:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }
   }, [status, session]);
 
+  // --- Logique pour le changement de titre ---
   const handleEquipTitle = async () => {
-    if (!selectedTitle || !session?.user?.id) {
-        alert("Veuillez sélectionner un titre.");
-        return;
-    }
+    if (!selectedTitle || !session?.user?.id) return;
     try {
         await fetch(`/api/titres/${session.user.id}`, {
             method: 'POST',
@@ -90,10 +96,11 @@ export default function DashboardHomePage() {
         setIsTitleModalOpen(false);
     } catch (error) {
         console.error("Erreur lors du changement de titre:", error);
-        alert("Une erreur est survenue lors du changement de titre.");
+        alert("Une erreur est survenue.");
     }
   };
   
+  // --- Fonction utilitaire pour l'affichage du rang ---
   const formatRank = (rank: number | null) => {
     if (!rank) return <span className="text-gray-400">(Non classé)</span>;
     if (rank === 1) return <span className="font-bold text-yellow-400">(1er)</span>;
@@ -110,6 +117,8 @@ export default function DashboardHomePage() {
     <>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Bienvenue sur KTS</h1>
+
+        {/* --- Grille Principale : Profil & Graphique --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-[#1e2530] p-6 rounded-lg space-y-4">
             <div className="flex items-center space-x-4">
@@ -119,7 +128,6 @@ export default function DashboardHomePage() {
                 <p className="text-sm text-purple-400 font-semibold">♕ {session?.user?.role === 'admin' ? 'Administrateur' : 'Membre'}</p>
               </div>
             </div>
-            {/* --- CORRECTION ICI : Ajout de '?? null' pour éviter les 'undefined' --- */}
             <ul className="space-y-2 text-gray-300">
               <li className="flex items-center"><Coins className="h-5 w-5 text-yellow-400 mr-3" /> Possède <span className="font-bold text-yellow-400 mx-2">{stats?.currency?.toLocaleString()}</span> pièces <span className="ml-2">{formatRank(stats?.currencyRank ?? null)}</span></li>
               <li className="flex items-center"><Zap className="h-5 w-5 text-cyan-400 mr-3" /> Possède <span className="font-bold text-cyan-400 mx-2">{stats?.points}</span> points <span className="ml-2">{formatRank(stats?.pointsRank ?? null)}</span></li>
@@ -140,12 +148,14 @@ export default function DashboardHomePage() {
           </div>
         </div>
         
+        {/* --- Bloc Récompense Quotidienne --- */}
         <div className="bg-[#1e2530] p-6 rounded-lg text-center">
           <h2 className="font-bold text-lg flex items-center justify-center"><Gift className="h-6 w-6 mr-2 text-yellow-400"/>Récompense quotidienne</h2>
           <p className="text-gray-400 text-sm my-2">Connecte-toi chaque jour pour obtenir un bonus !</p>
           <button className="bg-green-600 px-5 py-2 rounded-md font-bold hover:bg-green-700">Réclamer ma récompense du jour</button>
         </div>
 
+        {/* --- Bloc Patch Notes --- */}
         {patchNotes && (
           <div className="bg-[#1e2530] p-6 rounded-lg">
             <h2 className="font-bold text-lg mb-4">📢 {patchNotes.title}</h2>
@@ -156,6 +166,7 @@ export default function DashboardHomePage() {
           </div>
         )}
 
+        {/* --- Bloc Succès --- */}
         <div className="bg-[#1e2530] p-6 rounded-lg">
           <h2 className="font-bold text-lg mb-4">🏆 Succès débloqués</h2>
           {successes.length > 0 ? (
@@ -164,15 +175,16 @@ export default function DashboardHomePage() {
         </div>
       </div>
 
+      {/* --- Modal pour Changer de Titre --- */}
       {isTitleModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#1e2530] p-8 rounded-lg border border-cyan-700 w-full max-w-md">
             <h2 className="text-2xl font-bold mb-6">Changer de titre</h2>
             <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-              {availableTitles && availableTitles.length > 0 ? availableTitles.map(title => (
-                <label key={title.name} className="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
-                  <input type="radio" name="title" value={title.name} checked={selectedTitle === title.name} onChange={(e) => setSelectedTitle(e.target.value)} className="form-radio h-5 w-5 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500"/>
-                  <span className="ml-4 text-lg">{title.name}</span>
+              {availableTitles && availableTitles.length > 0 ? availableTitles.map(titre => (
+                <label key={titre} className="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
+                  <input type="radio" name="title" value={titre} checked={selectedTitle === titre} onChange={(e) => setSelectedTitle(e.target.value)} className="form-radio h-5 w-5 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500"/>
+                  <span className="ml-4 text-lg">{titre}</span>
                 </label>
               )) : <p className="text-gray-400">Vous ne possédez aucun titre pour le moment.</p>}
             </div>
