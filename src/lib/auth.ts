@@ -3,7 +3,6 @@ import DiscordProvider from "next-auth/providers/discord";
 import { JWT } from "next-auth/jwt";
 import { Session } from "next-auth";
 
-// On définit un type pour le profil que l'on reçoit de Discord
 interface DiscordProfile extends Profile {
     id: string;
     username: string;
@@ -16,25 +15,20 @@ export const authOptions: NextAuthOptions = {
         DiscordProvider({
             clientId: process.env.DISCORD_CLIENT_ID!,
             clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-            
-            // On utilise la fonction profile pour mapper les données de Discord
-            // à notre objet User personnalisé (avec le rôle)
             profile(profile: DiscordProfile): User {
                 const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',');
                 const userRole = adminIds.includes(profile.id) ? 'admin' : 'user';
-
                 return {
                     id: profile.id,
                     name: profile.username,
                     email: profile.email,
                     image: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : null,
-                    role: userRole, // La propriété 'role' est bien présente et requise
+                    role: userRole, // La propriété 'role' est bien présente
                 };
             },
         }),
     ],
     callbacks: {
-        // Le token JWT est enrichi avec l'id et le rôle de l'utilisateur
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
@@ -42,7 +36,6 @@ export const authOptions: NextAuthOptions = {
             }
             return token;
         },
-        // La session client reçoit l'id et le rôle depuis le token
         async session({ session, token }: { session: Session; token: JWT }) {
             if (session.user) {
                 session.user.id = token.id;
