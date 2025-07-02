@@ -4,13 +4,19 @@ import { authOptions } from '@/lib/auth';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// GET : Récupère les titres de l'utilisateur
-export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
+// On utilise la signature simplifiée avec 'any' pour le contexte
+export async function GET(request: NextRequest, context: any) {
     try {
+        const { params } = context;
         const { userId } = params;
+
         const res = await fetch(`${BOT_API_URL}/titres/${userId}`);
-        if (!res.ok && res.status === 404) {
-            return NextResponse.json({ titresPossedes: [], titreActuel: null });
+        if (!res.ok) {
+            // Si l'utilisateur n'est pas trouvé (404), on renvoie une structure vide
+            if (res.status === 404) {
+                return NextResponse.json({ titresPossedes: [], titreActuel: null });
+            }
+            throw new Error(`Erreur du bot API: ${res.statusText}`);
         }
         const data = await res.json();
         return NextResponse.json(data);
@@ -20,15 +26,14 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
     }
 }
 
-// --- AJOUT DE LA FONCTION POST ---
-// POST : Met à jour le titre équipé de l'utilisateur
-export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
+// On utilise aussi la signature simplifiée pour la fonction POST
+export async function POST(request: NextRequest, context: any) {
     const session = await getServerSession(authOptions);
+    const { params } = context;
     const { userId } = params;
 
-    // Sécurité : on vérifie que l'utilisateur modifie bien son propre titre
     if (session?.user?.id !== userId) {
-        return NextResponse.json({ error: 'Action non autorisée' }, { status: 403 });
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
     
     try {
@@ -37,7 +42,6 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
             return NextResponse.json({ error: 'Le champ nouveauTitre est requis' }, { status: 400 });
         }
 
-        // On transmet la requête au bot
         const res = await fetch(`${BOT_API_URL}/titres/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -46,8 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
         
         const data = await res.json();
         if (!res.ok) {
-            // Si le bot renvoie une erreur, on la transmet au client
-            throw new Error(data.error || "Erreur de l'API du bot");
+            throw new Error(data.error || `Erreur du bot API: ${res.statusText}`);
         }
         
         return NextResponse.json(data);
