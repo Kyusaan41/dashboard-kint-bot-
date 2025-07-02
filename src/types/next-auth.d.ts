@@ -1,36 +1,33 @@
-// src/types/next-auth.d.ts
-
 import 'next-auth';
+import { DefaultSession } from 'next-auth';
 
+// On étend les types de base de NextAuth
 declare module 'next-auth' {
     /**
-     * Surcharge le type de la session pour inclure tes propriétés personnalisées
+     * Le type User. On rend le rôle OPTIONNEL avec le '?'.
+     */
+    interface User {
+        id: string;
+        role?: string; // <--- MODIFICATION ICI
+    }
+
+    /**
+     * La session côté client. On rend aussi le rôle optionnel.
      */
     interface Session {
         user: {
             id: string;
-            role: string;
-            name?: string | null;
-            email?: string | null;
-            image?: string | null;
-        };
-    }
-
-    /**
-     * Surcharge le type de l'utilisateur de base
-     */
-    interface User {
-        id: string;
-        role: string;
+            role?: string; // <--- MODIFICATION ICI
+        } & DefaultSession['user'];
     }
 }
 
 declare module 'next-auth/jwt' {
     /**
-     * Surcharge le type du JWT pour inclure ton rôle et id
+     * Le token JWT. Le rôle devient optionnel ici aussi.
      */
     interface JWT {
         id: string;
-        role: string;
+        role?: string; // <--- MODIFICATION ICI
     }
 }
