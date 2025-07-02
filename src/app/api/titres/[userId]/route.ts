@@ -1,26 +1,20 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-// On utilise une signature simplifiée avec 'any' pour le contexte
+const BOT_API_URL = 'http://51.83.103.24:20077/api';
+
 export async function GET(request: NextRequest, context: any) {
     try {
-        // On récupère les paramètres à l'intérieur de la fonction
         const { params } = context;
         const { userId } = params;
 
-        if (!userId) {
-            return NextResponse.json({ error: "User ID manquant dans l'URL" }, { status: 400 });
+        const res = await fetch(`${BOT_API_URL}/titres/${userId}`);
+         if (!res.ok) {
+            throw new Error(`Erreur du bot API: ${res.statusText}`);
         }
-
-        // --- Logique métier ---
-        const userTitles = [
-            { id: 'newbie', name: 'Le Novice' },
-        ];
-        // --------------------
-
-        return NextResponse.json(userTitles);
-
+        const data = await res.json();
+        return NextResponse.json(data);
     } catch (error) {
-        console.error(`Erreur API /titres/[userId]:`, error);
-        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+        console.error("Erreur dans /api/titres/[userId]:", error);
+        return NextResponse.json({ titresPossedes: [], titreActuel: null }, { status: 500 });
     }
 }
