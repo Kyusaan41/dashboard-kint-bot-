@@ -9,7 +9,54 @@ async function handleApiResponse(response: Response) {
     return response.json();
 }
 
+// --- Fonctions pour l'Administration ---
+
+export async function getUsers() {
+    return handleApiResponse(await fetch('/api/admin/users'));
+}
+
+export async function giveMoney(userId: string, amount: number) {
+    return handleApiResponse(await fetch('/api/admin/give-money', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount }),
+    }));
+}
+
+export async function giveKip(userId: string, amount: number) {
+    return handleApiResponse(await fetch('/api/admin/give-kip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount }),
+    }));
+}
+
+export async function restartBot() {
+    return handleApiResponse(await fetch('/api/admin/restart-bot', {
+        method: 'POST',
+    }));
+}
+
+export async function giveItem(userId: string, itemName: string) {
+    return handleApiResponse(await fetch('/api/admin/give-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, itemName }),
+    }));
+}
+
+// --- Fonction pour les Logs ---
+
+export async function getBotLogs() {
+    const response = await fetch('/api/logs');
+    if (!response.ok) {
+        throw new Error('Impossible de récupérer les logs du bot.');
+    }
+    return handleApiResponse(response);
+}
+
 // --- Fonctions pour l'XP ---
+
 export async function getXPByUser(userId: string) {
     return handleApiResponse(await fetch(`/api/users/${userId}/xp`));
 }
@@ -23,12 +70,13 @@ export async function updateXP(userId: string, newXP: number) {
 }
 
 // --- Fonctions pour la Monnaie (Currency) ---
+
 export async function fetchCurrency(userId: string) {
-    return handleApiResponse(await fetch(`/api/users/${userId}/currency`));
+    return handleApiResponse(await fetch(`/api/currency/${userId}`));
 }
 
 export async function updateCurrency(userId: string, newBalance: number) {
-    return handleApiResponse(await fetch(`/api/users/${userId}/currency`, {
+    return handleApiResponse(await fetch(`/api/currency/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ coins: newBalance }),
@@ -36,12 +84,13 @@ export async function updateCurrency(userId: string, newBalance: number) {
 }
 
 // --- Fonctions pour les Points ---
+
 export async function fetchPoints(userId: string) {
-    return handleApiResponse(await fetch(`/api/users/${userId}/points`));
+    return handleApiResponse(await fetch(`/api/points/${userId}`));
 }
 
 export async function updatePoints(userId: string, newPoints: number) {
-    return handleApiResponse(await fetch(`/api/users/${userId}/points`, {
+    return handleApiResponse(await fetch(`/api/points/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ points: newPoints }),
@@ -49,6 +98,7 @@ export async function updatePoints(userId: string, newPoints: number) {
 }
 
 // --- Fonctions pour le Classement ---
+
 export async function getXPLeaderboard() {
     return handleApiResponse(await fetch('/api/leaderboard/xp'));
 }
@@ -62,6 +112,7 @@ export async function getPointsLeaderboard() {
 }
 
 // --- Fonctions pour le Magasin ---
+
 export async function getShopItems() {
     return handleApiResponse(await fetch('/api/shop'));
 }
@@ -74,36 +125,8 @@ export async function buyItem(itemId: string) {
     }));
 }
 
-// --- Fonctions pour l'Administration ---
-export async function getUsers() {
-    return handleApiResponse(await fetch('/api/admin/users'));
-}
-
-export async function giveItem(userId: string, itemName: string) {
-    return handleApiResponse(await fetch('/api/admin/give-item', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, itemName }),
-    }));
-}
-
-export async function giveKip(userId: string, amount: number) {
-    return handleApiResponse(await fetch('/api/admin/give-kip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, amount }),
-    }));
-}
-
-export async function giveMoney(userId: string, amount: number) {
-    return handleApiResponse(await fetch('/api/admin/give-money', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, amount }),
-    }));
-}
-
 // --- Fonctions pour l'Inventaire ---
+
 export async function getInventory() {
     return handleApiResponse(await fetch('/api/inventory'));
 }
