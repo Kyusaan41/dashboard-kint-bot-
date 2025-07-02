@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Award, BarChart2, Coins, Crown, Gift, MessageSquare, Star, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-// --- Définition des Types pour les données ---
+// --- Définition des Types ---
 type UserStats = {
   currency: number;
   currencyRank: number | null;
@@ -30,11 +30,8 @@ export default function DashboardHomePage() {
   const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState<string>('');
   const [loading, setLoading] = useState(true);
-
-  // --- State pour la récompense quotidienne ---
   const [claimStatus, setClaimStatus] = useState({ canClaim: false, timeLeft: '00:00:00' });
 
-  // --- Chargement de toutes les données ---
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
       const fetchData = async () => {
@@ -45,7 +42,7 @@ export default function DashboardHomePage() {
             fetch(`/api/success/${session.user.id}`),
             fetch(`/api/patchnote`),
             fetch(`/api/titres/${session.user.id}`),
-            fetch(`/api/currency/${session.user.id}`) // Appel pour vérifier le statut du claim
+            fetch(`/api/currency/${session.user.id}`)
           ]);
 
           const statsData = await statsRes.json();
@@ -67,7 +64,6 @@ export default function DashboardHomePage() {
           }));
           setMessageData(formattedMessageData);
 
-          // Logique pour déterminer si la récompense peut être réclamée
           const now = Date.now();
           const twentyFourHours = 24 * 60 * 60 * 1000;
           if (!currencyData.lastClaim || (now - currencyData.lastClaim >= twentyFourHours)) {
@@ -76,7 +72,6 @@ export default function DashboardHomePage() {
               const timeLeft = twentyFourHours - (now - currencyData.lastClaim);
               setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
           }
-
         } catch (error) {
           console.error("Erreur de chargement du dashboard:", error);
         } finally {
@@ -87,23 +82,20 @@ export default function DashboardHomePage() {
     }
   }, [status, session]);
 
-  // --- Compte à rebours pour le bouton de récompense ---
   useEffect(() => {
     if (claimStatus.canClaim || !claimStatus.timeLeft) return;
-
     const interval = setInterval(() => {
-        const [h, m, s] = claimStatus.timeLeft.split(':').map(Number);
-        const totalSeconds = (h * 3600) + (m * 60) + s - 1;
-
-        if (totalSeconds <= 0) {
+        const parts = claimStatus.timeLeft.split(':').map(Number);
+        if(parts.length !== 3) { clearInterval(interval); return; }
+        const totalSeconds = (parts[0] * 3600) + (parts[1] * 60) + parts[2] - 1;
+        if (totalSeconds < 0) {
             setClaimStatus({ canClaim: true, timeLeft: '' });
             clearInterval(interval);
         } else {
             const newTime = new Date(totalSeconds * 1000).toISOString().substr(11, 8);
-            setClaimStatus({ canClaim: false, timeLeft: newTime });
+            setClaimStatus(prev => ({ ...prev, timeLeft: newTime }));
         }
     }, 1000);
-
     return () => clearInterval(interval);
   }, [claimStatus]);
 
@@ -131,17 +123,13 @@ export default function DashboardHomePage() {
     return <span className="text-sm text-gray-400">({rank}<sup>e</sup>)</span>;
   };
 
-  // --- Logique pour réclamer la récompense ---
   const handleClaimReward = async () => {
     if (!claimStatus.canClaim) return;
-
     try {
         const res = await fetch('/api/claim-reward', { method: 'POST' });
         const data = await res.json();
-
         if (res.ok) {
             alert(data.message || "Récompense réclamée !");
-            // Mise à jour de l'affichage
             setStats(prev => prev ? { ...prev, currency: data.newBalance } : null);
             setClaimStatus({ canClaim: false, timeLeft: '23:59:59' });
         } else {
@@ -163,7 +151,6 @@ export default function DashboardHomePage() {
     <>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Bienvenue sur KTS</h1>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-[#1e2530] p-6 rounded-lg space-y-4">
             <div className="flex items-center space-x-4">
@@ -173,10 +160,11 @@ export default function DashboardHomePage() {
                 <p className="text-sm text-purple-400 font-semibold">♕ {session?.user?.role === 'admin' ? 'Administrateur' : 'Membre'}</p>
               </div>
             </div>
+            {/* --- CORRECTION ICI : Ajout de '?? 0' comme valeur par défaut --- */}
             <ul className="space-y-2 text-gray-300">
-              <li className="flex items-center"><Coins className="h-5 w-5 text-yellow-400 mr-3" /> Possède <span className="font-bold text-yellow-400 mx-2">{stats?.currency?.toLocaleString()}</span> pièces <span className="ml-2">{formatRank(stats?.currencyRank ?? null)}</span></li>
-              <li className="flex items-center"><Zap className="h-5 w-5 text-cyan-400 mr-3" /> Possède <span className="font-bold text-cyan-400 mx-2">{stats?.points}</span> points <span className="ml-2">{formatRank(stats?.pointsRank ?? null)}</span></li>
-              <li className="flex items-center"><Star className="h-5 w-5 text-green-400 mr-3" /> Possède <span className="font-bold text-green-400 mx-2">{stats?.xp?.toLocaleString()}</span> XP <span className="ml-2">{formatRank(stats?.xpRank ?? null)}</span></li>
+              <li className="flex items-center"><Coins className="h-5 w-5 text-yellow-400 mr-3" /> Possède <span className="font-bold text-yellow-400 mx-2">{(stats?.currency ?? 0).toLocaleString()}</span> pièces <span className="ml-2">{formatRank(stats?.currencyRank ?? null)}</span></li>
+              <li className="flex items-center"><Zap className="h-5 w-5 text-cyan-400 mr-3" /> Possède <span className="font-bold text-cyan-400 mx-2">{stats?.points ?? 0}</span> points <span className="ml-2">{formatRank(stats?.pointsRank ?? null)}</span></li>
+              <li className="flex items-center"><Star className="h-5 w-5 text-green-400 mr-3" /> Possède <span className="font-bold text-green-400 mx-2">{(stats?.xp ?? 0).toLocaleString()}</span> XP <span className="ml-2">{formatRank(stats?.xpRank ?? null)}</span></li>
             </ul>
             <div className="flex items-center pt-4 border-t border-gray-700">
               <p>Titre actuel: <span className="font-semibold ml-2">{stats?.equippedTitle || 'Aucun'}</span></p>
