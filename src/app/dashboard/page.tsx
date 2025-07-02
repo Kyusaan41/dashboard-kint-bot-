@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Award, BarChart2, Coins, Crown, Gift, MessageSquare, Star, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-// --- Définition des Types pour une meilleure clarté du code ---
+// --- Définition des Types pour les données ---
 type UserStats = {
   currency: number;
   currencyRank: number | null;
@@ -19,7 +19,7 @@ type UserStats = {
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
 type MessageData = { day: string; messages: number; };
 
-// --- Le Composant Principal de la Page ---
+// --- Le Composant Principal ---
 export default function DashboardHomePage() {
   const { data: session, status } = useSession();
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -31,49 +31,54 @@ export default function DashboardHomePage() {
   const [selectedTitle, setSelectedTitle] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
-  // --- Chargement de toutes les données nécessaires ---
+  // --- State pour la récompense quotidienne ---
+  const [claimStatus, setClaimStatus] = useState({ canClaim: false, timeLeft: '00:00:00' });
+
+  // --- Chargement de toutes les données ---
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
       const fetchData = async () => {
         try {
-          // On lance tous les appels en parallèle pour optimiser le temps de chargement
-          const [
-            statsRes, 
-            messagesRes, 
-            successRes, 
-            patchnoteRes, 
-            titlesRes
-          ] = await Promise.all([
+          const [statsRes, messagesRes, successRes, patchnoteRes, titlesRes, currencyRes] = await Promise.all([
             fetch(`/api/stats/me`),
             fetch(`/api/messages/${session.user.id}`),
             fetch(`/api/success/${session.user.id}`),
             fetch(`/api/patchnote`),
-            fetch(`/api/titres/${session.user.id}`)
+            fetch(`/api/titres/${session.user.id}`),
+            fetch(`/api/currency/${session.user.id}`) // Appel pour vérifier le statut du claim
           ]);
 
-          // On traite les réponses JSON
           const statsData = await statsRes.json();
           const messagesData = await messagesRes.json();
           const successData = await successRes.json();
           const patchnoteData = await patchnoteRes.json();
           const titlesData = await titlesRes.json();
+          const currencyData = await currencyRes.json();
 
-          // On met à jour l'état de notre composant
           setStats(statsData);
           setSuccesses(successData.succes || []);
           setPatchNotes(patchnoteData);
           setAvailableTitles(titlesData.titresPossedes || []);
           setSelectedTitle(statsData.equippedTitle || '');
           
-          // On formate les données pour le graphique
           const formattedMessageData = (messagesData.messagesLast7Days || []).map((count: number, index: number) => ({
             day: `Jour ${index + 1}`,
             messages: count,
           }));
           setMessageData(formattedMessageData);
 
+          // Logique pour déterminer si la récompense peut être réclamée
+          const now = Date.now();
+          const twentyFourHours = 24 * 60 * 60 * 1000;
+          if (!currencyData.lastClaim || (now - currencyData.lastClaim >= twentyFourHours)) {
+              setClaimStatus({ canClaim: true, timeLeft: '' });
+          } else {
+              const timeLeft = twentyFourHours - (now - currencyData.lastClaim);
+              setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
+          }
+
         } catch (error) {
-          console.error("Erreur de chargement des données du dashboard:", error);
+          console.error("Erreur de chargement du dashboard:", error);
         } finally {
           setLoading(false);
         }
@@ -82,7 +87,26 @@ export default function DashboardHomePage() {
     }
   }, [status, session]);
 
-  // --- Logique pour le changement de titre ---
+  // --- Compte à rebours pour le bouton de récompense ---
+  useEffect(() => {
+    if (claimStatus.canClaim || !claimStatus.timeLeft) return;
+
+    const interval = setInterval(() => {
+        const [h, m, s] = claimStatus.timeLeft.split(':').map(Number);
+        const totalSeconds = (h * 3600) + (m * 60) + s - 1;
+
+        if (totalSeconds <= 0) {
+            setClaimStatus({ canClaim: true, timeLeft: '' });
+            clearInterval(interval);
+        } else {
+            const newTime = new Date(totalSeconds * 1000).toISOString().substr(11, 8);
+            setClaimStatus({ canClaim: false, timeLeft: newTime });
+        }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [claimStatus]);
+
   const handleEquipTitle = async () => {
     if (!selectedTitle || !session?.user?.id) return;
     try {
@@ -99,13 +123,36 @@ export default function DashboardHomePage() {
     }
   };
   
-  // --- Fonction utilitaire pour l'affichage du rang ---
   const formatRank = (rank: number | null) => {
     if (!rank) return <span className="text-gray-400">(Non classé)</span>;
     if (rank === 1) return <span className="font-bold text-yellow-400">(1er)</span>;
     if (rank === 2) return <span className="font-bold text-gray-300">(2e)</span>;
     if (rank === 3) return <span className="font-bold text-yellow-600">(3e)</span>;
     return <span className="text-sm text-gray-400">({rank}<sup>e</sup>)</span>;
+  };
+
+  // --- Logique pour réclamer la récompense ---
+  const handleClaimReward = async () => {
+    if (!claimStatus.canClaim) return;
+
+    try {
+        const res = await fetch('/api/claim-reward', { method: 'POST' });
+        const data = await res.json();
+
+        if (res.ok) {
+            alert(data.message || "Récompense réclamée !");
+            // Mise à jour de l'affichage
+            setStats(prev => prev ? { ...prev, currency: data.newBalance } : null);
+            setClaimStatus({ canClaim: false, timeLeft: '23:59:59' });
+        } else {
+            alert(data.error || "Impossible de réclamer la récompense maintenant.");
+            if (data.timeLeft) {
+                setClaimStatus({ canClaim: false, timeLeft: new Date(data.timeLeft).toISOString().substr(11, 8) });
+            }
+        }
+    } catch (error) {
+        alert("Une erreur de communication est survenue.");
+    }
   };
 
   if (loading || status === 'loading') {
@@ -117,7 +164,6 @@ export default function DashboardHomePage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Bienvenue sur KTS</h1>
 
-        {/* --- Grille Principale : Profil & Graphique --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-[#1e2530] p-6 rounded-lg space-y-4">
             <div className="flex items-center space-x-4">
@@ -147,14 +193,14 @@ export default function DashboardHomePage() {
           </div>
         </div>
         
-        {/* --- Bloc Récompense Quotidienne --- */}
         <div className="bg-[#1e2530] p-6 rounded-lg text-center">
           <h2 className="font-bold text-lg flex items-center justify-center"><Gift className="h-6 w-6 mr-2 text-yellow-400"/>Récompense quotidienne</h2>
-          <p className="text-gray-400 text-sm my-2">Connecte-toi chaque jour pour obtenir un bonus !</p>
-          <button className="bg-green-600 px-5 py-2 rounded-md font-bold hover:bg-green-700">Réclamer ma récompense du jour</button>
+          <p className="text-gray-400 text-sm my-2">Connecte-toi chaque jour pour obtenir un bonus de 500 pièces !</p>
+          <button onClick={handleClaimReward} disabled={!claimStatus.canClaim} className={`px-5 py-2 rounded-md font-bold transition ${ claimStatus.canClaim ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 cursor-not-allowed' }`}>
+            {claimStatus.canClaim ? 'Réclamer ma récompense' : `Prochaine récompense dans ${claimStatus.timeLeft}`}
+          </button>
         </div>
 
-        {/* --- Bloc Patch Notes --- */}
         {patchNotes && (
           <div className="bg-[#1e2530] p-6 rounded-lg">
             <h2 className="font-bold text-lg mb-4">📢 {patchNotes.title}</h2>
@@ -165,7 +211,6 @@ export default function DashboardHomePage() {
           </div>
         )}
 
-        {/* --- Bloc Succès --- */}
         <div className="bg-[#1e2530] p-6 rounded-lg">
           <h2 className="font-bold text-lg mb-4">🏆 Succès débloqués</h2>
           {successes.length > 0 ? (
@@ -174,7 +219,6 @@ export default function DashboardHomePage() {
         </div>
       </div>
 
-      {/* --- Modal pour Changer de Titre --- */}
       {isTitleModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#1e2530] p-8 rounded-lg border border-cyan-700 w-full max-w-md">
