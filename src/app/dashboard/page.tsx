@@ -16,7 +16,6 @@ type UserStats = {
   pointsRank: number | null;
   equippedTitle: string | null;
 };
-type Success = { id: string; name: string; };
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
 type MessageData = { day: string; messages: number; };
 
@@ -24,7 +23,7 @@ type MessageData = { day: string; messages: number; };
 export default function DashboardHomePage() {
   const { data: session, status } = useSession();
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [successes, setSuccesses] = useState<Success[]>([]);
+  const [successes, setSuccesses] = useState<string[]>([]);
   const [patchNotes, setPatchNotes] = useState<PatchNote | null>(null);
   const [messageData, setMessageData] = useState<MessageData[]>([]);
   const [availableTitles, setAvailableTitles] = useState<string[]>([]);
@@ -170,7 +169,7 @@ export default function DashboardHomePage() {
         <div className="bg-[#1e2530] p-6 rounded-lg">
           <h2 className="font-bold text-lg mb-4">🏆 Succès débloqués</h2>
           {successes.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{successes.map(s => <div key={s.id} className="bg-gray-700 p-3 rounded-md text-center"><p>{s.name}</p></div>)}</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{successes.map(succesName => <div key={succesName} className="bg-gray-700 p-3 rounded-md text-center"><p>{succesName}</p></div>)}</div>
           ) : (<p className="text-gray-500 text-sm">Aucun succès débloqué pour le moment.</p>)}
         </div>
       </div>
