@@ -1,17 +1,13 @@
-// app/api/patchnote/route.ts
 import { NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import path from 'path';
+const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
 export async function GET() {
-  try {
-    const filePath = path.join(process.cwd(), './patchnote.json'); // ou juste 'patchnote.json'
-    const data = await readFile(filePath, 'utf-8');
-    const json = JSON.parse(data);
-
-    return NextResponse.json(json);
-  } catch (error) {
-    console.error('Erreur lecture patchnote:', error);
-    return NextResponse.json({ error: 'Erreur lecture patchnote' }, { status: 500 });
-  }
+    try {
+        const res = await fetch(`${BOT_API_URL}/patchnote`);
+        if (!res.ok) throw new Error('Réponse du bot non valide');
+        const data = await res.json();
+        return NextResponse.json(data);
+    } catch (error) {
+        return NextResponse.json({ title: 'Erreur', ajouts: ['Impossible de charger les notes de mise à jour.'], ajustements: [] }, { status: 500 });
+    }
 }
