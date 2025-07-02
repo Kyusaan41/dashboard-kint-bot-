@@ -1,0 +1,13 @@
+/* --- AJOUTEZ CE CODE À LA FIN --- */
+@keyframes sway {
+  0%, 100% {
+    transform: rotate(-8deg) translateX(-5%);
+  }
+  50% {
+    transform: rotate(8deg) translateX(5%);
+  }
+}
+
+.animate-sway {
+  animation: sway 3s ease-in-out infinite;
+}
