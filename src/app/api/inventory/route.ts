@@ -11,18 +11,37 @@ export async function GET(request: Request) {
     }
 
     try {
-        const res = await fetch(`${BOT_API_URL}/inventaire/${session.user.id}`);
-        if (!res.ok) {
-            // Si l'inventaire est vide (404), on renvoie un tableau vide.
-            if (res.status === 404) {
-                return NextResponse.json([]);
-            }
-            throw new Error('Erreur API Bot');
+        // --- CORRECTION : On récupère l'inventaire ET la boutique en même temps ---
+        const [inventoryRes, shopRes] = await Promise.all([
+            fetch(`${BOT_API_URL}/inventaire/${session.user.id}`),
+            fetch(`${BOT_API_URL}/shop`) // L'API qui liste tous les objets
+        ]);
+
+        if (inventoryRes.status === 404) {
+            return NextResponse.json([]); // L'utilisateur a un inventaire vide, on renvoie un tableau vide.
         }
-        const data = await res.json();
-        // On transforme l'objet en tableau pour une utilisation plus simple
-        const inventoryArray = Object.entries(data).map(([id, item]) => ({ id, ...(item as object) }));
-        return NextResponse.json(inventoryArray);
+
+        if (!inventoryRes.ok || !shopRes.ok) {
+            throw new Error("Impossible de récupérer les données de l'inventaire ou de la boutique depuis le bot.");
+        }
+        
+        const userInventory = await inventoryRes.json();
+        const shopItems = await shopRes.json();
+
+        // On "enrichit" l'inventaire avec les détails de la boutique
+        const enrichedInventory = Object.entries(userInventory).map(([itemId, itemData]) => {
+            const shopItem = shopItems.find((s: any) => s.id === itemId);
+            const data = itemData as { quantity: number };
+
+            return {
+                id: itemId,
+                quantity: data.quantity,
+                name: shopItem?.name || itemId, // Si l'objet n'est plus en boutique, on affiche son ID
+                icon: shopItem?.icon || null
+            };
+        });
+
+        return NextResponse.json(enrichedInventory);
 
     } catch (error) {
         console.error("Erreur API /api/inventory:", error);
