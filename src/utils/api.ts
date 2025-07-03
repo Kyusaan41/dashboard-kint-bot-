@@ -132,7 +132,7 @@ export async function getInventory() {
     return handleApiResponse(await fetch('/api/inventory'));
 }
 
-// --- AJOUT : Ajoutez cette fonction à la fin de votre fichier ---
+// --- AJOUT ET EXPORTATION DE LA FONCTION ---
 /**
  * Récupère le statut du cooldown pour le KShield pour un utilisateur donné.
  * @param userId L'ID de l'utilisateur.

@@ -2,9 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// --- CORRECTION : La syntaxe des arguments de la fonction GET est mise à jour ---
-export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
-    const { userId } = params;
+// --- CORRECTION : Utilisation d'une signature plus souple pour la fonction GET ---
+export async function GET(request: NextRequest, context: { params: { userId: string } }) {
+    const { userId } = context.params;
 
     if (!userId) {
         return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
