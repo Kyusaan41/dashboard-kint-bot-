@@ -1,25 +1,39 @@
+/* src/app/globals.css */
 
+/* --- CORRECTION ICI --- */
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+/* --- FIN CORRECTION --- */
 
+/* ... (votre CSS existant sous ces imports, y compris les :root et body) ... */
 
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
 
-/* --- AJOUTEZ CE CODE À LA FIN --- */
-@keyframes sway {
-  0%, 100% {
-    transform: rotate(-8deg) translateX(-5%);
-  }
-  50% {
-    transform: rotate(8deg) translateX(5%);
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
   }
 }
 
-.animate-sway {
-  animation: sway 3s ease-in-out infinite;
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-
+/* --- AJOUTEZ CE CODE À LA FIN (pour les animations) --- */
 @layer utilities {
   /* Animation pour la grenouille sur la page de connexion */
   @keyframes sway {
