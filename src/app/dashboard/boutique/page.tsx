@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { getShopItems, buyItem, fetchCurrency } from '@/utils/api';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart, X, Coins, RefreshCw } from 'lucide-react';
+import { ShoppingCart, X, Coins, RefreshCw, Lock } from 'lucide-react';
 
 // Type pour les objets de la boutique
 type ShopItem = {
@@ -16,6 +16,33 @@ type ShopItem = {
     icon: string;
     category: string;
 };
+
+// --- AJOUT : Type pour le statut du KShield ---
+type KShieldStatus = {
+    canPurchase: boolean;
+    timeLeft?: number; // Temps restant en millisecondes
+};
+
+
+// --- AJOUT : fonction utilitaire de formatage du temps ---
+const formatTimeLeft = (ms: number) => {
+    if (ms <= 0) return '';
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (days > 0) return `disponible dans ${days}j ${hours}h`;
+    if (hours > 0) return `disponible dans ${hours}h ${minutes}m`;
+    return `disponible dans ${minutes}m`;
+};
+
+// --- API côté client (pourrait être dans `utils/api.ts`) ---
+async function getKshieldStatus(userId: string): Promise<KShieldStatus> {
+    const res = await fetch(`/api/shop/kshield-status/${userId}`);
+    if (!res.ok) throw new Error("Impossible de vérifier le statut du KShield.");
+    return res.json();
+}
+
 
 export default function ShopPage() {
     const { data: session } = useSession();
@@ -29,6 +56,7 @@ export default function ShopPage() {
     const [userBalance, setUserBalance] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);
+    const [kshieldStatus, setKshieldStatus] = useState<KShieldStatus>({ canPurchase: true });
 
     // Fonction pour charger les données de la boutique et de l'utilisateur
     const fetchData = async () => {
@@ -38,9 +66,10 @@ export default function ShopPage() {
         setError(null); // Réinitialise l'erreur avant chaque tentative
 
         try {
-            const [shopData, currencyData] = await Promise.all([
+            const [shopData, currencyData, kshieldData] = await Promise.all([
                 getShopItems(),
-                fetchCurrency(session.user.id)
+                fetchCurrency(session.user.id),
+                getKshieldStatus(session.user.id) // Utilisation de la nouvelle fonction
             ]);
             
             const typedShopData: ShopItem[] = Array.isArray(shopData) ? shopData : [];
@@ -52,6 +81,7 @@ export default function ShopPage() {
                 setActiveCategory(allCategories[0]);
             }
             setUserBalance(currencyData.balance);
+            setKshieldStatus(kshieldData);
         } catch (err) {
             console.error("Erreur de chargement de la boutique:", err);
             setError("Impossible de charger les données de la boutique.");
@@ -68,10 +98,13 @@ export default function ShopPage() {
     }, [session]);
 
     // Fonctions de gestion du panier
-    const addToCart = (item: ShopItem) => setCart(prevCart => [...prevCart, item]);
+    const addToCart = (item: ShopItem) => {
+        if (item.id === 'KShield' && !kshieldStatus.canPurchase) return;
+        setCart(prev => [...prev, item]);
+    };
     
-    const removeFromCart = (itemIndex: number) => {
-        const newCart = cart.filter((_, index) => index !== itemIndex);
+    const removeFromCart = (index: number) => {
+        const newCart = cart.filter((_, i) => i !== index);
         setCart(newCart);
         if (newCart.length === 0) {
             setIsConfirming(false); // Annule la confirmation si le panier devient vide
@@ -84,30 +117,25 @@ export default function ShopPage() {
     const handlePurchase = async () => {
         if (cart.length === 0) return;
         if (userBalance !== null && userBalance < cartTotal) {
-            alert("Vous n'avez pas assez de pièces !");
-            setIsConfirming(false); // Réinitialise l'état
+            alert("Fonds insuffisants !");
+            setIsConfirming(false);
             return;
         }
-
-        const itemIds = cart.map(item => item.id);
-
         try {
-            await buyItem(itemIds);
+            await buyItem(cart.map(item => item.id));
             alert("Achat réussi !");
             setCart([]);
-            // Rafraîchit le solde de l'utilisateur après l'achat
-            const currencyData = await fetchCurrency(session!.user!.id);
-            setUserBalance(currencyData.balance);
+            await fetchData(); // Recharge toutes les données
         } catch (err) {
-            alert(`Échec de l'achat : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+            alert(`Échec : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
         } finally {
-            setIsConfirming(false); // Réinitialise l'état après l'achat
+            setIsConfirming(false);
         }
     };
 
     // Affiche un message de chargement
     if (loading) {
-        return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement de la boutique...</p>;
+        return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement...</p>;
     }
     
     // Affiche un message d'erreur avec un bouton pour réessayer
@@ -117,10 +145,9 @@ export default function ShopPage() {
                 <p>{error}</p>
                 <button 
                     onClick={fetchData} 
-                    className="mt-4 flex items-center gap-2 mx-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                    className="mt-4 flex items-center gap-2 mx-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg"
                 >
-                    <RefreshCw size={18} />
-                    Réessayer
+                    <RefreshCw size={18} /> Réessayer
                 </button>
             </div>
         );
@@ -150,19 +177,29 @@ export default function ShopPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <AnimatePresence>
-                    {filteredItems.map(item => (
-                        <motion.div key={item.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-[#1e2530] border border-gray-700 rounded-lg p-4 flex flex-col text-center shadow-lg">
-                            <div className="flex-grow">
-                                <Image src={item.icon || '/default-icon.png'} alt={item.name} width={80} height={80} className="mx-auto object-contain h-20"/>
-                                <h2 className="text-xl font-bold mt-4">{item.name}</h2>
-                                <p className="text-sm text-gray-400 mt-1 h-10">{item.description}</p>
-                            </div>
-                            <div className="mt-4">
-                                <p className="text-lg font-semibold text-yellow-400">{item.price} Pièces</p>
-                                <button onClick={() => addToCart(item)} className="mt-2 w-full bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-cyan-700 transition">Ajouter au panier</button>
-                            </div>
-                        </motion.div>
-                    ))}
+                    {filteredItems.map(item => {
+                        const isKshield = item.id === 'KShield';
+                        const isDisabled = isKshield && !kshieldStatus.canPurchase;
+                        return (
+                            <motion.div key={item.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-[#1e2530] border border-gray-700 rounded-lg p-4 flex flex-col text-center shadow-lg">
+                                <div className="flex-grow">
+                                    <Image src={item.icon || '/default-icon.png'} alt={item.name} width={80} height={80} className="mx-auto object-contain h-20"/>
+                                    <h2 className="text-xl font-bold mt-4">{item.name}</h2>
+                                    <p className="text-sm text-gray-400 mt-1 h-10">{item.description}</p>
+                                </div>
+                                <div className="mt-4">
+                                    <p className="text-lg font-semibold text-yellow-400">{item.price} Pièces</p>
+                                    <button
+                                        onClick={() => addToCart(item)}
+                                        disabled={isDisabled}
+                                        className={`mt-2 w-full font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 ${isDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'}`}
+                                    >
+                                        {isDisabled ? (<><Lock size={16} />{formatTimeLeft(kshieldStatus.timeLeft || 0)}</>) : ('Ajouter au panier')}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
                 </AnimatePresence>
             </div>
             
@@ -190,13 +227,7 @@ export default function ShopPage() {
                         <div className="mt-3">
                             <AnimatePresence mode="wait">
                                 {isConfirming ? (
-                                    <motion.div
-                                        key="confirm"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className="space-y-2"
-                                    >
+                                    <motion.div key="confirm" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-2">
                                         <p className="text-center text-sm text-gray-300">Confirmer l'achat ?</p>
                                         <div className="flex gap-2">
                                             <button onClick={handlePurchase} className="w-full bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">Confirmer</button>
@@ -204,14 +235,7 @@ export default function ShopPage() {
                                         </div>
                                     </motion.div>
                                 ) : (
-                                    <motion.button
-                                        key="pay"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        onClick={() => setIsConfirming(true)} 
-                                        className="w-full bg-cyan-600 text-white font-bold py-2 rounded-lg hover:bg-cyan-700 transition"
-                                    >
+                                    <motion.button key="pay" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} onClick={() => setIsConfirming(true)} className="w-full bg-cyan-600 text-white font-bold py-2 rounded-lg hover:bg-cyan-700 transition">
                                         Payer
                                     </motion.button>
                                 )}
