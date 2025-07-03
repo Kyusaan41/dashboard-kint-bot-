@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 export default function LoginPage() {
   const isMaintenanceMode = process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE === 'true';
-  const maintenanceMessage = process.env.NEXT_PUBLIC_MAINTENANCE_MESSAGE || "Le site est actuellement en maintenance. Veuillez réessayer plus tard.";
+  const maintenanceMessage = process.env.NEXT_PUBLIC_MAINTENANCE_MESSAGE || "Le bot est actuellement en maintenance. Veuillez réessayer plus tard.";
 
   useEffect(() => {
     if (!isMaintenanceMode) {
@@ -19,7 +19,7 @@ export default function LoginPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#0b0d13] p-4 text-white text-center">
         {/* Grenouille au-dessus de "Maintenance en cours" */}
-        <div className="relative w-48 h-48 mb-6 frog-animation"> {/* Utilisez la classe CSS directe */}
+        <div className="relative w-48 h-48 mb-6 frog-animation">
           <Image 
             src="/frog-mascot.png"
             alt="Mascotte Grenouille"
@@ -29,18 +29,20 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Titre clignotant */}
-        <h1 className="text-4xl font-bold text-red-500 mb-6 maintenance-text"> {/* Utilisez la classe CSS directe */}
-          🚧 Maintenance en cours 🚧
+        {/* Titre clignotant avec les lumières des barrières */}
+        <h1 className="text-4xl font-bold text-red-500 mb-6 maintenance-text">
+          <span className="police-light-red mr-2">🚨</span> {/* Gyrophare rouge à gauche */}
+          Maintenance en cours
+          <span className="police-light-blue ml-2">🚨</span> {/* Gyrophare bleu à droite */}
         </h1>
         <p className="text-lg text-gray-300 mb-4">{maintenanceMessage}</p>
         <p className="text-md text-gray-400 mt-4">Nous travaillons pour améliorer le service. Merci de votre patience !</p>
         
-        {/* Effet de lumière sur les barrières (via classes CSS directes) */}
-        <div className="flex mt-8 space-x-4">
-            <span className="text-6xl police-light-red">🚨</span> {/* Utilisez la classe CSS directe */}
-            <span className="text-6xl police-light-blue">🚨</span>{/* Utilisez la classe CSS directe */}
-        </div>
+        {/* L'ancienne div avec les gyrophares séparés est supprimée */}
+        {/* <div className="flex mt-8 space-x-4">
+            <span className="text-6xl police-light-red">🚨</span>
+            <span className="text-6xl police-light-blue">🚨</span>
+        </div> */}
 
         {/* Styles d'animation directement dans le composant */}
         <style jsx>{`
@@ -63,6 +65,7 @@ export default function LoginPage() {
           }
 
           /* Animations pour les effets de lumière des gyrophares */
+          /* Ces animations ciblent maintenant les spans à l'intérieur de h1 */
           .police-light-red {
             animation: light-pulse-red 1.5s ease-in-out infinite;
           }
