@@ -70,7 +70,7 @@ export default function KintMiniGamePage() {
   return (
     <div className="space-y-8">
       <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
-        <h1 className="text-4xl font-bold text-center text-cyan-400">Jeu de Points KINT</h1>
+        <h1 className="text-4xl font-bold text-center text-cyan-400">Classement KINT ⚡</h1>
         <p className="text-center text-gray-400 mt-2">Gérez vos points et consultez l'historique de vos actions.</p>
       </motion.div>
 
