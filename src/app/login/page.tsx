@@ -31,9 +31,9 @@ export default function LoginPage() {
 
         {/* Titre clignotant avec les lumières des barrières */}
         <h1 className="text-4xl font-bold text-red-500 mb-6 maintenance-text">
-          <span className="police-light-red mr-2">🚨</span> {/* Gyrophare rouge à gauche */}
+          <span className="police-light-red mr-2">🚧</span> {/* Gyrophare rouge à gauche */}
           Maintenance en cours
-          <span className="police-light-blue ml-2">🚨</span> {/* Gyrophare bleu à droite */}
+          <span className="police-light-blue ml-2">🚧</span> {/* Gyrophare bleu à droite */}
         </h1>
         <p className="text-lg text-gray-300 mb-4">{maintenanceMessage}</p>
         <p className="text-md text-gray-400 mt-4">Nous travaillons pour améliorer le service. Merci de votre patience !</p>
