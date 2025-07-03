@@ -2,21 +2,22 @@ import { NextResponse, NextRequest } from 'next/server';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// --- CORRECTION : Utilisation d'une signature plus souple pour la fonction GET ---
-export async function GET(request: NextRequest, context: { params: { userId: string } }) {
-    const { userId } = context.params;
-
-    if (!userId) {
-        return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
-    }
-
+// On utilise la signature simplifiée avec 'any' qui est la seule qui passe le build
+export async function GET(request: NextRequest, context: any) {
     try {
+        const { params } = context;
+        const { userId } = params;
+
+        if (!userId) {
+            return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+        }
+
+        // On appelle la route du bot correspondante
         const res = await fetch(`${BOT_API_URL}/shop/kshield-status/${userId}`);
 
         if (!res.ok) {
-            const errorData = await res.json().catch(() => ({ error: 'Erreur inconnue du bot' }));
-            console.error(`Erreur de l'API du bot pour kshield-status :`, errorData);
-            return NextResponse.json({ error: "Impossible de récupérer le statut du KShield depuis le bot." }, { status: res.status });
+            const errorData = await res.json().catch(() => ({}));
+            return NextResponse.json({ error: errorData.error || "Impossible de récupérer le statut du KShield." }, { status: res.status });
         }
         
         const data = await res.json();
