@@ -7,14 +7,16 @@ export async function GET(request: NextRequest, context: any) {
         const { params } = context;
         const { userId } = params;
 
-        const res = await fetch(`${BOT_API_URL}/success/${userId}`);
-        if (!res.ok) {
-            throw new Error(`Erreur du bot API: ${res.statusText}`);
+        if (!userId) {
+            return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
         }
+        
+        const res = await fetch(`${BOT_API_URL}/success/${userId}`);
+        if (!res.ok) throw new Error('Erreur API Bot');
+        
         const data = await res.json();
         return NextResponse.json(data);
     } catch (error) {
-        console.error("Erreur dans /api/success/[userId]:", error);
         return NextResponse.json({ succes: [] }, { status: 500 });
     }
 }

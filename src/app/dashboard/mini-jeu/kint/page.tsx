@@ -5,21 +5,11 @@ import { useSession } from 'next-auth/react';
 import { getPointsLeaderboard, fetchPoints, updatePoints } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, TrendingUp, TrendingDown, Crown } from 'lucide-react';
+import { Zap, TrendingUp, TrendingDown, ChevronsRight, Crown, User } from 'lucide-react';
 
 // --- Définition des Types ---
-type LeaderboardEntry = { 
-    userId: string; 
-    points: number; 
-    username?: string; 
-    avatar?: string; 
-};
-
-type HistoryEntry = { 
-    amount: number; 
-    date: string; 
-    reason: string; 
-};
+type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
+type HistoryEntry = { amount: number; date: string; reason: string; };
 
 // --- Le Composant Principal ---
 export default function KintMiniGamePage() {
@@ -30,7 +20,6 @@ export default function KintMiniGamePage() {
   const [loading, setLoading] = useState(true);
   const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>('');
 
-  // Fonction pour charger toutes les données de la page
   const fetchData = async () => {
     if (!session?.user?.id) return;
     try {
@@ -50,29 +39,23 @@ export default function KintMiniGamePage() {
   };
 
   useEffect(() => {
-    // Ne charge les données que si la session est authentifiée
     if (status === 'authenticated') {
         fetchData();
     }
   }, [status]);
 
-  // Gère l'ajout ou le retrait de points
   const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
     if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || userPoints === null || !session?.user?.id) return;
     
     const amount = Number(manualPointsAmount);
     const newPoints = actionType === 'add' ? userPoints + amount : userPoints - amount;
-
-    // Mise à jour optimiste de l'UI pour une meilleure réactivité
     const previousPoints = userPoints;
     setUserPoints(newPoints); 
 
     try {
       await updatePoints(session.user.id, newPoints);
-      // On recharge tout pour avoir des données fraîches après l'action
-      fetchData(); 
+      fetchData(); // On recharge tout pour être à jour
     } catch (error) {
-      // En cas d'erreur, on revient à l'état précédent
       setUserPoints(previousPoints); 
       alert("Échec de la mise à jour des points.");
     } finally {
@@ -92,7 +75,6 @@ export default function KintMiniGamePage() {
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Colonne de gauche : Score et Actions */}
         <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg space-y-6">
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                 <Image src={session?.user?.image || '/default-avatar.png'} alt="avatar" width={48} height={48} className="rounded-full"/>
@@ -106,13 +88,12 @@ export default function KintMiniGamePage() {
                 <label className="block mb-2 font-medium">Modifier le score</label>
                 <div className="flex gap-2">
                     <input type="number" placeholder="Montant..." value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-gray-800 p-3 rounded-md"/>
-                    <button onClick={() => handleManualPointsAction('add')} className="px-4 bg-green-600 rounded-md font-bold hover:bg-green-700"><TrendingUp size={20}/></button>
-                    <button onClick={() => handleManualPointsAction('subtract')} className="px-4 bg-red-600 rounded-md font-bold hover:bg-red-700"><TrendingDown size={20}/></button>
+                    <button onClick={() => handleManualPointsAction('add')} className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700"><TrendingUp size={20}/></button>
+                    <button onClick={() => handleManualPointsAction('subtract')} className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700"><TrendingDown size={20}/></button>
                 </div>
             </div>
         </div>
 
-        {/* Colonne du milieu : Historique */}
         <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg">
             <h2 className="text-2xl font-bold text-white mb-4">Historique Récent</h2>
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
@@ -130,11 +111,10 @@ export default function KintMiniGamePage() {
                         </motion.div>
                     ))}
                 </AnimatePresence>
-                {history.length === 0 && <p className="text-gray-500 text-center">Aucune transaction récente.</p>}
+                {history.length === 0 && <p className="text-gray-500 text-center py-4">Aucune transaction récente.</p>}
             </div>
         </div>
 
-        {/* Colonne de droite : Classement */}
         <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg">
             <h2 className="text-2xl font-bold text-white mb-4">Classement</h2>
             <ul className="space-y-2">
@@ -146,6 +126,7 @@ export default function KintMiniGamePage() {
                         <span className="font-bold text-cyan-400">{player.points}</span>
                     </motion.li>
                 ))}
+                 {leaderboard.length === 0 && <p className="text-gray-500 text-center py-4">Aucun joueur dans le classement.</p>}
             </ul>
         </div>
       </div>
