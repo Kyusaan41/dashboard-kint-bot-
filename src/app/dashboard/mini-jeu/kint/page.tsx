@@ -54,7 +54,7 @@ export default function KintMiniGamePage() {
 
         try {
             await updatePoints(session.user.id, newPoints);
-            fetchData(); // On recharge tout pour être à jour
+            fetchData();
         } catch (error) {
             setUserPoints(previousPoints); 
             alert("Échec de la mise à jour des points.");
@@ -86,17 +86,21 @@ export default function KintMiniGamePage() {
                     </div>
                     <div>
                         <label className="block font-medium mb-2">Modifier le score</label>
-                        {/* --- MODIFICATION : L'avertissement est maintenant sur la même ligne que les boutons --- */}
                         <div className="flex items-center gap-2">
                             <input type="number" placeholder="Montant..." value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-gray-800 p-3 rounded-md"/>
-                            <button onClick={() => handleManualPointsAction('add')} className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700"><TrendingUp size={20}/></button>
-                            <button onClick={() => handleManualPointsAction('subtract')} className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700"><TrendingDown size={20}/></button>
                             
-                            {/* L'icône d'avertissement, déplacée ici */}
+                            {/* --- CORRECTION FINALE : Ajout de 'cursor-pointer' --- */}
+                            <button onClick={() => handleManualPointsAction('add')} className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700 cursor-pointer">
+                                <TrendingUp size={20}/>
+                            </button>
+                            <button onClick={() => handleManualPointsAction('subtract')} className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700 cursor-pointer">
+                                <TrendingDown size={20}/>
+                            </button>
+                            
                             <div className="relative group">
                                 <AlertTriangle className="h-5 w-5 text-yellow-500 cursor-help"/>
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-900 border border-zinc-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                    Attention ! La logique du KShield n’est pas encore active sur le dashboard. Si vous souhaitez utiliser votre Shield en cas de défaite, faites-le directement sur Discord !
+                                    Attention ! La logique du KShield n'est pas encore active sur le dashboard. Si vous voulez utiliser votre Shield en cas de défaite, faites-le sur Discord !
                                 </div>
                             </div>
                         </div>
