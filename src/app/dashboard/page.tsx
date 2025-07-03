@@ -21,7 +21,7 @@ type MessageData = { day: string; messages: number; };
 type ServerInfo = {
     id: string;
     name: string;
-    icon: string | null;
+    icon: string;
 };
 
 // --- Le Composant Principal ---
@@ -44,7 +44,7 @@ export default function DashboardHomePage() {
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const responses = await Promise.all([
+                    const [statsRes, messagesRes, successRes, patchnoteRes, titlesRes, currencyRes, serverInfoRes] = await Promise.all([
                         fetch(`/api/stats/me`),
                         fetch(`/api/messages/${session.user.id}`),
                         fetch(`/api/success/${session.user.id}`),
@@ -54,38 +54,34 @@ export default function DashboardHomePage() {
                         fetch(`/api/server/info`)
                     ]);
 
-                    const [statsRes, messagesRes, successRes, patchnoteRes, titlesRes, currencyRes, serverInfoRes] = responses;
-
-                    // Traitement individuel pour plus de robustesse
-                    if (statsRes.ok) setStats(await statsRes.json());
-                    if (messagesRes.ok) {
-                        const data = await messagesRes.json();
-                        setMessageData((data.messagesLast7Days || []).map((count: number, index: number) => ({
-                            day: `Jour ${index + 1}`, messages: count,
-                        })));
-                    }
-                    if (successRes.ok) setSuccesses((await successRes.json()).succes || []);
-                    if (patchnoteRes.ok) setPatchNotes(await patchnoteRes.json());
-                    if (titlesRes.ok) {
-                        const data = await titlesRes.json();
-                        setAvailableTitles(data.titresPossedes || []);
-                        // Mettre à jour le titre équipé depuis les stats si disponible
-                        const currentStats = stats || await statsRes.clone().json();
-                        setSelectedTitle(currentStats.equippedTitle || '');
-                    }
-                    if (currencyRes.ok) {
-                        const data = await currencyRes.json();
-                        const now = Date.now();
-                        const twentyFourHours = 24 * 60 * 60 * 1000;
-                        if (!data.lastClaim || (now - data.lastClaim >= twentyFourHours)) {
-                            setClaimStatus({ canClaim: true, timeLeft: '' });
-                        } else {
-                            const timeLeft = twentyFourHours - (now - data.lastClaim);
-                            setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
-                        }
-                    }
+                    const statsData = await statsRes.json();
+                    const messagesData = await messagesRes.json();
+                    const successData = await successRes.json();
+                    const patchnoteData = await patchnoteRes.json();
+                    const titlesData = await titlesRes.json();
+                    const currencyData = await currencyRes.json();
                     if (serverInfoRes.ok) setServerInfo(await serverInfoRes.json());
 
+                    if (statsRes.ok) setStats(statsData);
+                    setSuccesses(successData.succes || []);
+                    setPatchNotes(patchnoteData);
+                    setAvailableTitles(titlesData.titresPossedes || []);
+                    setSelectedTitle(statsData.equippedTitle || '');
+                    
+                    const formattedMessageData = (messagesData.messagesLast7Days || []).map((count: number, index: number) => ({
+                        day: `Jour ${index + 1}`,
+                        messages: count,
+                    }));
+                    setMessageData(formattedMessageData);
+
+                    const now = Date.now();
+                    const twentyFourHours = 24 * 60 * 60 * 1000;
+                    if (!currencyData.lastClaim || (now - currencyData.lastClaim >= twentyFourHours)) {
+                        setClaimStatus({ canClaim: true, timeLeft: '' });
+                    } else {
+                        const timeLeft = twentyFourHours - (now - currencyData.lastClaim);
+                        setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
+                    }
                 } catch (error) {
                     console.error("Erreur de chargement du dashboard:", error);
                 } finally {
