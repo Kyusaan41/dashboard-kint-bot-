@@ -58,7 +58,7 @@ export default function Home() {
           style={{ willChange: "transform" }}
         >
           <Image
-            src="/frog-mascot.png"
+            src="/illustration-bot.png"
             alt="Illustration bot Discord"
             width={520}
             height={520}
