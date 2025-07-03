@@ -21,8 +21,14 @@ type MessageData = { day: string; messages: number; };
 type ServerInfo = {
     id: string;
     name: string;
-    icon: string;
+    icon: string | null;
 };
+// --- AJOUT : Types pour les réponses API ---
+type SuccessData = { succes: string[] };
+type TitlesData = { titresPossedes: string[] };
+type CurrencyData = { balance: number; lastClaim: number | null };
+type MessagesApiResponse = { messagesLast7Days: number[] };
+
 
 // --- Le Composant Principal ---
 export default function DashboardHomePage() {
@@ -37,6 +43,7 @@ export default function DashboardHomePage() {
     const [loading, setLoading] = useState(true);
     const [claimStatus, setClaimStatus] = useState({ canClaim: false, timeLeft: '00:00:00' });
     const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
+    const [isClaiming, setIsClaiming] = useState(false);
 
     // --- Chargement de toutes les données nécessaires ---
     useEffect(() => {
@@ -44,7 +51,7 @@ export default function DashboardHomePage() {
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const [statsRes, messagesRes, successRes, patchnoteRes, titlesRes, currencyRes, serverInfoRes] = await Promise.all([
+                    const results = await Promise.allSettled([
                         fetch(`/api/stats/me`),
                         fetch(`/api/messages/${session.user.id}`),
                         fetch(`/api/success/${session.user.id}`),
@@ -54,34 +61,41 @@ export default function DashboardHomePage() {
                         fetch(`/api/server/info`)
                     ]);
 
-                    const statsData = await statsRes.json();
-                    const messagesData = await messagesRes.json();
-                    const successData = await successRes.json();
-                    const patchnoteData = await patchnoteRes.json();
-                    const titlesData = await titlesRes.json();
-                    const currencyData = await currencyRes.json();
-                    if (serverInfoRes.ok) setServerInfo(await serverInfoRes.json());
-
-                    if (statsRes.ok) setStats(statsData);
-                    setSuccesses(successData.succes || []);
-                    setPatchNotes(patchnoteData);
-                    setAvailableTitles(titlesData.titresPossedes || []);
-                    setSelectedTitle(statsData.equippedTitle || '');
+                    const processData = async (promiseResult: PromiseSettledResult<Response>, setter: Function) => {
+                        if (promiseResult.status === 'fulfilled' && promiseResult.value.ok) {
+                            try {
+                                const data = await promiseResult.value.json();
+                                setter(data);
+                                return data;
+                            } catch (e) { console.error("Erreur lors du parsing JSON", e); }
+                        }
+                        return null;
+                    };
                     
-                    const formattedMessageData = (messagesData.messagesLast7Days || []).map((count: number, index: number) => ({
-                        day: `Jour ${index + 1}`,
-                        messages: count,
-                    }));
-                    setMessageData(formattedMessageData);
+                    const statsData = await processData(results[0], setStats);
+                    
+                    // --- CORRECTION : Ajout des types explicites pour les paramètres 'data' ---
+                    await processData(results[1], (data: MessagesApiResponse) => setMessageData((data.messagesLast7Days || []).map((c: number, i: number) => ({ day: `Jour ${i + 1}`, messages: c }))));
+                    await processData(results[2], (data: SuccessData) => setSuccesses(data.succes || []));
+                    await processData(results[3], setPatchNotes);
+                    await processData(results[4], (data: TitlesData) => setAvailableTitles(data.titresPossedes || []));
+                    await processData(results[5], (data: CurrencyData) => {
+                        if (!data) return;
+                        const now = Date.now();
+                        const twentyFourHours = 24 * 60 * 60 * 1000;
+                        if (!data.lastClaim || (now - data.lastClaim >= twentyFourHours)) {
+                            setClaimStatus({ canClaim: true, timeLeft: '' });
+                        } else {
+                            const timeLeft = twentyFourHours - (now - data.lastClaim);
+                            setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
+                        }
+                    });
+                    await processData(results[6], setServerInfo);
 
-                    const now = Date.now();
-                    const twentyFourHours = 24 * 60 * 60 * 1000;
-                    if (!currencyData.lastClaim || (now - currencyData.lastClaim >= twentyFourHours)) {
-                        setClaimStatus({ canClaim: true, timeLeft: '' });
-                    } else {
-                        const timeLeft = twentyFourHours - (now - currencyData.lastClaim);
-                        setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
+                    if (statsData) {
+                        setSelectedTitle(statsData.equippedTitle || '');
                     }
+
                 } catch (error) {
                     console.error("Erreur de chargement du dashboard:", error);
                 } finally {
@@ -92,7 +106,7 @@ export default function DashboardHomePage() {
         }
     }, [status, session]);
 
-    // --- Compte à rebours pour la récompense quotidienne ---
+    // --- Compte à rebours, changement de titre, etc. (inchangés) ---
     useEffect(() => {
         if (claimStatus.canClaim || !claimStatus.timeLeft) return;
         const interval = setInterval(() => {
@@ -109,8 +123,7 @@ export default function DashboardHomePage() {
         }, 1000);
         return () => clearInterval(interval);
     }, [claimStatus]);
-
-    // --- Logique pour équiper un titre ---
+    
     const handleEquipTitle = async () => {
         if (!selectedTitle || !session?.user?.id) return;
         try {
@@ -126,8 +139,6 @@ export default function DashboardHomePage() {
             alert("Une erreur est survenue.");
         }
     };
-    
-    // --- Fonction utilitaire pour formater le rang ---
     const formatRank = (rank: number | null) => {
         if (!rank) return <span className="text-gray-400">(Non classé)</span>;
         if (rank === 1) return <span className="font-bold text-yellow-400">(1er)</span>;
@@ -135,10 +146,10 @@ export default function DashboardHomePage() {
         if (rank === 3) return <span className="font-bold text-yellow-600">(3e)</span>;
         return <span className="text-sm text-gray-400">({rank}<sup>e</sup>)</span>;
     };
-
-    // --- Logique pour réclamer la récompense ---
     const handleClaimReward = async () => {
-        if (!claimStatus.canClaim) return;
+        if (!claimStatus.canClaim || isClaiming) return;
+        
+        setIsClaiming(true);
         try {
             const res = await fetch('/api/claim-reward', { method: 'POST' });
             const data = await res.json();
@@ -154,6 +165,8 @@ export default function DashboardHomePage() {
             }
         } catch (error) {
             alert("Une erreur de communication est survenue.");
+        } finally {
+            setIsClaiming(false);
         }
     };
 
@@ -209,8 +222,9 @@ export default function DashboardHomePage() {
                 <div className="bg-[#1e2530] p-6 rounded-lg text-center">
                     <h2 className="font-bold text-lg flex items-center justify-center"><Gift className="h-6 w-6 mr-2 text-yellow-400"/>Récompense quotidienne</h2>
                     <p className="text-gray-400 text-sm my-2">Connecte-toi chaque jour pour obtenir un bonus de 500 pièces !</p>
-                    <button onClick={handleClaimReward} disabled={!claimStatus.canClaim} className={`px-5 py-2 rounded-md font-bold transition ${ claimStatus.canClaim ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 cursor-not-allowed' }`}>
-                        {claimStatus.canClaim ? 'Réclamer ma récompense' : `Prochaine récompense dans ${claimStatus.timeLeft}`}
+                    <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`px-5 py-2 rounded-md font-bold transition flex items-center justify-center ${ (claimStatus.canClaim && !isClaiming) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 cursor-not-allowed' }`}>
+                        {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2"/>}
+                        {claimStatus.canClaim ? (isClaiming ? 'Réclamation...' : 'Réclamer ma récompense') : `Prochaine récompense dans ${claimStatus.timeLeft}`}
                     </button>
                 </div>
 
