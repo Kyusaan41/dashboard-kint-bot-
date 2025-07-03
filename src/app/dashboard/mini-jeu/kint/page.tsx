@@ -4,45 +4,36 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { getPointsLeaderboard, fetchPoints, updatePoints } from '@/utils/api';
 import Image from 'next/image';
-import { motion } from 'framer-motion'; // Import de Framer Motion
+import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, TrendingUp, TrendingDown, ChevronsRight, Crown, User } from 'lucide-react';
 
-// Types pour les données
-type LeaderboardEntry = {
-  userId: string;
-  points: number;
-  username?: string; // Garde comme optionnel si le bot ne le fournit pas toujours
-  avatar?: string;   // Garde comme optionnel si le bot ne le fournit pas toujours
-};
+// --- Définition des Types ---
+type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
+type HistoryEntry = { amount: number; date: string; reason: string; };
 
+// --- Le Composant Principal ---
 export default function KintMiniGamePage() {
   const { data: session, status } = useSession();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [userPoints, setUserPoints] = useState<number | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>(''); 
-  const [maintenanceMessage, setMaintenanceMessage] = useState<string | null>(null);
+  const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>('');
 
-  // Fonction pour récupérer les données du jeu
+  // Fonction pour charger toutes les données
   const fetchData = async () => {
     if (!session?.user?.id) return;
-
-    setLoading(true);
-    setMaintenanceMessage(null);
     try {
-      const [leaderboardData, pointsData] = await Promise.all([
-        getPointsLeaderboard(), // Récupère le classement
-        fetchPoints(session.user.id), // Récupère les points de l'utilisateur connecté
+      const [leaderboardData, pointsData, historyData] = await Promise.all([
+        getPointsLeaderboard(),
+        fetchPoints(session.user.id),
+        fetch(`/api/points/${session.user.id}/history`).then(res => res.json())
       ]);
-
-      setLeaderboard(leaderboardData.slice(0, 10)); // Prend le top 10
-      setUserPoints(pointsData.points); // Définit les points de l'utilisateur
-    } catch (error: any) {
-      console.error("Erreur lors de la récupération des données du jeu:", error);
-      if (error.message.includes('maintenance') || error.message.includes('indisponible')) {
-          setMaintenanceMessage(error.message);
-      } else {
-          alert("Impossible de charger les données du jeu. Veuillez réessayer.");
-      }
+      setLeaderboard(leaderboardData);
+      setUserPoints(pointsData.points);
+      setHistory(historyData);
+    } catch (error) {
+      console.error("Erreur de chargement:", error);
     } finally {
       setLoading(false);
     }
@@ -52,136 +43,90 @@ export default function KintMiniGamePage() {
     fetchData();
   }, [session]);
 
-  // Gère l'interaction de jeu (ajout/retrait de points)
-  const handleGameAction = async (amount: number) => {
-    if (userPoints === null || !session?.user?.id) {
-      alert("Erreur: Impossible de mettre à jour les points. Vérifiez votre session ou les points.");
-      return;
-    }
-    
-    const newPoints = userPoints + amount;
-    setUserPoints(newPoints); // Mise à jour optimiste
+  const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
+    if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || userPoints === null) return;
+    const amount = Number(manualPointsAmount);
+    const newPoints = actionType === 'add' ? userPoints + amount : userPoints - amount;
 
     try {
-      await updatePoints(session.user.id, newPoints);
-      const newLeaderboard = await getPointsLeaderboard();
-      setLeaderboard(newLeaderboard.slice(0, 10));
-    } catch (error: any) {
-      console.error("Erreur lors de la mise à jour des points:", error);
-      if (error.message.includes('maintenance') || error.message.includes('indisponible')) {
-          alert(error.message);
-          setMaintenanceMessage(error.message);
-      } else {
-          alert(`Échec de l'action : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
-      }
-      setUserPoints(userPoints); // Retour à la valeur initiale en cas d'échec
+      setUserPoints(newPoints); // Mise à jour optimiste
+      await updatePoints(session!.user.id, newPoints);
+      fetchData(); // On recharge tout pour être à jour
+    } catch (error) {
+      setUserPoints(userPoints); // Retour à l'état initial en cas d'erreur
+      alert("Échec de l'action.");
+    } finally {
+        setManualPointsAmount('');
     }
-  };
-
-  // Gère l'ajout/retrait de points depuis le champ de saisie
-  const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
-    if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount))) {
-      alert("Veuillez entrer un montant valide.");
-      return;
-    }
-    const amount = Number(manualPointsAmount);
-    if (actionType === 'subtract') {
-      await handleGameAction(-amount);
-    } else {
-      await handleGameAction(amount);
-    }
-    setManualPointsAmount(''); // Réinitialiser le champ après l'action
   };
 
   if (loading) {
-    return <div className="text-center text-gray-400 animate-pulse">Chargement du classement Kint...</div>;
-  }
-
-  if (maintenanceMessage) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-[#0b0d13] text-white p-8 text-center">
-        <h1 className="text-4xl font-bold text-red-500 mb-4">Maintenance en cours</h1>
-        <p className="text-lg text-gray-300">{maintenanceMessage}</p>
-        <p className="text-md text-gray-400 mt-4">Seuls les administrateurs peuvent accéder aux fonctionnalités du bot actuellement.</p>
-      </div>
-    );
+    return <div className="text-center text-gray-400 animate-pulse">Chargement du jeu...</div>;
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      {/* Bloc pour gérer les points de l'utilisateur connecté */}
-      <div className="lg:w-1/3 bg-[#12151d] p-6 rounded-lg border border-cyan-700 flex flex-col items-center">
-        <h2 className="text-2xl font-bold text-cyan-400 mb-4">Votre Score</h2>
-        <div className="text-6xl font-bold text-white my-8">
-          {userPoints !== null ? userPoints : '...'}
-        </div>
-        
-        {/* Ancien bloc des boutons +5 et -5 - SUPPRIMÉ */}
-        {/* <div className="flex justify-around w-full mb-6">
-          <button onClick={() => handleGameAction(-5)} className="px-6 py-3 bg-red-600 rounded-lg font-bold hover:bg-red-700 transition">-5 Points</button>
-          <button onClick={() => handleGameAction(5)} className="px-6 py-3 bg-green-600 rounded-lg font-bold hover:bg-green-700 transition">+5 Points</button>
-        </div>
-        */}
+    <div className="space-y-8">
+      <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+        <h1 className="text-4xl font-bold text-center text-cyan-400">Jeu de Points KINT</h1>
+        <p className="text-center text-gray-400 mt-2">Gérez vos points et consultez l'historique de vos actions.</p>
+      </motion.div>
 
-        <div className="w-full space-y-4">
-            <h3 className="text-xl font-semibold text-gray-300">Gérer Manuellement les Points</h3>
-            <div className="flex gap-2">
-                <input
-                    type="number"
-                    placeholder="Montant..."
-                    value={manualPointsAmount}
-                    onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="flex-1 bg-gray-800 p-3 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                />
-                <button 
-                    onClick={() => handleManualPointsAction('add')} 
-                    className="px-4 py-3 bg-green-600 rounded-lg font-bold hover:bg-green-700 transition"
-                    disabled={manualPointsAmount === '' || isNaN(Number(manualPointsAmount))}
-                >
-                    Ajouter
-                </button>
-                <button 
-                    onClick={() => handleManualPointsAction('subtract')} 
-                    className="px-4 py-3 bg-red-600 rounded-lg font-bold hover:bg-red-700 transition"
-                    disabled={manualPointsAmount === '' || isNaN(Number(manualPointsAmount))}
-                >
-                    Enlever
-                </button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Colonne de gauche : Score et Actions */}
+        <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg space-y-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <Image src={session?.user?.image || ''} alt="avatar" width={48} height={48} className="rounded-full"/>
+                {session?.user?.name}
+            </h2>
+            <div className="text-center bg-black/20 p-6 rounded-lg">
+                <p className="text-sm text-gray-400">Votre score actuel</p>
+                <p className="text-7xl font-bold text-cyan-400 my-2">{userPoints}</p>
+            </div>
+            <div>
+                <label className="block mb-2 font-medium">Modifier le score</label>
+                <div className="flex gap-2">
+                    <input type="number" placeholder="Montant..." value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-gray-800 p-3 rounded-md"/>
+                    <button onClick={() => handleManualPointsAction('add')} className="px-4 bg-green-600 rounded-md font-bold hover:bg-green-700"><TrendingUp size={20}/></button>
+                    <button onClick={() => handleManualPointsAction('subtract')} className="px-4 bg-red-600 rounded-md font-bold hover:bg-red-700"><TrendingDown size={20}/></button>
+                </div>
             </div>
         </div>
-      </div>
 
-      {/* Bloc du classement KINT (avec animations) */}
-      <div className="lg:w-2/3 bg-[#12151d] p-6 rounded-lg border border-gray-700">
-        <h2 className="text-2xl font-bold text-cyan-400 mb-4">Top 10 KINT</h2>
-        <ul className="space-y-3">
-          {leaderboard.length > 0 ? (
-            leaderboard.map((player, index) => (
-              <motion.li
-                key={player.userId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={`flex items-center p-3 rounded-md transition ${player.userId === session?.user?.id ? 'bg-cyan-600/50 border border-cyan-500' : 'bg-gray-700'}`}
-              >
-                {/* Affichage de l'avatar de l'utilisateur */}
-                <Image 
-                  src={player.avatar || '/default-avatar.png'} // Utilise l'avatar du joueur ou un avatar par défaut
-                  alt={player.username || 'Avatar'} 
-                  width={40} 
-                  height={40} 
-                  className="rounded-full mr-4" 
-                />
-                <span className="font-bold text-lg w-10 text-center">{index + 1}.</span>
-                {/* Affichage du pseudo de l'utilisateur */}
-                <span className="font-medium flex-1">{player.username || 'Utilisateur Inconnu'}</span>
-                <span className="font-semibold text-yellow-400">{player.points} pts</span>
-              </motion.li>
-            ))
-          ) : (
-            <p className="text-gray-500 text-center">Aucun joueur dans le classement pour le moment.</p>
-          )}
-        </ul>
+        {/* Colonne du milieu : Historique */}
+        <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg">
+            <h2 className="text-2xl font-bold text-white mb-4">Historique Récent</h2>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+                <AnimatePresence>
+                    {history.map((item, index) => (
+                        <motion.div key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3, delay: index * 0.1 }} className="flex items-center justify-between text-sm bg-gray-800 p-3 rounded-md">
+                            <div className="flex items-center gap-3">
+                                {item.amount > 0 ? <TrendingUp className="text-green-500" size={18}/> : <TrendingDown className="text-red-500" size={18}/>}
+                                <div>
+                                    <p className={`font-bold ${item.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{item.amount > 0 ? `+${item.amount}` : item.amount} points</p>
+                                    <p className="text-xs text-gray-500">{item.reason}</p>
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-400">{new Date(item.date).toLocaleTimeString()}</p>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
+            </div>
+        </div>
+
+        {/* Colonne de droite : Classement */}
+        <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg">
+            <h2 className="text-2xl font-bold text-white mb-4">Classement</h2>
+            <ul className="space-y-2">
+                {leaderboard.map((player, index) => (
+                    <motion.li key={player.userId} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.15 }} className={`flex items-center gap-3 p-2 rounded-md ${player.userId === session?.user?.id ? 'bg-cyan-900/50' : ''}`}>
+                        <div className="w-8 text-center font-bold text-gray-400">{index === 0 ? <Crown size={20} className="text-yellow-400"/> : `${index + 1}.`}</div>
+                        <Image src={player.avatar || '/default-avatar.png'} alt={player.username || 'avatar'} width={36} height={36} className="rounded-full"/>
+                        <span className="font-medium text-gray-200 flex-1">{player.username}</span>
+                        <span className="font-bold text-cyan-400">{player.points}</span>
+                    </motion.li>
+                ))}
+            </ul>
+        </div>
       </div>
     </div>
   );
