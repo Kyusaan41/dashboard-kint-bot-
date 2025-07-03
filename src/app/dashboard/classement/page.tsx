@@ -28,14 +28,21 @@ const LeaderboardRow = ({ entry, rank, sessionUserId }: { entry: LeaderboardEntr
     const isCurrentUser = entry.userId === sessionUserId;
     const value = entry.xp ?? entry.balance ?? entry.points ?? 0;
 
+    const getRankIndicator = () => {
+        if (rank === 1) return <Crown className="text-yellow-400" size={20} />;
+        if (rank === 2) return <Award className="text-gray-300" size={20} />;
+        if (rank === 3) return <Medal className="text-yellow-600" size={20} />;
+        return <span className="text-gray-400 font-bold">{rank}.</span>;
+    };
+
     return (
         <motion.li
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: (rank - 4) * 0.05 }} // Délai ajusté
+            transition={{ duration: 0.3, delay: (rank - 4) * 0.05 }}
             className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${isCurrentUser ? 'bg-cyan-900/60' : 'hover:bg-gray-800'}`}
         >
-            <div className="w-8 text-center flex-shrink-0 font-bold text-gray-400">{rank}.</div>
+            <div className="w-8 text-center flex-shrink-0">{getRankIndicator()}</div>
             <Image src={entry.avatar || '/default-avatar.png'} alt={entry.username || 'avatar'} width={40} height={40} className="rounded-full" />
             <span className="font-medium text-white flex-1 truncate">{entry.username || 'Utilisateur Inconnu'}</span>
             <span className="font-bold text-cyan-300">{value.toLocaleString()}</span>
@@ -43,7 +50,7 @@ const LeaderboardRow = ({ entry, rank, sessionUserId }: { entry: LeaderboardEntr
     );
 };
 
-// --- NOUVEAU : Composant pour une carte du Podium ---
+// --- Composant pour une carte du Podium ---
 const PodiumCard = ({ entry, rank, icon: Icon }: { entry: LeaderboardEntry, rank: number, icon: React.ElementType }) => {
     const value = entry.xp ?? entry.balance ?? entry.points ?? 0;
     const rankColors = {
@@ -108,7 +115,20 @@ export default function ClassementPage() {
     const restOfLeaderboard = currentLeaderboard.slice(3);
     const activeIcon = tabs.find(t => t.id === activeTab)?.icon || Star;
     
-    // ... (Gestion du chargement et des erreurs)
+    if (loading || status === 'loading') {
+        return <div className="flex items-center justify-center h-full"><Loader2 className="h-10 w-10 text-cyan-400 animate-spin" /></div>;
+    }
+
+    if (error) {
+        return (
+            <div className="text-center text-red-400 p-8">
+                <p>{error}</p>
+                <button onClick={fetchData} className="mt-4 flex items-center gap-2 mx-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg">
+                    <RefreshCw size={18} /> Réessayer
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
@@ -116,9 +136,18 @@ export default function ClassementPage() {
             
             <nav className="flex justify-center border-b border-gray-700">
                 {tabs.map(tab => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} /* ... */>
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors duration-200 ${
+                            activeTab === tab.id
+                                ? 'text-cyan-400 border-b-2 border-cyan-400'
+                                : 'text-gray-400 hover:text-white'
+                        }`}
+                    >
                         <tab.icon size={18} />
-                        {tab.label}
+                        {/* --- CORRECTION : Le label est maintenant dans un <span> --- */}
+                        <span>{tab.label}</span>
                     </button>
                 ))}
             </nav>
@@ -131,7 +160,6 @@ export default function ClassementPage() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
                 >
-                    {/* --- NOUVELLE SECTION PODIUM --- */}
                     {topThree.length === 3 && (
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end mb-12">
                             <PodiumCard entry={topThree[1]} rank={2} icon={activeIcon} />
@@ -140,14 +168,13 @@ export default function ClassementPage() {
                         </div>
                     )}
 
-                    {/* --- LISTE DU RESTE DU CLASSEMENT --- */}
                     {restOfLeaderboard.length > 0 ? (
                         <ul className="space-y-2 bg-[#1e2530] p-4 rounded-lg">
                             {restOfLeaderboard.map((entry, index) => (
                                 <LeaderboardRow 
                                     key={entry.userId} 
                                     entry={entry} 
-                                    rank={index + 4} // On commence à la 4ème place
+                                    rank={index + 4}
                                     sessionUserId={session?.user?.id}
                                 />
                             ))}
