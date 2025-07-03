@@ -222,7 +222,7 @@ export default function DashboardHomePage() {
                 <div className="bg-[#1e2530] p-6 rounded-lg text-center">
                     <h2 className="font-bold text-lg flex items-center justify-center"><Gift className="h-6 w-6 mr-2 text-yellow-400"/>Récompense quotidienne</h2>
                     <p className="text-gray-400 text-sm my-2">Connecte-toi chaque jour pour obtenir un bonus de 500 pièces !</p>
-                    <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`px-5 py-2 rounded-md font-bold transition flex items-center justify-center ${ (claimStatus.canClaim && !isClaiming) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 cursor-not-allowed' }`}>
+                    <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`mx-auto px-5 py-2 rounded-md font-bold transition flex items-center justify-center ${ (claimStatus.canClaim && !isClaiming) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 cursor-not-allowed' }`}>
                         {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2"/>}
                         {claimStatus.canClaim ? (isClaiming ? 'Réclamation...' : 'Réclamer ma récompense') : `Prochaine récompense dans ${claimStatus.timeLeft}`}
                     </button>
