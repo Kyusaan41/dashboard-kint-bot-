@@ -39,8 +39,8 @@ export default function LoginPage() {
         
         {/* Effet de lumière sur les barrières (via classes CSS) */}
         <div className="flex mt-8 space-x-4">
-            <span className="text-6xl animate-light-pulse-red">🚨</span>
-            <span className="text-6xl animate-light-pulse-blue">🚨</span>
+            <span className="text-6xl animate-light-pulse-red"></span>
+            <span className="text-6xl animate-light-pulse-blue"></span>
         </div>
       </div>
     );
