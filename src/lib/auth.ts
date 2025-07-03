@@ -16,14 +16,19 @@ export const authOptions: NextAuthOptions = {
             clientId: process.env.DISCORD_CLIENT_ID!,
             clientSecret: process.env.DISCORD_CLIENT_SECRET!,
             profile(profile: DiscordProfile): User {
-                const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',');
+                // --- CORRECTION : On nettoie les IDs pour enlever les espaces ---
+                const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '')
+                    .split(',')
+                    .map(id => id.trim()); // Ajout de .trim() pour enlever les espaces avant/après
+
                 const userRole = adminIds.includes(profile.id) ? 'admin' : 'user';
+
                 return {
                     id: profile.id,
                     name: profile.username,
                     email: profile.email,
                     image: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : null,
-                    role: userRole, // La propriété 'role' est bien présente
+                    role: userRole,
                 };
             },
         }),
