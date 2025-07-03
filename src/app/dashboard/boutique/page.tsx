@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ShoppingCart, X, Coins } from 'lucide-react';
 
-// Type pour les objets de la boutique
 type ShopItem = {
     id: string;
     name: string;
@@ -23,8 +22,6 @@ export default function ShopPage() {
     const [categories, setCategories] = useState<string[]>([]);
     const [activeCategory, setActiveCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
-    
-    // États pour le panier et le solde
     const [cart, setCart] = useState<ShopItem[]>([]);
     const [userBalance, setUserBalance] = useState<number | null>(null);
 
@@ -37,14 +34,12 @@ export default function ShopPage() {
                     fetchCurrency(session.user.id)
                 ]);
 
-                // --- CORRECTION ICI : On s'assure du typage ---
                 const typedShopData: ShopItem[] = shopData;
                 const allCategories = [...new Set(typedShopData.map(item => item.category || 'Divers'))];
-                // -------------------------------------------
-
+                
+                setItems(typedShopData);
                 setCategories(allCategories);
                 setActiveCategory(allCategories[0] || '');
-                setItems(typedShopData);
                 setUserBalance(currencyData.balance);
             } catch (error) {
                 alert("Impossible de charger les données de la boutique.");
@@ -55,12 +50,10 @@ export default function ShopPage() {
         fetchData();
     }, [session]);
 
-    // Fonctions pour gérer le panier
     const addToCart = (item: ShopItem) => setCart(prevCart => [...prevCart, item]);
     const removeFromCart = (itemIndex: number) => setCart(prevCart => prevCart.filter((_, index) => index !== itemIndex));
     const cartTotal = cart.reduce((total, item) => total + item.price, 0);
 
-    // Fonction pour finaliser l'achat
     const handlePurchase = async () => {
         if (cart.length === 0) return;
         if (userBalance !== null && userBalance < cartTotal) {
@@ -72,20 +65,22 @@ export default function ShopPage() {
         if (!confirm(`Confirmer l'achat de ${cart.length} objet(s) pour ${cartTotal} pièces ?`)) return;
 
         try {
-            // --- CORRECTION ICI : On appelle buyItem avec le tableau d'IDs ---
+            // --- CORRECTION : Appel de la fonction 'buyItem' avec le tableau d'IDs ---
             await buyItem(itemIds); 
-            // --------------------------------------------------------
+            // -----------------------------------------------------------------
             alert("Achat réussi !");
             setCart([]);
+            // Rafraîchit le solde de l'utilisateur après l'achat
             const currencyData = await fetchCurrency(session!.user!.id);
             setUserBalance(currencyData.balance);
         } catch (error) {
-            alert(`Échec de l'achat : ${error instanceof Error ? error.message : 'Erreur'}`);
+            // Affiche une erreur plus explicite à l'utilisateur
+            alert(`Échec de l'achat : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         }
     };
 
     if (loading) {
-        return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement...</p>;
+        return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement de la boutique...</p>;
     }
 
     const filteredItems = items.filter(item => (item.category || 'Divers') === activeCategory);
