@@ -10,8 +10,8 @@ import { motion } from 'framer-motion'; // Import de Framer Motion
 type LeaderboardEntry = {
   userId: string;
   points: number;
-  username?: string;
-  avatar?: string;
+  username?: string; // Garde comme optionnel si le bot ne le fournit pas toujours
+  avatar?: string;   // Garde comme optionnel si le bot ne le fournit pas toujours
 };
 
 export default function KintMiniGamePage() {
@@ -27,15 +27,15 @@ export default function KintMiniGamePage() {
     if (!session?.user?.id) return;
 
     setLoading(true);
-    setMaintenanceMessage(null); // Réinitialise le message de maintenance
+    setMaintenanceMessage(null);
     try {
       const [leaderboardData, pointsData] = await Promise.all([
-        getPointsLeaderboard(),
-        fetchPoints(session.user.id),
+        getPointsLeaderboard(), // Récupère le classement
+        fetchPoints(session.user.id), // Récupère les points de l'utilisateur connecté
       ]);
 
-      setLeaderboard(leaderboardData.slice(0, 10));
-      setUserPoints(pointsData.points);
+      setLeaderboard(leaderboardData.slice(0, 10)); // Prend le top 10
+      setUserPoints(pointsData.points); // Définit les points de l'utilisateur
     } catch (error: any) {
       console.error("Erreur lors de la récupération des données du jeu:", error);
       if (error.message.includes('maintenance') || error.message.includes('indisponible')) {
@@ -64,7 +64,6 @@ export default function KintMiniGamePage() {
 
     try {
       await updatePoints(session.user.id, newPoints);
-      // Rafraîchir le classement après la mise à jour réussie
       const newLeaderboard = await getPointsLeaderboard();
       setLeaderboard(newLeaderboard.slice(0, 10));
     } catch (error: any) {
@@ -110,17 +109,19 @@ export default function KintMiniGamePage() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
-      {/* Bloc pour ajouter/enlever des points (pour l'utilisateur connecté) */}
+      {/* Bloc pour gérer les points de l'utilisateur connecté */}
       <div className="lg:w-1/3 bg-[#12151d] p-6 rounded-lg border border-cyan-700 flex flex-col items-center">
         <h2 className="text-2xl font-bold text-cyan-400 mb-4">Votre Score</h2>
         <div className="text-6xl font-bold text-white my-8">
           {userPoints !== null ? userPoints : '...'}
         </div>
         
-        <div className="flex justify-around w-full mb-6">
+        {/* Ancien bloc des boutons +5 et -5 - SUPPRIMÉ */}
+        {/* <div className="flex justify-around w-full mb-6">
           <button onClick={() => handleGameAction(-5)} className="px-6 py-3 bg-red-600 rounded-lg font-bold hover:bg-red-700 transition">-5 Points</button>
           <button onClick={() => handleGameAction(5)} className="px-6 py-3 bg-green-600 rounded-lg font-bold hover:bg-green-700 transition">+5 Points</button>
         </div>
+        */}
 
         <div className="w-full space-y-4">
             <h3 className="text-xl font-semibold text-gray-300">Gérer Manuellement les Points</h3>
@@ -155,17 +156,24 @@ export default function KintMiniGamePage() {
         <h2 className="text-2xl font-bold text-cyan-400 mb-4">Top 10 KINT</h2>
         <ul className="space-y-3">
           {leaderboard.length > 0 ? (
-            // Utilisation de Framer Motion pour animer les éléments du classement
             leaderboard.map((player, index) => (
               <motion.li
                 key={player.userId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }} // Délai séquentiel pour chaque élément
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 className={`flex items-center p-3 rounded-md transition ${player.userId === session?.user?.id ? 'bg-cyan-600/50 border border-cyan-500' : 'bg-gray-700'}`}
               >
+                {/* Affichage de l'avatar de l'utilisateur */}
+                <Image 
+                  src={player.avatar || '/default-avatar.png'} // Utilise l'avatar du joueur ou un avatar par défaut
+                  alt={player.username || 'Avatar'} 
+                  width={40} 
+                  height={40} 
+                  className="rounded-full mr-4" 
+                />
                 <span className="font-bold text-lg w-10 text-center">{index + 1}.</span>
-                <Image src={player.avatar || '/default-avatar.png'} alt={player.username || 'Avatar'} width={40} height={40} className="rounded-full mx-4" />
+                {/* Affichage du pseudo de l'utilisateur */}
                 <span className="font-medium flex-1">{player.username || 'Utilisateur Inconnu'}</span>
                 <span className="font-semibold text-yellow-400">{player.points} pts</span>
               </motion.li>
