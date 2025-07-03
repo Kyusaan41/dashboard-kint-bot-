@@ -9,22 +9,39 @@ export default function LoginPage() {
   const isMaintenanceMode = process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE === 'true';
   const maintenanceMessage = process.env.NEXT_PUBLIC_MAINTENANCE_MESSAGE || "Le bot est actuellement en maintenance. Veuillez réessayer plus tard.";
 
-  // AJOUT TEMPORAIRE POUR DEBUG
+  // Supprimons les logs de debug temporaires pour le code final
   useEffect(() => {
-    console.log('NEXT_PUBLIC_BOT_MAINTENANCE_MODE lu:', process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE);
-    console.log('isMaintenanceMode (après parsing):', isMaintenanceMode);
     if (!isMaintenanceMode) {
       signIn("discord", { callbackUrl: "/dashboard" });
     }
   }, [isMaintenanceMode]); 
-  // FIN AJOUT TEMPORAIRE
 
   if (isMaintenanceMode) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#0b0d13] p-4 text-white text-center">
-        <h1 className="text-4xl font-bold text-red-500 mb-6">🚧 Maintenance en cours 🚧</h1>
+        {/* Grenouille au-dessus de "Maintenance en cours" */}
+        <div className="relative w-48 h-48 mb-6 animate-bounce-slow"> {/* animate-bounce-slow sera défini dans globals.css */}
+          <Image 
+            src="/frog-mascot.png" // Assurez-vous que ce chemin est correct
+            alt="Mascotte Grenouille"
+            layout="fill"
+            objectFit="contain"
+            priority
+          />
+        </div>
+
+        {/* Titre clignotant */}
+        <h1 className="text-4xl font-bold text-red-500 mb-6 animate-pulse-slow"> {/* animate-pulse-slow sera défini dans globals.css */}
+          🚧 Maintenance en cours 🚧
+        </h1>
         <p className="text-lg text-gray-300 mb-4">{maintenanceMessage}</p>
         <p className="text-md text-gray-400 mt-4">Nous travaillons pour améliorer le service. Merci de votre patience !</p>
+        
+        {/* Effet de lumière sur les barrières (via classes CSS) */}
+        <div className="flex mt-8 space-x-4">
+            <span className="text-6xl animate-light-pulse-red">🚨</span>
+            <span className="text-6xl animate-light-pulse-blue">🚨</span>
+        </div>
       </div>
     );
   }
