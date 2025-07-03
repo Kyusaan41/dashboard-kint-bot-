@@ -32,11 +32,9 @@ export default function DashboardHomePage() {
   const [loading, setLoading] = useState(true);
   const [claimStatus, setClaimStatus] = useState({ canClaim: false, timeLeft: '00:00:00' });
 
-  // --- Chargement de toutes les données nécessaires ---
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
       const fetchData = async () => {
-        setLoading(true);
         try {
           const [statsRes, messagesRes, successRes, patchnoteRes, titlesRes, currencyRes] = await Promise.all([
             fetch(`/api/stats/me`),
@@ -47,6 +45,8 @@ export default function DashboardHomePage() {
             fetch(`/api/currency/${session.user.id}`)
           ]);
 
+          if (!statsRes.ok) throw new Error('Échec de la récupération des statistiques principales');
+
           const statsData = await statsRes.json();
           const messagesData = await messagesRes.json();
           const successData = await successRes.json();
@@ -54,7 +54,7 @@ export default function DashboardHomePage() {
           const titlesData = await titlesRes.json();
           const currencyData = await currencyRes.json();
 
-          if (statsRes.ok) setStats(statsData);
+          setStats(statsData);
           setSuccesses(successData.succes || []);
           setPatchNotes(patchnoteData);
           setAvailableTitles(titlesData.titresPossedes || []);
