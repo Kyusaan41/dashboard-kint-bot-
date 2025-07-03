@@ -6,23 +6,25 @@ import { Loader2 } from "lucide-react";
 import Image from 'next/image';
 
 export default function LoginPage() {
-  // Récupérer les variables d'environnement côté client
   const isMaintenanceMode = process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE === 'true';
   const maintenanceMessage = process.env.NEXT_PUBLIC_MAINTENANCE_MESSAGE || "Le bot est actuellement en maintenance. Veuillez réessayer plus tard.";
 
-  // Déclenche la connexion avec Discord au chargement de la page si pas en maintenance
+  // AJOUT TEMPORAIRE POUR DEBUG
   useEffect(() => {
+    console.log('NEXT_PUBLIC_BOT_MAINTENANCE_MODE lu:', process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE);
+    console.log('isMaintenanceMode (après parsing):', isMaintenanceMode);
     if (!isMaintenanceMode) {
       signIn("discord", { callbackUrl: "/dashboard" });
     }
-  }, [isMaintenanceMode]); // Dépend de isMaintenanceMode
+  }, [isMaintenanceMode]); 
+  // FIN AJOUT TEMPORAIRE
 
   if (isMaintenanceMode) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#0b0d13] p-4 text-white text-center">
         <h1 className="text-4xl font-bold text-red-500 mb-6">🚧 Maintenance en cours 🚧</h1>
         <p className="text-lg text-gray-300 mb-4">{maintenanceMessage}</p>
-        <p className="text-md text-gray-400">Nous travaillons pour améliorer le service. Merci de votre patience !</p>
+        <p className="text-md text-gray-400 mt-4">Nous travaillons pour améliorer le service. Merci de votre patience !</p>
       </div>
     );
   }
