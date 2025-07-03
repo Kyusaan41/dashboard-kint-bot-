@@ -3,8 +3,9 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Award, BarChart2, Coins, Crown, Gift, MessageSquare, Star, Zap, Loader2 } from 'lucide-react';
+import { Award, BarChart2, Coins, Crown, Gift, MessageSquare, Star, Zap, Loader2, Package } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { getInventory } from '@/utils/api'; // Assurez-vous d'avoir cette fonction dans vos utils
 
 // --- Définition des Types pour les données ---
 type UserStats = {
@@ -23,7 +24,12 @@ type ServerInfo = {
     name: string;
     icon: string | null;
 };
-// --- AJOUT : Types pour les réponses API ---
+type InventoryItem = {
+    id: string;
+    name: string;
+    quantity: number;
+    icon?: string;
+};
 type SuccessData = { succes: string[] };
 type TitlesData = { titresPossedes: string[] };
 type CurrencyData = { balance: number; lastClaim: number | null };
@@ -34,6 +40,7 @@ type MessagesApiResponse = { messagesLast7Days: number[] };
 export default function DashboardHomePage() {
     const { data: session, status } = useSession();
     const [stats, setStats] = useState<UserStats | null>(null);
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [successes, setSuccesses] = useState<string[]>([]);
     const [patchNotes, setPatchNotes] = useState<PatchNote | null>(null);
     const [messageData, setMessageData] = useState<MessageData[]>([]);
@@ -58,23 +65,20 @@ export default function DashboardHomePage() {
                         fetch(`/api/patchnote`),
                         fetch(`/api/titres/${session.user.id}`),
                         fetch(`/api/currency/${session.user.id}`),
-                        fetch(`/api/server/info`)
+                        fetch(`/api/server/info`),
+                        getInventory(), // Nouvel appel pour l'inventaire
                     ]);
 
-                    const processData = async (promiseResult: PromiseSettledResult<Response>, setter: Function) => {
-                        if (promiseResult.status === 'fulfilled' && promiseResult.value.ok) {
-                            try {
-                                const data = await promiseResult.value.json();
-                                setter(data);
-                                return data;
-                            } catch (e) { console.error("Erreur lors du parsing JSON", e); }
+                    const processData = async (promiseResult: PromiseSettledResult<any>, setter: Function) => {
+                        if (promiseResult.status === 'fulfilled') {
+                            const value = promiseResult.value.ok ? await promiseResult.value.json() : promiseResult.value;
+                            setter(value);
+                            return value;
                         }
                         return null;
                     };
                     
                     const statsData = await processData(results[0], setStats);
-                    
-                    // --- CORRECTION : Ajout des types explicites pour les paramètres 'data' ---
                     await processData(results[1], (data: MessagesApiResponse) => setMessageData((data.messagesLast7Days || []).map((c: number, i: number) => ({ day: `Jour ${i + 1}`, messages: c }))));
                     await processData(results[2], (data: SuccessData) => setSuccesses(data.succes || []));
                     await processData(results[3], setPatchNotes);
@@ -91,6 +95,8 @@ export default function DashboardHomePage() {
                         }
                     });
                     await processData(results[6], setServerInfo);
+                    await processData(results[7], setInventory);
+
 
                     if (statsData) {
                         setSelectedTitle(statsData.equippedTitle || '');
@@ -106,7 +112,7 @@ export default function DashboardHomePage() {
         }
     }, [status, session]);
 
-    // --- Compte à rebours, changement de titre, etc. (inchangés) ---
+    // --- Compte à rebours, changement de titre, etc. ---
     useEffect(() => {
         if (claimStatus.canClaim || !claimStatus.timeLeft) return;
         const interval = setInterval(() => {
@@ -190,8 +196,8 @@ export default function DashboardHomePage() {
                     <h1 className="text-2xl font-bold">Bienvenue sur {serverInfo?.name || 'KTS'}</h1>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 bg-[#1e2530] p-6 rounded-lg space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-[#1e2530] p-6 rounded-lg space-y-4">
                         <div className="flex items-center space-x-4">
                             <Image src={session?.user?.image || '/default-avatar.png'} alt="Avatar" width={64} height={64} className="rounded-full" />
                             <div>
@@ -210,12 +216,22 @@ export default function DashboardHomePage() {
                         </div>
                     </div>
                     <div className="bg-[#1e2530] p-6 rounded-lg">
-                        <h2 className="font-bold mb-4 flex items-center"><MessageSquare className="h-5 w-5 mr-2"/>Messages sur 7 jours</h2>
-                        <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={messageData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                                <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} /><YAxis stroke="#9ca3af" fontSize={12} allowDecimals={false} /><Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none' }} cursor={{fill: 'rgba(100, 116, 139, 0.1)'}}/><Bar dataKey="messages" name="Messages" fill="#06b6d4" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <h2 className="font-bold text-lg mb-4 flex items-center"><Package className="h-5 w-5 mr-2"/>Inventaire rapide</h2>
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            {inventory.length > 0 ? (
+                                inventory.map(item => (
+                                    <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
+                                        <div className="w-10 h-10 bg-black/20 rounded-md flex items-center justify-center mr-3">
+                                            <Package size={20} className="text-gray-400"/>
+                                        </div>
+                                        <span className="flex-1 font-semibold">{item.name}</span>
+                                        <span className="text-xs font-bold bg-cyan-800 text-cyan-200 px-2 py-1 rounded-full">x{item.quantity}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-gray-500 py-8">Votre inventaire est vide.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
                 
