@@ -70,10 +70,14 @@ export default function DashboardHomePage() {
                     ]);
 
                     const processData = async (promiseResult: PromiseSettledResult<any>, setter: Function) => {
-                        if (promiseResult.status === 'fulfilled') {
-                            const value = promiseResult.value.ok ? await promiseResult.value.json() : promiseResult.value;
-                            setter(value);
-                            return value;
+                        if (promiseResult.status === 'fulfilled' && promiseResult.value.ok) {
+                            try {
+                                const data = await promiseResult.value.json();
+                                setter(data);
+                                return data;
+                            } catch (e) { console.error("Erreur lors du parsing JSON", e); }
+                        } else if (promiseResult.status === 'rejected') {
+                             console.error("Erreur API:", promiseResult.reason);
                         }
                         return null;
                     };
@@ -96,7 +100,6 @@ export default function DashboardHomePage() {
                     });
                     await processData(results[6], setServerInfo);
                     await processData(results[7], setInventory);
-
 
                     if (statsData) {
                         setSelectedTitle(statsData.equippedTitle || '');
@@ -222,7 +225,11 @@ export default function DashboardHomePage() {
                                 inventory.map(item => (
                                     <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
                                         <div className="w-10 h-10 bg-black/20 rounded-md flex items-center justify-center mr-3">
-                                            <Package size={20} className="text-gray-400"/>
+                                            {item.icon ? (
+                                                <Image src={item.icon} alt={item.name} width={24} height={24} />
+                                            ) : (
+                                                <Package size={20} className="text-gray-400"/>
+                                            )}
                                         </div>
                                         <span className="flex-1 font-semibold">{item.name}</span>
                                         <span className="text-xs font-bold bg-cyan-800 text-cyan-200 px-2 py-1 rounded-full">x{item.quantity}</span>
@@ -233,6 +240,15 @@ export default function DashboardHomePage() {
                             )}
                         </div>
                     </div>
+                </div>
+                
+                <div className="bg-[#1e2530] p-6 rounded-lg">
+                        <h2 className="font-bold mb-4 flex items-center"><MessageSquare className="h-5 w-5 mr-2"/>Messages sur 7 jours</h2>
+                        <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={messageData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                                <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} /><YAxis stroke="#9ca3af" fontSize={12} allowDecimals={false} /><Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none' }} cursor={{fill: 'rgba(100, 116, 139, 0.1)'}}/><Bar dataKey="messages" name="Messages" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
                 </div>
                 
                 <div className="bg-[#1e2530] p-6 rounded-lg text-center">
