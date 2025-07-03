@@ -60,8 +60,8 @@ export default function Home() {
           <Image
             src="/frog-mascot.png"
             alt="Illustration bot Discord"
-            width={720}
-            height={720}
+            width={520}
+            height={520}
             className="rounded-2xl shadow-2xl"
           />
         </div>
