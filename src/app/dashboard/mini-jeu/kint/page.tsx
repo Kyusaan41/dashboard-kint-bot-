@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { getPointsLeaderboard, fetchPoints, updatePoints } from '@/utils/api';
 import Image from 'next/image';
+import { motion } from 'framer-motion'; // Import de Framer Motion
 
 // Types pour les données
 type LeaderboardEntry = {
@@ -14,18 +15,19 @@ type LeaderboardEntry = {
 };
 
 export default function KintMiniGamePage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [userPoints, setUserPoints] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  // Nouvel état pour la quantité de points à ajouter/retirer
   const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>(''); 
+  const [maintenanceMessage, setMaintenanceMessage] = useState<string | null>(null);
 
   // Fonction pour récupérer les données du jeu
   const fetchData = async () => {
     if (!session?.user?.id) return;
 
     setLoading(true);
+    setMaintenanceMessage(null); // Réinitialise le message de maintenance
     try {
       const [leaderboardData, pointsData] = await Promise.all([
         getPointsLeaderboard(),
@@ -34,10 +36,13 @@ export default function KintMiniGamePage() {
 
       setLeaderboard(leaderboardData.slice(0, 10));
       setUserPoints(pointsData.points);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de la récupération des données du jeu:", error);
-      // Afficher une alerte ou un message à l'utilisateur si la récupération échoue
-      // alert("Impossible de charger les données du jeu. Veuillez réessayer.");
+      if (error.message.includes('maintenance') || error.message.includes('indisponible')) {
+          setMaintenanceMessage(error.message);
+      } else {
+          alert("Impossible de charger les données du jeu. Veuillez réessayer.");
+      }
     } finally {
       setLoading(false);
     }
@@ -45,9 +50,6 @@ export default function KintMiniGamePage() {
 
   useEffect(() => {
     fetchData();
-    // Optionnel: rafraîchir les données toutes les X secondes
-    // const interval = setInterval(fetchData, 10000); // Rafraîchit toutes les 10 secondes
-    // return () => clearInterval(interval);
   }, [session]);
 
   // Gère l'interaction de jeu (ajout/retrait de points)
@@ -57,24 +59,23 @@ export default function KintMiniGamePage() {
       return;
     }
     
-    // Assurez-vous que l'ajout ne rend pas les points négatifs si ce n'est pas souhaité
     const newPoints = userPoints + amount;
-    // Si vous voulez empêcher les points de descendre en dessous de zéro:
-    // const newPoints = Math.max(0, userPoints + amount);
-
-    // Mettre à jour l'état local immédiatement pour une meilleure réactivité
-    setUserPoints(newPoints);
+    setUserPoints(newPoints); // Mise à jour optimiste
 
     try {
       await updatePoints(session.user.id, newPoints);
       // Rafraîchir le classement après la mise à jour réussie
       const newLeaderboard = await getPointsLeaderboard();
       setLeaderboard(newLeaderboard.slice(0, 10));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de la mise à jour des points:", error);
-      alert(`Échec de la mise à jour des points : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
-      // Revenir à la valeur initiale en cas d'échec de l'API
-      setUserPoints(userPoints); 
+      if (error.message.includes('maintenance') || error.message.includes('indisponible')) {
+          alert(error.message);
+          setMaintenanceMessage(error.message);
+      } else {
+          alert(`Échec de l'action : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      }
+      setUserPoints(userPoints); // Retour à la valeur initiale en cas d'échec
     }
   };
 
@@ -97,21 +98,30 @@ export default function KintMiniGamePage() {
     return <div className="text-center text-gray-400 animate-pulse">Chargement du classement Kint...</div>;
   }
 
+  if (maintenanceMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-[#0b0d13] text-white p-8 text-center">
+        <h1 className="text-4xl font-bold text-red-500 mb-4">Maintenance en cours</h1>
+        <p className="text-lg text-gray-300">{maintenanceMessage}</p>
+        <p className="text-md text-gray-400 mt-4">Seuls les administrateurs peuvent accéder aux fonctionnalités du bot actuellement.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col lg:flex-row gap-8">
+      {/* Bloc pour ajouter/enlever des points (pour l'utilisateur connecté) */}
       <div className="lg:w-1/3 bg-[#12151d] p-6 rounded-lg border border-cyan-700 flex flex-col items-center">
         <h2 className="text-2xl font-bold text-cyan-400 mb-4">Votre Score</h2>
         <div className="text-6xl font-bold text-white my-8">
           {userPoints !== null ? userPoints : '...'}
         </div>
         
-        {/* Section pour les boutons +5 et -5 */}
         <div className="flex justify-around w-full mb-6">
           <button onClick={() => handleGameAction(-5)} className="px-6 py-3 bg-red-600 rounded-lg font-bold hover:bg-red-700 transition">-5 Points</button>
           <button onClick={() => handleGameAction(5)} className="px-6 py-3 bg-green-600 rounded-lg font-bold hover:bg-green-700 transition">+5 Points</button>
         </div>
 
-        {/* Nouvelle section pour l'ajout/retrait manuel */}
         <div className="w-full space-y-4">
             <h3 className="text-xl font-semibold text-gray-300">Gérer Manuellement les Points</h3>
             <div className="flex gap-2">
@@ -138,20 +148,31 @@ export default function KintMiniGamePage() {
                 </button>
             </div>
         </div>
-
       </div>
 
+      {/* Bloc du classement KINT (avec animations) */}
       <div className="lg:w-2/3 bg-[#12151d] p-6 rounded-lg border border-gray-700">
-        <h2 className="text-2xl font-bold text-cyan-400 mb-4">Top 10</h2>
+        <h2 className="text-2xl font-bold text-cyan-400 mb-4">Top 10 KINT</h2>
         <ul className="space-y-3">
-          {leaderboard.map((player, index) => (
-            <li key={player.userId} className={`flex items-center p-3 rounded-md transition ${player.userId === session?.user?.id ? 'bg-cyan-600/50 border border-cyan-500' : 'bg-gray-700'}`}>
-              <span className="font-bold text-lg w-10 text-center">{index + 1}.</span>
-              <Image src={player.avatar || '/default-avatar.png'} alt={player.username || 'Avatar'} width={40} height={40} className="rounded-full mx-4" />
-              <span className="font-medium flex-1">{player.username || 'Utilisateur Inconnu'}</span>
-              <span className="font-semibold text-yellow-400">{player.points} pts</span>
-            </li>
-          ))}
+          {leaderboard.length > 0 ? (
+            // Utilisation de Framer Motion pour animer les éléments du classement
+            leaderboard.map((player, index) => (
+              <motion.li
+                key={player.userId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }} // Délai séquentiel pour chaque élément
+                className={`flex items-center p-3 rounded-md transition ${player.userId === session?.user?.id ? 'bg-cyan-600/50 border border-cyan-500' : 'bg-gray-700'}`}
+              >
+                <span className="font-bold text-lg w-10 text-center">{index + 1}.</span>
+                <Image src={player.avatar || '/default-avatar.png'} alt={player.username || 'Avatar'} width={40} height={40} className="rounded-full mx-4" />
+                <span className="font-medium flex-1">{player.username || 'Utilisateur Inconnu'}</span>
+                <span className="font-semibold text-yellow-400">{player.points} pts</span>
+              </motion.li>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center">Aucun joueur dans le classement pour le moment.</p>
+          )}
         </ul>
       </div>
     </div>
