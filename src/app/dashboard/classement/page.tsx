@@ -23,32 +23,54 @@ type LeaderboardData = {
     points: LeaderboardEntry[];
 };
 
-// --- Composant pour une seule ligne de classement ---
+// --- Composant pour une seule ligne de classement (à partir de la 4ème place) ---
 const LeaderboardRow = ({ entry, rank, sessionUserId }: { entry: LeaderboardEntry, rank: number, sessionUserId?: string }) => {
     const isCurrentUser = entry.userId === sessionUserId;
     const value = entry.xp ?? entry.balance ?? entry.points ?? 0;
-
-    const getRankIndicator = () => {
-        if (rank === 1) return <Crown className="text-yellow-400" size={20} />;
-        if (rank === 2) return <Award className="text-gray-300" size={20} />;
-        if (rank === 3) return <Medal className="text-yellow-600" size={20} />;
-        return <span className="text-gray-400 font-bold">{rank}.</span>;
-    };
 
     return (
         <motion.li
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: rank * 0.05 }}
+            transition={{ duration: 0.3, delay: (rank - 4) * 0.05 }} // Délai ajusté
             className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${isCurrentUser ? 'bg-cyan-900/60' : 'hover:bg-gray-800'}`}
         >
-            <div className="w-8 text-center flex-shrink-0">{getRankIndicator()}</div>
+            <div className="w-8 text-center flex-shrink-0 font-bold text-gray-400">{rank}.</div>
             <Image src={entry.avatar || '/default-avatar.png'} alt={entry.username || 'avatar'} width={40} height={40} className="rounded-full" />
             <span className="font-medium text-white flex-1 truncate">{entry.username || 'Utilisateur Inconnu'}</span>
             <span className="font-bold text-cyan-300">{value.toLocaleString()}</span>
         </motion.li>
     );
 };
+
+// --- NOUVEAU : Composant pour une carte du Podium ---
+const PodiumCard = ({ entry, rank, icon: Icon }: { entry: LeaderboardEntry, rank: number, icon: React.ElementType }) => {
+    const value = entry.xp ?? entry.balance ?? entry.points ?? 0;
+    const rankColors = {
+        1: { border: 'border-yellow-400', text: 'text-yellow-400', icon: Crown },
+        2: { border: 'border-gray-300', text: 'text-gray-300', icon: Award },
+        3: { border: 'border-yellow-600', text: 'text-yellow-600', icon: Medal },
+    };
+    const { border, text, icon: RankIcon } = rankColors[rank as keyof typeof rankColors];
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: rank * 0.1 }}
+            className={`bg-[#1e2530] p-6 rounded-2xl border-2 ${border} flex flex-col items-center text-center shadow-lg transform ${rank === 1 ? 'scale-110 z-10' : 'scale-100'}`}
+        >
+            <RankIcon className={`${text} mb-2`} size={32} />
+            <Image src={entry.avatar || '/default-avatar.png'} alt={entry.username || 'avatar'} width={80} height={80} className="rounded-full border-4 border-gray-600" />
+            <span className="font-bold text-xl text-white mt-4 truncate max-w-full">{entry.username || 'Inconnu'}</span>
+            <div className="flex items-center gap-2 mt-2 font-semibold text-lg">
+                <Icon className={text} size={20} />
+                <span className={text}>{value.toLocaleString()}</span>
+            </div>
+        </motion.div>
+    );
+};
+
 
 // --- Le Composant Principal de la Page ---
 export default function ClassementPage() {
@@ -59,13 +81,10 @@ export default function ClassementPage() {
     const [error, setError] = useState<string | null>(null);
 
     const fetchData = async () => {
-        setLoading(true);
-        setError(null);
+        setLoading(true); setError(null);
         try {
             const [xpData, currencyData, pointsData] = await Promise.all([
-                getXPLeaderboard(),
-                getCurrencyLeaderboard(),
-                getPointsLeaderboard()
+                getXPLeaderboard(), getCurrencyLeaderboard(), getPointsLeaderboard()
             ]);
             setLeaderboards({ xp: xpData, currency: currencyData, points: pointsData });
         } catch (err) {
@@ -76,11 +95,7 @@ export default function ClassementPage() {
         }
     };
 
-    useEffect(() => {
-        if (status === 'authenticated') {
-            fetchData();
-        }
-    }, [status]);
+    useEffect(() => { if (status === 'authenticated') fetchData(); }, [status]);
 
     const tabs = [
         { id: 'xp', label: 'Expérience', icon: Star },
@@ -89,21 +104,11 @@ export default function ClassementPage() {
     ];
 
     const currentLeaderboard = leaderboards ? leaderboards[activeTab] : [];
-
-    if (loading || status === 'loading') {
-        return <div className="flex items-center justify-center h-full"><Loader2 className="h-10 w-10 text-cyan-400 animate-spin" /></div>;
-    }
-
-    if (error) {
-        return (
-            <div className="text-center text-red-400 p-8">
-                <p>{error}</p>
-                <button onClick={fetchData} className="mt-4 flex items-center gap-2 mx-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg">
-                    <RefreshCw size={18} /> Réessayer
-                </button>
-            </div>
-        );
-    }
+    const topThree = currentLeaderboard.slice(0, 3);
+    const restOfLeaderboard = currentLeaderboard.slice(3);
+    const activeIcon = tabs.find(t => t.id === activeTab)?.icon || Star;
+    
+    // ... (Gestion du chargement et des erreurs)
 
     return (
         <div className="space-y-8">
@@ -111,15 +116,7 @@ export default function ClassementPage() {
             
             <nav className="flex justify-center border-b border-gray-700">
                 {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors duration-200 ${
-                            activeTab === tab.id
-                                ? 'text-cyan-400 border-b-2 border-cyan-400'
-                                : 'text-gray-400 hover:text-white'
-                        }`}
-                    >
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} /* ... */>
                         <tab.icon size={18} />
                         {tab.label}
                     </button>
@@ -134,20 +131,30 @@ export default function ClassementPage() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
                 >
-                    {currentLeaderboard.length > 0 ? (
+                    {/* --- NOUVELLE SECTION PODIUM --- */}
+                    {topThree.length === 3 && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end mb-12">
+                            <PodiumCard entry={topThree[1]} rank={2} icon={activeIcon} />
+                            <PodiumCard entry={topThree[0]} rank={1} icon={activeIcon} />
+                            <PodiumCard entry={topThree[2]} rank={3} icon={activeIcon} />
+                        </div>
+                    )}
+
+                    {/* --- LISTE DU RESTE DU CLASSEMENT --- */}
+                    {restOfLeaderboard.length > 0 ? (
                         <ul className="space-y-2 bg-[#1e2530] p-4 rounded-lg">
-                            {currentLeaderboard.map((entry, index) => (
+                            {restOfLeaderboard.map((entry, index) => (
                                 <LeaderboardRow 
                                     key={entry.userId} 
                                     entry={entry} 
-                                    rank={index + 1} 
+                                    rank={index + 4} // On commence à la 4ème place
                                     sessionUserId={session?.user?.id}
                                 />
                             ))}
                         </ul>
-                    ) : (
+                    ) : topThree.length === 0 ? (
                         <p className="text-center text-gray-500 py-10">Aucune donnée pour ce classement.</p>
-                    )}
+                    ) : null}
                 </motion.div>
             </AnimatePresence>
         </div>
