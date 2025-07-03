@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Award, BarChart2, Coins, Crown, Gift, MessageSquare, Star, Zap, Loader2, Package } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { getInventory } from '@/utils/api'; // Assurez-vous d'avoir cette fonction dans vos utils
+import { getInventory } from '@/utils/api';
 
 // --- Définition des Types pour les données ---
 type UserStats = {
@@ -66,18 +66,14 @@ export default function DashboardHomePage() {
                         fetch(`/api/titres/${session.user.id}`),
                         fetch(`/api/currency/${session.user.id}`),
                         fetch(`/api/server/info`),
-                        getInventory(), // Nouvel appel pour l'inventaire
+                        getInventory(),
                     ]);
 
                     const processData = async (promiseResult: PromiseSettledResult<any>, setter: Function) => {
-                        if (promiseResult.status === 'fulfilled' && promiseResult.value.ok) {
-                            try {
-                                const data = await promiseResult.value.json();
-                                setter(data);
-                                return data;
-                            } catch (e) { console.error("Erreur lors du parsing JSON", e); }
-                        } else if (promiseResult.status === 'rejected') {
-                             console.error("Erreur API:", promiseResult.reason);
+                        if (promiseResult.status === 'fulfilled') {
+                            const value = promiseResult.value.ok ? await promiseResult.value.json() : promiseResult.value;
+                            setter(value);
+                            return value;
                         }
                         return null;
                     };
@@ -224,14 +220,14 @@ export default function DashboardHomePage() {
                             {inventory.length > 0 ? (
                                 inventory.map(item => (
                                     <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
-                                        <div className="w-10 h-10 bg-black/20 rounded-md flex items-center justify-center mr-3">
+                                        <div className="w-10 h-10 bg-black/20 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
                                             {item.icon ? (
                                                 <Image src={item.icon} alt={item.name} width={24} height={24} />
                                             ) : (
                                                 <Package size={20} className="text-gray-400"/>
                                             )}
                                         </div>
-                                        <span className="flex-1 font-semibold">{item.name}</span>
+                                        <span className="flex-1 font-semibold truncate">{item.name}</span>
                                         <span className="text-xs font-bold bg-cyan-800 text-cyan-200 px-2 py-1 rounded-full">x{item.quantity}</span>
                                     </div>
                                 ))

@@ -11,16 +11,18 @@ export async function GET(request: Request) {
     }
 
     try {
-        // --- CORRECTION : On récupère l'inventaire ET la boutique en même temps ---
+        // --- On récupère l'inventaire ET la boutique en même temps ---
         const [inventoryRes, shopRes] = await Promise.all([
             fetch(`${BOT_API_URL}/inventaire/${session.user.id}`),
-            fetch(`${BOT_API_URL}/shop`) // L'API qui liste tous les objets
+            fetch(`${BOT_API_URL}/shop`) // L'API qui liste tous les objets de la boutique
         ]);
 
+        // Si l'inventaire est vide (404), on renvoie un tableau vide, ce qui est normal.
         if (inventoryRes.status === 404) {
-            return NextResponse.json([]); // L'utilisateur a un inventaire vide, on renvoie un tableau vide.
+            return NextResponse.json([]); 
         }
 
+        // Si une des deux requêtes échoue pour une autre raison, on renvoie une erreur.
         if (!inventoryRes.ok || !shopRes.ok) {
             throw new Error("Impossible de récupérer les données de l'inventaire ou de la boutique depuis le bot.");
         }
@@ -33,11 +35,12 @@ export async function GET(request: Request) {
             const shopItem = shopItems.find((s: any) => s.id === itemId);
             const data = itemData as { quantity: number };
 
+            // --- CORRECTION CLÉ : On s'assure de toujours renvoyer un objet valide ---
             return {
                 id: itemId,
                 quantity: data.quantity,
                 name: shopItem?.name || itemId, // Si l'objet n'est plus en boutique, on affiche son ID
-                icon: shopItem?.icon || null
+                icon: shopItem?.icon || null   // On utilise l'icône de la boutique, ou rien si elle n'existe pas
             };
         });
 
