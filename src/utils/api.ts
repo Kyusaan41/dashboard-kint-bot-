@@ -113,15 +113,17 @@ export async function getPointsLeaderboard() {
 
 // --- Fonctions pour le Magasin ---
 
-export async function getShopItems() {
+export async function getShopItems(): Promise<any[]> { // On s'assure qu'il renvoie bien un tableau
     return handleApiResponse(await fetch('/api/shop'));
 }
 
-export async function buyItem(itemId: string) {
+// --- MODIFICATION IMPORTANTE ICI ---
+// buyItem accepte maintenant un tableau d'IDs d'objets
+export async function buyItem(itemIds: string[]) {
     return handleApiResponse(await fetch('/api/shop/buy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId }),
+        body: JSON.stringify({ items: itemIds }), // Le body envoie un tableau 'items'
     }));
 }
 
