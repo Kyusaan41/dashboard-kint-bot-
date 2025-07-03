@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react';
 import { getPointsLeaderboard, fetchPoints, updatePoints } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-// --- AJOUT : Import de l'icône d'avertissement ---
 import { Zap, TrendingUp, TrendingDown, ChevronsRight, Crown, User, AlertTriangle } from 'lucide-react';
 
 // --- Définition des Types ---
@@ -86,13 +85,11 @@ export default function KintMiniGamePage() {
                         <p className="text-7xl font-bold text-cyan-400 my-2">{userPoints}</p>
                     </div>
                     <div>
-                        {/* --- MODIFICATION : Ajout du conteneur flex et de l'icône d'avertissement --- */}
                         <div className="flex items-center gap-2 mb-2">
                             <label className="block font-medium">Modifier le score</label>
-                            {/* Le conteneur 'group' permet de déclencher l'affichage au survol */}
-                            <div className="relative group">
+                            {/* --- CORRECTION : Ajout de 'inline-block' pour empêcher le conteneur de s'étirer --- */}
+                            <div className="relative group inline-block">
                                 <AlertTriangle className="h-5 w-5 text-red-500 cursor-help"/>
-                                {/* La bulle d'info (tooltip) */}
                                 <div className="absolute bottom-full mb-2 w-64 p-3 bg-zinc-900 border border-zinc-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                     Attention ! La logique du KShield n'est pas encore active sur le dashboard. Si vous voulez utiliser votre Shield en cas de défaite, faites-le sur Discord !
                                 </div>
