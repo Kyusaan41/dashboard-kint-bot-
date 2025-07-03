@@ -5,8 +5,9 @@ import { useSession } from 'next-auth/react';
 import { getShopItems, buyItem, fetchCurrency } from '@/utils/api';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart, X, Coins } from 'lucide-react';
+import { ShoppingCart, X, Coins, RefreshCw } from 'lucide-react';
 
+// Type pour les objets de la boutique
 type ShopItem = {
     id: string;
     name: string;
@@ -22,67 +23,109 @@ export default function ShopPage() {
     const [categories, setCategories] = useState<string[]>([]);
     const [activeCategory, setActiveCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
+    
+    // États pour le panier, le solde, l'erreur et la confirmation d'achat
     const [cart, setCart] = useState<ShopItem[]>([]);
     const [userBalance, setUserBalance] = useState<number | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [isConfirming, setIsConfirming] = useState(false);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!session?.user?.id) return;
-            try {
-                const [shopData, currencyData] = await Promise.all([
-                    getShopItems(),
-                    fetchCurrency(session.user.id)
-                ]);
+    // Fonction pour charger les données de la boutique et de l'utilisateur
+    const fetchData = async () => {
+        if (!session?.user?.id) return;
+        
+        setLoading(true);
+        setError(null); // Réinitialise l'erreur avant chaque tentative
 
-                const typedShopData: ShopItem[] = shopData;
-                const allCategories = [...new Set(typedShopData.map(item => item.category || 'Divers'))];
-                
-                setItems(typedShopData);
-                setCategories(allCategories);
-                setActiveCategory(allCategories[0] || '');
-                setUserBalance(currencyData.balance);
-            } catch (error) {
-                alert("Impossible de charger les données de la boutique.");
-            } finally {
-                setLoading(false);
+        try {
+            const [shopData, currencyData] = await Promise.all([
+                getShopItems(),
+                fetchCurrency(session.user.id)
+            ]);
+            
+            const typedShopData: ShopItem[] = Array.isArray(shopData) ? shopData : [];
+            const allCategories = [...new Set(typedShopData.map(item => item.category || 'Divers'))];
+            
+            setItems(typedShopData);
+            setCategories(allCategories);
+            if (allCategories.length > 0) {
+                setActiveCategory(allCategories[0]);
             }
-        };
-        fetchData();
+            setUserBalance(currencyData.balance);
+        } catch (err) {
+            console.error("Erreur de chargement de la boutique:", err);
+            setError("Impossible de charger les données de la boutique.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Charge les données lorsque la session est disponible
+    useEffect(() => {
+        if (session) {
+            fetchData();
+        }
     }, [session]);
 
+    // Fonctions de gestion du panier
     const addToCart = (item: ShopItem) => setCart(prevCart => [...prevCart, item]);
-    const removeFromCart = (itemIndex: number) => setCart(prevCart => prevCart.filter((_, index) => index !== itemIndex));
+    
+    const removeFromCart = (itemIndex: number) => {
+        const newCart = cart.filter((_, index) => index !== itemIndex);
+        setCart(newCart);
+        if (newCart.length === 0) {
+            setIsConfirming(false); // Annule la confirmation si le panier devient vide
+        }
+    };
+    
     const cartTotal = cart.reduce((total, item) => total + item.price, 0);
 
+    // Fonction pour gérer l'achat final
     const handlePurchase = async () => {
         if (cart.length === 0) return;
         if (userBalance !== null && userBalance < cartTotal) {
             alert("Vous n'avez pas assez de pièces !");
+            setIsConfirming(false); // Réinitialise l'état
             return;
         }
 
         const itemIds = cart.map(item => item.id);
-        if (!confirm(`Confirmer l'achat de ${cart.length} objet(s) pour ${cartTotal} pièces ?`)) return;
 
         try {
-            // --- CORRECTION : Appel de la fonction 'buyItem' avec le tableau d'IDs ---
-            await buyItem(itemIds); 
-            // -----------------------------------------------------------------
+            await buyItem(itemIds);
             alert("Achat réussi !");
             setCart([]);
             // Rafraîchit le solde de l'utilisateur après l'achat
             const currencyData = await fetchCurrency(session!.user!.id);
             setUserBalance(currencyData.balance);
-        } catch (error) {
-            // Affiche une erreur plus explicite à l'utilisateur
-            alert(`Échec de l'achat : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        } catch (err) {
+            alert(`Échec de l'achat : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+        } finally {
+            setIsConfirming(false); // Réinitialise l'état après l'achat
         }
     };
 
+    // Affiche un message de chargement
     if (loading) {
         return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement de la boutique...</p>;
     }
-
+    
+    // Affiche un message d'erreur avec un bouton pour réessayer
+    if (error) {
+        return (
+            <div className="text-center text-red-400 p-8">
+                <p>{error}</p>
+                <button 
+                    onClick={fetchData} 
+                    className="mt-4 flex items-center gap-2 mx-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                >
+                    <RefreshCw size={18} />
+                    Réessayer
+                </button>
+            </div>
+        );
+    }
+    
     const filteredItems = items.filter(item => (item.category || 'Divers') === activeCategory);
 
     return (
@@ -125,7 +168,7 @@ export default function ShopPage() {
             
             <AnimatePresence>
             {cart.length > 0 && (
-                <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className="fixed bottom-4 right-4 bg-[#1e2530] border border-cyan-500 rounded-lg shadow-2xl w-80 p-4">
+                <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className="fixed bottom-4 right-4 bg-[#1e2530] border border-cyan-500 rounded-lg shadow-2xl w-80 p-4 z-50">
                     <h3 className="text-lg font-bold flex items-center gap-2"><ShoppingCart/> Panier ({cart.length})</h3>
                     <div className="my-3 space-y-2 max-h-40 overflow-y-auto pr-2">
                         {cart.map((item, index) => (
@@ -139,11 +182,41 @@ export default function ShopPage() {
                         ))}
                     </div>
                     <div className="border-t border-gray-700 pt-3 mt-3">
-                        <div className="flex justify-between font-bold">
+                        <div className="flex justify-between font-bold text-lg">
                             <span>Total:</span>
                             <span>{cartTotal} Pièces</span>
                         </div>
-                        <button onClick={handlePurchase} className="mt-3 w-full bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">Payer</button>
+                        
+                        <div className="mt-3">
+                            <AnimatePresence mode="wait">
+                                {isConfirming ? (
+                                    <motion.div
+                                        key="confirm"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="space-y-2"
+                                    >
+                                        <p className="text-center text-sm text-gray-300">Confirmer l'achat ?</p>
+                                        <div className="flex gap-2">
+                                            <button onClick={handlePurchase} className="w-full bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">Confirmer</button>
+                                            <button onClick={() => setIsConfirming(false)} className="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700 transition">Annuler</button>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <motion.button
+                                        key="pay"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        onClick={() => setIsConfirming(true)} 
+                                        className="w-full bg-cyan-600 text-white font-bold py-2 rounded-lg hover:bg-cyan-700 transition"
+                                    >
+                                        Payer
+                                    </motion.button>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </motion.div>
             )}
