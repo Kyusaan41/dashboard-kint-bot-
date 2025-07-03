@@ -1,23 +1,37 @@
 import { NextResponse } from 'next/server';
 
-// La BASE_URL de l'API de votre bot est ici, côté serveur.
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
 export async function GET() {
     try {
-        const response = await fetch(`${BOT_API_URL}/xp`);
+        // On lance les deux appels en parallèle pour plus d'efficacité
+        const [leaderboardRes, serverInfoRes] = await Promise.all([
+            fetch(`${BOT_API_URL}/xp`),       // Récupère le classement { userId, xp }
+            fetch(`${BOT_API_URL}/serverinfo`) // Récupère les infos des membres
+        ]);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Erreur de l'API du bot [${response.status}]: ${errorText}`);
-            return NextResponse.json({ message: "Erreur lors de la récupération du classement XP depuis le bot." }, { status: response.status });
+        if (!leaderboardRes.ok || !serverInfoRes.ok) {
+            throw new Error("Impossible de récupérer toutes les données nécessaires depuis le bot.");
         }
 
-        const data = await response.json();
-        return NextResponse.json(data);
+        const leaderboard = await leaderboardRes.json();
+        const serverInfo = await serverInfoRes.json();
+        const members = serverInfo.members || [];
+
+        // On "enrichit" le classement XP avec les données des membres
+        const enrichedLeaderboard = leaderboard.map((player: { userId: string, xp: number }) => {
+            const memberInfo = members.find((m: any) => m.id === player.userId);
+            return {
+                ...player,
+                username: memberInfo?.username || 'Utilisateur inconnu',
+                avatar: memberInfo?.avatar || '/default-avatar.png'
+            };
+        });
+
+        return NextResponse.json(enrichedLeaderboard);
 
     } catch (error) {
-        console.error("Erreur interne du dashboard:", error);
-        return NextResponse.json({ message: 'Impossible de contacter le serveur du bot.' }, { status: 500 });
+        console.error("Erreur dans /api/leaderboard/xp:", error);
+        return NextResponse.json([], { status: 500 });
     }
 }
