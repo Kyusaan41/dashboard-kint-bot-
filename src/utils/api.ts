@@ -131,3 +131,12 @@ export async function buyItem(itemIds: string[]) {
 export async function getInventory() {
     return handleApiResponse(await fetch('/api/inventory'));
 }
+
+// --- AJOUT : Ajoutez cette fonction à la fin de votre fichier ---
+/**
+ * Récupère le statut du cooldown pour le KShield pour un utilisateur donné.
+ * @param userId L'ID de l'utilisateur.
+ */
+export async function getKshieldStatus(userId: string) {
+    return handleApiResponse(await fetch(`/api/shop/kshield-status/${userId}`));
+}

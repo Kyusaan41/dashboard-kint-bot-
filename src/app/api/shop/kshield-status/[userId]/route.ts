@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
+// --- CORRECTION : La syntaxe des arguments de la fonction GET est mise à jour ---
 export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
     const { userId } = params;
 
