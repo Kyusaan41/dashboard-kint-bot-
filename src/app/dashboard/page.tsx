@@ -165,7 +165,7 @@ export default function DashboardHomePage() {
         <>
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    {serverInfo?.icon && (
+                    {serverInfo && serverInfo.id && serverInfo.icon && (
                         <Image
                             src={`https://cdn.discordapp.com/icons/${serverInfo.id}/${serverInfo.icon}.png`}
                             alt="Icône du serveur"
