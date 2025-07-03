@@ -1,18 +1,18 @@
 /* src/app/globals.css */
 
-/* --- CORRECTION ICI --- */
+/* --- IMPORTS OBLIGATOIRES POUR TAILWIND CSS V4 --- */
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
-/* --- FIN CORRECTION --- */
+/* --- FIN DES IMPORTS TAILWIND CSS V4 --- */
 
-/* ... (votre CSS existant sous ces imports, y compris les :root et body) ... */
-
+/* Variables CSS personnalisées */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
+/* Thème inline si utilisé avec @theme */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -20,6 +20,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Media query pour le mode sombre */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -27,18 +28,24 @@
   }
 }
 
+/* Styles de base pour le corps du document */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* --- AJOUTEZ CE CODE À LA FIN (pour les animations) --- */
+/* --- DÉFINITION DES CLASSES D'ANIMATION PERSONNALISÉES --- */
+/* Ces définitions DOIVENT être à l'intérieur d'un @layer utilities */
 @layer utilities {
-  /* Animation pour la grenouille sur la page de connexion */
+  /* Animation pour la grenouille sur la page de connexion (d'origine) */
   @keyframes sway {
-    0%, 100% { transform: rotate(-3deg); }
-    50% { transform: rotate(3deg); }
+    0%, 100% {
+      transform: rotate(-3deg);
+    }
+    50% {
+      transform: rotate(3deg);
+    }
   }
   .animate-sway {
     animation: sway 3s ease-in-out infinite;
@@ -46,8 +53,12 @@ body {
 
   /* Animation pour la grenouille sur la page de maintenance (rebond lent) */
   @keyframes bounce-slow {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); } /* Ajustez la hauteur du rebond si nécessaire */
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px); /* Ajustez la hauteur du rebond si nécessaire */
+    }
   }
   .animate-bounce-slow {
     animation: bounce-slow 2s ease-in-out infinite; /* 2s pour un rebond lent */
@@ -55,8 +66,12 @@ body {
 
   /* Animation pour le texte "Maintenance en cours" (clignotement lent) */
   @keyframes pulse-slow {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; } /* Ajustez l'opacité minimale si nécessaire */
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5; /* Ajustez l'opacité minimale si nécessaire */
+    }
   }
   .animate-pulse-slow {
     animation: pulse-slow 2s ease-in-out infinite; /* 2s pour un clignotement lent */
@@ -64,16 +79,24 @@ body {
 
   /* Animations pour les effets de lumière des gyrophares */
   @keyframes light-pulse-red {
-    0%, 100% { text-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
-    50% { text-shadow: 0 0 20px rgba(255, 0, 0, 0.8), 0 0 30px rgba(255, 0, 0, 0.6); }
+    0%, 100% {
+      text-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3);
+    }
+    50% {
+      text-shadow: 0 0 20px rgba(255, 0, 0, 0.8), 0 0 30px rgba(255, 0, 0, 0.6);
+    }
   }
   .animate-light-pulse-red {
     animation: light-pulse-red 1.5s ease-in-out infinite;
   }
 
   @keyframes light-pulse-blue {
-    0%, 100% { text-shadow: 0 0 5px rgba(0, 0, 255, 0.5), 0 0 10px rgba(0, 0, 255, 0.3); }
-    50% { text-shadow: 0 0 20px rgba(0, 0, 255, 0.8), 0 0 30px rgba(0, 0, 255, 0.6); }
+    0%, 100% {
+      text-shadow: 0 0 5px rgba(0, 0, 255, 0.5), 0 0 10px rgba(0, 0, 255, 0.3);
+    }
+    50% {
+      text-shadow: 0 0 20px rgba(0, 0, 255, 0.8), 0 0 30px rgba(0, 0, 255, 0.6);
+    }
   }
   .animate-light-pulse-blue {
     animation: light-pulse-blue 1.5s ease-in-out infinite;

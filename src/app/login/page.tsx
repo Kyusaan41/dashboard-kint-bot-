@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 export default function LoginPage() {
   const isMaintenanceMode = process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE === 'true';
-  const maintenanceMessage = process.env.NEXT_PUBLIC_MAINTENANCE_MESSAGE || "Le bot est actuellement en maintenance. Veuillez réessayer plus tard.";
+  const maintenanceMessage = process.env.NEXT_PUBLIC_MAINTENANCE_MESSAGE || "Le site est actuellement en maintenance. Veuillez réessayer plus tard.";
 
   // Supprimons les logs de debug temporaires pour le code final
   useEffect(() => {
