@@ -91,7 +91,7 @@ export default function KintMiniGamePage() {
                             <div className="relative group inline-block">
                                 <AlertTriangle className="h-5 w-5 text-red-500 cursor-help"/>
                                 <div className="absolute bottom-full mb-2 w-64 p-3 bg-zinc-900 border border-zinc-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                    Attention ! La logique du KShield n'est pas encore active sur le dashboard. Si vous voulez utiliser votre Shield en cas de défaite, faites-le sur Discord !
+                                    Attention ! La logique du KShield n’est pas encore active sur le dashboard. Si vous souhaitez utiliser votre Shield en cas de défaite, faites-le directement sur Discord !
                                 </div>
                             </div>
                         </div>
