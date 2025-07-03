@@ -85,20 +85,20 @@ export default function KintMiniGamePage() {
                         <p className="text-7xl font-bold text-cyan-400 my-2">{userPoints}</p>
                     </div>
                     <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <label className="block font-medium">Modifier le score</label>
-                            <div className="relative group inline-block">
-                                <AlertTriangle className="h-5 w-5 text-red-500 cursor-help"/>
-                                {/* --- CORRECTION : Ajout de 'z-10' pour que la bulle flotte au-dessus des autres éléments --- */}
-                                <div className="absolute bottom-full mb-2 w-64 p-3 bg-zinc-900 border border-zinc-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                    Attention ! La logique du KShield n’est pas encore active sur le dashboard. Si vous souhaitez utiliser votre Shield en cas de défaite, faites-le directement sur Discord !
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
+                        <label className="block font-medium mb-2">Modifier le score</label>
+                        {/* --- MODIFICATION : L'avertissement est maintenant sur la même ligne que les boutons --- */}
+                        <div className="flex items-center gap-2">
                             <input type="number" placeholder="Montant..." value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-gray-800 p-3 rounded-md"/>
                             <button onClick={() => handleManualPointsAction('add')} className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700"><TrendingUp size={20}/></button>
                             <button onClick={() => handleManualPointsAction('subtract')} className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700"><TrendingDown size={20}/></button>
+                            
+                            {/* L'icône d'avertissement, déplacée ici */}
+                            <div className="relative group">
+                                <AlertTriangle className="h-5 w-5 text-yellow-500 cursor-help"/>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-900 border border-zinc-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                    Attention ! La logique du KShield n’est pas encore active sur le dashboard. Si vous souhaitez utiliser votre Shield en cas de défaite, faites-le directement sur Discord !
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
