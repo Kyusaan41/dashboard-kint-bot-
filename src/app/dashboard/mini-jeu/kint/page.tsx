@@ -87,10 +87,10 @@ export default function KintMiniGamePage() {
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <label className="block font-medium">Modifier le score</label>
-                            {/* --- CORRECTION : Ajout de 'inline-block' pour empêcher le conteneur de s'étirer --- */}
                             <div className="relative group inline-block">
                                 <AlertTriangle className="h-5 w-5 text-red-500 cursor-help"/>
-                                <div className="absolute bottom-full mb-2 w-64 p-3 bg-zinc-900 border border-zinc-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                {/* --- CORRECTION : Ajout de 'z-10' pour que la bulle flotte au-dessus des autres éléments --- */}
+                                <div className="absolute bottom-full mb-2 w-64 p-3 bg-zinc-900 border border-zinc-700 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                                     Attention ! La logique du KShield n’est pas encore active sur le dashboard. Si vous souhaitez utiliser votre Shield en cas de défaite, faites-le directement sur Discord !
                                 </div>
                             </div>
