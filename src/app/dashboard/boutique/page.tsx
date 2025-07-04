@@ -2,20 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-// Assurez-vous que getKshieldStatus est bien dans vos utils/api
 import { getShopItems, buyItem, fetchCurrency, getKshieldStatus } from '@/utils/api';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle } from 'lucide-react';
+import { ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle, Sword, Palette, Wrench } from 'lucide-react';
 
-// Types
+// --- Types ---
 type ShopItem = {
     id: string;
     name: string;
     price: number;
     description: string;
     icon: string;
-    category: string;
+    type: 'Kint' | 'Utilitaire' | 'Personnalisation' | string; // Catégorie principale
+    category: 'Légendaire' | 'Épique' | 'Rare' | 'Commun' | string; // Rareté
 };
 
 type KShieldStatus = {
@@ -23,7 +23,7 @@ type KShieldStatus = {
     timeLeft?: number;
 };
 
-// Fonction utilitaire pour formater le temps restant
+// --- Fonctions Utilitaires ---
 const formatTimeLeft = (ms: number) => {
     if (ms <= 0) return '';
     const totalSeconds = Math.floor(ms / 1000);
@@ -35,11 +35,19 @@ const formatTimeLeft = (ms: number) => {
     return `dans ${minutes}m`;
 };
 
+const mainCategories = [
+    { id: 'Kint', label: 'Kint', icon: Sword },
+    { id: 'Utilitaire', label: 'Utilitaire', icon: Wrench },
+    { id: 'Personnalisation', label: 'Personnalisation', icon: Palette },
+];
+
+const rarityOrder = ['Légendaire', 'Épique', 'Rare', 'Commun', 'Divers'];
+
+
 export default function ShopPage() {
     const { data: session } = useSession();
     const [items, setItems] = useState<ShopItem[]>([]);
-    const [categories, setCategories] = useState<string[]>([]);
-    const [activeCategory, setActiveCategory] = useState<string>('');
+    const [activeMainCategory, setActiveMainCategory] = useState<string>('Kint');
     const [loading, setLoading] = useState(true);
     const [cart, setCart] = useState<ShopItem[]>([]);
     const [userBalance, setUserBalance] = useState<number | null>(null);
@@ -48,23 +56,17 @@ export default function ShopPage() {
     const [kshieldStatus, setKshieldStatus] = useState<KShieldStatus>({ canPurchase: true });
     const [showSuccess, setShowSuccess] = useState(false);
 
+    // --- Chargement des données ---
     const fetchData = async () => {
         if (!session?.user?.id) return;
-        setLoading(true);
-        setError(null);
+        setLoading(true); setError(null);
         try {
             const [shopData, currencyData, kshieldData] = await Promise.all([
                 getShopItems(),
                 fetchCurrency(session.user.id),
                 getKshieldStatus(session.user.id)
             ]);
-            const typedShopData: ShopItem[] = Array.isArray(shopData) ? shopData : [];
-            const allCategories = [...new Set(typedShopData.map(item => item.category || 'Divers'))];
-            setItems(typedShopData);
-            setCategories(allCategories);
-            if (allCategories.length > 0) {
-                setActiveCategory(allCategories[0]);
-            }
+            setItems(Array.isArray(shopData) ? shopData : []);
             setUserBalance(currencyData.balance);
             setKshieldStatus(kshieldData);
         } catch (err) {
@@ -75,27 +77,21 @@ export default function ShopPage() {
         }
     };
 
-    useEffect(() => {
-        if (session) {
-            fetchData();
-        }
-    }, [session]);
-
+    useEffect(() => { if (session) fetchData(); }, [session]);
+    
+    // --- Fonctions de gestion du panier et de l'achat ---
     const addToCart = (item: ShopItem) => {
         if (item.id === 'KShield' && !kshieldStatus.canPurchase) return;
         setCart(prev => [...prev, item]);
     };
-
-    const removeFromCart = (index: number) => {
-        const newCart = cart.filter((_, i) => i !== index);
+    const removeFromCart = (itemIndex: number) => {
+        const newCart = cart.filter((_, i) => i !== itemIndex);
         setCart(newCart);
         if (newCart.length === 0) {
             setIsConfirming(false);
         }
     };
-
     const cartTotal = cart.reduce((total, item) => total + item.price, 0);
-
     const handlePurchase = async () => {
         if (cart.length === 0) return;
         if (userBalance !== null && userBalance < cartTotal) {
@@ -116,10 +112,10 @@ export default function ShopPage() {
         }
     };
 
+    // --- Logique de chargement et d'erreur ---
     if (loading) {
         return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement...</p>;
     }
-
     if (error) {
         return (
             <div className="text-center text-red-400 p-8">
@@ -134,7 +130,18 @@ export default function ShopPage() {
         );
     }
 
-    const filteredItems = items.filter(item => (item.category || 'Divers') === activeCategory);
+    // --- Logique de filtrage et de groupage des items ---
+    const filteredItems = items.filter(item => item.type === activeMainCategory);
+    const groupedItems = filteredItems.reduce((acc, item) => {
+        const rarity = item.category || 'Divers';
+        if (!acc[rarity]) {
+            acc[rarity] = [];
+        }
+        acc[rarity].push(item);
+        return acc;
+    }, {} as Record<string, ShopItem[]>);
+
+    const sortedRarities = Object.keys(groupedItems).sort((a, b) => rarityOrder.indexOf(a) - rarityOrder.indexOf(b));
 
     return (
         <div className="p-4 sm:p-8 text-white">
@@ -163,64 +170,84 @@ export default function ShopPage() {
                 )}
             </header>
 
-            <nav className="flex space-x-2 sm:space-x-4 border-b border-gray-700 mb-8 overflow-x-auto pb-2">
-                {categories.map(category => (
+            <nav className="flex justify-center border-b border-gray-700 mb-8">
+                {mainCategories.map(cat => (
                     <button
-                        key={category}
-                        onClick={() => setActiveCategory(category)}
-                        className={`flex-shrink-0 px-3 py-2 font-semibold transition-colors duration-200 ${
-                            activeCategory === category ? 'text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white'
+                        key={cat.id}
+                        onClick={() => setActiveMainCategory(cat.id)}
+                        className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors duration-200 ${
+                            activeMainCategory === cat.id
+                                ? 'text-cyan-400 border-b-2 border-cyan-400'
+                                : 'text-gray-400 hover:text-white'
                         }`}
                     >
-                        {category}
+                        <cat.icon size={18} />
+                        <span>{cat.label}</span>
                     </button>
                 ))}
             </nav>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <AnimatePresence>
-                    {filteredItems.map(item => {
-                        const isKshield = item.id === 'KShield';
-                        const isDisabled = isKshield && !kshieldStatus.canPurchase;
-                        return (
-                            <motion.div
-                                key={item.id}
-                                layout
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                className="bg-[#1e2530] border border-gray-700 rounded-lg p-4 flex flex-col text-center shadow-lg"
-                            >
-                                <div className="flex-grow">
-                                    <Image src={item.icon || '/default-icon.png'} alt={item.name} width={80} height={80} className="mx-auto object-contain h-20" />
-                                    <h2 className="text-xl font-bold mt-4">{item.name}</h2>
-                                    <p className="text-sm text-gray-400 mt-1 h-10">{item.description}</p>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeMainCategory}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    {filteredItems.length > 0 ? (
+                        sortedRarities.map(rarity => (
+                            <section key={rarity} className="mb-12">
+                                <h2 className="text-2xl font-bold text-cyan-300 border-l-4 border-cyan-400 pl-4 mb-6">{rarity}</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {groupedItems[rarity].map(item => {
+                                        const isKshield = item.id === 'KShield';
+                                        const isDisabled = isKshield && !kshieldStatus.canPurchase;
+                                        return (
+                                            <motion.div
+                                                key={item.id}
+                                                layout
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.9 }}
+                                                className="bg-[#1e2530] border border-gray-700 rounded-lg p-4 flex flex-col text-center shadow-lg"
+                                            >
+                                                <div className="flex-grow">
+                                                    <Image src={item.icon || '/default-icon.png'} alt={item.name} width={80} height={80} className="mx-auto object-contain h-20" />
+                                                    <h2 className="text-xl font-bold mt-4">{item.name}</h2>
+                                                    <p className="text-sm text-gray-400 mt-1 h-10">{item.description}</p>
+                                                </div>
+                                                <div className="mt-4">
+                                                    <p className="text-lg font-semibold text-yellow-400">{item.price} Pièces</p>
+                                                    <button
+                                                        onClick={() => addToCart(item)}
+                                                        disabled={isDisabled}
+                                                        className={`mt-2 w-full font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 ${
+                                                            isDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
+                                                        }`}
+                                                    >
+                                                        {isDisabled ? (
+                                                            <>
+                                                                <Lock size={16} />
+                                                                {formatTimeLeft(kshieldStatus.timeLeft || 0)}
+                                                            </>
+                                                        ) : (
+                                                            'Ajouter au panier'
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
                                 </div>
-                                <div className="mt-4">
-                                    <p className="text-lg font-semibold text-yellow-400">{item.price} Pièces</p>
-                                    <button
-                                        onClick={() => addToCart(item)}
-                                        disabled={isDisabled}
-                                        className={`mt-2 w-full font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 ${
-                                            isDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
-                                        }`}
-                                    >
-                                        {isDisabled ? (
-                                            <>
-                                                <Lock size={16} />
-                                                {formatTimeLeft(kshieldStatus.timeLeft || 0)}
-                                            </>
-                                        ) : (
-                                            'Ajouter au panier'
-                                        )}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                </AnimatePresence>
-            </div>
-
+                            </section>
+                        ))
+                    ) : (
+                        <p className="text-center text-gray-500 py-16">Cette catégorie est vide pour le moment.</p>
+                    )}
+                </motion.div>
+            </AnimatePresence>
+            
             <AnimatePresence>
                 {cart.length > 0 && (
                     <motion.div
