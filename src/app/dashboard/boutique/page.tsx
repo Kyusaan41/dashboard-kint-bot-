@@ -190,7 +190,7 @@ export default function ShopPage() {
             </nav>
 
             <AnimatePresence>
-                {subCategories.length > 1 && (
+                
                     <motion.nav
                         key={activeMainCategory}
                         initial={{ opacity: 0, height: 0 }}
@@ -217,7 +217,7 @@ export default function ShopPage() {
                             </button>
                         ))}
                     </motion.nav>
-                )}
+                
             </AnimatePresence>
 
             <div className="mt-8">
