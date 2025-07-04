@@ -77,8 +77,29 @@ export default function ShopPage() {
         }
     };
 
+    // TOUS LES HOOKS (useState, useEffect, useMemo) DOIVENT ÊTRE DÉCLARÉS ICI,
+    // AVANT TOUT RETOUR CONDITIONNEL (`if (loading) return ...`)
+    
+    // useEffect pour le chargement des données
     useEffect(() => { if (session) fetchData(); }, [session]);
     
+    // Ces useMemo DOIVENT être ici, à la racine du composant
+    const subCategories = useMemo(() => {
+        const itemsInCategory = items.filter(item => item.type === activeMainCategory);
+        const rarities = [...new Set(itemsInCategory.map(item => item.category || 'Divers'))];
+        return rarities.sort((a, b) => rarityOrder.indexOf(a) - rarityOrder.indexOf(b));
+    }, [items, activeMainCategory]);
+
+    const filteredItems = useMemo(() => {
+        let itemsToShow = items.filter(item => item.type === activeMainCategory);
+        if (activeRarity !== 'all') {
+            itemsToShow = itemsToShow.filter(item => (item.category || 'Divers') === activeRarity);
+        }
+        return itemsToShow;
+    }, [items, activeMainCategory, activeRarity]);
+
+
+    // Fonctions diverses (peuvent être avant ou après les Hooks, mais avant le JSX)
     const addToCart = (item: ShopItem) => {
         if (item.id === 'KShield' && !kshieldStatus.canPurchase) return;
         setCart(prev => [...prev, item]);
@@ -109,6 +130,13 @@ export default function ShopPage() {
         }
     };
 
+    const handleMainCategoryClick = (categoryId: string) => {
+        setActiveMainCategory(categoryId);
+        setActiveRarity('all');
+    };
+
+
+    // MAINTENANT, et seulement MAINTENANT, tu peux avoir des retours conditionnels.
     if (loading) {
         return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement...</p>;
     }
@@ -126,25 +154,7 @@ export default function ShopPage() {
         );
     }
 
-    const subCategories = useMemo(() => {
-        const itemsInCategory = items.filter(item => item.type === activeMainCategory);
-        const rarities = [...new Set(itemsInCategory.map(item => item.category || 'Divers'))];
-        return rarities.sort((a, b) => rarityOrder.indexOf(a) - rarityOrder.indexOf(b));
-    }, [items, activeMainCategory]);
-
-    const filteredItems = useMemo(() => {
-        let itemsToShow = items.filter(item => item.type === activeMainCategory);
-        if (activeRarity !== 'all') {
-            itemsToShow = itemsToShow.filter(item => (item.category || 'Divers') === activeRarity);
-        }
-        return itemsToShow;
-    }, [items, activeMainCategory, activeRarity]);
-
-    const handleMainCategoryClick = (categoryId: string) => {
-        setActiveMainCategory(categoryId);
-        setActiveRarity('all');
-    };
-
+    // Le reste du rendu du composant
     return (
         <div className="p-4 sm:p-8 text-white">
             <AnimatePresence>
