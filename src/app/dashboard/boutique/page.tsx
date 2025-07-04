@@ -14,8 +14,8 @@ type ShopItem = {
     price: number;
     description: string;
     icon: string;
-    type: 'Kint' | 'Utilitaire' | 'Personnalisation' | string; // Catégorie principale
-    category: 'Légendaire' | 'Épique' | 'Rare' | 'Commun' | string; // Rareté
+    type: 'Kint' | 'Utilitaire' | 'Personnalisation' | string;
+    category: 'Légendaire' | 'Épique' | 'Rare' | 'Commun' | string;
 };
 
 type KShieldStatus = {
@@ -57,7 +57,6 @@ export default function ShopPage() {
     const [kshieldStatus, setKshieldStatus] = useState<KShieldStatus>({ canPurchase: true });
     const [showSuccess, setShowSuccess] = useState(false);
 
-    // --- Chargement des données ---
     const fetchData = async () => {
         if (!session?.user?.id) return;
         setLoading(true); setError(null);
@@ -80,7 +79,6 @@ export default function ShopPage() {
 
     useEffect(() => { if (session) fetchData(); }, [session]);
     
-    // --- Fonctions de gestion du panier et de l'achat ---
     const addToCart = (item: ShopItem) => {
         if (item.id === 'KShield' && !kshieldStatus.canPurchase) return;
         setCart(prev => [...prev, item]);
@@ -88,9 +86,7 @@ export default function ShopPage() {
     const removeFromCart = (itemIndex: number) => {
         const newCart = cart.filter((_, i) => i !== itemIndex);
         setCart(newCart);
-        if (newCart.length === 0) {
-            setIsConfirming(false);
-        }
+        if (newCart.length === 0) setIsConfirming(false);
     };
     const cartTotal = cart.reduce((total, item) => total + item.price, 0);
     const handlePurchase = async () => {
@@ -113,7 +109,6 @@ export default function ShopPage() {
         }
     };
 
-    // --- Logique de chargement et d'erreur ---
     if (loading) {
         return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement...</p>;
     }
@@ -131,7 +126,6 @@ export default function ShopPage() {
         );
     }
 
-    // --- Logique de filtrage à deux niveaux ---
     const subCategories = useMemo(() => {
         const itemsInCategory = items.filter(item => item.type === activeMainCategory);
         const rarities = [...new Set(itemsInCategory.map(item => item.category || 'Divers'))];
@@ -148,7 +142,7 @@ export default function ShopPage() {
 
     const handleMainCategoryClick = (categoryId: string) => {
         setActiveMainCategory(categoryId);
-        setActiveRarity('all'); // Réinitialise le filtre de rareté
+        setActiveRarity('all');
     };
 
     return (
@@ -178,7 +172,6 @@ export default function ShopPage() {
                 )}
             </header>
 
-            {/* Barre de navigation pour les catégories principales */}
             <nav className="flex justify-center border-b border-gray-700">
                 {mainCategories.map(cat => (
                     <button
@@ -196,7 +189,6 @@ export default function ShopPage() {
                 ))}
             </nav>
 
-            {/* Barre de navigation pour les sous-catégories (raretés) */}
             <AnimatePresence>
                 {subCategories.length > 1 && (
                     <motion.nav
@@ -228,7 +220,6 @@ export default function ShopPage() {
                 )}
             </AnimatePresence>
 
-            {/* Grille des objets filtrés */}
             <div className="mt-8">
                 <AnimatePresence mode="wait">
                     <motion.div
