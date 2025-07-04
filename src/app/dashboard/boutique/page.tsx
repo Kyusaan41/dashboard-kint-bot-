@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { getShopItems, buyItem, fetchCurrency, getKshieldStatus } from '@/utils/api';
 import Image from 'next/image';
@@ -23,7 +23,7 @@ type KShieldStatus = {
     timeLeft?: number;
 };
 
-// --- Fonctions Utilitaires ---
+// --- Constantes ---
 const formatTimeLeft = (ms: number) => {
     if (ms <= 0) return '';
     const totalSeconds = Math.floor(ms / 1000);
@@ -48,6 +48,7 @@ export default function ShopPage() {
     const { data: session } = useSession();
     const [items, setItems] = useState<ShopItem[]>([]);
     const [activeMainCategory, setActiveMainCategory] = useState<string>('Kint');
+    const [activeRarity, setActiveRarity] = useState<string>('all');
     const [loading, setLoading] = useState(true);
     const [cart, setCart] = useState<ShopItem[]>([]);
     const [userBalance, setUserBalance] = useState<number | null>(null);
@@ -130,18 +131,25 @@ export default function ShopPage() {
         );
     }
 
-    // --- Logique de filtrage et de groupage des items ---
-    const filteredItems = items.filter(item => item.type === activeMainCategory);
-    const groupedItems = filteredItems.reduce((acc, item) => {
-        const rarity = item.category || 'Divers';
-        if (!acc[rarity]) {
-            acc[rarity] = [];
-        }
-        acc[rarity].push(item);
-        return acc;
-    }, {} as Record<string, ShopItem[]>);
+    // --- Logique de filtrage à deux niveaux ---
+    const subCategories = useMemo(() => {
+        const itemsInCategory = items.filter(item => item.type === activeMainCategory);
+        const rarities = [...new Set(itemsInCategory.map(item => item.category || 'Divers'))];
+        return rarities.sort((a, b) => rarityOrder.indexOf(a) - rarityOrder.indexOf(b));
+    }, [items, activeMainCategory]);
 
-    const sortedRarities = Object.keys(groupedItems).sort((a, b) => rarityOrder.indexOf(a) - rarityOrder.indexOf(b));
+    const filteredItems = useMemo(() => {
+        let itemsToShow = items.filter(item => item.type === activeMainCategory);
+        if (activeRarity !== 'all') {
+            itemsToShow = itemsToShow.filter(item => (item.category || 'Divers') === activeRarity);
+        }
+        return itemsToShow;
+    }, [items, activeMainCategory, activeRarity]);
+
+    const handleMainCategoryClick = (categoryId: string) => {
+        setActiveMainCategory(categoryId);
+        setActiveRarity('all'); // Réinitialise le filtre de rareté
+    };
 
     return (
         <div className="p-4 sm:p-8 text-white">
@@ -170,11 +178,12 @@ export default function ShopPage() {
                 )}
             </header>
 
-            <nav className="flex justify-center border-b border-gray-700 mb-8">
+            {/* Barre de navigation pour les catégories principales */}
+            <nav className="flex justify-center border-b border-gray-700">
                 {mainCategories.map(cat => (
                     <button
                         key={cat.id}
-                        onClick={() => setActiveMainCategory(cat.id)}
+                        onClick={() => handleMainCategoryClick(cat.id)}
                         className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors duration-200 ${
                             activeMainCategory === cat.id
                                 ? 'text-cyan-400 border-b-2 border-cyan-400'
@@ -187,66 +196,95 @@ export default function ShopPage() {
                 ))}
             </nav>
 
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={activeMainCategory}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    {filteredItems.length > 0 ? (
-                        sortedRarities.map(rarity => (
-                            <section key={rarity} className="mb-12">
-                                <h2 className="text-2xl font-bold text-cyan-300 border-l-4 border-cyan-400 pl-4 mb-6">{rarity}</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {groupedItems[rarity].map(item => {
-                                        const isKshield = item.id === 'KShield';
-                                        const isDisabled = isKshield && !kshieldStatus.canPurchase;
-                                        return (
-                                            <motion.div
-                                                key={item.id}
-                                                layout
-                                                initial={{ opacity: 0, scale: 0.9 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                exit={{ opacity: 0, scale: 0.9 }}
-                                                className="bg-[#1e2530] border border-gray-700 rounded-lg p-4 flex flex-col text-center shadow-lg"
-                                            >
-                                                <div className="flex-grow">
-                                                    <Image src={item.icon || '/default-icon.png'} alt={item.name} width={80} height={80} className="mx-auto object-contain h-20" />
-                                                    <h2 className="text-xl font-bold mt-4">{item.name}</h2>
-                                                    <p className="text-sm text-gray-400 mt-1 h-10">{item.description}</p>
-                                                </div>
-                                                <div className="mt-4">
-                                                    <p className="text-lg font-semibold text-yellow-400">{item.price} Pièces</p>
-                                                    <button
-                                                        onClick={() => addToCart(item)}
-                                                        disabled={isDisabled}
-                                                        className={`mt-2 w-full font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 ${
-                                                            isDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
-                                                        }`}
-                                                    >
-                                                        {isDisabled ? (
-                                                            <>
-                                                                <Lock size={16} />
-                                                                {formatTimeLeft(kshieldStatus.timeLeft || 0)}
-                                                            </>
-                                                        ) : (
-                                                            'Ajouter au panier'
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    })}
-                                </div>
-                            </section>
-                        ))
-                    ) : (
-                        <p className="text-center text-gray-500 py-16">Cette catégorie est vide pour le moment.</p>
-                    )}
-                </motion.div>
+            {/* Barre de navigation pour les sous-catégories (raretés) */}
+            <AnimatePresence>
+                {subCategories.length > 1 && (
+                    <motion.nav
+                        key={activeMainCategory}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="flex justify-center items-center gap-2 mt-6 flex-wrap"
+                    >
+                        <button
+                            onClick={() => setActiveRarity('all')}
+                            className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
+                                activeRarity === 'all' ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
+                            }`}
+                        >
+                            Tous
+                        </button>
+                        {subCategories.map(rarity => (
+                            <button
+                                key={rarity}
+                                onClick={() => setActiveRarity(rarity)}
+                                className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
+                                    activeRarity === rarity ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
+                                }`}
+                            >
+                                {rarity}
+                            </button>
+                        ))}
+                    </motion.nav>
+                )}
             </AnimatePresence>
+
+            {/* Grille des objets filtrés */}
+            <div className="mt-8">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeMainCategory + activeRarity}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    >
+                        {filteredItems.length > 0 ? (
+                            filteredItems.map(item => {
+                                const isKshield = item.id === 'KShield';
+                                const isDisabled = isKshield && !kshieldStatus.canPurchase;
+                                return (
+                                    <motion.div
+                                        key={item.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        className="bg-[#1e2530] border border-gray-700 rounded-lg p-4 flex flex-col text-center shadow-lg"
+                                    >
+                                        <div className="flex-grow">
+                                            <Image src={item.icon || '/default-icon.png'} alt={item.name} width={80} height={80} className="mx-auto object-contain h-20" />
+                                            <h2 className="text-xl font-bold mt-4">{item.name}</h2>
+                                            <p className="text-sm text-gray-400 mt-1 h-10">{item.description}</p>
+                                        </div>
+                                        <div className="mt-4">
+                                            <p className="text-lg font-semibold text-yellow-400">{item.price} Pièces</p>
+                                            <button
+                                                onClick={() => addToCart(item)}
+                                                disabled={isDisabled}
+                                                className={`mt-2 w-full font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 ${
+                                                    isDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
+                                                }`}
+                                            >
+                                                {isDisabled ? (
+                                                    <>
+                                                        <Lock size={16} />
+                                                        {formatTimeLeft(kshieldStatus.timeLeft || 0)}
+                                                    </>
+                                                ) : (
+                                                    'Ajouter au panier'
+                                                )}
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })
+                        ) : (
+                            <p className="col-span-full text-center text-gray-500 py-16">Aucun objet ne correspond à cette sélection.</p>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
             
             <AnimatePresence>
                 {cart.length > 0 && (
