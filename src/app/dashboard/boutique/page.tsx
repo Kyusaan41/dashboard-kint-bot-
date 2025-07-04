@@ -148,18 +148,24 @@ export default function ShopPage() {
     return (
         <div className="p-4 sm:p-8 text-white">
             <AnimatePresence>
-                {showSuccess && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -50, scale: 0.8 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -50, scale: 0.8 }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                        className="fixed top-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 z-50"
-                    >
-                        <CheckCircle />
-                        <span className="font-semibold">ACHAT RÉUSSI</span>
-                    </motion.div>
-                )}
+                {/* Le motion.div est toujours rendu, son animation gère la visibilité */}
+                <motion.div
+                    key="success-message" // Clé fixe pour AnimatePresence
+                    initial={{ opacity: 0, y: -50, scale: 0.8 }}
+                    animate={{ 
+                        opacity: showSuccess ? 1 : 0, 
+                        y: showSuccess ? 0 : -50, 
+                        scale: showSuccess ? 1 : 0.8,
+                        pointerEvents: showSuccess ? 'auto' : 'none' // Désactive les clics quand caché
+                    }}
+                    exit={{ opacity: 0, y: -50, scale: 0.8 }} 
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    style={{ visibility: showSuccess ? 'visible' : 'hidden' }} // Cache complètement si non visible
+                    className="fixed top-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 z-50"
+                >
+                    <CheckCircle />
+                    <span className="font-semibold">ACHAT RÉUSSI</span>
+                </motion.div>
             </AnimatePresence>
 
             <header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
@@ -197,8 +203,7 @@ export default function ShopPage() {
                     animate={{
                         opacity: subCategories.length > 1 ? 1 : 0,
                         height: subCategories.length > 1 ? 'auto' : 0,
-                        // Désactive les événements de souris quand la nav est cachée
-                        pointerEvents: subCategories.length > 1 ? 'auto' : 'none'
+                        pointerEvents: subCategories.length > 1 ? 'auto' : 'none' // Désactive les événements de souris quand cachée
                     }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }} // Transition pour une animation fluide
@@ -290,78 +295,89 @@ export default function ShopPage() {
             </div>
             
             <AnimatePresence>
-                {cart.length > 0 && (
-                    <motion.div
-                        initial={{ y: 100, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        exit={{ y: 100, opacity: 0 }}
-                        className="fixed bottom-4 right-4 bg-[#1e2530] border border-cyan-500 rounded-lg shadow-2xl w-80 p-4 z-50"
-                    >
-                        <h3 className="text-lg font-bold flex items-center gap-2">
-                            <ShoppingCart /> Panier ({cart.length})
-                        </h3>
-                        <div className="my-3 space-y-2 max-h-40 overflow-y-auto pr-2">
-                            {cart.map((item, index) => (
-                                <div key={`${item.id}-${index}`} className="flex justify-between items-center text-sm">
-                                    <span>{item.name}</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-yellow-400">{item.price}</span>
-                                        <button onClick={() => removeFromCart(index)} className="text-gray-500 hover:text-red-500">
-                                            <X size={16} />
-                                        </button>
+                {/* Le motion.div du panier est toujours rendu, son animation gère la visibilité */}
+                <motion.div
+                    key="shopping-cart-summary" // Clé fixe pour AnimatePresence
+                    initial={{ y: 100, opacity: 0 }}
+                    animate={{ 
+                        y: cart.length > 0 ? 0 : 100, 
+                        opacity: cart.length > 0 ? 1 : 0,
+                        pointerEvents: cart.length > 0 ? 'auto' : 'none' // Désactive les clics quand caché
+                    }}
+                    exit={{ y: 100, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    style={{ visibility: cart.length > 0 ? 'visible' : 'hidden' }} // Cache complètement si non visible
+                    className="fixed bottom-4 right-4 bg-[#1e2530] border border-cyan-500 rounded-lg shadow-2xl w-80 p-4 z-50"
+                >
+                    {/* Le contenu du panier n'est rendu que s'il y a des éléments */}
+                    {cart.length > 0 && ( 
+                        <>
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <ShoppingCart /> Panier ({cart.length})
+                            </h3>
+                            <div className="my-3 space-y-2 max-h-40 overflow-y-auto pr-2">
+                                {cart.map((item, index) => (
+                                    <div key={`${item.id}-${index}`} className="flex justify-between items-center text-sm">
+                                        <span>{item.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-yellow-400">{item.price}</span>
+                                            <button onClick={() => removeFromCart(index)} className="text-gray-500 hover:text-red-500">
+                                                <X size={16} />
+                                            </button>
+                                        </div>
                                     </div>
+                                ))}
+                            </div>
+                            <div className="border-t border-gray-700 pt-3 mt-3">
+                                <div className="flex justify-between font-bold text-lg">
+                                    <span>Total:</span>
+                                    <span>{cartTotal} Pièces</span>
                                 </div>
-                            ))}
-                        </div>
-                        <div className="border-t border-gray-700 pt-3 mt-3">
-                            <div className="flex justify-between font-bold text-lg">
-                                <span>Total:</span>
-                                <span>{cartTotal} Pièces</span>
-                            </div>
 
-                            <div className="mt-3">
-                                <AnimatePresence mode="wait">
-                                    {isConfirming ? (
-                                        <motion.div
-                                            key="confirm"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="space-y-2"
-                                        >
-                                            <p className="text-center text-sm text-gray-300">Confirmer l'achat ?</p>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={handlePurchase}
-                                                    className="w-full bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition"
-                                                >
-                                                    Confirmer
-                                                </button>
-                                                <button
-                                                    onClick={() => setIsConfirming(false)}
-                                                    className="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700 transition"
-                                                >
-                                                    Annuler
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.button
-                                            key="pay"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            onClick={() => setIsConfirming(true)}
-                                            className="w-full bg-cyan-600 text-white font-bold py-2 rounded-lg hover:bg-cyan-700 transition"
-                                        >
-                                            Payer
-                                        </motion.button>
-                                    )}
-                                </AnimatePresence>
+                                <div className="mt-3">
+                                    <AnimatePresence mode="wait">
+                                        {isConfirming ? (
+                                            <motion.div
+                                                key="confirm"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="space-y-2"
+                                            >
+                                                <p className="text-center text-sm text-gray-300">Confirmer l'achat ?</p>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={handlePurchase}
+                                                        className="w-full bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition"
+                                                    >
+                                                        Confirmer
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setIsConfirming(false)}
+                                                        className="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700 transition"
+                                                    >
+                                                        Annuler
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.button
+                                                key="pay"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                onClick={() => setIsConfirming(true)}
+                                                className="w-full bg-cyan-600 text-white font-bold py-2 rounded-lg hover:bg-cyan-700 transition"
+                                            >
+                                                Payer
+                                            </motion.button>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
                             </div>
-                        </div>
-                    </motion.div>
-                )}
+                        </>
+                    )}
+                </motion.div>
             </AnimatePresence>
         </div>
     );
