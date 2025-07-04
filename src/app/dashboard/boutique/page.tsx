@@ -190,34 +190,46 @@ export default function ShopPage() {
             </nav>
 
             <AnimatePresence>
-                
-                    <motion.nav
-                        key={activeMainCategory}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="flex justify-center items-center gap-2 mt-6 flex-wrap"
-                    >
-                        <button
-                            onClick={() => setActiveRarity('all')}
-                            className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
-                                activeRarity === 'all' ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
-                            }`}
-                        >
-                            Tous
-                        </button>
-                        {subCategories.map(rarity => (
+                {/* La motion.nav est toujours rendue, son animation gère la visibilité */}
+                <motion.nav
+                    key={activeMainCategory}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{
+                        opacity: subCategories.length > 1 ? 1 : 0,
+                        height: subCategories.length > 1 ? 'auto' : 0,
+                        // Désactive les événements de souris quand la nav est cachée
+                        pointerEvents: subCategories.length > 1 ? 'auto' : 'none'
+                    }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }} // Transition pour une animation fluide
+                    className="flex justify-center items-center gap-2 mt-6 flex-wrap"
+                    style={{ overflow: 'hidden' }} // Empêche le contenu de déborder quand la hauteur est 0
+                >
+                    {/* On ne rend les boutons de sous-catégories que s'il y en a plus d'une */}
+                    {subCategories.length > 1 && (
+                        <>
                             <button
-                                key={rarity}
-                                onClick={() => setActiveRarity(rarity)}
+                                onClick={() => setActiveRarity('all')}
                                 className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
-                                    activeRarity === rarity ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
+                                    activeRarity === 'all' ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
                                 }`}
                             >
-                                {rarity}
+                                Tous
                             </button>
-                        ))}
-                    </motion.nav>
-                
+                            {subCategories.map(rarity => (
+                                <button
+                                    key={rarity}
+                                    onClick={() => setActiveRarity(rarity)}
+                                    className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
+                                        activeRarity === rarity ? 'bg-cyan-600 text-white' : 'bg-gray-700 hover:bg-gray-600'
+                                    }`}
+                                >
+                                    {rarity}
+                                </button>
+                            ))}
+                        </>
+                    )}
+                </motion.nav>
             </AnimatePresence>
 
             <div className="mt-8">
