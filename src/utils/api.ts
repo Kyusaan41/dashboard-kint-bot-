@@ -150,3 +150,7 @@ export async function useKshield() {
 export async function getKintLogs() {
     return handleApiResponse(await fetch('/api/admin/kint-logs'));
 }
+
+export async function getAllAchievements() {
+    return handleApiResponse(await fetch('/api/success/all'));
+}

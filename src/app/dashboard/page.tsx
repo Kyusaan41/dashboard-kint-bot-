@@ -3,9 +3,9 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Coins, Gift, Loader2, Package, MessageSquare, Star, Zap } from 'lucide-react';
+import { Coins, Gift, Loader2, Package, MessageSquare, Star, Zap, Trophy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { getInventory } from '@/utils/api';
+import { getInventory, getAllAchievements } from '@/utils/api';
 
 // --- Définition des Types ---
 type UserStats = {
@@ -30,18 +30,24 @@ type InventoryItem = {
     quantity: number;
     icon?: string;
 };
-type SuccessData = { succes: string[] };
+type UnlockedSuccessData = { succes: string[] };
 type TitlesData = { titresPossedes: string[] };
 type CurrencyData = { balance: number; lastClaim: number | null };
 type MessagesApiResponse = { messagesLast7Days: number[] };
-
+type AllAchievements = {
+    [key: string]: {
+        name: string;
+        description: string;
+    }
+};
 
 // --- Le Composant Principal ---
 export default function DashboardHomePage() {
     const { data: session, status } = useSession();
     const [stats, setStats] = useState<UserStats | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
-    const [successes, setSuccesses] = useState<string[]>([]);
+    const [unlockedSuccesses, setUnlockedSuccesses] = useState<string[]>([]);
+    const [allAchievements, setAllAchievements] = useState<AllAchievements>({});
     const [patchNotes, setPatchNotes] = useState<PatchNote | null>(null);
     const [messageData, setMessageData] = useState<MessageData[]>([]);
     const [availableTitles, setAvailableTitles] = useState<string[]>([]);
@@ -52,13 +58,12 @@ export default function DashboardHomePage() {
     const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
     const [isClaiming, setIsClaiming] = useState(false);
 
-    // --- Chargement de toutes les données nécessaires ---
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.id) {
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const [statsData, messages, successData, patchnoteData, titles, currency, server, inventoryData] = await Promise.all([
+                    const [statsData, messages, successData, patchnoteData, titles, currency, server, inventoryData, allAchievementsData] = await Promise.all([
                         fetch(`/api/stats/me`).then(res => res.json()),
                         fetch(`/api/messages/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/success/${session.user.id}`).then(res => res.json()),
@@ -66,12 +71,14 @@ export default function DashboardHomePage() {
                         fetch(`/api/titres/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/currency/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/server/info`).then(res => res.json()),
-                        getInventory()
+                        getInventory(),
+                        getAllAchievements()
                     ]);
 
                     setStats(statsData);
                     setMessageData((messages.messagesLast7Days || []).map((c: number, i: number) => ({ day: `Jour ${i + 1}`, messages: c })));
-                    setSuccesses(successData.succes || []);
+                    setUnlockedSuccesses(successData.succes || []);
+                    setAllAchievements(allAchievementsData || {});
                     setPatchNotes(patchnoteData);
                     setAvailableTitles(titles.titresPossedes || []);
                     setServerInfo(server);
@@ -102,7 +109,6 @@ export default function DashboardHomePage() {
         }
     }, [status, session]);
 
-    // --- Compte à rebours, changement de titre, etc. ---
     useEffect(() => {
         if (claimStatus.canClaim || !claimStatus.timeLeft) return;
         const interval = setInterval(() => {
@@ -131,12 +137,11 @@ export default function DashboardHomePage() {
             setStats(prev => prev ? { ...prev, equippedTitle: selectedTitle } : null);
             setIsTitleModalOpen(false);
         } catch (error) {
-            console.error("Erreur lors du changement de titre:", error);
             alert("Une erreur est survenue.");
         }
     };
     const formatRank = (rank: number | null) => {
-        if (!rank) return <span className="text-gray-400">(Non classé)</span>;
+        if (rank === null) return <span className="text-gray-400">(Non classé)</span>;
         if (rank === 1) return <span className="font-bold text-yellow-400">(1er)</span>;
         if (rank === 2) return <span className="font-bold text-gray-300">(2e)</span>;
         if (rank === 3) return <span className="font-bold text-yellow-600">(3e)</span>;
@@ -144,7 +149,6 @@ export default function DashboardHomePage() {
     };
     const handleClaimReward = async () => {
         if (!claimStatus.canClaim || isClaiming) return;
-        
         setIsClaiming(true);
         try {
             const res = await fetch('/api/claim-reward', { method: 'POST' });
@@ -155,9 +159,6 @@ export default function DashboardHomePage() {
                 setClaimStatus({ canClaim: false, timeLeft: '23:59:59' });
             } else {
                 alert(data.error || "Impossible de réclamer la récompense maintenant.");
-                if (data.timeLeft) {
-                    setClaimStatus({ canClaim: false, timeLeft: new Date(data.timeLeft).toISOString().substr(11, 8) });
-                }
             }
         } catch (error) {
             alert("Une erreur de communication est survenue.");
@@ -170,10 +171,12 @@ export default function DashboardHomePage() {
         return <div className="flex h-full items-center justify-center text-gray-400"><Loader2 className="h-8 w-8 animate-spin mr-3"/> Chargement de vos exploits...</div>;
     }
 
+    const totalAchievementsCount = Object.keys(allAchievements).length;
+
     return (
         <>
             <div className="space-y-6">
-                <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-4">
                     {serverInfo && serverInfo.id && serverInfo.icon && (
                         <Image
                             src={`https://cdn.discordapp.com/icons/${serverInfo.id}/${serverInfo.icon}.png`}
@@ -186,32 +189,38 @@ export default function DashboardHomePage() {
                     <h1 className="text-2xl font-bold">Bienvenue sur {serverInfo?.name || 'KTS'}</h1>
                 </div>
 
-                {/* --- GRILLE DE MISE EN PAGE SUR 3 COLONNES --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Bloc 1 : Profil Utilisateur */}
-                    <div className="bg-[#1e2530] p-6 rounded-lg">
-                        <div className="flex items-center space-x-4">
+                {/* --- Ligne 1: Bloc de profil principal --- */}
+                <div className="bg-[#1e2530] p-6 rounded-lg">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
                             <Image src={session?.user?.image || '/default-avatar.png'} alt="Avatar" width={64} height={64} className="rounded-full" />
                             <div>
-                                <p className="font-bold text-lg">{session?.user?.name}</p>
-                                <p className="text-sm text-purple-400 font-semibold">♕ {session?.user?.role === 'admin' ? 'Administrateur' : 'Membre'}</p>
+                                <h1 className="text-2xl font-bold">{session?.user?.name}</h1>
+                                <p className="text-sm text-purple-400 font-semibold">♕ {stats?.equippedTitle || 'Membre'}</p>
                             </div>
                         </div>
-                        <ul className="space-y-2 text-gray-300 mt-4">
-                            <li className="flex items-center"><Coins className="h-5 w-5 text-yellow-400 mr-3" /> Possède <span className="font-bold text-yellow-400 mx-2">{(stats?.currency ?? 0).toLocaleString()}</span> pièces <span className="ml-2">{formatRank(stats?.currencyRank ?? null)}</span></li>
-                            <li className="flex items-center"><Zap className="h-5 w-5 text-cyan-400 mr-3" /> Possède <span className="font-bold text-cyan-400 mx-2">{stats?.points ?? 0}</span> points <span className="ml-2">{formatRank(stats?.pointsRank ?? null)}</span></li>
-                            <li className="flex items-center"><Star className="h-5 w-5 text-green-400 mr-3" /> Possède <span className="font-bold text-green-400 mx-2">{(stats?.xp ?? 0).toLocaleString()}</span> XP <span className="ml-2">{formatRank(stats?.xpRank ?? null)}</span></li>
+                        <button onClick={() => setIsTitleModalOpen(true)} className="bg-cyan-600 px-4 py-2 rounded-md text-sm font-semibold hover:bg-cyan-700 ml-auto">
+                            Changer de titre
+                        </button>
+                    </div>
+                </div>
+
+                {/* Ligne 2: Grille avec les stats, l'inventaire et les messages */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Bloc Stats */}
+                    <div className="bg-[#1e2530] p-6 rounded-lg space-y-4">
+                        <h2 className="font-bold text-lg">Statistiques</h2>
+                        <ul className="space-y-3 text-gray-300">
+                            <li className="flex items-center"><Coins className="h-5 w-5 text-yellow-400 mr-3" /> <div><span>{(stats?.currency ?? 0).toLocaleString()}</span> pièces <span className="ml-1">{formatRank(stats?.currencyRank ?? null)}</span></div></li>
+                            <li className="flex items-center"><Zap className="h-5 w-5 text-cyan-400 mr-3" /> <div><span>{stats?.points ?? 0}</span> points <span className="ml-1">{formatRank(stats?.pointsRank ?? null)}</span></div></li>
+                            <li className="flex items-center"><Star className="h-5 w-5 text-green-400 mr-3" /> <div><span>{(stats?.xp ?? 0).toLocaleString()}</span> XP <span className="ml-1">{formatRank(stats?.xpRank ?? null)}</span></div></li>
                         </ul>
-                        <div className="flex items-center pt-4 mt-4 border-t border-gray-700">
-                            <p>Titre actuel: <span className="font-semibold ml-2">{stats?.equippedTitle || 'Aucun'}</span></p>
-                            <button onClick={() => setIsTitleModalOpen(true)} className="ml-auto bg-cyan-600 px-3 py-1 rounded-md text-sm font-semibold hover:bg-cyan-700">Changer le titre</button>
-                        </div>
                     </div>
 
-                    {/* Bloc 2 : Inventaire Rapide */}
+                    {/* Bloc Inventaire */}
                     <div className="bg-[#1e2530] p-6 rounded-lg">
                          <h2 className="font-bold text-lg mb-4 flex items-center"><Package className="h-5 w-5 mr-2"/>Inventaire rapide</h2>
-                        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
+                        <div className="space-y-3 max-h-[150px] overflow-y-auto pr-2">
                             {inventory && inventory.length > 0 ? (
                                 inventory.map(item => (
                                     <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
@@ -227,15 +236,15 @@ export default function DashboardHomePage() {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-center text-gray-500 pt-16">Votre inventaire est vide.</p>
+                                <p className="text-center text-gray-500 pt-8">Votre inventaire est vide.</p>
                             )}
                         </div>
                     </div>
 
-                    {/* Bloc 3 : Messages sur 7 jours */}
-                    <div className="bg-[#1e2530] p-6 rounded-lg lg:col-span-1 md:col-span-2">
+                    {/* Bloc Messages */}
+                    <div className="bg-[#1e2530] p-6 rounded-lg md:col-span-2 lg:col-span-1">
                         <h2 className="font-bold mb-4 flex items-center"><MessageSquare className="h-5 w-5 mr-2"/>Messages sur 7 jours</h2>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width="100%" height={150}>
                             <BarChart data={messageData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                                 <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} /><YAxis stroke="#9ca3af" fontSize={12} allowDecimals={false} /><Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none' }} cursor={{fill: 'rgba(100, 116, 139, 0.1)'}}/><Bar dataKey="messages" name="Messages" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                             </BarChart>
@@ -243,6 +252,7 @@ export default function DashboardHomePage() {
                     </div>
                 </div>
                 
+                {/* --- Blocs du bas --- */}
                 <div className="bg-[#1e2530] p-6 rounded-lg text-center">
                     <h2 className="font-bold text-lg flex items-center justify-center"><Gift className="h-6 w-6 mr-2 text-yellow-400"/>Récompense quotidienne</h2>
                     <p className="text-gray-400 text-sm my-2">Connecte-toi chaque jour pour obtenir un bonus de 500 pièces !</p>
@@ -261,12 +271,22 @@ export default function DashboardHomePage() {
                         </div>
                     </div>
                 )}
-
+                
                 <div className="bg-[#1e2530] p-6 rounded-lg">
-                    <h2 className="font-bold text-lg mb-4">🏆 Succès débloqués</h2>
-                    {successes.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{successes.map(succesName => <div key={succesName} className="bg-gray-700 p-3 rounded-md text-center"><p>{succesName}</p></div>)}</div>
-                    ) : (<p className="text-gray-500 text-sm">Aucun succès débloqué pour le moment.</p>)}
+                    <h2 className="font-bold text-lg mb-4">
+                        🏆 Succès débloqués ({unlockedSuccesses.length}/{totalAchievementsCount})
+                    </h2>
+                    {unlockedSuccesses.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {unlockedSuccesses.map(successId => (
+                                <div key={successId} className="bg-gray-700 p-3 rounded-md text-center truncate" title={allAchievements[successId]?.description || 'Succès secret'}>
+                                    <p>{allAchievements[successId]?.name || successId}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-gray-500 text-sm">Aucun succès débloqué pour le moment.</p>
+                    )}
                 </div>
             </div>
 
