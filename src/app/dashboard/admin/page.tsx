@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react'; // Ajout de useMemo
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-// On importe la nouvelle fonction et une icône pour le rafraîchissement
 import { getUsers, giveMoney, giveKip, restartBot, getBotLogs } from '@/utils/api'; 
 import Image from 'next/image';
 import { Power, RefreshCw } from 'lucide-react';
@@ -20,6 +19,9 @@ export default function AdminPage() {
     const [selectedUser, setSelectedUser] = useState<UserEntry | null>(null);
     const [moneyAmount, setMoneyAmount] = useState<number | ''>('');
     const [pointsAmount, setPointsAmount] = useState<number | ''>('');
+    
+    // --- NOUVEAU : State pour la recherche ---
+    const [searchQuery, setSearchQuery] = useState('');
     
     // State pour les logs
     const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -43,7 +45,6 @@ export default function AdminPage() {
 
             const fetchLogs = () => {
                 getBotLogs()
-                    // CORRECTION ICI : Accéder à data.logs avant d'appeler reverse()
                     .then(data => setLogs(data.logs.reverse())) 
                     .catch(err => console.error("Erreur de chargement des logs:", err))
                     .finally(() => setLoadingLogs(false));
@@ -61,9 +62,18 @@ export default function AdminPage() {
         logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [logs]);
 
+    // --- NOUVEAU : Liste des utilisateurs filtrée ---
+    const filteredUsers = useMemo(() => {
+        if (!searchQuery) return users;
+        return users.filter(user =>
+            user.username.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [users, searchQuery]);
+
+
     const handleStatAction = async (action: (userId: string, amount: number) => Promise<any>, amount: number | '', isRemoval: boolean = false) => {
         if (!selectedUser || amount === '') return;
-        const finalAmount = isRemoval ? -Math.abs(amount) : amount;
+        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount);
         try {
             await action(selectedUser.id, finalAmount);
             alert(`Action réussie pour ${selectedUser.username}`);
@@ -98,9 +108,20 @@ export default function AdminPage() {
                 <div className="space-y-6">
                     <div className="bg-[#1e2530] p-6 rounded-lg border border-gray-700">
                         <h2 className="text-xl font-semibold mb-4">Utilisateurs</h2>
+                        
+                        {/* --- NOUVEAU : Champ de recherche --- */}
+                        <input
+                            type="text"
+                            placeholder="Rechercher un membre..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-gray-900 p-2 rounded-md mb-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        />
+
                         {loadingUsers ? <p>Chargement...</p> : (
-                            <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
-                                {users.map((user) => (
+                            <div className="max-h-80 overflow-y-auto space-y-2 pr-2">
+                                {/* On utilise la liste filtrée ici */}
+                                {filteredUsers.map((user) => (
                                     <div key={user.id} onClick={() => setSelectedUser(user)} className={`flex items-center p-2 rounded-md cursor-pointer ${selectedUser?.id === user.id ? 'bg-cyan-600' : 'bg-gray-800 hover:bg-gray-700'}`}>
                                         <Image src={user.avatar || '/default-avatar.png'} alt={user.username} width={40} height={40} className="rounded-full" />
                                         <span className="ml-3">{user.username}</span>
@@ -115,12 +136,20 @@ export default function AdminPage() {
                             <div className="space-y-6 pt-2">
                                 <div>
                                     <label className="block mb-2 font-medium">Gérer l'Argent</label>
-                                    <div className="flex gap-2"><input type="number" placeholder="Montant..." value={moneyAmount} onChange={e => setMoneyAmount(Number(e.target.value))} className="w-full bg-gray-800 p-2 rounded-md" /><button onClick={() => handleStatAction(giveMoney, moneyAmount)} className="px-4 bg-green-600 rounded-md font-semibold hover:bg-green-700">Ajouter</button><button onClick={() => handleStatAction(giveMoney, moneyAmount, true)} className="px-4 bg-red-600 rounded-md font-semibold hover:bg-red-700">Enlever</button></div>
+                                    <div className="flex gap-2">
+                                        <input type="number" placeholder="Montant..." value={moneyAmount} onChange={e => setMoneyAmount(Number(e.target.value))} className="w-full bg-gray-800 p-2 rounded-md" />
+                                        <button onClick={() => handleStatAction(giveMoney, moneyAmount)} className="px-4 bg-green-600 rounded-md font-semibold hover:bg-green-700">Ajouter</button>
+                                        <button onClick={() => handleStatAction(giveMoney, moneyAmount, true)} className="px-4 bg-red-600 rounded-md font-semibold hover:bg-red-700">Enlever</button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block mb-2 font-medium">Gérer les Points KIP</label>
-                                    <div className="flex gap-2"><input type="number" placeholder="Montant..." value={pointsAmount} onChange={e => setPointsAmount(Number(e.target.value))} className="w-full bg-gray-800 p-2 rounded-md" /><button onClick={() => handleStatAction(giveKip, pointsAmount)} className="px-4 bg-green-600 rounded-md font-semibold hover:bg-green-700">Ajouter</button><button onClick={() => handleStatAction(giveKip, pointsAmount, true)} className="px-4 bg-red-600 rounded-md font-semibold hover:bg-red-700">Enlever</button></div>
-                                                            </div>
+                                    <div className="flex gap-2">
+                                        <input type="number" placeholder="Montant..." value={pointsAmount} onChange={e => setPointsAmount(Number(e.target.value))} className="w-full bg-gray-800 p-2 rounded-md" />
+                                        <button onClick={() => handleStatAction(giveKip, pointsAmount)} className="px-4 bg-green-600 rounded-md font-semibold hover:bg-green-700">Ajouter</button>
+                                        <button onClick={() => handleStatAction(giveKip, pointsAmount, true)} className="px-4 bg-red-600 rounded-md font-semibold hover:bg-red-700">Enlever</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -146,32 +175,3 @@ export default function AdminPage() {
         </div>
     );
 }
-
-// Le fichier `app/api/logs/route.ts` ne change pas car le problème était côté client.
-// Cependant, pour la complétude, je le réinclus ici :
-
-// app/api/logs/route.ts
-// import { NextResponse } from 'next/server';
-
-// export async function GET() {
-//   try {
-//     // L'URL de ton bot hébergé sur Katabump
-//     const response = await fetch('http://51.83.103.24:20077/api/logs');
-
-//     if (!response.ok) {
-//       return NextResponse.json(
-//         { error: 'Erreur côté bot lors de la récupération des logs' },
-//         { status: 500 }
-//       );
-//     }
-
-//     const data = await response.json();
-//     return NextResponse.json({ logs: data.logs || [] });
-//   } catch (error) {
-//     console.error('Erreur dans l\'API logs (route.ts) :', error);
-//     return NextResponse.json(
-//       { error: 'Impossible de récupérer les logs du bot.' },
-//       { status: 500 }
-//     );
-//   }
-// }
