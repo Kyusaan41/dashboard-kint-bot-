@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
-import { getShopItems, buyItem, fetchCurrency, getKshieldStatus } from '@/utils/api';
+import { getShopItems, buyItem, fetchCurrency, getKshieldStatus, getInventory } from '@/utils/api';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle, Sword, Palette, Wrench } from 'lucide-react';
@@ -16,6 +16,13 @@ type ShopItem = {
     icon: string;
     type: 'Kint' | 'Utilitaire' | 'Personnalisation' | string;
     category: 'Légendaire' | 'Épique' | 'Rare' | 'Commun' | string;
+};
+
+type InventoryItem = {
+    id: string;
+    name: string;
+    quantity: number;
+    icon?: string;
 };
 
 type KShieldStatus = {
@@ -47,6 +54,7 @@ const rarityOrder = ['Légendaire', 'Épique', 'Rare', 'Commun', 'Divers'];
 export default function ShopPage() {
     const { data: session } = useSession();
     const [items, setItems] = useState<ShopItem[]>([]);
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [activeMainCategory, setActiveMainCategory] = useState<string>('Kint');
     const [activeRarity, setActiveRarity] = useState<string>('all');
     const [loading, setLoading] = useState(true);
@@ -61,14 +69,16 @@ export default function ShopPage() {
         if (!session?.user?.id) return;
         setLoading(true); setError(null);
         try {
-            const [shopData, currencyData, kshieldData] = await Promise.all([
+            const [shopData, currencyData, kshieldData, inventoryData] = await Promise.all([
                 getShopItems(),
                 fetchCurrency(session.user.id),
-                getKshieldStatus(session.user.id)
+                getKshieldStatus(session.user.id),
+                getInventory() // On récupère l'inventaire
             ]);
             setItems(Array.isArray(shopData) ? shopData : []);
             setUserBalance(currencyData.balance);
             setKshieldStatus(kshieldData);
+            setInventory(Array.isArray(inventoryData) ? inventoryData : []); // On stocke l'inventaire
         } catch (err) {
             console.error(err);
             setError("Impossible de charger les données de la boutique.");
@@ -76,14 +86,9 @@ export default function ShopPage() {
             setLoading(false);
         }
     };
-
-    // TOUS LES HOOKS (useState, useEffect, useMemo) DOIVENT ÊTRE DÉCLARÉS ICI,
-    // AVANT TOUT RETOUR CONDITIONNEL (`if (loading) return ...`)
     
-    // useEffect pour le chargement des données
     useEffect(() => { if (session) fetchData(); }, [session]);
     
-    // Ces useMemo DOIVENT être ici, à la racine du composant
     const subCategories = useMemo(() => {
         const itemsInCategory = items.filter(item => item.type === activeMainCategory);
         const rarities = [...new Set(itemsInCategory.map(item => item.category || 'Divers'))];
@@ -99,9 +104,11 @@ export default function ShopPage() {
     }, [items, activeMainCategory, activeRarity]);
 
 
-    // Fonctions diverses (peuvent être avant ou après les Hooks, mais avant le JSX)
     const addToCart = (item: ShopItem) => {
         if (item.id === 'KShield' && !kshieldStatus.canPurchase) return;
+        const isOwned = inventory.some(invItem => invItem.id === item.id);
+        // On considère les articles de personnalisation comme uniques
+        if (item.type === 'Personnalisation' && isOwned) return; 
         setCart(prev => [...prev, item]);
     };
     const removeFromCart = (itemIndex: number) => {
@@ -136,7 +143,6 @@ export default function ShopPage() {
     };
 
 
-    // MAINTENANT, et seulement MAINTENANT, tu peux avoir des retours conditionnels.
     if (loading) {
         return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement...</p>;
     }
@@ -154,23 +160,21 @@ export default function ShopPage() {
         );
     }
 
-    // Le reste du rendu du composant
     return (
         <div className="p-4 sm:p-8 text-white">
             <AnimatePresence>
-                {/* Le motion.div est toujours rendu, son animation gère la visibilité */}
                 <motion.div
-                    key="success-message" // Clé fixe pour AnimatePresence
+                    key="success-message" 
                     initial={{ opacity: 0, y: -50, scale: 0.8 }}
                     animate={{ 
                         opacity: showSuccess ? 1 : 0, 
                         y: showSuccess ? 0 : -50, 
                         scale: showSuccess ? 1 : 0.8,
-                        pointerEvents: showSuccess ? 'auto' : 'none' // Désactive les clics quand caché
+                        pointerEvents: showSuccess ? 'auto' : 'none'
                     }}
                     exit={{ opacity: 0, y: -50, scale: 0.8 }} 
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    style={{ visibility: showSuccess ? 'visible' : 'hidden' }} // Cache complètement si non visible
+                    style={{ visibility: showSuccess ? 'visible' : 'hidden' }}
                     className="fixed top-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 z-50"
                 >
                     <CheckCircle />
@@ -206,21 +210,19 @@ export default function ShopPage() {
             </nav>
 
             <AnimatePresence>
-                {/* La motion.nav est toujours rendue, son animation gère la visibilité */}
                 <motion.nav
                     key={activeMainCategory}
                     initial={{ opacity: 0, height: 0 }}
                     animate={{
                         opacity: subCategories.length > 1 ? 1 : 0,
                         height: subCategories.length > 1 ? 'auto' : 0,
-                        pointerEvents: subCategories.length > 1 ? 'auto' : 'none' // Désactive les événements de souris quand cachée
+                        pointerEvents: subCategories.length > 1 ? 'auto' : 'none'
                     }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }} // Transition pour une animation fluide
+                    transition={{ duration: 0.3 }}
                     className="flex justify-center items-center gap-2 mt-6 flex-wrap"
-                    style={{ overflow: 'hidden' }} // Empêche le contenu de déborder quand la hauteur est 0
+                    style={{ overflow: 'hidden' }}
                 >
-                    {/* On ne rend les boutons de sous-catégories que s'il y en a plus d'une */}
                     {subCategories.length > 1 && (
                         <>
                             <button
@@ -260,7 +262,12 @@ export default function ShopPage() {
                         {filteredItems.length > 0 ? (
                             filteredItems.map(item => {
                                 const isKshield = item.id === 'KShield';
-                                const isDisabled = isKshield && !kshieldStatus.canPurchase;
+                                const isOwned = inventory.some(invItem => invItem.id === item.id);
+                                // Les articles de personnalisation sont uniques
+                                const isUniqueAndOwned = item.type === 'Personnalisation' && isOwned;
+                                
+                                const isDisabled = (isKshield && !kshieldStatus.canPurchase) || isUniqueAndOwned;
+
                                 return (
                                     <motion.div
                                         key={item.id}
@@ -284,7 +291,11 @@ export default function ShopPage() {
                                                     isDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
                                                 }`}
                                             >
-                                                {isDisabled ? (
+                                                {isUniqueAndOwned ? (
+                                                    <>
+                                                      <CheckCircle size={16} /> Possédé
+                                                    </>
+                                                ) : isKshield && !kshieldStatus.canPurchase ? (
                                                     <>
                                                         <Lock size={16} />
                                                         {formatTimeLeft(kshieldStatus.timeLeft || 0)}
@@ -305,21 +316,19 @@ export default function ShopPage() {
             </div>
             
             <AnimatePresence>
-                {/* Le motion.div du panier est toujours rendu, son animation gère la visibilité */}
                 <motion.div
-                    key="shopping-cart-summary" // Clé fixe pour AnimatePresence
+                    key="shopping-cart-summary"
                     initial={{ y: 100, opacity: 0 }}
                     animate={{ 
                         y: cart.length > 0 ? 0 : 100, 
                         opacity: cart.length > 0 ? 1 : 0,
-                        pointerEvents: cart.length > 0 ? 'auto' : 'none' // Désactive les clics quand caché
+                        pointerEvents: cart.length > 0 ? 'auto' : 'none'
                     }}
                     exit={{ y: 100, opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                    style={{ visibility: cart.length > 0 ? 'visible' : 'hidden' }} // Cache complètement si non visible
+                    style={{ visibility: cart.length > 0 ? 'visible' : 'hidden' }}
                     className="fixed bottom-4 right-4 bg-[#1e2530] border border-cyan-500 rounded-lg shadow-2xl w-80 p-4 z-50"
                 >
-                    {/* Le contenu du panier n'est rendu que s'il y a des éléments */}
                     {cart.length > 0 && ( 
                         <>
                             <h3 className="text-lg font-bold flex items-center gap-2">
