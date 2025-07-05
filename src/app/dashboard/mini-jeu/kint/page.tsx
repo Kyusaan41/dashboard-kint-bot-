@@ -2,19 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-// On s'assure que updatePoints est bien importé
 import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, TrendingUp, TrendingDown, ChevronsRight, Crown, User, AlertTriangle, Shield, Loader2 } from 'lucide-react';
+import { Zap, TrendingUp, TrendingDown, Crown, User, Shield, Loader2 } from 'lucide-react';
 
-// --- Définition des Types ---
+// --- Types ---
 type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
-// On ajoute un type optionnel pour les entrées spéciales de l'historique
 type HistoryEntry = { amount: number; date: string; reason: string; type?: 'shield' };
 type InventoryItem = { id: string; name: string; quantity: number; };
 
-// --- Le Composant Principal ---
+// --- Composant Principal ---
 export default function KintMiniGamePage() {
     const { data: session, status } = useSession();
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -25,9 +23,9 @@ export default function KintMiniGamePage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>('');
 
+    // Fonction pour charger toutes les données
     const fetchData = async () => {
         if (!session?.user?.id) return;
-        setLoading(true);
         try {
             const [leaderboardData, pointsData, historyData, inventoryData] = await Promise.all([
                 getPointsLeaderboard(),
@@ -41,52 +39,32 @@ export default function KintMiniGamePage() {
             setInventory(inventoryData);
         } catch (error) {
             console.error("Erreur de chargement des données du jeu:", error);
-        } finally {
-            setLoading(false);
         }
     };
 
+    // Chargement initial des données
     useEffect(() => {
         if (status === 'authenticated') {
-            fetchData();
+            setLoading(true);
+            fetchData().finally(() => setLoading(false));
         }
     }, [status, session]);
     
+    // Logique d'envoi de la modification de points
     const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
         if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || !session?.user?.id) return;
         
         setIsSubmitting(true);
         const amount = Number(manualPointsAmount);
-        const amountWithSign = actionType === 'add' ? amount : -amount;
+        const pointsToSend = actionType === 'add' ? amount : -amount;
         
-        try {
-            // On envoie la requête de mise à jour au bot
-            const response = await updatePoints(session.user.id, amountWithSign);
+        console.log(`[DEBUG KINT] Tentative d'envoi de ${pointsToSend} points.`);
 
-            // Si le bot a utilisé un KShield
-            if (response.kshieldUsed) {
-                const newHistoryEntry: HistoryEntry = {
-                    amount: 0,
-                    date: new Date().toISOString(),
-                    reason: 'Perte annulée',
-                    type: 'shield' // Type spécial pour l'affichage
-                };
-                setHistory(prev => [newHistoryEntry, ...prev]);
-                alert('Votre KShield vous a protégé de la perte de points !');
-            } else {
-                // Sinon, on met à jour les points et l'historique normalement
-                setUserPoints(response.newPoints);
-                const newHistoryEntry: HistoryEntry = {
-                    amount: amountWithSign,
-                    date: new Date().toISOString(),
-                    reason: amountWithSign > 0 ? 'Victoire KINT' : 'Défaite KINT',
-                };
-                setHistory(prev => [newHistoryEntry, ...prev]);
-            }
-            
-            // On met à jour l'inventaire pour refléter la consommation du KShield
-            const updatedInventory = await getInventory();
-            setInventory(updatedInventory);
+        try {
+            await updatePoints(session.user.id, pointsToSend);
+            // Après la mise à jour, on recharge toutes les données pour être sûr
+            await fetchData();
+            alert('Points mis à jour !');
 
         } catch (error) {
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -108,6 +86,7 @@ export default function KintMiniGamePage() {
             </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                {/* --- Section Joueur et Actions --- */}
                 <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg space-y-6">
                     <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                         <Image src={session?.user?.image || '/default-avatar.png'} alt="avatar" width={48} height={48} className="rounded-full"/>
@@ -132,6 +111,7 @@ export default function KintMiniGamePage() {
                     </div>
                 </div>
 
+                {/* --- Section Historique --- */}
                 <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg">
                     <h2 className="text-2xl font-bold text-white mb-4">Historique Récent</h2>
                     <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
@@ -139,21 +119,9 @@ export default function KintMiniGamePage() {
                             {history.length > 0 ? history.map((item, index) => (
                                 <motion.div key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3, delay: index * 0.05 }} className="flex items-center justify-between text-sm bg-gray-800 p-3 rounded-md">
                                     <div className="flex items-center gap-3">
-                                        {/* --- NOUVELLE LOGIQUE D'AFFICHAGE DE L'ICÔNE --- */}
-                                        {item.type === 'shield' ? (
-                                            <Shield className="text-blue-400" size={18}/>
-                                        ) : item.amount > 0 ? (
-                                            <TrendingUp className="text-green-500" size={18}/>
-                                        ) : (
-                                            <TrendingDown className="text-red-500" size={18}/>
-                                        )}
+                                        {item.amount > 0 ? ( <TrendingUp className="text-green-500" size={18}/> ) : ( <TrendingDown className="text-red-500" size={18}/> )}
                                         <div>
-                                            {/* --- NOUVELLE LOGIQUE D'AFFICHAGE DU TEXTE --- */}
-                                            {item.type === 'shield' ? (
-                                                <p className="font-bold text-blue-400">KShield Utilisé</p>
-                                            ) : (
-                                                <p className={`font-bold ${item.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{item.amount > 0 ? `+${item.amount}` : item.amount} points</p>
-                                            )}
+                                            <p className={`font-bold ${item.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{item.amount > 0 ? `+${item.amount}` : item.amount} points</p>
                                             <p className="text-xs text-gray-500">{item.reason}</p>
                                         </div>
                                     </div>
@@ -166,6 +134,7 @@ export default function KintMiniGamePage() {
                     </div>
                 </div>
 
+                {/* --- Section Classement --- */}
                 <div className="lg:col-span-1 bg-[#1e2530] p-6 rounded-lg">
                     <h2 className="text-2xl font-bold text-white mb-4">Classement</h2>
                     <ul className="space-y-2">

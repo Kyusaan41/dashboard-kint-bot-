@@ -146,3 +146,7 @@ export async function useKshield() {
         method: 'POST',
     }));
 }
+
+export async function getKintLogs() {
+    return handleApiResponse(await fetch('/api/admin/kint-logs'));
+}
