@@ -3,11 +3,11 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Award, BarChart2, Coins, Crown, Gift, MessageSquare, Star, Zap, Loader2, Package } from 'lucide-react';
+import { Coins, Gift, Loader2, Package, MessageSquare, Star, Zap } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getInventory } from '@/utils/api';
 
-// --- Définition des Types pour les données ---
+// --- Définition des Types ---
 type UserStats = {
     currency: number;
     currencyRank: number | null;
@@ -58,44 +58,35 @@ export default function DashboardHomePage() {
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const results = await Promise.allSettled([
-                        fetch(`/api/stats/me`),
-                        fetch(`/api/messages/${session.user.id}`),
-                        fetch(`/api/success/${session.user.id}`),
-                        fetch(`/api/patchnote`),
-                        fetch(`/api/titres/${session.user.id}`),
-                        fetch(`/api/currency/${session.user.id}`),
-                        fetch(`/api/server/info`),
-                        getInventory(),
+                    const [statsData, messages, successData, patchnoteData, titles, currency, server, inventoryData] = await Promise.all([
+                        fetch(`/api/stats/me`).then(res => res.json()),
+                        fetch(`/api/messages/${session.user.id}`).then(res => res.json()),
+                        fetch(`/api/success/${session.user.id}`).then(res => res.json()),
+                        fetch(`/api/patchnote`).then(res => res.json()),
+                        fetch(`/api/titres/${session.user.id}`).then(res => res.json()),
+                        fetch(`/api/currency/${session.user.id}`).then(res => res.json()),
+                        fetch(`/api/server/info`).then(res => res.json()),
+                        getInventory()
                     ]);
 
-                    const processData = async (promiseResult: PromiseSettledResult<any>, setter: Function) => {
-                        if (promiseResult.status === 'fulfilled') {
-                            const value = promiseResult.value.ok ? await promiseResult.value.json() : promiseResult.value;
-                            setter(value);
-                            return value;
-                        }
-                        return null;
-                    };
-                    
-                    const statsData = await processData(results[0], setStats);
-                    await processData(results[1], (data: MessagesApiResponse) => setMessageData((data.messagesLast7Days || []).map((c: number, i: number) => ({ day: `Jour ${i + 1}`, messages: c }))));
-                    await processData(results[2], (data: SuccessData) => setSuccesses(data.succes || []));
-                    await processData(results[3], setPatchNotes);
-                    await processData(results[4], (data: TitlesData) => setAvailableTitles(data.titresPossedes || []));
-                    await processData(results[5], (data: CurrencyData) => {
-                        if (!data) return;
+                    setStats(statsData);
+                    setMessageData((messages.messagesLast7Days || []).map((c: number, i: number) => ({ day: `Jour ${i + 1}`, messages: c })));
+                    setSuccesses(successData.succes || []);
+                    setPatchNotes(patchnoteData);
+                    setAvailableTitles(titles.titresPossedes || []);
+                    setServerInfo(server);
+                    setInventory(inventoryData || []);
+
+                    if (currency) {
                         const now = Date.now();
                         const twentyFourHours = 24 * 60 * 60 * 1000;
-                        if (!data.lastClaim || (now - data.lastClaim >= twentyFourHours)) {
+                        if (!currency.lastClaim || (now - currency.lastClaim >= twentyFourHours)) {
                             setClaimStatus({ canClaim: true, timeLeft: '' });
                         } else {
-                            const timeLeft = twentyFourHours - (now - data.lastClaim);
+                            const timeLeft = twentyFourHours - (now - currency.lastClaim);
                             setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
                         }
-                    });
-                    await processData(results[6], setServerInfo);
-                    await processData(results[7], setInventory);
+                    }
 
                     if (statsData) {
                         setSelectedTitle(statsData.equippedTitle || '');
@@ -195,8 +186,10 @@ export default function DashboardHomePage() {
                     <h1 className="text-2xl font-bold">Bienvenue sur {serverInfo?.name || 'KTS'}</h1>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-[#1e2530] p-6 rounded-lg space-y-4">
+                {/* --- GRILLE DE MISE EN PAGE SUR 3 COLONNES --- */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Bloc 1 : Profil Utilisateur */}
+                    <div className="bg-[#1e2530] p-6 rounded-lg">
                         <div className="flex items-center space-x-4">
                             <Image src={session?.user?.image || '/default-avatar.png'} alt="Avatar" width={64} height={64} className="rounded-full" />
                             <div>
@@ -204,20 +197,22 @@ export default function DashboardHomePage() {
                                 <p className="text-sm text-purple-400 font-semibold">♕ {session?.user?.role === 'admin' ? 'Administrateur' : 'Membre'}</p>
                             </div>
                         </div>
-                        <ul className="space-y-2 text-gray-300">
+                        <ul className="space-y-2 text-gray-300 mt-4">
                             <li className="flex items-center"><Coins className="h-5 w-5 text-yellow-400 mr-3" /> Possède <span className="font-bold text-yellow-400 mx-2">{(stats?.currency ?? 0).toLocaleString()}</span> pièces <span className="ml-2">{formatRank(stats?.currencyRank ?? null)}</span></li>
                             <li className="flex items-center"><Zap className="h-5 w-5 text-cyan-400 mr-3" /> Possède <span className="font-bold text-cyan-400 mx-2">{stats?.points ?? 0}</span> points <span className="ml-2">{formatRank(stats?.pointsRank ?? null)}</span></li>
                             <li className="flex items-center"><Star className="h-5 w-5 text-green-400 mr-3" /> Possède <span className="font-bold text-green-400 mx-2">{(stats?.xp ?? 0).toLocaleString()}</span> XP <span className="ml-2">{formatRank(stats?.xpRank ?? null)}</span></li>
                         </ul>
-                        <div className="flex items-center pt-4 border-t border-gray-700">
+                        <div className="flex items-center pt-4 mt-4 border-t border-gray-700">
                             <p>Titre actuel: <span className="font-semibold ml-2">{stats?.equippedTitle || 'Aucun'}</span></p>
                             <button onClick={() => setIsTitleModalOpen(true)} className="ml-auto bg-cyan-600 px-3 py-1 rounded-md text-sm font-semibold hover:bg-cyan-700">Changer le titre</button>
                         </div>
                     </div>
+
+                    {/* Bloc 2 : Inventaire Rapide */}
                     <div className="bg-[#1e2530] p-6 rounded-lg">
-                        <h2 className="font-bold text-lg mb-4 flex items-center"><Package className="h-5 w-5 mr-2"/>Inventaire rapide</h2>
-                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                            {inventory.length > 0 ? (
+                         <h2 className="font-bold text-lg mb-4 flex items-center"><Package className="h-5 w-5 mr-2"/>Inventaire rapide</h2>
+                        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
+                            {inventory && inventory.length > 0 ? (
                                 inventory.map(item => (
                                     <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
                                         <div className="w-10 h-10 bg-black/20 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
@@ -232,19 +227,20 @@ export default function DashboardHomePage() {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-center text-gray-500 py-8">Votre inventaire est vide.</p>
+                                <p className="text-center text-gray-500 pt-16">Votre inventaire est vide.</p>
                             )}
                         </div>
                     </div>
-                </div>
-                
-                <div className="bg-[#1e2530] p-6 rounded-lg">
+
+                    {/* Bloc 3 : Messages sur 7 jours */}
+                    <div className="bg-[#1e2530] p-6 rounded-lg lg:col-span-1 md:col-span-2">
                         <h2 className="font-bold mb-4 flex items-center"><MessageSquare className="h-5 w-5 mr-2"/>Messages sur 7 jours</h2>
-                        <ResponsiveContainer width="100%" height={200}>
+                        <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={messageData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                                 <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} /><YAxis stroke="#9ca3af" fontSize={12} allowDecimals={false} /><Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none' }} cursor={{fill: 'rgba(100, 116, 139, 0.1)'}}/><Bar dataKey="messages" name="Messages" fill="#06b6d4" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
+                    </div>
                 </div>
                 
                 <div className="bg-[#1e2530] p-6 rounded-lg text-center">

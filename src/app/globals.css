@@ -24,3 +24,30 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- STYLE PERSONNALISÉ POUR LA SCROLLBAR --- */
+
+/* Pour Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #0891b2 #12151d;
+}
+
+/* Pour Chrome, Safari, Edge et autres navigateurs basés sur WebKit */
+::-webkit-scrollbar {
+  width: 8px; /* Largeur de la scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #12151d; /* Couleur de fond de la piste */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #0891b2; /* Couleur de la barre de défilement (le "pouce") */
+  border-radius: 10px; /* Arrondi des bords */
+  border: 2px solid #12151d; /* Crée une petite bordure autour de la barre */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #06b6d4; /* La barre devient plus claire au survol */
+}
