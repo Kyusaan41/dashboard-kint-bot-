@@ -1,47 +1,81 @@
+// kyusaan41/dashboard-kint-bot-/dashboard-kint-bot--88b4d2d89afc01f7cd978a78da0118b6ed3f361c/src/app/dashboard/page.tsx
+
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FC, ReactNode } from 'react';
 import Image from 'next/image';
-import { Coins, Gift, Loader2, Package, MessageSquare, Star, Zap, Trophy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { getInventory, getAllAchievements } from '@/utils/api';
+import { 
+    Coins, Gift, Loader2, Package, MessageSquare, Star, Zap, Trophy, 
+    BookOpen, Crown, Gem
+} from 'lucide-react';
 
-// --- Définition des Types ---
+// --- Type Definitions ---
 type UserStats = {
-    currency: number;
-    currencyRank: number | null;
-    xp: number;
-    xpRank: number | null;
-    points: number;
-    pointsRank: number | null;
+    currency: number; currencyRank: number | null;
+    xp: number; xpRank: number | null;
+    points: number; pointsRank: number | null;
     equippedTitle: string | null;
 };
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
 type MessageData = { day: string; messages: number; };
-type ServerInfo = {
-    id: string;
-    name: string;
-    icon: string | null;
-};
-type InventoryItem = {
-    id: string;
-    name: string;
-    quantity: number;
-    icon?: string;
-};
-type UnlockedSuccessData = { succes: string[] };
-type TitlesData = { titresPossedes: string[] };
-type CurrencyData = { balance: number; lastClaim: number | null };
-type MessagesApiResponse = { messagesLast7Days: number[] };
-type AllAchievements = {
-    [key: string]: {
-        name: string;
-        description: string;
-    }
+type ServerInfo = { id: string; name: string; icon: string | null; };
+type InventoryItem = { id: string; name: string; quantity: number; icon?: string; };
+type AllAchievements = { [key: string]: { name: string; description: string; } };
+
+// --- UI Components ---
+const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
+    <motion.div 
+        whileHover={{ scale: 1.02, y: -5 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+        className={`bg-[#1c222c] border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden group ${className}`}
+    >
+        <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
+        <div className="relative z-10">{children}</div>
+    </motion.div>
+);
+
+// StatCard MODIFIÉ pour correspondre EXACTEMENT à l'image
+const StatCard: FC<{ icon: ReactNode; title: string; value: number; rank: number | null; color: string }> = ({ icon, title, value, rank, color }) => {
+    const formatRank = (r: number | null) => {
+        if (!r) return <span className="text-gray-500">(Non classé)</span>;
+        const rankColor = r === 3 ? "text-yellow-600" : "text-gray-400";
+        return <span className={`font-semibold ${rankColor}`}>({r}e)</span>;
+    };
+
+    return (
+        <Card className="flex-1">
+            <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
+                    {icon}
+                </div>
+                <div>
+                    <p className="text-sm text-gray-400">{title}</p>
+                    <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
+                </div>
+                <div className="ml-auto">
+                    {formatRank(rank)}
+                </div>
+            </div>
+        </Card>
+    );
 };
 
-// --- Le Composant Principal (Corrigé) ---
+
+const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, server }) => (
+    <div className="flex items-center gap-4">
+        <Image src={user?.image || '/default-avatar.png'} alt="Avatar" width={64} height={64} className="rounded-full border-2 border-cyan-500" />
+        <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Bienvenue, <span className="text-cyan-400">{user?.name || 'Utilisateur'}</span>!</h1>
+            <p className="text-gray-400">Ravi de vous revoir sur le dashboard de {server?.name || 'KTS'}.</p>
+        </div>
+    </div>
+);
+
+// --- Main Component ---
 export default function DashboardHomePage() {
     const { data: session, status } = useSession();
     const [stats, setStats] = useState<UserStats | null>(null);
@@ -52,12 +86,12 @@ export default function DashboardHomePage() {
     const [messageData, setMessageData] = useState<MessageData[]>([]);
     const [availableTitles, setAvailableTitles] = useState<string[]>([]);
     const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
-    const [selectedTitle, setSelectedTitle] = useState<string>('');
+    const [selectedTitle, setSelectedTitle] = useState('');
     const [loading, setLoading] = useState(true);
     const [claimStatus, setClaimStatus] = useState({ canClaim: false, timeLeft: '00:00:00' });
     const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
     const [isClaiming, setIsClaiming] = useState(false);
-
+    
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.id) {
             const fetchData = async () => {
@@ -76,7 +110,7 @@ export default function DashboardHomePage() {
                     ]);
 
                     setStats(statsData);
-                    setMessageData((messages.messagesLast7Days || []).map((c: number, i: number) => ({ day: `Jour ${i + 1}`, messages: c })));
+                    setMessageData((messages.messagesLast7Days || []).map((c: number, i: number) => ({ day: `J-${6 - i}`, messages: c })));
                     setUnlockedSuccesses(successData.succes || []);
                     setAllAchievements(allAchievementsData || {});
                     setPatchNotes(patchnoteData);
@@ -84,30 +118,21 @@ export default function DashboardHomePage() {
                     setServerInfo(server);
                     setInventory(inventoryData || []);
 
-                    // --- LOGIQUE DE RÉCOMPENSE CORRIGÉE ---
                     if (currency) {
                         const now = Date.now();
                         const twentyFourHours = 24 * 60 * 60 * 1000;
                         const lastClaimTime = currency.lastClaim;
-
                         if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
-                            // L'utilisateur a déjà réclamé et doit attendre
                             const timeLeftValue = twentyFourHours - (now - lastClaimTime);
                             const displayTime = new Date(Math.max(0, timeLeftValue)).toISOString().substr(11, 8);
                             setClaimStatus({ canClaim: false, timeLeft: displayTime });
                         } else {
-                            // L'utilisateur peut réclamer (première fois ou délai passé)
                             setClaimStatus({ canClaim: true, timeLeft: '' });
                         }
                     }
-                    // --- FIN DE LA LOGIQUE CORRIGÉE ---
-
-                    if (statsData) {
-                        setSelectedTitle(statsData.equippedTitle || '');
-                    }
-
+                    if (statsData) setSelectedTitle(statsData.equippedTitle || '');
                 } catch (error) {
-                    console.error("Erreur de chargement du dashboard:", error);
+                    console.error("Erreur de chargement:", error);
                 } finally {
                     setLoading(false);
                 }
@@ -115,34 +140,27 @@ export default function DashboardHomePage() {
             fetchData();
         }
     }, [status, session]);
-    
-    // --- GESTION DE LA RÉCLAMATION CORRIGÉE ---
+
     const handleClaimReward = async () => {
         if (!claimStatus.canClaim || isClaiming || !session?.user?.id) return;
         setIsClaiming(true);
         try {
-            // Correction de l'URL pour correspondre à la route du bot
-            const res = await fetch(`/api/currency/claim/${session.user.id}`, { 
-                method: 'POST' 
-            });
+            const res = await fetch(`/api/currency/claim/${session.user.id}`, { method: 'POST' });
             const data = await res.json();
-            
             if (res.ok) {
                 alert(data.message || "Récompense réclamée !");
                 setStats(prev => prev ? { ...prev, currency: data.newBalance } : null);
-                // On met à jour le statut pour bloquer le bouton immédiatement
                 setClaimStatus({ canClaim: false, timeLeft: '24:00:00' });
             } else {
-                alert(data.error || "Impossible de réclamer la récompense maintenant.");
+                alert(data.error || "Impossible de réclamer.");
             }
         } catch (error) {
-            alert("Une erreur de communication est survenue.");
+            alert("Une erreur est survenue.");
         } finally {
             setIsClaiming(false);
         }
     };
-    // --- FIN DE LA GESTION CORRIGÉE ---
-
+    
     const handleEquipTitle = async () => {
         if (!selectedTitle || !session?.user?.id) return;
         try {
@@ -158,149 +176,132 @@ export default function DashboardHomePage() {
         }
     };
 
-    const formatRank = (rank: number | null) => {
-        if (!rank) return <span className="text-gray-400">(Non classé)</span>;
-        if (rank === 1) return <span className="font-bold text-yellow-400">(1er)</span>;
-        if (rank === 2) return <span className="font-bold text-gray-300">(2e)</span>;
-        if (rank === 3) return <span className="font-bold text-yellow-600">(3e)</span>;
-        return <span className="text-sm text-gray-400">({rank}<sup>e</sup>)</span>;
-    };
-
     if (loading || status === 'loading') {
-        return <div className="flex h-full items-center justify-center text-gray-400"><Loader2 className="h-8 w-8 animate-spin mr-3"/> Chargement de vos exploits...</div>;
+        return <div className="flex h-full items-center justify-center text-gray-400"><Loader2 className="h-8 w-8 animate-spin mr-3"/> Chargement...</div>;
     }
 
     const totalAchievementsCount = Object.keys(allAchievements).length;
 
     return (
-        <>
-            <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                    {serverInfo && serverInfo.id && serverInfo.icon && (
-                        <Image
-                            src={`https://cdn.discordapp.com/icons/${serverInfo.id}/${serverInfo.icon}.png`}
-                            alt="Icône du serveur"
-                            width={40}
-                            height={40}
-                            className="rounded-full"
-                        />
-                    )}
-                    <h1 className="text-2xl font-bold">Bienvenue sur {serverInfo?.name || 'KTS'}</h1>
+        <AnimatePresence>
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="space-y-6 md:space-y-8"
+            >
+                <WelcomeHeader user={session?.user} server={serverInfo} />
+
+                <div className="flex flex-col md:flex-row gap-6">
+                    {stats && <StatCard icon={<Coins size={28} />} title="Pièces" value={stats.currency} rank={stats.currencyRank} color="bg-yellow-500/20 text-yellow-400" />}
+                    {stats && <StatCard icon={<Star size={28} />} title="Expérience" value={stats.xp} rank={stats.xpRank} color="bg-green-500/20 text-green-400" />}
+                    {stats && <StatCard icon={<Zap size={28} />} title="Points KINT" value={stats.points} rank={stats.pointsRank} color="bg-cyan-500/20 text-cyan-400" />}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Bloc 1 : Profil Utilisateur */}
-                    <div className="bg-[#1e2530] p-6 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                            <Image src={session?.user?.image || '/default-avatar.png'} alt="Avatar" width={64} height={64} className="rounded-full" />
-                            <div>
-                                <p className="font-bold text-lg">{session?.user?.name}</p>
-                                <p className="text-sm text-purple-400 font-semibold">♕ {session?.user?.role === 'admin' ? 'Administrateur' : 'Membre'}</p>
-                            </div>
-                        </div>
-                        <ul className="space-y-2 text-gray-300 mt-4">
-                            <li className="flex items-center"><Coins className="h-5 w-5 text-yellow-400 mr-3" /> Possède <span className="font-bold text-yellow-400 mx-2">{(stats?.currency ?? 0).toLocaleString()}</span> pièces <span className="ml-2">{formatRank(stats?.currencyRank ?? null)}</span></li>
-                            <li className="flex items-center"><Zap className="h-5 w-5 text-cyan-400 mr-3" /> Possède <span className="font-bold text-cyan-400 mx-2">{stats?.points ?? 0}</span> points <span className="ml-2">{formatRank(stats?.pointsRank ?? null)}</span></li>
-                            <li className="flex items-center"><Star className="h-5 w-5 text-green-400 mr-3" /> Possède <span className="font-bold text-green-400 mx-2">{(stats?.xp ?? 0).toLocaleString()}</span> XP <span className="ml-2">{formatRank(stats?.xpRank ?? null)}</span></li>
-                        </ul>
-                        <div className="flex items-center pt-4 mt-4 border-t border-gray-700">
-                            <p>Titre actuel: <span className="font-semibold ml-2">{stats?.equippedTitle || 'Aucun'}</span></p>
-                            <button onClick={() => setIsTitleModalOpen(true)} className="ml-auto bg-cyan-600 px-3 py-1 rounded-md text-sm font-semibold hover:bg-cyan-700">Changer le titre</button>
-                        </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-6">
+                        <Card>
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><MessageSquare size={18}/> Activité récente</h3>
+                            <ResponsiveContainer width="100%" height={250}>
+                               <BarChart data={messageData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                                    <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} />
+                                    <YAxis stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} allowDecimals={false} />
+                                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '0.5rem' }} cursor={{fill: 'rgba(100, 116, 139, 0.1)'}}/>
+                                    <Bar dataKey="messages" name="Messages" fill="url(#colorUv)" radius={[4, 4, 0, 0]} />
+                                    <defs>
+                                        <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8}/>
+                                            <stop offset="95%" stopColor="#0891b2" stopOpacity={0.2}/>
+                                        </linearGradient>
+                                    </defs>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </Card>
+                        {patchNotes && (
+                            <Card>
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><BookOpen size={18}/> {patchNotes.title}</h3>
+                                <div className="space-y-4 text-gray-300">
+                                    {patchNotes.ajouts?.length > 0 && <div><h4 className="font-semibold text-cyan-400 mb-2">Ajouts</h4><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajouts.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
+                                    {patchNotes.ajustements?.length > 0 && <div><h4 className="font-semibold text-green-400 mb-2">Ajustements</h4><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajustements.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
+                                </div>
+                            </Card>
+                        )}
                     </div>
-
-                    {/* Bloc 2 : Inventaire Rapide */}
-                    <div className="bg-[#1e2530] p-6 rounded-lg">
-                         <h2 className="font-bold text-lg mb-4 flex items-center"><Package className="h-5 w-5 mr-2"/>Inventaire rapide</h2>
-                        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
-                            {inventory && inventory.length > 0 ? (
-                                inventory.map(item => (
+                    <div className="lg:col-span-1 space-y-6">
+                        <Card>
+                            <div className="flex items-center gap-4 mb-4">
+                               <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-amber-500 text-white"><Gift size={24} /></div>
+                                <div>
+                                    <h3 className="font-bold text-white">Récompense Quotidienne</h3>
+                                    <p className="text-sm text-gray-400">Réclamez 500 pièces !</p>
+                                </div>
+                            </div>
+                            <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`w-full px-4 py-2 rounded-lg font-bold transition-all flex items-center justify-center ${!claimStatus.canClaim || isClaiming ? 'bg-gray-700/50 cursor-not-allowed text-gray-400' : 'bg-green-600 hover:bg-green-700'}`}>
+                                {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2"/>}
+                                {claimStatus.canClaim ? 'Réclamer' : `Prochaine dans ${claimStatus.timeLeft}`}
+                            </button>
+                        </Card>
+                         <Card>
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Gem size={18}/> Personnalisation</h3>
+                            <div className="bg-gray-800/50 p-4 rounded-lg flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-400">Titre Actuel</p>
+                                    <p className="font-semibold text-white">{stats?.equippedTitle || 'Aucun'}</p>
+                                </div>
+                                <button onClick={() => setIsTitleModalOpen(true)} className="bg-cyan-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-cyan-700 transition">Changer</button>
+                            </div>
+                        </Card>
+                         <Card>
+                            <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Package size={18}/> Inventaire</h3>
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                {inventory.length > 0 ? inventory.map(item => (
                                     <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
-                                        <div className="w-10 h-10 bg-black/20 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
-                                            {item.icon ? (
-                                                <Image src={item.icon} alt={item.name} width={24} height={24} />
-                                            ) : (
-                                                <Package size={20} className="text-gray-400"/>
-                                            )}
-                                        </div>
-                                        <span className="flex-1 font-semibold truncate">{item.name}</span>
+                                        {item.icon ? <Image src={item.icon} alt={item.name} width={20} height={20} /> : <Gem size={20} className="text-gray-500"/>}
+                                        <span className="ml-3 flex-1 font-semibold truncate">{item.name}</span>
                                         <span className="text-xs font-bold bg-cyan-800 text-cyan-200 px-2 py-1 rounded-full">x{item.quantity}</span>
                                     </div>
-                                ))
-                            ) : (
-                                <p className="text-center text-gray-500 pt-16">Votre inventaire est vide.</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Bloc 3 : Messages sur 7 jours */}
-                    <div className="bg-[#1e2530] p-6 rounded-lg lg:col-span-1 md:col-span-2">
-                        <h2 className="font-bold mb-4 flex items-center"><MessageSquare className="h-5 w-5 mr-2"/>Messages sur 7 jours</h2>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={messageData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                                <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} /><YAxis stroke="#9ca3af" fontSize={12} allowDecimals={false} /><Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none' }} cursor={{fill: 'rgba(100, 116, 139, 0.1)'}}/><Bar dataKey="messages" name="Messages" fill="#06b6d4" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                                )) : <p className="text-sm text-center text-gray-500 py-4">Votre inventaire est vide.</p>}
+                            </div>
+                        </Card>
                     </div>
                 </div>
                 
-                <div className="bg-[#1e2530] p-6 rounded-lg text-center">
-                    <h2 className="font-bold text-lg flex items-center justify-center"><Gift className="h-6 w-6 mr-2 text-yellow-400"/>Récompense quotidienne</h2>
-                    <p className="text-gray-400 text-sm my-2">Connecte-toi chaque jour pour obtenir un bonus de 500 pièces !</p>
-                    <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`mx-auto px-5 py-2 rounded-md font-bold transition flex items-center justify-center ${ (claimStatus.canClaim && !isClaiming) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 cursor-not-allowed' }`}>
-                        {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2"/>}
-                        {claimStatus.canClaim ? (isClaiming ? 'Réclamation...' : 'Réclamer ma récompense') : `Prochaine récompense dans ${claimStatus.timeLeft}`}
-                    </button>
-                </div>
-
-                {patchNotes && (
-                    <div className="bg-[#1e2530] p-6 rounded-lg">
-                        <h2 className="font-bold text-lg mb-4">📢 {patchNotes.title}</h2>
-                        <div className="space-y-4 text-gray-300">
-                            {patchNotes.ajouts && <div><h3 className="font-semibold text-cyan-400 mb-2">Ajouts</h3><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajouts.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
-                            {patchNotes.ajustements && <div><h3 className="font-semibold text-green-400 mb-2">Ajustements</h3><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajustements.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
-                        </div>
-                    </div>
-                )}
-                
-                <div className="bg-[#1e2530] p-6 rounded-lg">
-                    <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-                        🏆
-                        Succès débloqués ({unlockedSuccesses.length}/{totalAchievementsCount})
-                    </h2>
+                <Card>
+                    <h2 className="font-bold text-white mb-4 flex items-center gap-2"><Trophy size={20} />Succès Débloqués ({unlockedSuccesses.length}/{totalAchievementsCount})</h2>
                     {unlockedSuccesses.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                             {unlockedSuccesses.map(successId => (
-                                <div key={successId} className="bg-gray-700 p-3 rounded-md text-center truncate" title={allAchievements[successId]?.description || 'Succès secret'}>
-                                    <p>{allAchievements[successId]?.name || successId}</p>
+                                <div key={successId} className="bg-gray-800/50 p-3 rounded-lg text-center truncate group hover:bg-gray-700/70 transition-colors" title={allAchievements[successId]?.description || 'Succès secret'}>
+                                    <p className="text-sm font-semibold text-white">{allAchievements[successId]?.name || successId}</p>
                                 </div>
                             ))}
                         </div>
-                    ) : (
-                        <p className="text-gray-500 text-sm">Aucun succès débloqué pour le moment.</p>
-                    )}
-                </div>
-            </div>
+                    ) : <p className="text-gray-500 text-sm text-center py-8">Aucun succès débloqué.</p>}
+                </Card>
 
-            {isTitleModalOpen && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-                    <div className="bg-[#1e2530] p-8 rounded-lg border border-cyan-700 w-full max-w-md">
-                        <h2 className="text-2xl font-bold mb-6">Changer de titre</h2>
-                        <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                            {availableTitles && availableTitles.length > 0 ? availableTitles.map(titre => (
-                                <label key={titre} className="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
-                                    <input type="radio" name="title" value={titre} checked={selectedTitle === titre} onChange={(e) => setSelectedTitle(e.target.value)} className="form-radio h-5 w-5 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500"/>
-                                    <span className="ml-4 text-lg">{titre}</span>
-                                </label>
-                            )) : <p className="text-gray-400">Vous ne possédez aucun titre pour le moment.</p>}
-                        </div>
-                        <div className="flex justify-end gap-4 mt-6">
-                            <button onClick={() => setIsTitleModalOpen(false)} className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700">Annuler</button>
-                            <button onClick={handleEquipTitle} className="px-4 py-2 bg-cyan-600 rounded hover:bg-cyan-700 font-bold">Équiper</button>
-                        </div>
+                {isTitleModalOpen && (
+                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-[#1c222c] p-6 rounded-2xl border border-cyan-700 w-full max-w-md shadow-2xl">
+                            <h2 className="text-xl font-bold mb-5">Changer de titre</h2>
+                            <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                                {availableTitles.length > 0 ? availableTitles.map(titre => (
+                                    <label key={titre} className="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
+                                        <input type="radio" name="title" value={titre} checked={selectedTitle === titre} onChange={(e) => setSelectedTitle(e.target.value)} className="form-radio h-5 w-5 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500 focus:ring-offset-0"/>
+                                        <span className="ml-4">{titre}</span>
+                                    </label>
+                                )) : <p className="text-gray-400 text-center py-4">Vous ne possédez aucun titre.</p>}
+                            </div>
+                            <div className="flex justify-end gap-4 mt-6">
+                                <button onClick={() => setIsTitleModalOpen(false)} className="px-5 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition">Annuler</button>
+                                <button onClick={handleEquipTitle} className="px-5 py-2 bg-cyan-600 rounded-lg hover:bg-cyan-700 font-bold transition">Équiper</button>
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
-        </>
+                )}
+                
+                <style jsx global>{`.bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
+            </motion.div>
+        </AnimatePresence>
     );
 }

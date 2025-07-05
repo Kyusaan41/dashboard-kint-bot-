@@ -1,106 +1,164 @@
 'use client';
 
-import { useEffect } from "react";
-import AOS from "aos";
-import "aos/dist/aos.css";
-
 import Link from "next/link";
-import { LogIn, UserPlus } from "lucide-react";
-import Image from "next/image";
+import { LogIn, UserPlus, Shield, BarChart, Settings, Bot, ArrowRight, ToyBrick, ZapIcon } from "lucide-react";
+import { motion, useAnimation } from "framer-motion";
+import { FC, ReactNode, useEffect } from "react";
+import { useInView } from "react-intersection-observer";
 
-export default function Home() {
+// --- Composants ---
+const FeatureNode: FC<{
+  icon: ReactNode;
+  title: string;
+  description: string;
+  delay: number;
+}> = ({ icon, title, description, delay }) => {
+  const controls = useAnimation();
+  const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.5 });
+
   useEffect(() => {
-    AOS.init({
-      duration: 700,
-      easing: "ease-in-out",
-      once: true,
-    });
-  }, []);
+    if (inView) {
+      controls.start("visible");
+    }
+  }, [controls, inView]);
 
   return (
-    <main className="min-h-screen bg-[#0b0d13] text-white px-6 py-16 relative overflow-hidden font-sans">
-      {/* Background glow effects */}
-      <div className="absolute top-[-150px] left-[-120px] w-[600px] h-[600px] bg-gradient-to-tr from-cyan-500 to-blue-400 opacity-25 rounded-full blur-[120px] z-0" />
-      <div className="absolute bottom-[-130px] right-[-130px] w-[500px] h-[500px] bg-gradient-to-br from-blue-600 to-cyan-600 opacity-20 rounded-full blur-[100px] z-0" />
+    <motion.div
+      ref={ref}
+      initial="hidden"
+      animate={controls}
+      variants={{
+        hidden: { opacity: 0, y: 30 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay } }
+      }}
+      className="flex items-start gap-4"
+    >
+      <div className="mt-1 w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-white/10 text-cyan-400">
+        {icon}
+      </div>
+      <div>
+        <h3 className="text-xl font-bold text-white">{title}</h3>
+        <p className="text-gray-400 mt-1 leading-relaxed">{description}</p>
+      </div>
+    </motion.div>
+  );
+};
 
-      {/* Hero section */}
-      <section className="relative z-10 flex flex-col lg:flex-row items-center justify-between max-w-7xl mx-auto">
-        <div className="text-center lg:text-left max-w-xl" data-aos="fade-right">
-          <h1 className="text-6xl md:text-7xl font-extrabold leading-tight bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text drop-shadow-lg">
-            Kint ⚡
-          </h1>
-          <p className="text-gray-400 mt-6 text-lg md:text-xl max-w-lg mx-auto lg:mx-0">
-            Le bot tout-en-un pour modération, sondages, logs, réactions et plus. Rapide, fiable et puissant.
-          </p>
+// --- Page Principale ---
+export default function Home() {
+  const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1075878481498804224';
+  const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot%20applications.commands&permissions=8`;
 
-          <div className="mt-10 flex flex-col sm:flex-row justify-center lg:justify-start gap-6">
-            <Link
-              href="/login"
-              className="inline-flex items-center px-6 py-3 text-lg font-semibold rounded-lg bg-cyan-600 hover:bg-cyan-700 shadow-lg text-white transition-transform transform hover:scale-105"
-            >
-              <LogIn className="mr-2 h-5 w-5" /> Connexion Discord
+  return (
+    <main className="bg-[#030014] text-white font-sans overflow-x-hidden">
+      {/* Fond de particules */}
+      <div className="absolute inset-0 z-0 opacity-50 bg-particle-pattern"></div>
+      <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#030014] via-transparent to-[#030014]"></div>
+
+      <div className="relative z-20 max-w-6xl mx-auto px-6">
+        {/* Header */}
+        <header className="py-6 flex justify-between items-center">
+            <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
+                <ZapIcon   className="text-cyan-400"/>
+                KINT
             </Link>
-
-            <Link
-              href="https://discord.com/oauth2/authorize?client_id=TON_CLIENT_ID&scope=bot%20applications.commands"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-6 py-3 text-lg font-semibold rounded-lg border border-cyan-500 text-cyan-400 hover:bg-cyan-900/30 shadow-md transition-transform transform hover:scale-105"
-            >
-              <UserPlus className="mr-2 h-5 w-5" /> Inviter le bot
+            <Link href="/login" className="group relative inline-flex items-center px-6 py-2.5 overflow-hidden rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
+                <span className="absolute top-0 left-0 w-0 h-full bg-cyan-400 transition-all duration-300 group-hover:w-full"></span>
+                <span className="relative flex items-center gap-2 transition-colors duration-300 group-hover:text-black">
+                    <LogIn size={16}/>
+                    Accès Dashboard
+                </span>
             </Link>
-          </div>
+        </header>
+
+        {/* Section Héros */}
+        <section className="py-28 md:py-40 text-center">
+             <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-6xl md:text-8xl font-black tracking-tight"
+            >
+              <span className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-transparent bg-clip-text">Kint</span>
+            </motion.h1>
+             <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-gray-300 mt-8 text-xl max-w-3xl mx-auto"
+            >
+              Un bot Discord tout-en-un pour la modération, les statistiques, l'économie et les jeux.
+            </motion.p>
+             <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="mt-12"
+            >
+                <Link href="/login" className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-bold rounded-full bg-cyan-400 text-black transition-transform transform hover:scale-105 shadow-2xl shadow-cyan-400/20">
+                    <LogIn size={22}/>
+                    Connexion à discord
+                </Link>
+            </motion.div>
+        </section>
+
+        {/* Section Fonctionnalités */}
+        <section className="py-24">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div className="relative h-96 flex items-center justify-center">
+                    <motion.div
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                        className="absolute w-full h-full bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full blur-3xl opacity-30"
+                    />
+                    <Bot size={80} className="text-white z-10"/>
+                </div>
+                <div className="space-y-10">
+                    <FeatureNode
+                        delay={0.1}
+                        icon={<Shield size={24}/>}
+                        title="Système de Protection"
+                        description="Une modération intelligente et des logs complets pour garantir la sécurité et la sérénité de vos membres."
+                    />
+                    <FeatureNode
+                        delay={0.3}
+                        icon={<BarChart size={24}/>}
+                        title="Économie & Progression"
+                        description="Motivez votre communauté avec un système de monnaie, d'XP, des classements et une boutique intégrée."
+                    />
+                    <FeatureNode
+                        delay={0.5}
+                        icon={<ToyBrick size={24}/>}
+                        title="Engagement Interactif"
+                        description="Des titres à collectionner, des succès à débloquer et des mini-jeux pour une expérience toujours renouvelée."
+                    />
+                </div>
+            </div>
+        </section>
+      </div>
+
+       {/* Footer */}
+      <footer className="border-t border-white/10 mt-16">
+        <div className="max-w-6xl mx-auto px-6 py-12 text-center">
+             <h2 className="text-4xl font-bold mb-4">Connectez Kint à votre serveur.</h2>
+             <p className="text-gray-500 mb-8 max-w-xl mx-auto">
+                L'installation ne prend qu'un instant. Le potentiel est infini.
+             </p>
+             <Link href={inviteUrl} target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-bold bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-white transition-transform transform hover:scale-105 shadow-2xl shadow-cyan-500/20">
+                Inviter le Bot
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1"/>
+            </Link>
         </div>
-
-        <div
-          className="mt-16 lg:mt-0 lg:ml-20 animate-float"
-          data-aos="fade-left"
-          style={{ willChange: "transform" }}
-        >
-          <Image
-            src="/illustration-bot.png"
-            alt="Illustration bot Discord"
-            width={520}
-            height={520}
-            className="rounded-2xl shadow-2xl"
-          />
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-28 max-w-5xl mx-auto z-10 relative">
-        {[
-          { title: "+20", subtitle: "Commandes disponibles" },
-          { title: "Modération", subtitle: "Gère les membres grâce au Dashboard." },
-          { title: "Modifie", subtitle: "Ajoutes des fonctionnalités au bot !" },
-        ].map((stat, i) => (
-          <div
-            key={i}
-            className="bg-[#12151d]/70 border border-cyan-600/40 rounded-3xl p-8 text-center shadow-lg backdrop-blur-sm hover:scale-105 transition-transform duration-300 cursor-pointer"
-            data-aos="zoom-in"
-          >
-            <h2 className="text-5xl font-extrabold text-cyan-400 drop-shadow-md">{stat.title}</h2>
-            <p className="text-gray-300 mt-3 text-md">{stat.subtitle}</p>
-          </div>
-        ))}
-      </section>
-
-      {/* Footer */}
-      <footer className="mt-36 text-gray-500 text-sm text-center z-10 relative select-none">
-        © 2025 Kint. Tous droits réservés à Kyû.
       </footer>
 
       <style jsx global>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-15px);
-          }
+        @keyframes move-particles {
+            from { background-position: 0 0; }
+            to { background-position: 10000px 5000px; }
         }
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
+        .bg-particle-pattern {
+            background-image: url(https://www.script-tutorials.com/demos/360/images/stars.png);
+            animation: move-particles 200s linear infinite;
         }
       `}</style>
     </main>
