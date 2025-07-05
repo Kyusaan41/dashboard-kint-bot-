@@ -140,3 +140,9 @@ export async function getInventory() {
 export async function getKshieldStatus(userId: string) {
     return handleApiResponse(await fetch(`/api/shop/kshield-status/${userId}`));
 }
+
+export async function useKshield() {
+    return handleApiResponse(await fetch('/api/kint/use-shield', {
+        method: 'POST',
+    }));
+}
