@@ -249,7 +249,7 @@ export default function DashboardHomePage() {
                 
                 <div className="bg-[#1e2530] p-6 rounded-lg">
                     <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-                        <Trophy />
+                        🏆
                         Succès débloqués ({unlockedSuccesses.length}/{totalAchievementsCount})
                     </h2>
                     {unlockedSuccesses.length > 0 ? (
