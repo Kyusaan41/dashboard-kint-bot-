@@ -6,48 +6,47 @@ const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
 export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    const userId = session?.user?.id;
+    if (!userId) {
+        return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
     }
 
     try {
-        // --- On récupère l'inventaire ET la boutique en même temps ---
         const [inventoryRes, shopRes] = await Promise.all([
-            fetch(`${BOT_API_URL}/inventaire/${session.user.id}`),
-            fetch(`${BOT_API_URL}/shop`) // L'API qui liste tous les objets de la boutique
+            fetch(`${BOT_API_URL}/inventaire/${userId}`), // <-- Corrigé pour utiliser l'ID
+            fetch(`${BOT_API_URL}/shop`)
         ]);
 
-        // Si l'inventaire est vide (404), on renvoie un tableau vide, ce qui est normal.
-        if (inventoryRes.status === 404) {
-            return NextResponse.json([]); 
+        if (!shopRes.ok) {
+            console.error("Erreur API /inventory: Impossible de récupérer les articles de la boutique.");
+            return NextResponse.json({ message: "Impossible de charger la boutique." }, { status: 502 });
         }
-
-        // Si une des deux requêtes échoue pour une autre raison, on renvoie une erreur.
-        if (!inventoryRes.ok || !shopRes.ok) {
-            throw new Error("Impossible de récupérer les données de l'inventaire ou de la boutique depuis le bot.");
-        }
-        
-        const userInventory = await inventoryRes.json();
         const shopItems = await shopRes.json();
 
-        // On "enrichit" l'inventaire avec les détails de la boutique
+        // Si l'inventaire n'est pas trouvé (404) ou qu'il y a une erreur, on traite comme un inventaire vide
+        let userInventory = {};
+        if (inventoryRes.ok) {
+            userInventory = await inventoryRes.json();
+        } else {
+            console.warn(`Avertissement API /inventory: La requête pour l'inventaire de ${userId} a échoué. Statut: ${inventoryRes.status}. On continue avec un inventaire vide.`);
+        }
+
         const enrichedInventory = Object.entries(userInventory).map(([itemId, itemData]) => {
             const shopItem = shopItems.find((s: any) => s.id === itemId);
             const data = itemData as { quantity: number };
 
-            // --- CORRECTION CLÉ : On s'assure de toujours renvoyer un objet valide ---
             return {
                 id: itemId,
                 quantity: data.quantity,
-                name: shopItem?.name || itemId, // Si l'objet n'est plus en boutique, on affiche son ID
-                icon: shopItem?.icon || null   // On utilise l'icône de la boutique, ou rien si elle n'existe pas
+                name: shopItem?.name || itemId,
+                icon: shopItem?.icon || null
             };
         });
 
         return NextResponse.json(enrichedInventory);
 
     } catch (error) {
-        console.error("Erreur API /api/inventory:", error);
-        return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
+        console.error("Erreur critique dans API /api/inventory:", error);
+        return NextResponse.json({ message: 'Erreur interne du serveur.' }, { status: 500 });
     }
 }

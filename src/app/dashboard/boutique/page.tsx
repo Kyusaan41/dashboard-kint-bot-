@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { getShopItems, buyItem, fetchCurrency, getKshieldStatus, getInventory } from '@/utils/api';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle, Sword, Palette, Wrench } from 'lucide-react';
+import { ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle, Sword, Palette, Wrench, Check } from 'lucide-react';
 
 // --- Types ---
 type ShopItem = {
@@ -16,6 +16,7 @@ type ShopItem = {
     icon: string;
     type: 'Kint' | 'Utilitaire' | 'Personnalisation' | string;
     category: 'Légendaire' | 'Épique' | 'Rare' | 'Commun' | string;
+    action?: string; // On ajoute la propriété optionnelle 'action'
 };
 
 type InventoryItem = {
@@ -73,12 +74,12 @@ export default function ShopPage() {
                 getShopItems(),
                 fetchCurrency(session.user.id),
                 getKshieldStatus(session.user.id),
-                getInventory() // On récupère l'inventaire
+                getInventory()
             ]);
             setItems(Array.isArray(shopData) ? shopData : []);
             setUserBalance(currencyData.balance);
             setKshieldStatus(kshieldData);
-            setInventory(Array.isArray(inventoryData) ? inventoryData : []); // On stocke l'inventaire
+            setInventory(Array.isArray(inventoryData) ? inventoryData : []);
         } catch (err) {
             console.error(err);
             setError("Impossible de charger les données de la boutique.");
@@ -105,10 +106,12 @@ export default function ShopPage() {
 
 
     const addToCart = (item: ShopItem) => {
-        if (item.id === 'KShield' && !kshieldStatus.canPurchase) return;
         const isOwned = inventory.some(invItem => invItem.id === item.id);
-        // On considère les articles de personnalisation comme uniques
-        if (item.type === 'Personnalisation' && isOwned) return; 
+
+        if (item.action === 'color' && isOwned) return;
+        if (item.type === 'Personnalisation' && item.action !== 'color' && isOwned) return;
+        if (item.id === 'KShield' && !kshieldStatus.canPurchase) return;
+
         setCart(prev => [...prev, item]);
     };
     const removeFromCart = (itemIndex: number) => {
@@ -129,7 +132,7 @@ export default function ShopPage() {
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 4000);
             setCart([]);
-            await fetchData();
+            await fetchData(); // Recharger les données après l'achat
         } catch (err) {
             alert(`Échec : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
         } finally {
@@ -261,12 +264,26 @@ export default function ShopPage() {
                     >
                         {filteredItems.length > 0 ? (
                             filteredItems.map(item => {
-                                const isKshield = item.id === 'KShield';
                                 const isOwned = inventory.some(invItem => invItem.id === item.id);
-                                // Les articles de personnalisation sont uniques
-                                const isUniqueAndOwned = item.type === 'Personnalisation' && isOwned;
-                                
-                                const isDisabled = (isKshield && !kshieldStatus.canPurchase) || isUniqueAndOwned;
+                                let buttonText = 'Ajouter au panier';
+                                let isDisabled = false;
+                                let buttonIcon = null;
+
+                                if (item.action === 'color') {
+                                    if (isOwned) {
+                                        buttonText = 'Équipé';
+                                        isDisabled = true;
+                                        buttonIcon = <Check size={16} />;
+                                    }
+                                } else if (item.type === 'Personnalisation' && isOwned) {
+                                    buttonText = 'Possédé';
+                                    isDisabled = true;
+                                    buttonIcon = <CheckCircle size={16} />;
+                                } else if (item.id === 'KShield' && !kshieldStatus.canPurchase) {
+                                    buttonText = formatTimeLeft(kshieldStatus.timeLeft || 0);
+                                    isDisabled = true;
+                                    buttonIcon = <Lock size={16} />;
+                                }
 
                                 return (
                                     <motion.div
@@ -291,18 +308,7 @@ export default function ShopPage() {
                                                     isDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
                                                 }`}
                                             >
-                                                {isUniqueAndOwned ? (
-                                                    <>
-                                                      <CheckCircle size={16} /> Possédé
-                                                    </>
-                                                ) : isKshield && !kshieldStatus.canPurchase ? (
-                                                    <>
-                                                        <Lock size={16} />
-                                                        {formatTimeLeft(kshieldStatus.timeLeft || 0)}
-                                                    </>
-                                                ) : (
-                                                    'Ajouter au panier'
-                                                )}
+                                                {buttonIcon} {buttonText}
                                             </button>
                                         </div>
                                     </motion.div>

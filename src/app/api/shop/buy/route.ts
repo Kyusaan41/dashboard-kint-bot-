@@ -6,84 +6,56 @@ const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
 export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
 
-    if (!session?.user?.id) {
+    if (!userId) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
     try {
-        const { items } = await request.json(); // `items` est un tableau d'IDs venant du panier
+        const { items } = await request.json();
 
         if (!Array.isArray(items) || items.length === 0) {
-            return NextResponse.json({ error: "Le panier est vide ou invalide." }, { status: 400 });
+            return NextResponse.json({ error: "Le panier est vide." }, { status: 400 });
         }
 
-        console.log(`[ACHAT DEBUG] L'utilisateur ${session.user.id} essaie d'acheter :`, items);
-
-        // --- VRAIE VÉRIFICATION CÔTÉ SERVEUR ---
-
-        // 1. On récupère l'inventaire et la boutique en même temps
         const [inventoryRes, shopRes] = await Promise.all([
-            fetch(`${BOT_API_URL}/inventaire/${session.user.id}`),
+            fetch(`${BOT_API_URL}/inventaire/${userId}`),
             fetch(`${BOT_API_URL}/shop`)
         ]);
 
-        const userInventory = inventoryRes.ok ? await inventoryRes.json() : {};
-        const allShopItems = shopRes.ok ? await shopRes.json() : [];
+        if (!shopRes.ok) throw new Error("Impossible de charger les articles de la boutique.");
+        const allShopItems = await shopRes.json();
         
-        console.log(`[ACHAT DEBUG] Inventaire actuel:`, JSON.stringify(userInventory));
+        const userInventory = inventoryRes.ok ? await inventoryRes.json() : {};
 
-        // 2. On vérifie chaque article du panier
         for (const itemId of items) {
             const itemDetails = allShopItems.find((i: any) => i.id === itemId);
 
-            // Si on ne trouve pas l'article dans la boutique, on continue (le bot lèvera une erreur)
-            if (!itemDetails) {
-                console.log(`[ACHAT DEBUG] Article ${itemId} non trouvé dans la boutique. La validation est laissée au bot.`);
-                continue;
-            }
-            
-            console.log(`[ACHAT DEBUG] Détails de l'article ${itemId}: type='${itemDetails.type}'`);
-
-            // La condition est maintenant stricte : le type doit être 'Personnalisation'
-            const isUniqueAndOwned = itemDetails.type === 'Personnalisation' && userInventory.hasOwnProperty(itemId);
-            
-            console.log(`[ACHAT DEBUG] L'article est-il unique et possédé ? ${isUniqueAndOwned}`);
-
-            if (isUniqueAndOwned) {
-                // Si l'article est unique ET déjà possédé, on bloque l'achat.
-                console.error(`[ACHAT DEBUG] ACHAT BLOQUÉ pour ${itemId}. L'utilisateur le possède déjà.`);
+            // --- NOUVELLE LOGIQUE DE VÉRIFICATION ---
+            // On ne bloque que les articles de type "Personnalisation" qui ne sont PAS des couleurs.
+            if (itemDetails && itemDetails.type === 'Personnalisation' && itemDetails.action !== 'color' && userInventory.hasOwnProperty(itemId)) {
                 return NextResponse.json(
-                    { error: `Vous possédez déjà l'article "${itemDetails.name}".` },
-                    { status: 400 } // Erreur 400 (Bad Request)
+                    { error: `Vous possédez déjà l'article unique "${itemDetails.name}".` },
+                    { status: 400 }
                 );
             }
         }
-        // --- FIN DE LA VÉRIFICATION ---
 
-        console.log(`[ACHAT DEBUG] Vérifications passées. Appel de l'API du bot pour finaliser l'achat.`);
-        const bodyToSend = {
-            userId: session.user.id,
-            items: items
-        };
-
-        const res = await fetch(`${BOT_API_URL}/shop/buy`, {
+        const bodyToSend = { userId, items };
+        const buyRes = await fetch(`${BOT_API_URL}/shop/buy`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bodyToSend),
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-            console.error(`[ACHAT DEBUG] Le bot a renvoyé une erreur:`, data);
-            return NextResponse.json({ error: data.error || "Une erreur est survenue côté bot." }, { status: res.status });
-        }
-        
-        return NextResponse.json(data);
+        const data = await buyRes.json();
+        return buyRes.ok 
+            ? NextResponse.json(data) 
+            : NextResponse.json({ error: data.error || "Erreur du bot." }, { status: buyRes.status });
 
     } catch (error) {
-        console.error("[ACHAT DEBUG] Erreur critique dans la route /api/shop/buy:", error);
+        console.error("Erreur dans /api/shop/buy:", error);
         return NextResponse.json({ error: 'Erreur interne du serveur du dashboard.' }, { status: 500 });
     }
 }
