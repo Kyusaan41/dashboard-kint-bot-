@@ -41,7 +41,7 @@ type AllAchievements = {
     }
 };
 
-// --- Le Composant Principal ---
+// --- Le Composant Principal (Corrigé) ---
 export default function DashboardHomePage() {
     const { data: session, status } = useSession();
     const [stats, setStats] = useState<UserStats | null>(null);
@@ -84,16 +84,23 @@ export default function DashboardHomePage() {
                     setServerInfo(server);
                     setInventory(inventoryData || []);
 
+                    // --- LOGIQUE DE RÉCOMPENSE CORRIGÉE ---
                     if (currency) {
                         const now = Date.now();
                         const twentyFourHours = 24 * 60 * 60 * 1000;
-                        if (!currency.lastClaim || (now - currency.lastClaim >= twentyFourHours)) {
-                            setClaimStatus({ canClaim: true, timeLeft: '' });
+                        const lastClaimTime = currency.lastClaim;
+
+                        if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
+                            // L'utilisateur a déjà réclamé et doit attendre
+                            const timeLeftValue = twentyFourHours - (now - lastClaimTime);
+                            const displayTime = new Date(Math.max(0, timeLeftValue)).toISOString().substr(11, 8);
+                            setClaimStatus({ canClaim: false, timeLeft: displayTime });
                         } else {
-                            const timeLeft = twentyFourHours - (now - currency.lastClaim);
-                            setClaimStatus({ canClaim: false, timeLeft: new Date(timeLeft).toISOString().substr(11, 8) });
+                            // L'utilisateur peut réclamer (première fois ou délai passé)
+                            setClaimStatus({ canClaim: true, timeLeft: '' });
                         }
                     }
+                    // --- FIN DE LA LOGIQUE CORRIGÉE ---
 
                     if (statsData) {
                         setSelectedTitle(statsData.equippedTitle || '');
@@ -108,6 +115,33 @@ export default function DashboardHomePage() {
             fetchData();
         }
     }, [status, session]);
+    
+    // --- GESTION DE LA RÉCLAMATION CORRIGÉE ---
+    const handleClaimReward = async () => {
+        if (!claimStatus.canClaim || isClaiming || !session?.user?.id) return;
+        setIsClaiming(true);
+        try {
+            // Correction de l'URL pour correspondre à la route du bot
+            const res = await fetch(`/api/currency/claim/${session.user.id}`, { 
+                method: 'POST' 
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                alert(data.message || "Récompense réclamée !");
+                setStats(prev => prev ? { ...prev, currency: data.newBalance } : null);
+                // On met à jour le statut pour bloquer le bouton immédiatement
+                setClaimStatus({ canClaim: false, timeLeft: '24:00:00' });
+            } else {
+                alert(data.error || "Impossible de réclamer la récompense maintenant.");
+            }
+        } catch (error) {
+            alert("Une erreur de communication est survenue.");
+        } finally {
+            setIsClaiming(false);
+        }
+    };
+    // --- FIN DE LA GESTION CORRIGÉE ---
 
     const handleEquipTitle = async () => {
         if (!selectedTitle || !session?.user?.id) return;
@@ -123,31 +157,13 @@ export default function DashboardHomePage() {
             alert("Une erreur est survenue.");
         }
     };
+
     const formatRank = (rank: number | null) => {
         if (!rank) return <span className="text-gray-400">(Non classé)</span>;
         if (rank === 1) return <span className="font-bold text-yellow-400">(1er)</span>;
         if (rank === 2) return <span className="font-bold text-gray-300">(2e)</span>;
         if (rank === 3) return <span className="font-bold text-yellow-600">(3e)</span>;
         return <span className="text-sm text-gray-400">({rank}<sup>e</sup>)</span>;
-    };
-    const handleClaimReward = async () => {
-        if (!claimStatus.canClaim || isClaiming) return;
-        setIsClaiming(true);
-        try {
-            const res = await fetch('/api/claim-reward', { method: 'POST' });
-            const data = await res.json();
-            if (res.ok) {
-                alert(data.message || "Récompense réclamée !");
-                setStats(prev => prev ? { ...prev, currency: data.newBalance } : null);
-                setClaimStatus({ canClaim: false, timeLeft: '23:59:59' });
-            } else {
-                alert(data.error || "Impossible de réclamer la récompense maintenant.");
-            }
-        } catch (error) {
-            alert("Une erreur de communication est survenue.");
-        } finally {
-            setIsClaiming(false);
-        }
     };
 
     if (loading || status === 'loading') {
