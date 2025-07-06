@@ -154,3 +154,20 @@ export async function getKintLogs() {
 export async function getAllAchievements() {
     return handleApiResponse(await fetch('/api/success/all'));
 }
+
+// --- NOUVELLE FONCTION POUR ENVOYER UN LOG DÉTAILLÉ À DISCORD VIA LE BOT ---
+export async function sendKintLogToDiscord(logData: {
+    userId: string;
+    username: string;
+    avatar: string;
+    actionType: 'GAGNÉ' | 'PERDU';
+    points: number;
+    currentBalance: number;
+    effect?: string;
+}) {
+    return handleApiResponse(await fetch('/api/log-kint-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(logData),
+    }));
+}
