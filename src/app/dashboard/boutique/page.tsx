@@ -62,12 +62,14 @@ const ShopItemCard: FC<{ item: ShopItem, onAddToCart: (item: ShopItem) => void, 
     let buttonText = "Ajouter au panier";
     let ButtonIcon = ShoppingCart;
 
-    if (item.action === 'color' && isOwned) {
-        isDisabled = true; buttonText = "Déjà possédé"; ButtonIcon = Check;
-    } else if (item.type === 'Personnalisation' && isOwned && item.action !== 'color') {
-        isDisabled = true; buttonText = "Possédé"; ButtonIcon = CheckCircle;
+    if (isOwned) {
+        isDisabled = true;
+        buttonText = "Possédé";
+        ButtonIcon = CheckCircle;
     } else if (item.id === 'KShield' && !kshieldStatus.canPurchase) {
-        isDisabled = true; buttonText = `Dans ${formatTimeLeft(kshieldStatus.timeLeft || 0)}`; ButtonIcon = Lock;
+        isDisabled = true;
+        buttonText = `Dans ${formatTimeLeft(kshieldStatus.timeLeft || 0)}`;
+        ButtonIcon = Lock;
     }
 
     return (
@@ -115,6 +117,8 @@ export default function ShopPage() {
     const { data: session } = useSession();
     const [items, setItems] = useState<ShopItem[]>([]);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
+    // --- NOUVEL ETAT POUR LES TITRES ---
+    const [ownedTitles, setOwnedTitles] = useState<string[]>([]);
     const [activeMainCategory, setActiveMainCategory] = useState<string>('Kint');
     const [activeRarity, setActiveRarity] = useState<string>('all');
     const [loading, setLoading] = useState(true);
@@ -129,16 +133,19 @@ export default function ShopPage() {
         if (!session?.user?.id) return;
         setLoading(true); setError(null);
         try {
-            const [shopData, currencyData, kshieldData, inventoryData] = await Promise.all([
+            // --- AJOUT DE LA RECUPERATION DES TITRES ---
+            const [shopData, currencyData, kshieldData, inventoryData, titlesData] = await Promise.all([
                 getShopItems(),
                 fetchCurrency(session.user.id),
                 getKshieldStatus(session.user.id),
-                getInventory()
+                getInventory(),
+                fetch(`/api/titres/${session.user.id}`).then(res => res.json())
             ]);
             setItems(Array.isArray(shopData) ? shopData : []);
             setUserBalance(currencyData.balance);
             setKshieldStatus(kshieldData);
             setInventory(Array.isArray(inventoryData) ? inventoryData : []);
+            setOwnedTitles(titlesData.titresPossedes || []); // Mise à jour de l'état des titres
         } catch (err) {
             setError("Impossible de charger les données de la boutique.");
         } finally {
@@ -180,7 +187,7 @@ export default function ShopPage() {
             setCart([]);
             await fetchData();
         } catch (err) {
-            alert(`Échec : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+            alert(`Échec de l'achat : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
         } finally {
             setIsPurchasing(false);
         }
@@ -235,7 +242,12 @@ export default function ShopPage() {
                 <AnimatePresence>
                     {filteredItems.length > 0 ? (
                         filteredItems.map(item => {
-                            const isOwned = inventory.some(invItem => invItem.id === item.id);
+                            // --- LOGIQUE DE POSSESSION CORRIGÉE ---
+                            const isInventoryOwned = inventory.some(invItem => invItem.id === item.id);
+                            // La vérification normalise les noms pour éviter les erreurs de casse ou d'espaces
+                            const isTitleOwned = item.type === 'Personnalisation' && ownedTitles.some(ownedTitle => ownedTitle.trim().toLowerCase() === item.name.trim().toLowerCase());
+                            const isOwned = isInventoryOwned || isTitleOwned;
+                            
                             return <ShopItemCard key={item.id} item={item} onAddToCart={addToCart} isOwned={isOwned} kshieldStatus={kshieldStatus} />;
                         })
                     ) : (
@@ -266,7 +278,7 @@ export default function ShopPage() {
                             </div>
                             <motion.button whileTap={{scale: 0.95}} onClick={handlePurchase} disabled={isPurchasing || (userBalance !== null && userBalance < cartTotal)} className="w-full mt-4 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                                 {isPurchasing && <Loader2 className="animate-spin" size={18}/>}
-                                {isPurchasing ? 'Achat en cours...' : (userBalance !== null && userBalance < cartTotal) ? 'Fonds insuffisants' : 'Valider l\'achat'}
+                                {isPurchasing ? 'Achat en cours...' : (userBalance !== null && userBalance < cartTotal) ? 'Fonds insuffisants' : `Valider l'achat`}
                             </motion.button>
                         </div>
                     </motion.div>
