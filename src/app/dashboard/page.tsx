@@ -1,12 +1,10 @@
-// kyusaan41/dashboard-kint-bot-/dashboard-kint-bot--88b4d2d89afc01f7cd978a78da0118b6ed3f361c/src/app/dashboard/page.tsx
-
-'use client';
+"use client"; // Add this line at the top
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, FC, ReactNode } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getInventory, getAllAchievements } from '@/utils/api';
 import { 
     Coins, Gift, Loader2, Package, MessageSquare, Star, Zap, Trophy, 
@@ -21,7 +19,8 @@ type UserStats = {
     equippedTitle: string | null;
 };
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
-type MessageData = { day: string; messages: number; };
+type KintHistoryData = { day: string; points: number; }; 
+type HistoryEntry = { amount: number; date: string; reason: string; type?: 'shield' };
 type ServerInfo = { id: string; name: string; icon: string | null; };
 type InventoryItem = { id: string; name: string; quantity: number; icon?: string; };
 type AllAchievements = { [key: string]: { name: string; description: string; } };
@@ -38,11 +37,10 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
     </motion.div>
 );
 
-// StatCard MODIFIÉ pour correspondre EXACTEMENT à l'image
 const StatCard: FC<{ icon: ReactNode; title: string; value: number; rank: number | null; color: string }> = ({ icon, title, value, rank, color }) => {
     const formatRank = (r: number | null) => {
         if (!r) return <span className="text-gray-500">(Non classé)</span>;
-        const rankColor = r === 3 ? "text-yellow-600" : "text-gray-400";
+        const rankColor = r <= 3 ? "text-yellow-500" : "text-gray-400";
         return <span className={`font-semibold ${rankColor}`}>({r}e)</span>;
     };
 
@@ -83,7 +81,7 @@ export default function DashboardHomePage() {
     const [unlockedSuccesses, setUnlockedSuccesses] = useState<string[]>([]);
     const [allAchievements, setAllAchievements] = useState<AllAchievements>({});
     const [patchNotes, setPatchNotes] = useState<PatchNote | null>(null);
-    const [messageData, setMessageData] = useState<MessageData[]>([]);
+    const [kintHistoryData, setKintHistoryData] = useState<KintHistoryData[]>([]); 
     const [availableTitles, setAvailableTitles] = useState<string[]>([]);
     const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
     const [selectedTitle, setSelectedTitle] = useState('');
@@ -97,20 +95,42 @@ export default function DashboardHomePage() {
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const [statsData, messages, successData, patchnoteData, titles, currency, server, inventoryData, allAchievementsData] = await Promise.all([
+                    const [statsData, messages, successData, patchnoteData, titles, currency, server, inventoryData, allAchievementsData, kintHistoryRaw] = await Promise.all([
                         fetch(`/api/stats/me`).then(res => res.json()),
-                        fetch(`/api/messages/${session.user.id}`).then(res => res.json()),
+                        fetch(`/api/messages/${session.user.id}`).then(res => res.json()), 
                         fetch(`/api/success/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/patchnote`).then(res => res.json()),
                         fetch(`/api/titres/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/currency/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/server/info`).then(res => res.json()),
                         getInventory(),
-                        getAllAchievements()
+                        getAllAchievements(),
+                        fetch(`/api/points/${session.user.id}/history`).then(res => res.json()),
                     ]);
 
                     setStats(statsData);
-                    setMessageData((messages.messagesLast7Days || []).map((c: number, i: number) => ({ day: `J-${6 - i}`, messages: c })));
+                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[]) 
+                        .filter((entry: HistoryEntry) => entry.type !== 'shield') 
+                        .reduce((acc: { [key: string]: number }, entry: HistoryEntry) => {
+                            const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+                            acc[dayKey] = (acc[dayKey] || 0) + entry.amount; 
+                            return acc;
+                        }, {});
+
+                    const last7DaysKintHistory = Object.keys(processedKintHistory)
+                        .sort((a, b) => {
+                            const [dayA, monthA] = a.split('/');
+                            const [dayB, monthB] = b.split('/');
+                            const dateA = new Date(new Date().getFullYear(), parseInt(monthA) - 1, parseInt(dayA)).getTime();
+                            const dateB = new Date(new Date().getFullYear(), parseInt(monthB) - 1, parseInt(dayB)).getTime();
+                            return dateA - dateB;
+                        }) 
+                        .slice(-7) 
+                        .map(date => ({ day: date, points: processedKintHistory[date] || 0 })); 
+                    
+                    setKintHistoryData(last7DaysKintHistory);
+
+
                     setUnlockedSuccesses(successData.succes || []);
                     setAllAchievements(allAchievementsData || {});
                     setPatchNotes(patchnoteData);
@@ -202,20 +222,30 @@ export default function DashboardHomePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
                         <Card>
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><MessageSquare size={18}/> Activité récente</h3>
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Zap size={18}/> Historique des Points KINT sur 7 jours</h3>
                             <ResponsiveContainer width="100%" height={250}>
-                               <BarChart data={messageData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                               <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                     <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} />
                                     <YAxis stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} allowDecimals={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '0.5rem' }} cursor={{fill: 'rgba(100, 116, 139, 0.1)'}}/>
-                                    <Bar dataKey="messages" name="Messages" fill="url(#colorUv)" radius={[4, 4, 0, 0]} />
+                                    <Tooltip 
+                                        contentStyle={{ 
+                                            backgroundColor: 'rgba(28, 34, 48, 0.8)', 
+                                            border: '1px solid rgba(255, 255, 255, 0.1)', 
+                                            borderRadius: '0.75rem',
+                                            backdropFilter: 'blur(4px)'
+                                        }}
+                                        labelStyle={{ color: '#cbd5e1' }}
+                                        itemStyle={{ color: '#22d3ee' }}
+                                    />
                                     <defs>
-                                        <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8}/>
-                                            <stop offset="95%" stopColor="#0891b2" stopOpacity={0.2}/>
+                                        <linearGradient id="kintPointsGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.4}/> 
+                                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
                                         </linearGradient>
                                     </defs>
-                                </BarChart>
+                                    <Area type="monotone" dataKey="points" name="Points KINT" stroke="#22d3ee" strokeWidth={2} fill="url(#kintPointsGradient)" />
+                                </AreaChart>
                             </ResponsiveContainer>
                         </Card>
                         {patchNotes && (
