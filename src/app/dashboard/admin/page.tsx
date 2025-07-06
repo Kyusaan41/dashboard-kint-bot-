@@ -48,8 +48,6 @@ export default function AdminPage() {
 
     const [botLogs, setBotLogs] = useState<LogEntry[]>([]);
     const [loadingBotLogs, setLoadingBotLogs] = useState(true);
-
-    // --- CORRECTION : Refs pour le conteneur et la fin des logs ---
     const botLogsContainerRef = useRef<HTMLDivElement>(null);
     const botLogsEndRef = useRef<HTMLDivElement>(null);
 
@@ -74,7 +72,6 @@ export default function AdminPage() {
                 getBotLogs()
                     .then(data => {
                         setBotLogs(data.logs.reverse());
-                        // --- CORRECTION : On ne scrolle que si l'utilisateur est déjà en bas ---
                         if (isScrolledToBottom) {
                             setTimeout(() => {
                                 botLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -228,8 +225,7 @@ export default function AdminPage() {
                             <Terminal /> Logs du Bot <span className="text-xs text-gray-500">(Rafraîchissement auto)</span>
                         </h2>
                         {loadingBotLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
-                            // --- CORRECTION : Ref ajoutée au conteneur des logs ---
-                            <div ref={botLogsContainerRef} className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[400px]">
+                            <div ref={botLogsContainerRef} className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
                                 {botLogs.length > 0 ? botLogs.map((log, index) => (
                                     <p key={index}><span className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString('fr-FR')}</span><span className="ml-2">{log.log}</span></p>
                                 )) : <p>Aucun log à afficher.</p>}
@@ -240,7 +236,7 @@ export default function AdminPage() {
                     <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Zap /> Logs KINT (Transactions de points)</h2>
                         {loadingKintLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
-                            <div className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[400px]">
+                            <div className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
                                 {kintLogs.length > 0 ? kintLogs.map((log, index) => (
                                     <div key={index} className="flex items-center gap-3 py-1 hover:bg-white/5 px-2 rounded">
                                         <span className="text-gray-500 flex-shrink-0">{new Date(log.date).toLocaleString('fr-FR')}</span>
