@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-// --- fetchCurrency et fetchPoints sont maintenant importés ---
 import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getKintLogs, fetchCurrency, fetchPoints } from '@/utils/api'; 
 import Image from 'next/image';
-import { Power, RefreshCw, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
+import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // --- Types ---
@@ -20,13 +19,12 @@ type KintLogEntry = {
     reason: string;
     type?: 'shield';
 };
-// --- Nouveau type pour les stats de l'utilisateur sélectionné ---
 type SelectedUserStats = {
     currency: number | null;
     points: number | null;
 };
 
-// --- Composant Card (réutilisé du dashboard) ---
+// --- Composant Card ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-[#1c222c] border border-white/10 rounded-xl p-6 shadow-lg relative overflow-hidden group ${className}`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -45,12 +43,14 @@ export default function AdminPage() {
     const [pointsAmount, setPointsAmount] = useState<number | ''>('');
     const [searchQuery, setSearchQuery] = useState('');
     
-    // --- Nouvel état pour les stats de l'utilisateur sélectionné ---
     const [selectedUserStats, setSelectedUserStats] = useState<SelectedUserStats>({ currency: null, points: null });
     const [loadingUserStats, setLoadingUserStats] = useState(false);
 
     const [botLogs, setBotLogs] = useState<LogEntry[]>([]);
     const [loadingBotLogs, setLoadingBotLogs] = useState(true);
+
+    // --- CORRECTION : Refs pour le conteneur et la fin des logs ---
+    const botLogsContainerRef = useRef<HTMLDivElement>(null);
     const botLogsEndRef = useRef<HTMLDivElement>(null);
 
     const [kintLogs, setKintLogs] = useState<KintLogEntry[]>([]);
@@ -66,20 +66,35 @@ export default function AdminPage() {
         if (status === 'authenticated' && session?.user?.role === 'admin') {
             getUsers().then(setUsers).catch(console.error).finally(() => setLoadingUsers(false));
             getKintLogs().then(setKintLogs).catch(console.error).finally(() => setLoadingKintLogs(false));
+            
             const fetchBotLogs = () => {
-                getBotLogs().then(data => setBotLogs(data.logs.reverse())).catch(console.error).finally(() => setLoadingBotLogs(false));
+                const container = botLogsContainerRef.current;
+                const isScrolledToBottom = container ? container.scrollHeight - container.scrollTop <= container.clientHeight + 50 : true;
+
+                getBotLogs()
+                    .then(data => {
+                        setBotLogs(data.logs.reverse());
+                        // --- CORRECTION : On ne scrolle que si l'utilisateur est déjà en bas ---
+                        if (isScrolledToBottom) {
+                            setTimeout(() => {
+                                botLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }
+                    })
+                    .catch(console.error)
+                    .finally(() => setLoadingBotLogs(false));
             };
+
             fetchBotLogs();
             const logInterval = setInterval(fetchBotLogs, 5000);
             return () => clearInterval(logInterval);
         }
     }, [status, session]);
 
-    // --- NOUVEL EFFET : Récupère les stats quand un utilisateur est sélectionné ---
     useEffect(() => {
         if (selectedUser) {
             setLoadingUserStats(true);
-            setSelectedUserStats({ currency: null, points: null }); // Reset
+            setSelectedUserStats({ currency: null, points: null });
             Promise.all([
                 fetchCurrency(selectedUser.id),
                 fetchPoints(selectedUser.id)
@@ -96,10 +111,6 @@ export default function AdminPage() {
             });
         }
     }, [selectedUser]);
-    
-    useEffect(() => {
-        botLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [botLogs]);
 
     const filteredUsers = useMemo(() => {
         if (!searchQuery) return users;
@@ -112,7 +123,6 @@ export default function AdminPage() {
         try {
             await action(selectedUser.id, finalAmount);
             alert(`Action réussie pour ${selectedUser.username}`);
-            // Rafraîchir les données après l'action
             if (action === giveKip) {
                 fetchPoints(selectedUser.id).then(data => setSelectedUserStats(prev => ({...prev, points: data.points ?? 0})));
                 getKintLogs().then(setKintLogs);
@@ -218,7 +228,8 @@ export default function AdminPage() {
                             <Terminal /> Logs du Bot <span className="text-xs text-gray-500">(Rafraîchissement auto)</span>
                         </h2>
                         {loadingBotLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
-                            <div className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[400px]">
+                            // --- CORRECTION : Ref ajoutée au conteneur des logs ---
+                            <div ref={botLogsContainerRef} className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[400px]">
                                 {botLogs.length > 0 ? botLogs.map((log, index) => (
                                     <p key={index}><span className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString('fr-FR')}</span><span className="ml-2">{log.log}</span></p>
                                 )) : <p>Aucun log à afficher.</p>}
