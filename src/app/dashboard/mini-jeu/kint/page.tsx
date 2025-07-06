@@ -2,7 +2,8 @@
 
 import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
-import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory } from '@/utils/api';
+// Importez la nouvelle fonction sendKintLogToDiscord
+import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory, sendKintLogToDiscord } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History, Swords, Award, Medal } from 'lucide-react';
@@ -102,15 +103,34 @@ export default function KintMiniGamePage() {
     }, [status, session]);
     
     const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
-        if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || !session?.user?.id) return;
-        
+        if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || !session?.user?.id || !session.user.name || !session.user.image) return; // Ajout de vérifications pour session.user
+
         setIsSubmitting(true);
         const amount = Number(manualPointsAmount);
         const pointsToSend = actionType === 'add' ? amount : -amount;
+        const actionText = actionType === 'add' ? 'GAGNÉ' : 'PERDU';
 
         try {
+            // Mettre à jour les points via l'API du bot
             await updatePoints(session.user.id, pointsToSend);
-            await fetchData();
+            
+            // Re-fetcher les points pour avoir le solde actuel APRES la mise à jour
+            const updatedPointsData = await fetchPoints(session.user.id);
+            const newCurrentBalance = updatedPointsData.points;
+
+            // Envoyer le log détaillé à Discord via la nouvelle API
+            await sendKintLogToDiscord({
+                userId: session.user.id,
+                username: session.user.name,
+                avatar: session.user.image,
+                actionType: actionText, // 'GAGNÉ' ou 'PERDU'
+                points: amount, // L'amount positif, car actionType indique si c'est gagné/perdu
+                currentBalance: newCurrentBalance,
+                // Si vous avez un concept d'effet actif sur le dashboard, passez-le ici
+                effect: "Aucun effet" // Placeholder, à remplacer si vous avez un vrai effet
+            });
+
+            await fetchData(); // Rafraîchir toutes les données du dashboard
             alert('Points mis à jour !');
         } catch (error) {
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
