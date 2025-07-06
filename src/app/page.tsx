@@ -5,6 +5,8 @@ import { LogIn, UserPlus, Shield, BarChart, Settings, Bot, ArrowRight, ToyBrick,
 import { motion, useAnimation } from "framer-motion";
 import { FC, ReactNode, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import { useSession } from 'next-auth/react'; // Importer useSession
+import { useRouter } from 'next/navigation'; // Importer useRouter
 
 // --- Composants ---
 const FeatureNode: FC<{
@@ -46,8 +48,26 @@ const FeatureNode: FC<{
 
 // --- Page Principale ---
 export default function Home() {
+  const { data: session, status } = useSession(); // Utiliser useSession
+  const router = useRouter(); // Utiliser useRouter
+
+  // Rediriger si l'utilisateur est déjà connecté
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
+
   const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || '1075878481498804224';
   const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&scope=bot%20applications.commands&permissions=8`;
+
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#030014] text-white">
+        <p className="animate-pulse">Chargement de la session...</p>
+      </div>
+    );
+  }
 
   return (
     <main className="bg-[#030014] text-white font-sans overflow-x-hidden">
@@ -62,13 +82,16 @@ export default function Home() {
                 <ZapIcon   className="text-cyan-400"/>
                 KINT
             </Link>
-            <Link href="/login" className="group relative inline-flex items-center px-6 py-2.5 overflow-hidden rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
-                <span className="absolute top-0 left-0 w-0 h-full bg-cyan-400 transition-all duration-300 group-hover:w-full"></span>
-                <span className="relative flex items-center gap-2 transition-colors duration-300 group-hover:text-black">
-                    <LogIn size={16}/>
-                    Accès Dashboard
-                </span>
-            </Link>
+            {/* Afficher le bouton d'accès au tableau de bord uniquement si non authentifié */}
+            {status !== 'authenticated' && (
+                <Link href="/login" className="group relative inline-flex items-center px-6 py-2.5 overflow-hidden rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
+                    <span className="absolute top-0 left-0 w-0 h-full bg-cyan-400 transition-all duration-300 group-hover:w-full"></span>
+                    <span className="relative flex items-center gap-2 transition-colors duration-300 group-hover:text-black">
+                        <LogIn size={16}/>
+                        Accès Dashboard
+                    </span>
+                </Link>
+            )}
         </header>
 
         {/* Section Héros */}
@@ -95,10 +118,13 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="mt-12"
             >
-                <Link href="/login" className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-bold rounded-full bg-cyan-400 text-black transition-transform transform hover:scale-105 shadow-2xl shadow-cyan-400/20">
-                    <LogIn size={22}/>
-                    Connexion à discord
-                </Link>
+                {/* Afficher le bouton de connexion à Discord uniquement si non authentifié */}
+                {status !== 'authenticated' && (
+                    <Link href="/login" className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-bold rounded-full bg-cyan-400 text-black transition-transform transform hover:scale-105 shadow-2xl shadow-cyan-400/20">
+                        <LogIn size={22}/>
+                        Connexion à discord
+                    </Link>
+                )}
             </motion.div>
         </section>
 
