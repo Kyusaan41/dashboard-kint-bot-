@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-// Importez getDetailedKintLogs au lieu de getKintLogs
+// Importez getDetailedKintLogs
 import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints } from '@/utils/api'; 
 import Image from 'next/image';
 import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
@@ -17,14 +17,14 @@ type LogEntry = { timestamp: string; log: string; };
 type KintLogEntry = {
     userId: string;
     username: string;
-    avatar?: string; // Ajouté si disponible dans les logs
-    actionType: 'GAGNÉ' | 'PERDU'; // Ajouté
-    points: number; // Renommé 'amount' en 'points' pour clarté
-    currentBalance: number; // Ajouté
-    effect?: string; // Ajouté
-    date: string; // Date et heure de l'action
-    reason: string; // Raison spécifique (ex: "Victoire", "Défaite Dashboard")
-    source: 'Discord' | 'Dashboard'; // <-- NOUVELLE CLÉ IMPORTANTE
+    avatar?: string;
+    actionType: 'GAGNÉ' | 'PERDU';
+    points: number;
+    currentBalance: number;
+    effect?: string;
+    date: string;
+    reason: string;
+    source: 'Discord' | 'Dashboard';
 };
 type SelectedUserStats = {
     currency: number | null;
@@ -58,7 +58,6 @@ export default function AdminPage() {
     const botLogsContainerRef = useRef<HTMLDivElement>(null);
     const botLogsEndRef = useRef<HTMLDivElement>(null);
 
-    // Utilisez le nouveau type KintLogEntry
     const [kintLogs, setKintLogs] = useState<KintLogEntry[]>([]);
     const [loadingKintLogs, setLoadingKintLogs] = useState(true);
 
@@ -72,16 +71,26 @@ export default function AdminPage() {
         if (status === 'authenticated' && session?.user?.role === 'admin') {
             getUsers().then(setUsers).catch(console.error).finally(() => setLoadingUsers(false));
             
-            // Appelle la nouvelle fonction pour les logs Kint détaillés
             getDetailedKintLogs()
                 .then(data => {
-                    // Trie les logs par date décroissante pour afficher les plus récents en premier
-                    const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) => 
-                        new Date(b.date).getTime() - new Date(a.date).getTime()
-                    );
-                    setKintLogs(sortedLogs);
+                    console.log('Données reçues de getDetailedKintLogs (admin page):', data);
+                    console.log('Type des données reçues (admin page):', typeof data, Array.isArray(data)); // Pour le debug
+
+                    // Vérifie si les données sont bien un tableau avant de trier
+                    if (Array.isArray(data)) {
+                        const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) => 
+                            new Date(b.date).getTime() - new Date(a.date).getTime()
+                        );
+                        setKintLogs(sortedLogs);
+                    } else {
+                        console.error("Erreur: Les logs Kint détaillés reçus ne sont pas un tableau. Reçu:", data);
+                        setKintLogs([]); // Initialise avec un tableau vide pour éviter le crash
+                    }
                 })
-                .catch(console.error)
+                .catch(error => {
+                    console.error("Erreur lors du chargement des logs Kint détaillés (admin page):", error);
+                    setKintLogs([]); // Assure que kintLogs est un tableau vide en cas d'erreur de fetch
+                })
                 .finally(() => setLoadingKintLogs(false));
             
             const fetchBotLogs = () => {
@@ -141,9 +150,6 @@ export default function AdminPage() {
             alert(`Action réussie pour ${selectedUser.username}`);
             if (action === giveKip) {
                 fetchPoints(selectedUser.id).then(data => setSelectedUserStats(prev => ({...prev, points: data.points ?? 0})));
-                // Pas besoin d'appeler getKintLogs ici, car le tableau se mettra à jour via l'intervalle si fetchData est appelée
-                // ou via une refetch complète de getDetailedKintLogs si l'action donne des points.
-                // NOTE: Si giveKip ne génère pas de log détaillé pour le moment, il n'apparaîtra pas ici.
             } else if (action === giveMoney) {
                  fetchCurrency(selectedUser.id).then(data => setSelectedUserStats(prev => ({...prev, currency: data.balance ?? 0})));
             }
