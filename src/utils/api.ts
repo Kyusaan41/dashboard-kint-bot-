@@ -71,15 +71,16 @@ export async function updateXP(userId: string, newXP: number) {
 
 // --- Fonctions pour la Monnaie (Currency) ---
 
+// MODIFICATION ICI: Ajout du paramètre 'source'
 export async function fetchCurrency(userId: string) {
     return handleApiResponse(await fetch(`/api/currency/${userId}`));
 }
 
-export async function updateCurrency(userId: string, newBalance: number) {
+export async function updateCurrency(userId: string, amountChange: number, source?: string) {
     return handleApiResponse(await fetch(`/api/currency/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coins: newBalance }),
+        body: JSON.stringify({ amount: amountChange, source: source }), // Passe la différence et la source
     }));
 }
 
@@ -89,11 +90,12 @@ export async function fetchPoints(userId: string) {
     return handleApiResponse(await fetch(`/api/points/${userId}`));
 }
 
-export async function updatePoints(userId: string, newPoints: number) {
+// MODIFICATION ICI: Ajout du paramètre 'source'
+export async function updatePoints(userId: string, amountChange: number, source?: string) {
     return handleApiResponse(await fetch(`/api/points/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ points: newPoints }),
+        body: JSON.stringify({ amount: amountChange, source: source }), // Passe la différence et la source
     }));
 }
 
@@ -156,6 +158,7 @@ export async function getAllAchievements() {
 }
 
 // --- NOUVELLE FONCTION POUR ENVOYER UN LOG DÉTAILLÉ À DISCORD VIA LE BOT ---
+// Assurez-vous que cette définition de type est correcte et complète
 export async function sendKintLogToDiscord(logData: {
     userId: string;
     username: string;
@@ -177,7 +180,7 @@ export async function sendKintLogToDiscord(logData: {
 
 // --- NOUVELLE FONCTION POUR RÉCUPÉRER LES LOGS KINT DÉTAILLÉS DEPUIS LE BOT ---
 // Elle accepte maintenant un userId optionnel pour le filtrage
-export async function getDetailedKintLogs(userId?: string): Promise<any[]> { // userId est maintenant optionnel
+export async function getDetailedKintLogs(userId?: string): Promise<any[]> { 
     const url = userId ? `/api/kint-detailed-logs?userId=${userId}` : '/api/kint-detailed-logs';
     return handleApiResponse(await fetch(url));
 }
