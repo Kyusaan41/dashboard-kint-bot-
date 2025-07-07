@@ -1,61 +1,37 @@
-// src/app/api/currency/[userId]/route.ts
-
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// Cette route récupère le solde ET le dernier claim d'un utilisateur
-export async function GET(request: NextRequest, context: any) {
+export async function GET() {
     try {
-        const { params } = context;
-        const { userId } = params;
+        // On lance les deux appels en parallèle pour plus d'efficacité
+        const [leaderboardRes, serverInfoRes] = await Promise.all([
+            fetch(`${BOT_API_URL}/currency`),   // Récupère le classement { userId, balance }
+            fetch(`${BOT_API_URL}/serverinfo`)  // Récupère les infos des membres
+        ]);
 
-        if (!userId) {
-            return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+        if (!leaderboardRes.ok || !serverInfoRes.ok) {
+            throw new Error("Impossible de récupérer toutes les données nécessaires depuis le bot.");
         }
 
-        const res = await fetch(`${BOT_API_URL}/currency/${userId}`);
-        if (!res.ok) {
-            throw new Error(`Erreur du bot API: ${res.statusText}`);
-        }
-        
-        const data = await res.json();
-        return NextResponse.json(data);
+        const leaderboard = await leaderboardRes.json();
+        const serverInfo = await serverInfoRes.json();
+        const members = serverInfo.members || [];
 
-    } catch (error) {
-        console.error("Erreur dans /api/currency/[userId]:", error);
-        return NextResponse.json({ balance: 0, lastClaim: null }, { status: 500 });
-    }
-}
-
-// POST : Met à jour la monnaie d'un utilisateur
-// Modification : Attend maintenant 'amount' (différence) et 'source'
-export async function POST(request: NextRequest, context: any) {
-    try {
-        const { params } = context;
-        const { userId } = params;
-        const { amount, source } = await request.json(); // <-- Récupère la différence (amount) et la source
-
-        if (typeof amount !== 'number') {
-            return NextResponse.json({ error: 'Le montant de la monnaie est invalide' }, { status: 400 });
-        }
-
-        // Appelle l'API du bot pour qu'elle gère la mise à jour réelle
-        // L'API du bot s'attend à recevoir une différence et la source.
-        const res = await fetch(`${BOT_API_URL}/currency/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coins: amount, source: source }), // <-- Transmet la différence et la source
+        // On "enrichit" le classement avec les données des membres
+        const enrichedLeaderboard = leaderboard.map((player: { userId: string, balance: number }) => {
+            const memberInfo = members.find((m: any) => m.id === player.userId);
+            return {
+                ...player,
+                username: memberInfo?.username || 'Utilisateur inconnu',
+                avatar: memberInfo?.avatar || '/default-avatar.png'
+            };
         });
 
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || 'Erreur du bot API');
-        }
+        return NextResponse.json(enrichedLeaderboard);
 
-        return NextResponse.json(data);
     } catch (error) {
-        console.error("Erreur dans POST /api/currency/[userId]:", error);
-        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+        console.error("Erreur dans /api/leaderboard/currency:", error);
+        return NextResponse.json([], { status: 500 });
     }
 }
