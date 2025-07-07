@@ -1,4 +1,4 @@
-"use client"; // Add this line at the top
+"use client";
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, FC, ReactNode } from 'react';
@@ -11,7 +11,7 @@ import {
     BookOpen, Crown, Gem
 } from 'lucide-react';
 
-// --- Type Definitions ---
+// --- Type Definitions (Mise à jour pour le nouveau format de log) ---
 type UserStats = {
     currency: number; currencyRank: number | null;
     xp: number; xpRank: number | null;
@@ -20,7 +20,13 @@ type UserStats = {
 };
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
 type KintHistoryData = { day: string; points: number; }; 
-type HistoryEntry = { amount: number; date: string; reason: string; type?: 'shield' };
+type HistoryEntry = { 
+    actionType: 'GAGNÉ' | 'PERDU';
+    points: number; 
+    date: string; 
+    reason: string; 
+    effect?: string;
+};
 type ServerInfo = { id: string; name: string; icon: string | null; };
 type InventoryItem = { id: string; name: string; quantity: number; icon?: string; };
 type AllAchievements = { [key: string]: { name: string; description: string; } };
@@ -105,15 +111,18 @@ export default function DashboardHomePage() {
                         fetch(`/api/server/info`).then(res => res.json()),
                         getInventory(),
                         getAllAchievements(),
-                        fetch(`/api/points/${session.user.id}/history`).then(res => res.json()),
+                        fetch(`/api/kint-detailed-logs?userId=${session.user.id}`).then(res => res.json()), // On utilise la route unifiée
                     ]);
 
                     setStats(statsData);
+
+                    // --- LOGIQUE DU GRAPHIQUE CORRIGÉE ---
                     const processedKintHistory = (kintHistoryRaw as HistoryEntry[]) 
-                        .filter((entry: HistoryEntry) => entry.type !== 'shield') 
+                        .filter((entry: HistoryEntry) => entry.effect !== 'KShield') // On ignore les actions protégées
                         .reduce((acc: { [key: string]: number }, entry: HistoryEntry) => {
                             const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-                            acc[dayKey] = (acc[dayKey] || 0) + entry.amount; 
+                            const points = entry.actionType === 'GAGNÉ' ? entry.points : -entry.points;
+                            acc[dayKey] = (acc[dayKey] || 0) + points; 
                             return acc;
                         }, {});
 
@@ -121,15 +130,13 @@ export default function DashboardHomePage() {
                         .sort((a, b) => {
                             const [dayA, monthA] = a.split('/');
                             const [dayB, monthB] = b.split('/');
-                            const dateA = new Date(new Date().getFullYear(), parseInt(monthA) - 1, parseInt(dayA)).getTime();
-                            const dateB = new Date(new Date().getFullYear(), parseInt(monthB) - 1, parseInt(dayB)).getTime();
-                            return dateA - dateB;
+                            return new Date(2024, parseInt(monthA) - 1, parseInt(dayA)).getTime() - new Date(2024, parseInt(monthB) - 1, parseInt(dayB)).getTime();
                         }) 
                         .slice(-7) 
                         .map(date => ({ day: date, points: processedKintHistory[date] || 0 })); 
                     
                     setKintHistoryData(last7DaysKintHistory);
-
+                    // --- FIN DE LA CORRECTION ---
 
                     setUnlockedSuccesses(successData.succes || []);
                     setAllAchievements(allAchievementsData || {});
