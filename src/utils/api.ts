@@ -156,7 +156,6 @@ export async function getAllAchievements() {
 }
 
 // --- NOUVELLE FONCTION POUR ENVOYER UN LOG DÉTAILLÉ À DISCORD VIA LE BOT ---
-// Assurez-vous que cette définition de type est correcte et complète
 export async function sendKintLogToDiscord(logData: {
     userId: string;
     username: string;
@@ -165,7 +164,7 @@ export async function sendKintLogToDiscord(logData: {
     points: number;
     currentBalance: number;
     effect?: string;
-    date: string; // <-- CE CHAMP ET LES SUIVANTS DOIVENT ÊTRE PRÉSENTS
+    date: string;
     source: 'Discord' | 'Dashboard';
     reason: string;
 }) {
@@ -177,6 +176,8 @@ export async function sendKintLogToDiscord(logData: {
 }
 
 // --- NOUVELLE FONCTION POUR RÉCUPÉRER LES LOGS KINT DÉTAILLÉS DEPUIS LE BOT ---
-export async function getDetailedKintLogs(): Promise<any[]> {
-    return handleApiResponse(await fetch('/api/kint-detailed-logs'));
+// Elle accepte maintenant un userId optionnel pour le filtrage
+export async function getDetailedKintLogs(userId?: string): Promise<any[]> { // userId est maintenant optionnel
+    const url = userId ? `/api/kint-detailed-logs?userId=${userId}` : '/api/kint-detailed-logs';
+    return handleApiResponse(await fetch(url));
 }

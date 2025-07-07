@@ -135,7 +135,7 @@ export default function KintMiniGamePage() {
             const [leaderboardData, pointsData, detailedHistoryData, inventoryData] = await Promise.all([
                 getPointsLeaderboard(),
                 fetchPoints(session.user.id),
-                getDetailedKintLogs(), // <-- APPEL DE LA NOUVELLE FONCTION POUR LES LOGS DÉTAILLÉS
+                getDetailedKintLogs(session.user.id), // <-- PASSE L'ID DE L'UTILISATEUR CONNECTÉ
                 getInventory(),
             ]);
             setLeaderboard(leaderboardData);
@@ -174,7 +174,7 @@ export default function KintMiniGamePage() {
         const amount = Number(manualPointsAmount);
         const pointsToModify = actionType === 'add' ? amount : -amount;
         const actionText = actionType === 'add' ? 'GAGNÉ' : 'PERDU';
-        const reasonText = actionType === 'add' ? 'Victoire Dashboard' : 'Défaite Dashboard'; // Bien défini ici
+        const reasonText = actionType === 'add' ? 'Victoire Dashboard' : 'Défaite Dashboard';
 
         try {
             // 1. Mettre à jour les points via l'API du bot
