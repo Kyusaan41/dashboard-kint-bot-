@@ -2,31 +2,28 @@
 
 import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
-// Importez les fonctions nécessaires
 import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory, sendKintLogToDiscord, getDetailedKintLogs } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History, Swords, Award, Medal } from 'lucide-react';
 
-// --- Types (MISES À JOUR) ---
+// --- Types ---
 type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
-
-// Type pour une entrée de l'historique Kint détaillé
 type HistoryEntry = {
     userId: string;
     username: string;
     avatar?: string;
-    actionType: 'GAGNÉ' | 'PERDU'; // Type d'action (Victoire/Défaite)
-    points: number; // Montant de points modifié
-    currentBalance: number; // Solde après l'action
-    effect?: string; // Effet actif (si applicable)
-    date: string; // Date et heure de l'action
-    reason: string; // Raison spécifique (ex: "Victoire", "Défaite Dashboard")
-    source: 'Discord' | 'Dashboard'; // <-- NOUVELLE CLÉ IMPORTANTE
+    actionType: 'GAGNÉ' | 'PERDU';
+    points: number;
+    currentBalance: number;
+    effect?: string;
+    date: string;
+    reason: string;
+    source: 'Discord' | 'Dashboard';
 };
 type InventoryItem = { id: string; name: string; quantity: number; };
 
-// --- Composant Card (pour la cohérence) ---
+// --- Composant Card ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-[#1c222c] border border-white/10 rounded-xl shadow-lg relative overflow-hidden group ${className}`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -34,8 +31,7 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
     </div>
 );
 
-// --- Sous-composants pour la clarté ---
-
+// --- Sous-composants ---
 const PodiumCard = ({ entry, rank }: { entry: LeaderboardEntry, rank: number }) => {
     const rankConfig = {
         1: { border: 'border-yellow-400', shadow: 'shadow-yellow-400/20', icon: Crown },
@@ -43,7 +39,6 @@ const PodiumCard = ({ entry, rank }: { entry: LeaderboardEntry, rank: number }) 
         3: { border: 'border-orange-400', shadow: 'shadow-orange-400/20', icon: Medal },
     };
     const config = rankConfig[rank as keyof typeof rankConfig];
-
     return (
          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: rank * 0.1, type: 'spring' }} className={`relative rounded-xl bg-[#1c222c] border-2 ${config.border} p-6 text-center shadow-2xl ${config.shadow} ${rank === 1 ? 'scale-110 z-10' : 'lg:mt-8'}`}>
             <config.icon className={config.border.replace('border-', 'text-')} size={32} />
@@ -66,65 +61,36 @@ const LeaderboardRow = ({ entry, rank, sessionUserId }: { entry: LeaderboardEntr
     );
 };
 
-// MISE À JOUR de HistoryItem pour afficher les nouvelles données
+// --- COMPOSANT HISTORIQUE MIS À JOUR ---
 const HistoryItem = ({ item }: { item: HistoryEntry }) => {
-    // Formatte la date comme "JJ/MM/AAAA HH:MM:SS"
-    const formattedDate = new Date(item.date).toLocaleString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false // Force le format 24h
-    });
-
+    const formattedDate = new Date(item.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const isKShieldLog = item.reason === 'Protégé par KShield';
+    const Icon = isKShieldLog ? Shield : (item.actionType === 'GAGNÉ' ? TrendingUp : TrendingDown);
+    const iconColor = isKShieldLog ? 'text-blue-400' : (item.actionType === 'GAGNÉ' ? 'text-green-500' : 'text-red-500');
+    const textColor = isKShieldLog ? 'text-blue-300' : (item.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400');
     const actionSign = item.actionType === 'GAGNÉ' ? '+' : '-';
-    const actionColor = item.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400';
+    const logText = isKShieldLog ? `Perte de ${item.points} pts annulée` : `a ${item.actionType.toLowerCase()} ${actionSign}${item.points} pts`;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col text-sm bg-gray-800/50 p-3 rounded-md"
-        >
-            <p className="text-gray-400 mb-1">
-                {formattedDate} {' '}
-                <span className={item.source === 'Discord' ? 'text-purple-400 font-semibold' : 'text-blue-400 font-semibold'}>
-                    ({item.source})
-                </span>
-            </p>
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }} className="flex flex-col text-sm bg-gray-800/50 p-3 rounded-md">
+            <p className="text-gray-400 mb-1">{formattedDate} <span className={item.source === 'Discord' ? 'text-purple-400 font-semibold' : 'text-blue-400 font-semibold'}>({item.source})</span></p>
             <div className="flex items-center gap-2">
-                {/* icône pour GAGNÉ/PERDU */}
-                {item.actionType === 'GAGNÉ' ? <TrendingUp className="text-green-500" size={18}/> : <TrendingDown className="text-red-500" size={18}/>}
-
-                <p className="font-semibold text-white truncate">
-                    {item.username} {' '}
-                    <span className={`${actionColor}`}>
-                        a {item.actionType.toLowerCase()} {actionSign}{item.points} pts
-                    </span>
-                    {' '} ({item.reason || item.actionType})
-                </p>
+                <Icon className={iconColor} size={18}/>
+                <p className="font-semibold text-white truncate">{item.username} <span className={textColor}>{logText}</span> ({item.reason})</p>
             </div>
-            {item.effect && item.effect !== "Aucun effet" && (
-                <p className="text-xs text-gray-500 mt-1">
-                    Effet: {item.effect}
-                </p>
-            )}
+            {item.effect && item.effect !== "Aucun effet" && (<p className="text-xs text-gray-500 mt-1">Effet: {item.effect}</p>)}
         </motion.div>
     );
 };
 
 
-// --- Composant Principal ---
+// --- COMPOSANT PRINCIPAL ---
 export default function KintMiniGamePage() {
     const { data: session, status } = useSession();
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [userPoints, setUserPoints] = useState<number | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
-    const [history, setHistory] = useState<HistoryEntry[]>([]); // Maintenant ce sont les logs détaillés
+    const [history, setHistory] = useState<HistoryEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>('');
@@ -135,40 +101,43 @@ export default function KintMiniGamePage() {
             const [leaderboardData, pointsData, detailedHistoryData, inventoryData] = await Promise.all([
                 getPointsLeaderboard(),
                 fetchPoints(session.user.id),
-                getDetailedKintLogs(session.user.id), // <-- PASSE L'ID DE L'UTILISATEUR CONNECTÉ
+                getDetailedKintLogs(),
                 getInventory(),
             ]);
+
+            // --- CORRECTION TYPE SCRIPT ICI ---
+            const membersMap = new Map<string, { username?: string; avatar?: string; }>(
+                leaderboardData.map((p: LeaderboardEntry) => [p.userId, { username: p.username, avatar: p.avatar }])
+            );
+
+            const enrichedHistory = detailedHistoryData.map((log: HistoryEntry) => ({
+                ...log,
+                username: membersMap.get(log.userId)?.username || log.username,
+                avatar: membersMap.get(log.userId)?.avatar || log.avatar,
+            })).filter((log: HistoryEntry) => log.userId === session.user.id);
+
             setLeaderboard(leaderboardData);
             setUserPoints(pointsData.points);
-            // --- CORRECTION ET AJOUT ICI ---
-            setInventory(inventoryData); // On met à jour l'inventaire avec les données reçues
-            // --------------------------
-            // Trie les logs par date décroissante pour afficher les plus récents en premier
-            const sortedHistory = detailedHistoryData.sort((a: HistoryEntry, b: HistoryEntry) =>
-                new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
-            setHistory(sortedHistory);
+            setInventory(inventoryData);
+            setHistory(enrichedHistory);
         } catch (error) {
             console.error("Erreur de chargement des données du jeu:", error);
         } finally {
-            setLoading(false); // Assurez-vous que le loading se termine même en cas d'erreur
+            setLoading(false);
         }
     };
 
     useEffect(() => {
         if (status === 'authenticated') {
             setLoading(true);
-            fetchData(); // Appel initial
-            // Intervalle de rafraîchissement des données (par exemple toutes les 15 secondes)
+            fetchData();
             const intervalId = setInterval(fetchData, 15000);
-            return () => clearInterval(intervalId); // Nettoyage de l'intervalle au démontage du composant
+            return () => clearInterval(intervalId);
         }
-    }, [status, session]); // Dépendances pour l'useEffect
+    }, [status, session]);
 
     const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
-        // Vérifiez que session.user et ses propriétés sont définies avant d'y accéder
         if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || !session?.user?.id || !session.user.name || !session.user.image) {
-            console.error("Données de session ou points invalides pour l'action manuelle.");
             alert("Veuillez vous connecter et entrer un nombre de points valide.");
             return;
         }
@@ -180,32 +149,24 @@ export default function KintMiniGamePage() {
         const reasonText = actionType === 'add' ? 'Victoire Dashboard' : 'Défaite Dashboard';
 
         try {
-            // 1. Mettre à jour les points via l'API du bot
             await updatePoints(session.user.id, pointsToModify);
-
-            // 2. Re-fetcher les points pour avoir le solde actuel APRES la mise à jour
             const updatedPointsData = await fetchPoints(session.user.id);
             const newCurrentBalance = updatedPointsData.points;
-
-            // 3. Envoyer le log détaillé à Discord via la nouvelle API
             await sendKintLogToDiscord({
                 userId: session.user.id,
                 username: session.user.name,
                 avatar: session.user.image,
-                actionType: actionText, // 'GAGNÉ' ou 'PERDU'
-                points: amount, // L'amount positif, car actionType indique si c'est gagné/perdu
+                actionType: actionText,
+                points: amount,
                 currentBalance: newCurrentBalance,
-                effect: "Manuel Dashboard", // Cause de l'action
-                date: new Date().toISOString(), // Date de l'action
-                source: "Dashboard", // <-- Source de l'action
-                reason: reasonText // <-- Le champ 'reason' est bien passé ici
+                effect: "Manuel Dashboard",
+                date: new Date().toISOString(),
+                source: "Dashboard",
+                reason: reasonText
             });
-
-            // 4. Rafraîchir toutes les données du dashboard
             await fetchData();
             alert('Points mis à jour !');
         } catch (error) {
-            console.error("Erreur lors de la mise à jour des points ou de l'envoi du log:", error);
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
             setManualPointsAmount('');
@@ -214,11 +175,7 @@ export default function KintMiniGamePage() {
     };
 
     if (loading || status === 'loading') {
-        return (
-            <div className="flex h-full items-center justify-center">
-                <Loader2 className="h-10 w-10 text-cyan-400 animate-spin" />
-            </div>
-        );
+        return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 text-cyan-400 animate-spin" /></div>;
     }
 
     const topThree = leaderboard.slice(0, 3);
@@ -231,87 +188,18 @@ export default function KintMiniGamePage() {
                 <p className="text-gray-400 mt-1">Consultez les scores, déclarez une victoire ou une défaite et suivez vos parties.</p>
             </motion.div>
 
-            {/* Podium */}
-            {topThree.length > 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
-                    {topThree[1] && <PodiumCard entry={topThree[1]} rank={2} />}
-                    {topThree[0] && <PodiumCard entry={topThree[0]} rank={1} />}
-                    {topThree[2] && <PodiumCard entry={topThree[2]} rank={3} />}
-                </div>
-            )}
+            {topThree.length > 0 && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">{topThree[1] && <PodiumCard entry={topThree[1]} rank={2} />}{topThree[0] && <PodiumCard entry={topThree[0]} rank={1} />}{topThree[2] && <PodiumCard entry={topThree[2]} rank={3} />}</div>}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-1 space-y-8">
-                    {/* PANNEAU JOUEUR UNIFIÉ */}
-                    <Card>
-                        <div className="p-6">
-                            <div className="flex items-center gap-4 mb-6">
-                                <Image src={session?.user?.image || '/default-avatar.png'} alt="avatar" width={64} height={64} className="rounded-full border-2 border-cyan-500"/>
-                                <div>
-                                    <h2 className="text-2xl font-bold text-white">{session?.user?.name}</h2>
-                                    <div className="flex items-center gap-2 text-sm text-blue-300">
-                                        <Shield size={16}/>
-                                        <span>KShields: {inventory.find(i => i.id === 'KShield')?.quantity || 0}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="text-center mb-6">
-                                <p className="text-sm text-gray-400">Score KINT Actuel</p>
-                                <p className="text-7xl font-bold text-cyan-400 my-1">{userPoints ?? '...'}</p>
-                            </div>
-
-                            <div className="bg-black/20 p-4 rounded-lg">
-                                <label className="block text-sm font-medium mb-2 text-white">Déclarer un résultat</label>
-                                <div className="flex items-center gap-2">
-                                    <input type="number" placeholder="Points" value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-[#12151d] p-3 rounded-md border border-white/20"/>
-                                    <motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('add')} disabled={isSubmitting} title="Victoire" className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700 disabled:opacity-50">
-                                        <TrendingUp size={20}/>
-                                    </motion.button>
-                                    <motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('subtract')} disabled={isSubmitting} title="Défaite" className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700 disabled:opacity-50">
-                                        <TrendingDown size={20}/>
-                                    </motion.button>
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
+                    <Card><div className="p-6"><div className="flex items-center gap-4 mb-6"><Image src={session?.user?.image || '/default-avatar.png'} alt="avatar" width={64} height={64} className="rounded-full border-2 border-cyan-500"/><div><h2 className="text-2xl font-bold text-white">{session?.user?.name}</h2><div className="flex items-center gap-2 text-sm text-blue-300"><Shield size={16}/><span>KShields: {inventory.find(i => i.id === 'KShield')?.quantity || 0}</span></div></div></div><div className="text-center mb-6"><p className="text-sm text-gray-400">Score KINT Actuel</p><p className="text-7xl font-bold text-cyan-400 my-1">{userPoints ?? '...'}</p></div><div className="bg-black/20 p-4 rounded-lg"><label className="block text-sm font-medium mb-2 text-white">Déclarer un résultat</label><div className="flex items-center gap-2"><input type="number" placeholder="Points" value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-[#12151d] p-3 rounded-md border border-white/20"/><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('add')} disabled={isSubmitting} title="Victoire" className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700 disabled:opacity-50"><TrendingUp size={20}/></motion.button><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('subtract')} disabled={isSubmitting} title="Défaite" className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700 disabled:opacity-50"><TrendingDown size={20}/></motion.button></div></div></div></Card>
                 </div>
-
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Card>
-                        <div className="p-6">
-                            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><History/> Historique des parties</h2>
-                            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                                <AnimatePresence>
-                                    {history.length > 0 ? history.map((item, index) => (
-                                        // Utilisation du userId et date comme clé si d'autres champs sont identiques
-                                        <HistoryItem key={`${item.userId}-${item.date}-${index}`} item={item} />
-                                    )) : <p className="text-gray-500 text-center py-4">Aucune transaction récente.</p>}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    </Card>
-
-                    <Card>
-                        <div className="p-6">
-                            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Trophy/> Classement de l'Arène</h2>
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                                {restOfLeaderboard.length > 0 ? restOfLeaderboard.map((player, index) => (
-                                    <LeaderboardRow key={player.userId} entry={player} rank={index + 4} sessionUserId={session?.user?.id} />
-                                )) : (
-                                    <p className="text-gray-500 text-center py-4">Pas d'autres joueurs dans le classement.</p>
-                                )}
-                            </div>
-                        </div>
-                    </Card>
+                    <Card><div className="p-6"><h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><History/> Historique des parties</h2><div className="space-y-3 max-h-[400px] overflow-y-auto pr-2"><AnimatePresence>{history.length > 0 ? history.map((item, index) => <HistoryItem key={`${item.userId}-${item.date}-${index}`} item={item} />) : <p className="text-gray-500 text-center py-4">Aucune transaction récente.</p>}</AnimatePresence></div></div></Card>
+                    <Card><div className="p-6"><h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Trophy/> Classement de l'Arène</h2><div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">{restOfLeaderboard.length > 0 ? restOfLeaderboard.map((player, index) => <LeaderboardRow key={player.userId} entry={player} rank={index + 4} sessionUserId={session?.user?.id} />) : <p className="text-gray-500 text-center py-4">Pas d'autres joueurs dans le classement.</p>}</div></div></Card>
                 </div>
             </div>
-             <style jsx global>{`
-                .bg-grid-pattern {
-                    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-                    background-size: 20px 20px;
-                }
-            `}</style>
+             <style jsx global>{`.bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
         </div>
     );
 }

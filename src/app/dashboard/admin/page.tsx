@@ -73,23 +73,17 @@ export default function AdminPage() {
 
             getDetailedKintLogs()
                 .then(data => {
-                    console.log('Données reçues de getDetailedKintLogs (admin page):', data);
-                    console.log('Type des données reçues (admin page):', typeof data, Array.isArray(data)); // Pour le debug
-
-                    // Vérifie si les données sont bien un tableau avant de trier
                     if (Array.isArray(data)) {
                         const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) =>
                             new Date(b.date).getTime() - new Date(a.date).getTime()
                         );
                         setKintLogs(sortedLogs);
                     } else {
-                        console.error("Erreur: Les logs Kint détaillés reçus ne sont pas un tableau. Reçu:", data);
-                        setKintLogs([]); // Initialise avec un tableau vide pour éviter le crash
+                        setKintLogs([]);
                     }
                 })
                 .catch(error => {
-                    console.error("Erreur lors du chargement des logs Kint détaillés (admin page):", error);
-                    setKintLogs([]); // Assure que kintLogs est un tableau vide en cas d'erreur de fetch
+                    setKintLogs([]);
                 })
                 .finally(() => setLoadingKintLogs(false));
 
@@ -129,7 +123,6 @@ export default function AdminPage() {
                     points: pointsData.points ?? 0
                 });
             }).catch(error => {
-                console.error("Erreur de chargement des stats de l'utilisateur:", error);
                 alert("Impossible de charger les stats de cet utilisateur.");
             }).finally(() => {
                 setLoadingUserStats(false);
@@ -142,19 +135,18 @@ export default function AdminPage() {
         return users.filter(user => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [users, searchQuery]);
 
-    // --- MODIFICATION ICI ---
     const handleStatAction = async (actionType: 'points' | 'currency', amount: number | '', isRemoval: boolean = false) => {
         if (!selectedUser || amount === '') return;
         const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount);
-        const source = "admin_dashboard"; // On définit la source de l'action
+        const source = "admin_dashboard";
 
         setLoadingUserStats(true);
         try {
             if (actionType === 'points') {
-                await updatePoints(selectedUser.id, finalAmount, source); // On passe la source
+                await updatePoints(selectedUser.id, finalAmount, source);
                 alert(`Points KINT mis à jour pour ${selectedUser.username} !`);
             } else if (actionType === 'currency') {
-                await updateCurrency(selectedUser.id, finalAmount, source); // On passe la source
+                await updateCurrency(selectedUser.id, finalAmount, source);
                 alert(`Pièces mises à jour pour ${selectedUser.username} !`);
             }
 
@@ -166,13 +158,11 @@ export default function AdminPage() {
             });
 
         } catch (error) {
-            console.error(`Erreur lors de la mise à jour ${actionType}:`, error);
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
             setLoadingUserStats(false);
         }
     };
-    // --- FIN DE LA MODIFICATION ---
 
     const handleRestart = async () => {
         if (!confirm("Êtes-vous sûr de vouloir redémarrer le bot ?")) return;
@@ -235,7 +225,7 @@ export default function AdminPage() {
                                 </h2>
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="block mb-2 font-medium text-gray-300 flex items-center justify-between">
+                                        <label className="flex items-center justify-between mb-2 font-medium text-gray-300">
                                             <span className="flex items-center gap-2"><Coins size={16}/> Gérer l'Argent</span>
                                             {loadingUserStats ? <span className="text-xs text-gray-500">...</span> : <span className="font-bold text-yellow-400">{selectedUserStats.currency?.toLocaleString() ?? 'N/A'}</span>}
                                         </label>
@@ -246,7 +236,7 @@ export default function AdminPage() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block mb-2 font-medium text-gray-300 flex items-center justify-between">
+                                        <label className="flex items-center justify-between mb-2 font-medium text-gray-300">
                                             <span className="flex items-center gap-2"><Zap size={16}/> Gérer les Points KINT</span>
                                              {loadingUserStats ? <span className="text-xs text-gray-500">...</span> : <span className="font-bold text-cyan-400">{selectedUserStats.points?.toLocaleString() ?? 'N/A'}</span>}
                                         </label>
@@ -281,45 +271,19 @@ export default function AdminPage() {
                         {loadingKintLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
                             <div className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
                                 {kintLogs.length > 0 ? kintLogs.map((log, index) => {
-                                    // Formatte la date comme "JJ/MM/AAAA HH:MM:SS"
-                                    const formattedDate = new Date(log.date).toLocaleString('fr-FR', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        second: '2-digit',
-                                        hour12: false
-                                    });
-
-                                    const actionSign = log.actionType === 'GAGNÉ' ? '+' : ''; // Pas de signe moins pour 'perdu', la valeur est déjà négative
+                                    const formattedDate = new Date(log.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+                                    const actionSign = log.actionType === 'GAGNÉ' ? '+' : '';
                                     const actionColor = log.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400';
                                     const sourceColor = log.source === 'Discord' ? 'text-purple-400' : 'text-blue-400';
 
-
                                     return (
                                         <div key={index} className="flex flex-col gap-1 py-1 hover:bg-white/5 px-2 rounded">
-                                            <span className="text-gray-500 flex-shrink-0">
-                                                {formattedDate} {' '}
-                                                <span className={`${sourceColor} font-semibold`}>
-                                                    ({log.source})
-                                                </span>
-                                            </span>
+                                            <span className="text-gray-500 flex-shrink-0">{formattedDate} <span className={`${sourceColor} font-semibold`}>({log.source})</span></span>
                                             <div className="flex items-center gap-2">
                                                 {log.actionType === 'GAGNÉ' ? <TrendingUp size={14} className="text-green-400"/> : <TrendingDown size={14} className="text-red-400"/>}
-                                                <span className="font-semibold text-white truncate" title={log.username}>
-                                                    {log.username} {' '}
-                                                    <span className={`${actionColor}`}>
-                                                        a {log.actionType.toLowerCase()} {actionSign}{log.points} pts
-                                                    </span>
-                                                    {' '} ({log.reason})
-                                                </span>
+                                                <span className="font-semibold text-white truncate" title={log.username}>{log.username} <span className={`${actionColor}`}>a {log.actionType.toLowerCase()} {actionSign}{log.points} pts</span> ({log.reason})</span>
                                             </div>
-                                            {log.effect && log.effect !== "Aucun effet" && (
-                                                <span className="text-xs text-gray-500 ml-6">
-                                                    Effet: {log.effect}
-                                                </span>
-                                            )}
+                                            {log.effect && log.effect !== "Aucun effet" && (<span className="text-xs text-gray-500 ml-6">Effet: {log.effect}</span>)}
                                         </div>
                                     );
                                 }) : <p>Aucun log KINT à afficher.</p>}
