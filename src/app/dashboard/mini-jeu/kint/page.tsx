@@ -12,7 +12,7 @@ import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History,
 type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
 
 // Type pour une entrée de l'historique Kint détaillé
-type HistoryEntry = { 
+type HistoryEntry = {
     userId: string;
     username: string;
     avatar?: string;
@@ -43,7 +43,7 @@ const PodiumCard = ({ entry, rank }: { entry: LeaderboardEntry, rank: number }) 
         3: { border: 'border-orange-400', shadow: 'shadow-orange-400/20', icon: Medal },
     };
     const config = rankConfig[rank as keyof typeof rankConfig];
-    
+
     return (
          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: rank * 0.1, type: 'spring' }} className={`relative rounded-xl bg-[#1c222c] border-2 ${config.border} p-6 text-center shadow-2xl ${config.shadow} ${rank === 1 ? 'scale-110 z-10' : 'lg:mt-8'}`}>
             <config.icon className={config.border.replace('border-', 'text-')} size={32} />
@@ -83,11 +83,11 @@ const HistoryItem = ({ item }: { item: HistoryEntry }) => {
     const actionColor = item.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400';
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, x: -20 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            exit={{ opacity: 0, x: 20 }} 
-            transition={{ duration: 0.3 }} 
+        <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
             className="flex flex-col text-sm bg-gray-800/50 p-3 rounded-md"
         >
             <p className="text-gray-400 mb-1">
@@ -99,7 +99,7 @@ const HistoryItem = ({ item }: { item: HistoryEntry }) => {
             <div className="flex items-center gap-2">
                 {/* icône pour GAGNÉ/PERDU */}
                 {item.actionType === 'GAGNÉ' ? <TrendingUp className="text-green-500" size={18}/> : <TrendingDown className="text-red-500" size={18}/>}
-                
+
                 <p className="font-semibold text-white truncate">
                     {item.username} {' '}
                     <span className={`${actionColor}`}>
@@ -140,11 +140,14 @@ export default function KintMiniGamePage() {
             ]);
             setLeaderboard(leaderboardData);
             setUserPoints(pointsData.points);
+            // --- CORRECTION ET AJOUT ICI ---
+            setInventory(inventoryData); // On met à jour l'inventaire avec les données reçues
+            // --------------------------
             // Trie les logs par date décroissante pour afficher les plus récents en premier
-            const sortedHistory = detailedHistoryData.sort((a: HistoryEntry, b: HistoryEntry) => 
+            const sortedHistory = detailedHistoryData.sort((a: HistoryEntry, b: HistoryEntry) =>
                 new Date(b.date).getTime() - new Date(a.date).getTime()
             );
-            setHistory(sortedHistory); 
+            setHistory(sortedHistory);
         } catch (error) {
             console.error("Erreur de chargement des données du jeu:", error);
         } finally {
@@ -157,7 +160,7 @@ export default function KintMiniGamePage() {
             setLoading(true);
             fetchData(); // Appel initial
             // Intervalle de rafraîchissement des données (par exemple toutes les 15 secondes)
-            const intervalId = setInterval(fetchData, 15000); 
+            const intervalId = setInterval(fetchData, 15000);
             return () => clearInterval(intervalId); // Nettoyage de l'intervalle au démontage du composant
         }
     }, [status, session]); // Dépendances pour l'useEffect
@@ -179,7 +182,7 @@ export default function KintMiniGamePage() {
         try {
             // 1. Mettre à jour les points via l'API du bot
             await updatePoints(session.user.id, pointsToModify);
-            
+
             // 2. Re-fetcher les points pour avoir le solde actuel APRES la mise à jour
             const updatedPointsData = await fetchPoints(session.user.id);
             const newCurrentBalance = updatedPointsData.points;
@@ -199,7 +202,7 @@ export default function KintMiniGamePage() {
             });
 
             // 4. Rafraîchir toutes les données du dashboard
-            await fetchData(); 
+            await fetchData();
             alert('Points mis à jour !');
         } catch (error) {
             console.error("Erreur lors de la mise à jour des points ou de l'envoi du log:", error);
@@ -252,12 +255,12 @@ export default function KintMiniGamePage() {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="text-center mb-6">
                                 <p className="text-sm text-gray-400">Score KINT Actuel</p>
                                 <p className="text-7xl font-bold text-cyan-400 my-1">{userPoints ?? '...'}</p>
                             </div>
-                            
+
                             <div className="bg-black/20 p-4 rounded-lg">
                                 <label className="block text-sm font-medium mb-2 text-white">Déclarer un résultat</label>
                                 <div className="flex items-center gap-2">
