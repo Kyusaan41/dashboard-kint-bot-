@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-// Importez getDetailedKintLogs
-import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints } from '@/utils/api'; 
+// Importez getDetailedKintLogs, updatePoints et updateCurrency
+import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api'; 
 import Image from 'next/image';
 import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -142,19 +142,41 @@ export default function AdminPage() {
         return users.filter(user => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [users, searchQuery]);
 
-    const handleStatAction = async (action: (userId: string, amount: number) => Promise<any>, amount: number | '', isRemoval: boolean = false) => {
+    // MODIFICATION ICI: Utilisation directe de updatePoints et updateCurrency
+    const handleStatAction = async (actionType: 'points' | 'currency', amount: number | '', isRemoval: boolean = false) => {
         if (!selectedUser || amount === '') return;
-        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount);
+        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount); // amount sera ajouté au solde actuel
+
+        setLoadingUserStats(true); // Active le chargement pendant l'action
         try {
-            await action(selectedUser.id, finalAmount);
-            alert(`Action réussie pour ${selectedUser.username}`);
-            if (action === giveKip) {
-                fetchPoints(selectedUser.id).then(data => setSelectedUserStats(prev => ({...prev, points: data.points ?? 0})));
-            } else if (action === giveMoney) {
-                 fetchCurrency(selectedUser.id).then(data => setSelectedUserStats(prev => ({...prev, currency: data.balance ?? 0})));
+            if (actionType === 'points') {
+                // Pour les points, updatePoints prend le nouveau solde total, pas seulement la différence.
+                // Donc on doit fetch d'abord le solde actuel.
+                const currentPointsData = await fetchPoints(selectedUser.id);
+                const currentPoints = currentPointsData.points ?? 0;
+                await updatePoints(selectedUser.id, currentPoints + finalAmount);
+                alert(`Points KINT mis à jour pour ${selectedUser.username} !`);
+            } else if (actionType === 'currency') {
+                // Pour la monnaie, updateCurrency prend le nouveau solde total.
+                const currentCurrencyData = await fetchCurrency(selectedUser.id);
+                const currentCurrency = currentCurrencyData.coins ?? 0; // Assurez-vous que c'est bien 'coins'
+                await updateCurrency(selectedUser.id, currentCurrency + finalAmount);
+                alert(`Pièces mises à jour pour ${selectedUser.username} !`);
             }
+            
+            // Re-fetcher les stats de l'utilisateur après la mise à jour pour refléter les changements
+            const updatedCurrencyData = await fetchCurrency(selectedUser.id);
+            const updatedPointsData = await fetchPoints(selectedUser.id);
+            setSelectedUserStats({
+                currency: updatedCurrencyData.coins ?? 0,
+                points: updatedPointsData.points ?? 0
+            });
+
         } catch (error) {
-            alert(`Échec : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+            console.error(`Erreur lors de la mise à jour ${actionType}:`, error);
+            alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        } finally {
+            setLoadingUserStats(false); // Désactive le chargement
         }
     };
 
@@ -225,8 +247,8 @@ export default function AdminPage() {
                                         </label>
                                         <div className="flex gap-2">
                                             <input type="number" placeholder="Montant..." value={moneyAmount} onChange={e => setMoneyAmount(Number(e.target.value))} className="w-full bg-[#12151d] p-2 rounded-md border border-white/20" />
-                                            <button onClick={() => handleStatAction(giveMoney, moneyAmount)} className="px-3 bg-green-600 rounded-md font-semibold hover:bg-green-700">+</button>
-                                            <button onClick={() => handleStatAction(giveMoney, moneyAmount, true)} className="px-3 bg-red-600 rounded-md font-semibold hover:bg-red-700">-</button>
+                                            <button onClick={() => handleStatAction('currency', moneyAmount)} className="px-3 bg-green-600 rounded-md font-semibold hover:bg-green-700">+</button>
+                                            <button onClick={() => handleStatAction('currency', moneyAmount, true)} className="px-3 bg-red-600 rounded-md font-semibold hover:bg-red-700">-</button>
                                         </div>
                                     </div>
                                     <div>
@@ -236,8 +258,8 @@ export default function AdminPage() {
                                         </label>
                                         <div className="flex gap-2">
                                             <input type="number" placeholder="Montant..." value={pointsAmount} onChange={e => setPointsAmount(Number(e.target.value))} className="w-full bg-[#12151d] p-2 rounded-md border border-white/20" />
-                                            <button onClick={() => handleStatAction(giveKip, pointsAmount)} className="px-3 bg-green-600 rounded-md font-semibold hover:bg-green-700">+</button>
-                                            <button onClick={() => handleStatAction(giveKip, pointsAmount, true)} className="px-3 bg-red-600 rounded-md font-semibold hover:bg-red-700">-</button>
+                                            <button onClick={() => handleStatAction('points', pointsAmount)} className="px-3 bg-green-600 rounded-md font-semibold hover:bg-green-700">+</button>
+                                            <button onClick={() => handleStatAction('points', pointsAmount, true)} className="px-3 bg-red-600 rounded-md font-semibold hover:bg-red-700">-</button>
                                         </div>
                                     </div>
                                 </div>
