@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory, sendKintLogToDiscord, getDetailedKintLogs } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History, Swords, Award, Medal } from 'lucide-react';
+import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History, Swords, Award, Medal, CheckCircle } from 'lucide-react';
 
 // --- Types ---
 type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
@@ -22,8 +22,9 @@ type HistoryEntry = {
     source: 'Discord' | 'Dashboard';
 };
 type InventoryItem = { id: string; name: string; quantity: number; };
+type Notification = { show: boolean; message: string; type: 'success' | 'error' };
 
-// --- Composant Card ---
+// --- Composants ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-[#1c222c] border border-white/10 rounded-xl shadow-lg relative overflow-hidden group ${className}`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -31,7 +32,6 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
     </div>
 );
 
-// --- Sous-composants ---
 const PodiumCard = ({ entry, rank }: { entry: LeaderboardEntry, rank: number }) => {
     const rankConfig = {
         1: { border: 'border-yellow-400', shadow: 'shadow-yellow-400/20', icon: Crown },
@@ -68,7 +68,7 @@ const HistoryItem = ({ item }: { item: HistoryEntry }) => {
     const iconColor = isKShieldLog ? 'text-blue-400' : (item.actionType === 'GAGNÉ' ? 'text-green-500' : 'text-red-500');
     const textColor = isKShieldLog ? 'text-blue-300' : (item.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400');
     const actionSign = item.actionType === 'GAGNÉ' ? '+' : '-';
-    const logText = isKShieldLog ? `Perte de ${item.points} pts annulée` : `a ${item.actionType.toLowerCase()} ${actionSign}${item.points} pts`;
+    const logText = isKShieldLog ? `a perdu ${item.points} pts` : `a ${item.actionType.toLowerCase()} ${actionSign}${item.points} pts`;
 
     return (
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }} className="flex flex-col text-sm bg-gray-800/50 p-3 rounded-md">
@@ -92,6 +92,15 @@ export default function KintMiniGamePage() {
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>('');
+    // --- NOUVEL ÉTAT POUR LA NOTIFICATION ---
+    const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
+
+    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => {
+            setNotification(prev => ({ ...prev, show: false }));
+        }, 3000); // La notification disparaît après 3 secondes
+    };
 
     const fetchData = async () => {
         if (!session?.user?.id) return;
@@ -130,7 +139,7 @@ export default function KintMiniGamePage() {
 
     const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
         if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || !session?.user?.id || !session.user.name || !session.user.image) {
-            alert("Veuillez vous connecter et entrer un nombre de points valide.");
+            showNotification("Veuillez entrer un nombre de points valide.", "error");
             return;
         }
 
@@ -139,33 +148,23 @@ export default function KintMiniGamePage() {
         const pointsToModify = actionType === 'add' ? amount : -amount;
         const actionText = actionType === 'add' ? 'GAGNÉ' : 'PERDU';
         const reasonText = actionType === 'add' ? 'Victoire Dashboard' : 'Défaite Dashboard';
-        const source = "Dashboard"; // On définit la source
+        const source = "Dashboard";
 
         try {
-            // --- CORRECTION : ON AJOUTE LA SOURCE ICI ---
             await updatePoints(session.user.id, pointsToModify, source);
-
-            // Cette partie sert juste à envoyer une notification sur Discord,
-            // elle ne crée plus de log en double.
             const updatedPointsData = await fetchPoints(session.user.id);
             const newCurrentBalance = updatedPointsData.points;
             await sendKintLogToDiscord({
-                userId: session.user.id,
-                username: session.user.name,
-                avatar: session.user.image,
-                actionType: actionText,
-                points: amount,
-                currentBalance: newCurrentBalance,
-                effect: "Manuel Dashboard",
-                date: new Date().toISOString(),
-                source: source,
-                reason: reasonText
+                userId: session.user.id, username: session.user.name,
+                avatar: session.user.image, actionType: actionText,
+                points: amount, currentBalance: newCurrentBalance,
+                effect: "Manuel Dashboard", date: new Date().toISOString(),
+                source: source, reason: reasonText
             });
-
             await fetchData();
-            alert('Points mis à jour !');
+            showNotification("Votre KINT a bien été pris en compte !");
         } catch (error) {
-            alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+            showNotification(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`, "error");
         } finally {
             setManualPointsAmount('');
             setIsSubmitting(false);
@@ -181,6 +180,20 @@ export default function KintMiniGamePage() {
 
     return (
         <div className="space-y-8">
+            <AnimatePresence>
+                {notification.show && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.3 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                        className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 bg-green-600 text-white"
+                    >
+                        <CheckCircle />
+                        <span className="font-semibold">{notification.message}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
                 <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Swords /> Arène KINT</h1>
                 <p className="text-gray-400 mt-1">Consultez les scores, déclarez une victoire ou une défaite et suivez vos parties.</p>
