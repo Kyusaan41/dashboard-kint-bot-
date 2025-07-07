@@ -66,7 +66,7 @@ export default function FeedbackWidget() {
                                 <ThumbsUp className="mx-auto h-12 w-12 text-green-500" />
                                 <h3 className="mt-4 font-bold text-lg text-white">Merci !</h3>
                                 <p className="mt-2 text-sm text-gray-300">
-                                    Kyû a bien reçu ton avis ! Merci beaucoup de participer au développement de KINT ! :D
+                                    Kyû a bien reçu ton avis 👍🏼 ! Merci beaucoup de participer au développement de KINT ! ❣️
                                 </p>
                                 <button
                                     onClick={resetWidget}
