@@ -61,7 +61,6 @@ const LeaderboardRow = ({ entry, rank, sessionUserId }: { entry: LeaderboardEntr
     );
 };
 
-// --- COMPOSANT HISTORIQUE MIS À JOUR ---
 const HistoryItem = ({ item }: { item: HistoryEntry }) => {
     const formattedDate = new Date(item.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     const isKShieldLog = item.reason === 'Protégé par KShield';
@@ -84,7 +83,6 @@ const HistoryItem = ({ item }: { item: HistoryEntry }) => {
 };
 
 
-// --- COMPOSANT PRINCIPAL ---
 export default function KintMiniGamePage() {
     const { data: session, status } = useSession();
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -104,18 +102,12 @@ export default function KintMiniGamePage() {
                 getDetailedKintLogs(),
                 getInventory(),
             ]);
-
-            // --- CORRECTION TYPE SCRIPT ICI ---
-            const membersMap = new Map<string, { username?: string; avatar?: string; }>(
-                leaderboardData.map((p: LeaderboardEntry) => [p.userId, { username: p.username, avatar: p.avatar }])
-            );
-
+            const membersMap = new Map<string, { username?: string; avatar?: string; }>(leaderboardData.map((p: LeaderboardEntry) => [p.userId, { username: p.username, avatar: p.avatar }]));
             const enrichedHistory = detailedHistoryData.map((log: HistoryEntry) => ({
                 ...log,
                 username: membersMap.get(log.userId)?.username || log.username,
                 avatar: membersMap.get(log.userId)?.avatar || log.avatar,
             })).filter((log: HistoryEntry) => log.userId === session.user.id);
-
             setLeaderboard(leaderboardData);
             setUserPoints(pointsData.points);
             setInventory(inventoryData);
@@ -147,9 +139,14 @@ export default function KintMiniGamePage() {
         const pointsToModify = actionType === 'add' ? amount : -amount;
         const actionText = actionType === 'add' ? 'GAGNÉ' : 'PERDU';
         const reasonText = actionType === 'add' ? 'Victoire Dashboard' : 'Défaite Dashboard';
+        const source = "Dashboard"; // On définit la source
 
         try {
-            await updatePoints(session.user.id, pointsToModify);
+            // --- CORRECTION : ON AJOUTE LA SOURCE ICI ---
+            await updatePoints(session.user.id, pointsToModify, source);
+
+            // Cette partie sert juste à envoyer une notification sur Discord,
+            // elle ne crée plus de log en double.
             const updatedPointsData = await fetchPoints(session.user.id);
             const newCurrentBalance = updatedPointsData.points;
             await sendKintLogToDiscord({
@@ -161,9 +158,10 @@ export default function KintMiniGamePage() {
                 currentBalance: newCurrentBalance,
                 effect: "Manuel Dashboard",
                 date: new Date().toISOString(),
-                source: "Dashboard",
+                source: source,
                 reason: reasonText
             });
+
             await fetchData();
             alert('Points mis à jour !');
         } catch (error) {
@@ -187,9 +185,7 @@ export default function KintMiniGamePage() {
                 <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Swords /> Arène KINT</h1>
                 <p className="text-gray-400 mt-1">Consultez les scores, déclarez une victoire ou une défaite et suivez vos parties.</p>
             </motion.div>
-
             {topThree.length > 0 && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">{topThree[1] && <PodiumCard entry={topThree[1]} rank={2} />}{topThree[0] && <PodiumCard entry={topThree[0]} rank={1} />}{topThree[2] && <PodiumCard entry={topThree[2]} rank={3} />}</div>}
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-1 space-y-8">
                     <Card><div className="p-6"><div className="flex items-center gap-4 mb-6"><Image src={session?.user?.image || '/default-avatar.png'} alt="avatar" width={64} height={64} className="rounded-full border-2 border-cyan-500"/><div><h2 className="text-2xl font-bold text-white">{session?.user?.name}</h2><div className="flex items-center gap-2 text-sm text-blue-300"><Shield size={16}/><span>KShields: {inventory.find(i => i.id === 'KShield')?.quantity || 0}</span></div></div></div><div className="text-center mb-6"><p className="text-sm text-gray-400">Score KINT Actuel</p><p className="text-7xl font-bold text-cyan-400 my-1">{userPoints ?? '...'}</p></div><div className="bg-black/20 p-4 rounded-lg"><label className="block text-sm font-medium mb-2 text-white">Déclarer un résultat</label><div className="flex items-center gap-2"><input type="number" placeholder="Points" value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-[#12151d] p-3 rounded-md border border-white/20"/><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('add')} disabled={isSubmitting} title="Victoire" className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700 disabled:opacity-50"><TrendingUp size={20}/></motion.button><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('subtract')} disabled={isSubmitting} title="Défaite" className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700 disabled:opacity-50"><TrendingDown size={20}/></motion.button></div></div></div></Card>
