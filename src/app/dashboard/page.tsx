@@ -7,11 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getInventory, getAllAchievements } from '@/utils/api';
 import { 
-    Coins, Gift, Loader2, Package, MessageSquare, Star, Zap, Trophy, 
+    Coins, Gift, Loader2, Package, Star, Zap, Trophy, 
     BookOpen, Crown, Gem
 } from 'lucide-react';
 
-// --- Type Definitions (Mise à jour pour le nouveau format de log) ---
+// --- Types Corrigés ---
 type UserStats = {
     currency: number; currencyRank: number | null;
     xp: number; xpRank: number | null;
@@ -49,25 +49,19 @@ const StatCard: FC<{ icon: ReactNode; title: string; value: number; rank: number
         const rankColor = r <= 3 ? "text-yellow-500" : "text-gray-400";
         return <span className={`font-semibold ${rankColor}`}>({r}e)</span>;
     };
-
     return (
         <Card className="flex-1">
             <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-                    {icon}
-                </div>
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>{icon}</div>
                 <div>
                     <p className="text-sm text-gray-400">{title}</p>
                     <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
                 </div>
-                <div className="ml-auto">
-                    {formatRank(rank)}
-                </div>
+                <div className="ml-auto">{formatRank(rank)}</div>
             </div>
         </Card>
     );
 };
-
 
 const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, server }) => (
     <div className="flex items-center gap-4">
@@ -79,7 +73,6 @@ const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, ser
     </div>
 );
 
-// --- Main Component ---
 export default function DashboardHomePage() {
     const { data: session, status } = useSession();
     const [stats, setStats] = useState<UserStats | null>(null);
@@ -101,9 +94,8 @@ export default function DashboardHomePage() {
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const [statsData, messages, successData, patchnoteData, titles, currency, server, inventoryData, allAchievementsData, kintHistoryRaw] = await Promise.all([
+                    const [statsData, successData, patchnoteData, titles, currency, server, inventoryData, allAchievementsData, kintHistoryRaw] = await Promise.all([
                         fetch(`/api/stats/me`).then(res => res.json()),
-                        fetch(`/api/messages/${session.user.id}`).then(res => res.json()), 
                         fetch(`/api/success/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/patchnote`).then(res => res.json()),
                         fetch(`/api/titres/${session.user.id}`).then(res => res.json()),
@@ -111,31 +103,37 @@ export default function DashboardHomePage() {
                         fetch(`/api/server/info`).then(res => res.json()),
                         getInventory(),
                         getAllAchievements(),
-                        fetch(`/api/kint-detailed-logs?userId=${session.user.id}`).then(res => res.json()), // On utilise la route unifiée
+                        fetch(`/api/kint-detailed-logs?userId=${session.user.id}`).then(res => res.json()),
                     ]);
 
                     setStats(statsData);
 
                     // --- LOGIQUE DU GRAPHIQUE CORRIGÉE ---
                     const processedKintHistory = (kintHistoryRaw as HistoryEntry[]) 
-                        .filter((entry: HistoryEntry) => entry.effect !== 'KShield') // On ignore les actions protégées
-                        .reduce((acc: { [key: string]: number }, entry: HistoryEntry) => {
+                        .filter(entry => entry.reason !== 'Protégé par KShield')
+                        .reduce((acc: { [key: string]: number }, entry) => {
                             const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
                             const points = entry.actionType === 'GAGNÉ' ? entry.points : -entry.points;
                             acc[dayKey] = (acc[dayKey] || 0) + points; 
                             return acc;
                         }, {});
 
-                    const last7DaysKintHistory = Object.keys(processedKintHistory)
-                        .sort((a, b) => {
-                            const [dayA, monthA] = a.split('/');
-                            const [dayB, monthB] = b.split('/');
-                            return new Date(2024, parseInt(monthA) - 1, parseInt(dayA)).getTime() - new Date(2024, parseInt(monthB) - 1, parseInt(dayB)).getTime();
-                        }) 
-                        .slice(-7) 
-                        .map(date => ({ day: date, points: processedKintHistory[date] || 0 })); 
-                    
-                    setKintHistoryData(last7DaysKintHistory);
+                    const last7DaysMap = new Map<string, number>();
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date();
+                        d.setDate(d.getDate() - i);
+                        const dayKey = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+                        last7DaysMap.set(dayKey, 0);
+                    }
+
+                    for (const day in processedKintHistory) {
+                        if (last7DaysMap.has(day)) {
+                            last7DaysMap.set(day, processedKintHistory[day]);
+                        }
+                    }
+
+                    const finalChartData = Array.from(last7DaysMap.entries()).map(([day, points]) => ({ day, points }));
+                    setKintHistoryData(finalChartData);
                     // --- FIN DE LA CORRECTION ---
 
                     setUnlockedSuccesses(successData.succes || []);
