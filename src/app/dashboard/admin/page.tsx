@@ -1,4 +1,3 @@
-// src/app/dashboard/admin/page.tsx
 "use client";
 
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
@@ -6,8 +5,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api'; 
 import Image from 'next/image';
-import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck, CheckCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
 type UserEntry = { id: string; username: string; avatar: string; };
@@ -22,12 +21,14 @@ type KintLogEntry = {
     effect?: string;
     date: string;
     reason: string;
-    source: 'Discord' | 'Dashboard';
+    source: 'Discord' | 'Dashboard' | 'admin_dashboard';
 };
 type SelectedUserStats = {
     currency: number | null;
     points: number | null;
 };
+type Notification = { show: boolean; message: string; type: 'success' | 'error' };
+
 
 // --- Composant Card ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
@@ -58,6 +59,16 @@ export default function AdminPage() {
 
     const [kintLogs, setKintLogs] = useState<KintLogEntry[]>([]);
     const [loadingKintLogs, setLoadingKintLogs] = useState(true);
+    
+    // --- NOUVEL ÉTAT POUR LA NOTIFICATION ---
+    const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
+
+    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => {
+            setNotification(prev => ({ ...prev, show: false }));
+        }, 3000); // La notification disparaît après 3 secondes
+    };
 
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.role !== 'admin') {
@@ -65,25 +76,29 @@ export default function AdminPage() {
         }
     }, [session, status, router]);
 
+    const refreshAllLogs = () => {
+        getDetailedKintLogs()
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) => 
+                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                    );
+                    setKintLogs(sortedLogs);
+                } else {
+                    setKintLogs([]);
+                }
+            })
+            .catch(error => {
+                setKintLogs([]);
+            })
+            .finally(() => setLoadingKintLogs(false));
+    };
+
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.role === 'admin') {
             getUsers().then(setUsers).catch(console.error).finally(() => setLoadingUsers(false));
             
-            getDetailedKintLogs()
-                .then(data => {
-                    if (Array.isArray(data)) {
-                        const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) => 
-                            new Date(b.date).getTime() - new Date(a.date).getTime()
-                        );
-                        setKintLogs(sortedLogs);
-                    } else {
-                        setKintLogs([]);
-                    }
-                })
-                .catch(error => {
-                    setKintLogs([]);
-                })
-                .finally(() => setLoadingKintLogs(false));
+            refreshAllLogs();
             
             const fetchBotLogs = () => {
                 const container = botLogsContainerRef.current;
@@ -121,7 +136,7 @@ export default function AdminPage() {
                     points: pointsData.points ?? 0
                 });
             }).catch(error => {
-                alert("Impossible de charger les stats de cet utilisateur.");
+                showNotification("Impossible de charger les stats de cet utilisateur.", "error");
             }).finally(() => {
                 setLoadingUserStats(false);
             });
@@ -142,11 +157,10 @@ export default function AdminPage() {
         try {
             if (actionType === 'points') {
                 await updatePoints(selectedUser.id, finalAmount, source); 
-                alert(`Points KINT mis à jour pour ${selectedUser.username} !`);
             } else if (actionType === 'currency') {
                 await updateCurrency(selectedUser.id, finalAmount, source);
-                alert(`Pièces mises à jour pour ${selectedUser.username} !`);
             }
+            showNotification(`Profil de ${selectedUser.username} mis à jour !`);
             
             const updatedCurrencyData = await fetchCurrency(selectedUser.id);
             const updatedPointsData = await fetchPoints(selectedUser.id);
@@ -154,9 +168,10 @@ export default function AdminPage() {
                 currency: updatedCurrencyData.balance ?? 0, 
                 points: updatedPointsData.points ?? 0
             });
+            refreshAllLogs(); // Rafraîchir les logs pour voir les changements (même si filtrés)
 
         } catch (error) {
-            alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+            showNotification(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`, "error");
         } finally {
             setLoadingUserStats(false);
         }
@@ -166,9 +181,9 @@ export default function AdminPage() {
         if (!confirm("Êtes-vous sûr de vouloir redémarrer le bot ?")) return;
         try {
             const res = await restartBot();
-            alert(res.message);
+            showNotification(res.message);
         } catch (error) {
-            alert(`Échec du redémarrage : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+            showNotification(`Échec du redémarrage : ${error instanceof Error ? error.message : 'Erreur inconnue'}`, "error");
         }
     };
 
@@ -177,6 +192,20 @@ export default function AdminPage() {
 
     return (
         <div className="space-y-8">
+            <AnimatePresence>
+                {notification.show && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.3 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                        className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 bg-green-600 text-white"
+                    >
+                        <CheckCircle />
+                        <span className="font-semibold">{notification.message}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold text-cyan-400">Panneau d'Administration</h1>
                 <motion.button
@@ -270,9 +299,8 @@ export default function AdminPage() {
                             <div className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
                                 {kintLogs.length > 0 ? kintLogs.map((log, index) => {
                                     const formattedDate = new Date(log.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-                                    const sourceColor = log.source === 'Discord' ? 'text-purple-400' : 'text-blue-400';
+                                    const sourceColor = log.source === 'Discord' ? 'text-purple-400' : (log.source === 'admin_dashboard' ? 'text-yellow-500' : 'text-blue-400');
                                     
-                                    // --- LOGIQUE D'AFFICHAGE CORRIGÉE ---
                                     const isKShieldLog = log.reason === 'Protégé par KShield';
                                     const Icon = isKShieldLog ? Shield : (log.actionType === 'GAGNÉ' ? TrendingUp : TrendingDown);
                                     const iconColor = isKShieldLog ? 'text-blue-400' : (log.actionType === 'GAGNÉ' ? 'text-green-500' : 'text-red-500');
@@ -280,13 +308,12 @@ export default function AdminPage() {
                                     const actionSign = log.actionType === 'GAGNÉ' ? '+' : '-';
                                     const logText = isKShieldLog ? `a perdu ${log.points} pts` : `a ${log.actionType.toLowerCase()} ${actionSign}${log.points} pts`;
 
-
                                     return (
                                         <div key={index} className="flex flex-col gap-1 py-1 hover:bg-white/5 px-2 rounded">
                                             <span className="text-gray-500 flex-shrink-0">
                                                 {formattedDate} {' '}
                                                 <span className={`${sourceColor} font-semibold`}>
-                                                    ({log.source})
+                                                    ({log.source === 'admin_dashboard' ? 'Admin' : log.source})
                                                 </span>
                                             </span>
                                             <div className="flex items-center gap-2">
