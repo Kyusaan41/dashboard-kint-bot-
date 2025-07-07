@@ -2,15 +2,28 @@
 
 import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
-// Importez la nouvelle fonction sendKintLogToDiscord
-import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory, sendKintLogToDiscord } from '@/utils/api';
+// Importez les fonctions nécessaires
+import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory, sendKintLogToDiscord, getDetailedKintLogs } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History, Swords, Award, Medal } from 'lucide-react';
 
-// --- Types ---
+// --- Types (MISES À JOUR) ---
 type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
-type HistoryEntry = { amount: number; date: string; reason: string; type?: 'shield' };
+
+// Type pour une entrée de l'historique Kint détaillé
+type HistoryEntry = { 
+    userId: string;
+    username: string;
+    avatar?: string;
+    actionType: 'GAGNÉ' | 'PERDU'; // Type d'action (Victoire/Défaite)
+    points: number; // Montant de points modifié
+    currentBalance: number; // Solde après l'action
+    effect?: string; // Effet actif (si applicable)
+    date: string; // Date et heure de l'action
+    reason: string; // Raison spécifique (ex: "Victoire", "Défaite Dashboard")
+    source: 'Discord' | 'Dashboard'; // <-- NOUVELLE CLÉ IMPORTANTE
+};
 type InventoryItem = { id: string; name: string; quantity: number; };
 
 // --- Composant Card (pour la cohérence) ---
@@ -53,18 +66,57 @@ const LeaderboardRow = ({ entry, rank, sessionUserId }: { entry: LeaderboardEntr
     );
 };
 
-const HistoryItem = ({ item }: { item: HistoryEntry }) => (
-    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }} className="flex items-center justify-between text-sm bg-gray-800/50 p-3 rounded-md">
-        <div className="flex items-center gap-3">
-            {item.type === 'shield' ? <Shield size={18} className="text-blue-400"/> : item.amount > 0 ? <TrendingUp className="text-green-500" size={18}/> : <TrendingDown className="text-red-500" size={18}/>}
-            <div>
-                <p className={`font-bold ${item.type === 'shield' ? 'text-blue-300' : item.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{item.type === 'shield' ? 'KShield Activé' : `${item.amount > 0 ? '+' : ''}${item.amount} pts`}</p>
-                <p className="text-xs text-gray-500">{item.reason}</p>
+// MISE À JOUR de HistoryItem pour afficher les nouvelles données
+const HistoryItem = ({ item }: { item: HistoryEntry }) => {
+    // Formatte la date comme "JJ/MM/AAAA HH:MM:SS"
+    const formattedDate = new Date(item.date).toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false // Force le format 24h
+    });
+
+    const actionSign = item.actionType === 'GAGNÉ' ? '+' : '-';
+    const actionColor = item.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400';
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, x: -20 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            exit={{ opacity: 0, x: 20 }} 
+            transition={{ duration: 0.3 }} 
+            className="flex flex-col text-sm bg-gray-800/50 p-3 rounded-md"
+        >
+            <p className="text-gray-400 mb-1">
+                {formattedDate} {' '}
+                <span className={item.source === 'Discord' ? 'text-purple-400 font-semibold' : 'text-blue-400 font-semibold'}>
+                    ({item.source})
+                </span>
+            </p>
+            <div className="flex items-center gap-2">
+                {/* icône pour GAGNÉ/PERDU */}
+                {item.actionType === 'GAGNÉ' ? <TrendingUp className="text-green-500" size={18}/> : <TrendingDown className="text-red-500" size={18}/>}
+                
+                <p className="font-semibold text-white truncate">
+                    {item.username} {' '}
+                    <span className={`${actionColor}`}>
+                        a {item.actionType.toLowerCase()} {actionSign}{item.points} pts
+                    </span>
+                    {' '} ({item.reason || item.actionType})
+                </p>
             </div>
-        </div>
-        <p className="text-xs text-gray-400 flex-shrink-0">{new Date(item.date).toLocaleTimeString('fr-FR')}</p>
-    </motion.div>
-);
+            {item.effect && item.effect !== "Aucun effet" && (
+                <p className="text-xs text-gray-500 mt-1">
+                    Effet: {item.effect}
+                </p>
+            )}
+        </motion.div>
+    );
+};
+
 
 // --- Composant Principal ---
 export default function KintMiniGamePage() {
@@ -72,7 +124,7 @@ export default function KintMiniGamePage() {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [userPoints, setUserPoints] = useState<number | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
-    const [history, setHistory] = useState<HistoryEntry[]>([]);
+    const [history, setHistory] = useState<HistoryEntry[]>([]); // Maintenant ce sont les logs détaillés
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [manualPointsAmount, setManualPointsAmount] = useState<number | ''>('');
@@ -80,45 +132,59 @@ export default function KintMiniGamePage() {
     const fetchData = async () => {
         if (!session?.user?.id) return;
         try {
-            const [leaderboardData, pointsData, historyData, inventoryData] = await Promise.all([
+            const [leaderboardData, pointsData, detailedHistoryData, inventoryData] = await Promise.all([
                 getPointsLeaderboard(),
                 fetchPoints(session.user.id),
-                fetch(`/api/points/${session.user.id}/history`).then(res => res.json()),
+                getDetailedKintLogs(), // <-- APPEL DE LA NOUVELLE FONCTION POUR LES LOGS DÉTAILLÉS
                 getInventory(),
             ]);
             setLeaderboard(leaderboardData);
             setUserPoints(pointsData.points);
-            setHistory(historyData);
-            setInventory(inventoryData);
+            // Trie les logs par date décroissante pour afficher les plus récents en premier
+            const sortedHistory = detailedHistoryData.sort((a: HistoryEntry, b: HistoryEntry) => 
+                new Date(b.date).getTime() - new Date(a.date).getTime()
+            );
+            setHistory(sortedHistory); 
         } catch (error) {
             console.error("Erreur de chargement des données du jeu:", error);
+        } finally {
+            setLoading(false); // Assurez-vous que le loading se termine même en cas d'erreur
         }
     };
 
     useEffect(() => {
         if (status === 'authenticated') {
             setLoading(true);
-            fetchData().finally(() => setLoading(false));
+            fetchData(); // Appel initial
+            // Intervalle de rafraîchissement des données (par exemple toutes les 15 secondes)
+            const intervalId = setInterval(fetchData, 15000); 
+            return () => clearInterval(intervalId); // Nettoyage de l'intervalle au démontage du composant
         }
-    }, [status, session]);
-    
+    }, [status, session]); // Dépendances pour l'useEffect
+
     const handleManualPointsAction = async (actionType: 'add' | 'subtract') => {
-        if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || !session?.user?.id || !session.user.name || !session.user.image) return; // Ajout de vérifications pour session.user
+        // Vérifiez que session.user et ses propriétés sont définies avant d'y accéder
+        if (manualPointsAmount === '' || isNaN(Number(manualPointsAmount)) || !session?.user?.id || !session.user.name || !session.user.image) {
+            console.error("Données de session ou points invalides pour l'action manuelle.");
+            alert("Veuillez vous connecter et entrer un nombre de points valide.");
+            return;
+        }
 
         setIsSubmitting(true);
         const amount = Number(manualPointsAmount);
-        const pointsToSend = actionType === 'add' ? amount : -amount;
+        const pointsToModify = actionType === 'add' ? amount : -amount;
         const actionText = actionType === 'add' ? 'GAGNÉ' : 'PERDU';
+        const reasonText = actionType === 'add' ? 'Victoire Dashboard' : 'Défaite Dashboard'; // Bien défini ici
 
         try {
-            // Mettre à jour les points via l'API du bot
-            await updatePoints(session.user.id, pointsToSend);
+            // 1. Mettre à jour les points via l'API du bot
+            await updatePoints(session.user.id, pointsToModify);
             
-            // Re-fetcher les points pour avoir le solde actuel APRES la mise à jour
+            // 2. Re-fetcher les points pour avoir le solde actuel APRES la mise à jour
             const updatedPointsData = await fetchPoints(session.user.id);
             const newCurrentBalance = updatedPointsData.points;
 
-            // Envoyer le log détaillé à Discord via la nouvelle API
+            // 3. Envoyer le log détaillé à Discord via la nouvelle API
             await sendKintLogToDiscord({
                 userId: session.user.id,
                 username: session.user.name,
@@ -126,13 +192,17 @@ export default function KintMiniGamePage() {
                 actionType: actionText, // 'GAGNÉ' ou 'PERDU'
                 points: amount, // L'amount positif, car actionType indique si c'est gagné/perdu
                 currentBalance: newCurrentBalance,
-                // Si vous avez un concept d'effet actif sur le dashboard, passez-le ici
-                effect: "Aucun effet" // Placeholder, à remplacer si vous avez un vrai effet
+                effect: "Manuel Dashboard", // Cause de l'action
+                date: new Date().toISOString(), // Date de l'action
+                source: "Dashboard", // <-- Source de l'action
+                reason: reasonText // <-- Le champ 'reason' est bien passé ici
             });
 
-            await fetchData(); // Rafraîchir toutes les données du dashboard
+            // 4. Rafraîchir toutes les données du dashboard
+            await fetchData(); 
             alert('Points mis à jour !');
         } catch (error) {
+            console.error("Erreur lors de la mise à jour des points ou de l'envoi du log:", error);
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
             setManualPointsAmount('');
@@ -141,7 +211,11 @@ export default function KintMiniGamePage() {
     };
 
     if (loading || status === 'loading') {
-        return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 text-cyan-400 animate-spin" /></div>;
+        return (
+            <div className="flex h-full items-center justify-center">
+                <Loader2 className="h-10 w-10 text-cyan-400 animate-spin" />
+            </div>
+        );
     }
 
     const topThree = leaderboard.slice(0, 3);
@@ -207,7 +281,8 @@ export default function KintMiniGamePage() {
                             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                                 <AnimatePresence>
                                     {history.length > 0 ? history.map((item, index) => (
-                                        <HistoryItem key={index} item={item} />
+                                        // Utilisation du userId et date comme clé si d'autres champs sont identiques
+                                        <HistoryItem key={`${item.userId}-${item.date}-${index}`} item={item} />
                                     )) : <p className="text-gray-500 text-center py-4">Aucune transaction récente.</p>}
                                 </AnimatePresence>
                             </div>
