@@ -171,3 +171,7 @@ export async function sendKintLogToDiscord(logData: {
         body: JSON.stringify(logData),
     }));
 }
+
+export async function getDetailedKintLogs(): Promise<any[]> {
+    return handleApiResponse(await fetch('/api/kint-detailed-logs'));
+}
