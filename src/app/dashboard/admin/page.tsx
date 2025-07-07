@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-// Importez getDetailedKintLogs, updatePoints et updateCurrency
 import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api'; 
 import Image from 'next/image';
 import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
@@ -145,22 +144,36 @@ export default function AdminPage() {
     // MODIFICATION ICI: Utilisation directe de updatePoints et updateCurrency
     const handleStatAction = async (actionType: 'points' | 'currency', amount: number | '', isRemoval: boolean = false) => {
         if (!selectedUser || amount === '') return;
-        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount); // amount sera ajouté au solde actuel
+        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount); // amount sera la différence (ex: -2 si on enlève 2)
+
+        console.log('--- DIAGNOSTIC POINTS UPDATE ---'); // Diagnostic
+        console.log('selectedUser ID:', selectedUser.id);
+        console.log('actionType:', actionType);
+        console.log('Input amount:', amount);
+        console.log('isRemoval:', isRemoval);
+        console.log('finalAmount (difference):', finalAmount); // Valeur attendue: -2 si on enlève 2
 
         setLoadingUserStats(true); // Active le chargement pendant l'action
         try {
             if (actionType === 'points') {
-                // Pour les points, updatePoints prend le nouveau solde total, pas seulement la différence.
-                // Donc on doit fetch d'abord le solde actuel.
                 const currentPointsData = await fetchPoints(selectedUser.id);
                 const currentPoints = currentPointsData.points ?? 0;
-                await updatePoints(selectedUser.id, currentPoints + finalAmount);
+                const newTotalPoints = currentPoints + finalAmount; // Calcul du nouveau total
+
+                console.log('Current Points:', currentPoints); // Diagnostic
+                console.log('New Total Points to send:', newTotalPoints); // Diagnostic
+
+                await updatePoints(selectedUser.id, newTotalPoints); // Envoie le NOUVEAU SOLDE TOTAL
                 alert(`Points KINT mis à jour pour ${selectedUser.username} !`);
             } else if (actionType === 'currency') {
-                // Pour la monnaie, updateCurrency prend le nouveau solde total.
                 const currentCurrencyData = await fetchCurrency(selectedUser.id);
-                const currentCurrency = currentCurrencyData.coins ?? 0; // Assurez-vous que c'est bien 'coins'
-                await updateCurrency(selectedUser.id, currentCurrency + finalAmount);
+                const currentCurrency = currentCurrencyData.balance ?? 0; // Utiliser 'balance' pour currency
+                const newTotalCurrency = currentCurrency + finalAmount; // Calcul du nouveau total
+
+                console.log('Current Currency:', currentCurrency); // Diagnostic
+                console.log('New Total Currency to send:', newTotalCurrency); // Diagnostic
+
+                await updateCurrency(selectedUser.id, newTotalCurrency); // Envoie le NOUVEAU SOLDE TOTAL
                 alert(`Pièces mises à jour pour ${selectedUser.username} !`);
             }
             
@@ -168,7 +181,7 @@ export default function AdminPage() {
             const updatedCurrencyData = await fetchCurrency(selectedUser.id);
             const updatedPointsData = await fetchPoints(selectedUser.id);
             setSelectedUserStats({
-                currency: updatedCurrencyData.coins ?? 0,
+                currency: updatedCurrencyData.balance ?? 0, // Utiliser 'balance'
                 points: updatedPointsData.points ?? 0
             });
 
@@ -177,6 +190,7 @@ export default function AdminPage() {
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
             setLoadingUserStats(false); // Désactive le chargement
+            console.log('--- FIN DIAGNOSTIC POINTS UPDATE ---'); // Diagnostic
         }
     };
 
