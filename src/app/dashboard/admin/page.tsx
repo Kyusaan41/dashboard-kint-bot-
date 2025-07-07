@@ -1,4 +1,5 @@
 // src/app/dashboard/admin/page.tsx
+"use client";
 
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
