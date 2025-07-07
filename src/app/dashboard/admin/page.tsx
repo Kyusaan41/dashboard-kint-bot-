@@ -4,16 +4,14 @@
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api';
+import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api'; 
 import Image from 'next/image';
 import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-// --- Types (MIS À JOUR pour les logs détaillés) ---
+// --- Types ---
 type UserEntry = { id: string; username: string; avatar: string; };
 type LogEntry = { timestamp: string; log: string; };
-
-// Le type KintLogEntry est maintenant plus détaillé pour correspondre aux logs
 type KintLogEntry = {
     userId: string;
     username: string;
@@ -49,7 +47,7 @@ export default function AdminPage() {
     const [moneyAmount, setMoneyAmount] = useState<number | ''>('');
     const [pointsAmount, setPointsAmount] = useState<number | ''>('');
     const [searchQuery, setSearchQuery] = useState('');
-
+    
     const [selectedUserStats, setSelectedUserStats] = useState<SelectedUserStats>({ currency: null, points: null });
     const [loadingUserStats, setLoadingUserStats] = useState(false);
 
@@ -70,11 +68,11 @@ export default function AdminPage() {
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.role === 'admin') {
             getUsers().then(setUsers).catch(console.error).finally(() => setLoadingUsers(false));
-
+            
             getDetailedKintLogs()
                 .then(data => {
                     if (Array.isArray(data)) {
-                        const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) =>
+                        const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) => 
                             new Date(b.date).getTime() - new Date(a.date).getTime()
                         );
                         setKintLogs(sortedLogs);
@@ -86,7 +84,7 @@ export default function AdminPage() {
                     setKintLogs([]);
                 })
                 .finally(() => setLoadingKintLogs(false));
-
+            
             const fetchBotLogs = () => {
                 const container = botLogsContainerRef.current;
                 const isScrolledToBottom = container ? container.scrollHeight - container.scrollTop <= container.clientHeight + 50 : true;
@@ -143,17 +141,17 @@ export default function AdminPage() {
         setLoadingUserStats(true);
         try {
             if (actionType === 'points') {
-                await updatePoints(selectedUser.id, finalAmount, source);
+                await updatePoints(selectedUser.id, finalAmount, source); 
                 alert(`Points KINT mis à jour pour ${selectedUser.username} !`);
             } else if (actionType === 'currency') {
                 await updateCurrency(selectedUser.id, finalAmount, source);
                 alert(`Pièces mises à jour pour ${selectedUser.username} !`);
             }
-
+            
             const updatedCurrencyData = await fetchCurrency(selectedUser.id);
             const updatedPointsData = await fetchPoints(selectedUser.id);
             setSelectedUserStats({
-                currency: updatedCurrencyData.balance ?? 0,
+                currency: updatedCurrencyData.balance ?? 0, 
                 points: updatedPointsData.points ?? 0
             });
 
@@ -190,7 +188,7 @@ export default function AdminPage() {
                     <Power className="h-5 w-5"/> Redémarrer le Bot
                 </motion.button>
             </div>
-
+            
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-1 space-y-8">
                     <Card>
@@ -272,18 +270,40 @@ export default function AdminPage() {
                             <div className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
                                 {kintLogs.length > 0 ? kintLogs.map((log, index) => {
                                     const formattedDate = new Date(log.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-                                    const actionSign = log.actionType === 'GAGNÉ' ? '+' : '';
-                                    const actionColor = log.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400';
                                     const sourceColor = log.source === 'Discord' ? 'text-purple-400' : 'text-blue-400';
+                                    
+                                    // --- LOGIQUE D'AFFICHAGE CORRIGÉE ---
+                                    const isKShieldLog = log.reason === 'Protégé par KShield';
+                                    const Icon = isKShieldLog ? Shield : (log.actionType === 'GAGNÉ' ? TrendingUp : TrendingDown);
+                                    const iconColor = isKShieldLog ? 'text-blue-400' : (log.actionType === 'GAGNÉ' ? 'text-green-500' : 'text-red-500');
+                                    const textColor = isKShieldLog ? 'text-blue-300' : (log.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400');
+                                    const actionSign = log.actionType === 'GAGNÉ' ? '+' : '-';
+                                    const logText = isKShieldLog ? `a perdu ${log.points} pts` : `a ${log.actionType.toLowerCase()} ${actionSign}${log.points} pts`;
+
 
                                     return (
                                         <div key={index} className="flex flex-col gap-1 py-1 hover:bg-white/5 px-2 rounded">
-                                            <span className="text-gray-500 flex-shrink-0">{formattedDate} <span className={`${sourceColor} font-semibold`}>({log.source})</span></span>
+                                            <span className="text-gray-500 flex-shrink-0">
+                                                {formattedDate} {' '}
+                                                <span className={`${sourceColor} font-semibold`}>
+                                                    ({log.source})
+                                                </span>
+                                            </span>
                                             <div className="flex items-center gap-2">
-                                                {log.actionType === 'GAGNÉ' ? <TrendingUp size={14} className="text-green-400"/> : <TrendingDown size={14} className="text-red-400"/>}
-                                                <span className="font-semibold text-white truncate" title={log.username}>{log.username} <span className={`${actionColor}`}>a {log.actionType.toLowerCase()} {actionSign}{log.points} pts</span> ({log.reason})</span>
+                                                <Icon size={14} className={iconColor}/>
+                                                <span className="font-semibold text-white truncate" title={log.username}>
+                                                    {log.username} {' '}
+                                                    <span className={`${textColor}`}>
+                                                        {logText}
+                                                    </span>
+                                                    {' '} ({log.reason})
+                                                </span>
                                             </div>
-                                            {log.effect && log.effect !== "Aucun effet" && (<span className="text-xs text-gray-500 ml-6">Effet: {log.effect}</span>)}
+                                            {log.effect && log.effect !== "Aucun effet" && (
+                                                <span className="text-xs text-gray-500 ml-6">
+                                                    Effet: {log.effect}
+                                                </span>
+                                            )}
                                         </div>
                                     );
                                 }) : <p>Aucun log KINT à afficher.</p>}
