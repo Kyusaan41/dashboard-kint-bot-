@@ -3,8 +3,8 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
+import FeedbackWidget from '@/components/FeedbackWidget'; // <-- 1. IMPORTER LE COMPOSANT
 
-// On n'a plus besoin de 'useEffect' ou 'useState' ici
 const pages = [
   { id: '', label: 'Accueil' },
   { id: 'mini-jeu', label: 'Mini-Jeux' },
@@ -22,18 +22,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     .split(',')
     .map(id => id.trim());
 
-  // On calcule l'URL de l'avatar directement ici pour éviter les boucles de rendu
   const getAvatarUrl = () => {
     if (!session?.user?.id) {
-      // Une image par défaut si la session n'est pas encore chargée
       return '/default-avatar.png'; 
     }
-    // L'avatar par défaut de Discord basé sur l'ID utilisateur
     const defaultDiscordAvatar = `https://cdn.discordapp.com/embed/avatars/${parseInt(session.user.id.slice(-1)) % 5}.png`;
     return session.user.image ?? defaultDiscordAvatar;
   };
 
-  // On filtre les pages en fonction du rôle de l'utilisateur
   const filteredPages = pages.filter(page => {
     if (page.id === 'admin') {
       if (!session?.user?.id) return false;
@@ -108,6 +104,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="flex-1 p-10 max-w-7xl mx-auto overflow-auto">
         {children}
       </main>
+
+      {/* --- 2. AJOUTER LE WIDGET ICI --- */}
+      <FeedbackWidget />
+
     </div>
   );
 }
