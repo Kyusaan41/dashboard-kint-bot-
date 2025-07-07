@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api'; 
+import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api';
 import Image from 'next/image';
 import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -49,7 +49,7 @@ export default function AdminPage() {
     const [moneyAmount, setMoneyAmount] = useState<number | ''>('');
     const [pointsAmount, setPointsAmount] = useState<number | ''>('');
     const [searchQuery, setSearchQuery] = useState('');
-    
+
     const [selectedUserStats, setSelectedUserStats] = useState<SelectedUserStats>({ currency: null, points: null });
     const [loadingUserStats, setLoadingUserStats] = useState(false);
 
@@ -70,7 +70,7 @@ export default function AdminPage() {
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.role === 'admin') {
             getUsers().then(setUsers).catch(console.error).finally(() => setLoadingUsers(false));
-            
+
             getDetailedKintLogs()
                 .then(data => {
                     console.log('Données reçues de getDetailedKintLogs (admin page):', data);
@@ -78,7 +78,7 @@ export default function AdminPage() {
 
                     // Vérifie si les données sont bien un tableau avant de trier
                     if (Array.isArray(data)) {
-                        const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) => 
+                        const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) =>
                             new Date(b.date).getTime() - new Date(a.date).getTime()
                         );
                         setKintLogs(sortedLogs);
@@ -92,7 +92,7 @@ export default function AdminPage() {
                     setKintLogs([]); // Assure que kintLogs est un tableau vide en cas d'erreur de fetch
                 })
                 .finally(() => setLoadingKintLogs(false));
-            
+
             const fetchBotLogs = () => {
                 const container = botLogsContainerRef.current;
                 const isScrolledToBottom = container ? container.scrollHeight - container.scrollTop <= container.clientHeight + 50 : true;
@@ -142,35 +142,26 @@ export default function AdminPage() {
         return users.filter(user => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [users, searchQuery]);
 
-    // MODIFICATION ICI: Envoyer la différence (finalAmount) aux fonctions updatePoints/updateCurrency
+    // --- MODIFICATION ICI ---
     const handleStatAction = async (actionType: 'points' | 'currency', amount: number | '', isRemoval: boolean = false) => {
         if (!selectedUser || amount === '') return;
-        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount); // finalAmount est la DIFFÉRENCE (+/-)
-
-        console.log('--- DIAGNOSTIC POINTS UPDATE ---');
-        console.log('selectedUser ID:', selectedUser.id);
-        console.log('actionType:', actionType);
-        console.log('Input amount:', amount);
-        console.log('isRemoval:', isRemoval);
-        console.log('finalAmount (difference):', finalAmount); // finalAmount doit être utilisé pour l'envoi
+        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount);
+        const source = "admin_dashboard"; // On définit la source de l'action
 
         setLoadingUserStats(true);
         try {
             if (actionType === 'points') {
-                // updatePoints prend maintenant la DIFFÉRENCE
-                await updatePoints(selectedUser.id, finalAmount); 
+                await updatePoints(selectedUser.id, finalAmount, source); // On passe la source
                 alert(`Points KINT mis à jour pour ${selectedUser.username} !`);
             } else if (actionType === 'currency') {
-                // updateCurrency prend maintenant la DIFFÉRENCE
-                await updateCurrency(selectedUser.id, finalAmount);
+                await updateCurrency(selectedUser.id, finalAmount, source); // On passe la source
                 alert(`Pièces mises à jour pour ${selectedUser.username} !`);
             }
-            
-            // Re-fetcher les stats de l'utilisateur après la mise à jour pour refléter les changements
+
             const updatedCurrencyData = await fetchCurrency(selectedUser.id);
             const updatedPointsData = await fetchPoints(selectedUser.id);
             setSelectedUserStats({
-                currency: updatedCurrencyData.balance ?? 0, 
+                currency: updatedCurrencyData.balance ?? 0,
                 points: updatedPointsData.points ?? 0
             });
 
@@ -179,9 +170,9 @@ export default function AdminPage() {
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
             setLoadingUserStats(false);
-            console.log('--- FIN DIAGNOSTIC POINTS UPDATE ---');
         }
     };
+    // --- FIN DE LA MODIFICATION ---
 
     const handleRestart = async () => {
         if (!confirm("Êtes-vous sûr de vouloir redémarrer le bot ?")) return;
@@ -209,7 +200,7 @@ export default function AdminPage() {
                     <Power className="h-5 w-5"/> Redémarrer le Bot
                 </motion.button>
             </div>
-            
+
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-1 space-y-8">
                     <Card>
