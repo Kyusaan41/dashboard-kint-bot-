@@ -1,4 +1,4 @@
-'use client';
+// src/app/dashboard/admin/page.tsx
 
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
@@ -141,39 +141,27 @@ export default function AdminPage() {
         return users.filter(user => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
     }, [users, searchQuery]);
 
-    // MODIFICATION ICI: Utilisation directe de updatePoints et updateCurrency
+    // MODIFICATION ICI: Envoyer la différence (finalAmount) aux fonctions updatePoints/updateCurrency
     const handleStatAction = async (actionType: 'points' | 'currency', amount: number | '', isRemoval: boolean = false) => {
         if (!selectedUser || amount === '') return;
-        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount); // amount sera la différence (ex: -2 si on enlève 2)
+        const finalAmount = isRemoval ? -Math.abs(Number(amount)) : Number(amount); // finalAmount est la DIFFÉRENCE (+/-)
 
-        console.log('--- DIAGNOSTIC POINTS UPDATE ---'); // Diagnostic
+        console.log('--- DIAGNOSTIC POINTS UPDATE ---');
         console.log('selectedUser ID:', selectedUser.id);
         console.log('actionType:', actionType);
         console.log('Input amount:', amount);
         console.log('isRemoval:', isRemoval);
-        console.log('finalAmount (difference):', finalAmount); // Valeur attendue: -2 si on enlève 2
+        console.log('finalAmount (difference):', finalAmount); // finalAmount doit être utilisé pour l'envoi
 
-        setLoadingUserStats(true); // Active le chargement pendant l'action
+        setLoadingUserStats(true);
         try {
             if (actionType === 'points') {
-                const currentPointsData = await fetchPoints(selectedUser.id);
-                const currentPoints = currentPointsData.points ?? 0;
-                const newTotalPoints = currentPoints + finalAmount; // Calcul du nouveau total
-
-                console.log('Current Points:', currentPoints); // Diagnostic
-                console.log('New Total Points to send:', newTotalPoints); // Diagnostic
-
-                await updatePoints(selectedUser.id, newTotalPoints); // Envoie le NOUVEAU SOLDE TOTAL
+                // updatePoints prend maintenant la DIFFÉRENCE
+                await updatePoints(selectedUser.id, finalAmount); 
                 alert(`Points KINT mis à jour pour ${selectedUser.username} !`);
             } else if (actionType === 'currency') {
-                const currentCurrencyData = await fetchCurrency(selectedUser.id);
-                const currentCurrency = currentCurrencyData.balance ?? 0; // Utiliser 'balance' pour currency
-                const newTotalCurrency = currentCurrency + finalAmount; // Calcul du nouveau total
-
-                console.log('Current Currency:', currentCurrency); // Diagnostic
-                console.log('New Total Currency to send:', newTotalCurrency); // Diagnostic
-
-                await updateCurrency(selectedUser.id, newTotalCurrency); // Envoie le NOUVEAU SOLDE TOTAL
+                // updateCurrency prend maintenant la DIFFÉRENCE
+                await updateCurrency(selectedUser.id, finalAmount);
                 alert(`Pièces mises à jour pour ${selectedUser.username} !`);
             }
             
@@ -181,7 +169,7 @@ export default function AdminPage() {
             const updatedCurrencyData = await fetchCurrency(selectedUser.id);
             const updatedPointsData = await fetchPoints(selectedUser.id);
             setSelectedUserStats({
-                currency: updatedCurrencyData.balance ?? 0, // Utiliser 'balance'
+                currency: updatedCurrencyData.balance ?? 0, 
                 points: updatedPointsData.points ?? 0
             });
 
@@ -189,8 +177,8 @@ export default function AdminPage() {
             console.error(`Erreur lors de la mise à jour ${actionType}:`, error);
             alert(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         } finally {
-            setLoadingUserStats(false); // Désactive le chargement
-            console.log('--- FIN DIAGNOSTIC POINTS UPDATE ---'); // Diagnostic
+            setLoadingUserStats(false);
+            console.log('--- FIN DIAGNOSTIC POINTS UPDATE ---');
         }
     };
 
