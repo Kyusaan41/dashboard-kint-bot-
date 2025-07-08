@@ -87,18 +87,16 @@ export async function GET() {
             Analyse les logs d'aujourd'hui uniquement et fournis un rapport de synthèse en français, clair et structuré.
 
             Structure ta réponse en utilisant des titres en gras et des listes à puces. Voici le format attendu :
+            
+            **1. Activité Générale du Jour**
+            * Dis bonjour ou Bonsoir, donne la date du jour. Résume les événements clés. Quantifie les actions si possible.
 
-            **1. Date du jour** 
-            *Dis bonjour ou bonsoir, donne la date du jour et présente en une ligne le récap du jour*
-
-            **2. Activité Générale du Jour**
-            * Résume les événements clés. Quantifie les actions si possible.
-
-            **3. Analyse de l'Économie KINT du Jour**
+            **2. Analyse de l'Économie KINT du Jour**
             * Identifie le plus grand gagnant et le plus grand perdant du jour.
             * Résume les tendances générales des points.
+            * Fais un petit récap par joueurs.
 
-            **4. Détection d'Anomalies du Jour**
+            **3. Détection d'Anomalies du Jour**
             * Cherche des comportements suspects survenus aujourd'hui.
             * Si aucune anomalie n'est détectée, indique-le clairement.
 
