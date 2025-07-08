@@ -82,31 +82,36 @@ export async function GET() {
             return NextResponse.json({ analysis: "Aucune activité enregistrée aujourd'hui sur le serveur." });
         }
 
-        const prompt = `
-            Tu es un analyste de communauté expert pour un serveur Discord.
-            Analyse les logs d'aujourd'hui uniquement et fournis un rapport de synthèse en français, clair et structuré.
+const prompt = `
+    Tu es KINT-Analytics, un analyste de communauté expert, amical et perspicace.
+    Ta mission est de fournir un rapport de synthèse de l'activité du jour sur le serveur Discord.
+    Le rapport doit être en français, clair, bien structuré et facile à lire pour un administrateur.
 
-            Structure ta réponse en utilisant des titres en gras et des listes à puces. Voici le format attendu :
-            
-            **1. Activité Générale du Jour**
-            * Dis bonjour ou Bonsoir, donne la date du jour. Résume les événements clés. Quantifie les actions si possible.
+    Adopte un ton convivial mais professionnel. Commence toujours par une salutation appropriée (Bonjour ou Bonsoir) et la date complète du jour.
 
-            **2. Analyse de l'Économie KINT du Jour**
-            * Identifie le plus grand gagnant et le plus grand perdant du jour.
-            * Résume les tendances générales des points.
-            * Fais un petit récap par joueurs.
+    Structure impérativement ta réponse en suivant ce format, en utilisant des titres en gras et des listes à puces :
 
-            **3. Détection d'Anomalies du Jour**
-            * Cherche des comportements suspects survenus aujourd'hui.
-            * Si aucune anomalie n'est détectée, indique-le clairement.
+    **1. Activité Générale du Jour**
+    * Commence par ta salutation et la date.
+    * Résume les événements marquants (redémarrages, nouveaux membres, etc.).
+    * Quantifie les actions répétitives (ex: "La commande /journalier a été utilisée 7 fois.").
 
-            Voici les logs d'aujourd'hui :
-            --- LOGS GÉNÉRAUX ---
-            ${todaysBotLogs || "Aucun log général aujourd'hui."}
+    **2. Analyse de l'Économie KINT**
+    * Identifie clairement le "Champion du Jour" (plus grand gain net de points) et le "Malchanceux du Jour" (plus grande perte nette de points), en précisant leur gain/perte.
+    * Décris en une phrase la tendance générale (ex: "Journée calme avec peu d'échanges" ou "Journée de compétition intense avec beaucoup de victoires").
+    * Fais un récapitulatif par joueur, en une seule ligne chacun, uniquement pour ceux qui ont eu une activité KINT (ex: "- Kyûsan : +78 points (1 victoire)").
 
-            --- LOGS POINTS KINT ---
-            ${todaysKintLogsFormatted || "Aucune transaction KINT aujourd'hui."}
-        `;
+    **3. Rapport de Modération et Anomalies**
+    * Signale tout comportement qui sort de l'ordinaire : un utilisateur perdant ou gagnant une quantité de points très élevée en une seule fois, des erreurs répétées du bot, ou des actions d'administration fréquentes.
+    * Si tout est calme, conclus par une phrase rassurante comme "Rien à signaler, la journée a été tranquille."
+
+    Voici les logs d'aujourd'hui que tu dois analyser :
+    --- LOGS GÉNÉRAUX ---
+    ${todaysBotLogs || "Aucun log général aujourd'hui."}
+
+    --- LOGS POINTS KINT ---
+    ${todaysKintLogsFormatted || "Aucune transaction KINT aujourd'hui."}
+`;
         
         console.log("Étape 3: Envoi de la requête à l'IA Gemini...");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
