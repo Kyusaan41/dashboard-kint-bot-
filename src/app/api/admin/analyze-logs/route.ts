@@ -57,22 +57,31 @@ export async function GET() {
         const recentKintLogs = formatKintLogs(kintLogsData, members);
 
         // 3. Construire le prompt pour l'IA
-        const prompt = `
-            Tu es un assistant expert pour un administrateur de serveur Discord.
-            Analyse les logs suivants et fournis un résumé clair, détaillé et concis en français.
-            
-            Structure ta réponse en trois parties avec des titres en gras :
-            1.  **Résumé de l'activité du jour :** Mentionne les événements importants.
-            2.  **Analyse KINT :** Fais un résumé des activités des joueurs et points liées au jeu KINT.
-            3.  **Anomalies détectées :** Signale tout comportement suspect. Si tu ne vois rien, dis "Aucune anomalie détectée".
+       const prompt = `
+    Tu es un analyste de communauté expert et un modérateur pour un serveur Discord.
+    Analyse les logs suivants et fournis un rapport de synthèse en français, clair, structuré et actionnable pour un administrateur.
 
-            Voici les logs :
-            --- LOGS GÉNÉRAUX ---
-            ${recentBotLogs}
+    Structure ta réponse en utilisant des titres en gras et des listes à puces. Voici le format attendu :
 
-            --- LOGS POINTS KINT ---
-            ${recentKintLogs}
-        `;
+    **1. Activité Générale du Serveur**
+    * Fais un résumé des événements clés. Quantifie les actions si possible (ex: "5 utilisateurs ont utilisé /journalier"). Mentionne les commandes les plus utilisées.
+
+    **2. Analyse de l'Économie KINT**
+    * Identifie le **plus grand gagnant** et le **plus grand perdant** de la journée en termes de points.
+    * Résume les tendances générales (beaucoup de victoires, de défaites, d'échanges...).
+    * Mentionne toute transaction notable ou inhabituelle.
+
+    **3. Détection d'Anomalies et Alertes**
+    * Cherche des comportements suspects : un utilisateur qui perd ou gagne une quantité de points anormalement élevée en peu de temps, des erreurs de bot répétées, ou des actions d'administration fréquentes sur un même utilisateur.
+    * Si aucune anomalie n'est détectée, indique-le clairement.
+
+    Voici les logs à analyser :
+    --- LOGS GÉNÉRAUX ---
+    ${recentBotLogs}
+
+    --- LOGS POINTS KINT ---
+    ${recentKintLogs}
+`;
         
         // 4. Appeler l'IA Gemini
         console.log("Étape 3: Envoi de la requête à l'IA Gemini...");
