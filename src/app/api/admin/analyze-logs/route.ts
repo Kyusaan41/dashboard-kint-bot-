@@ -63,7 +63,7 @@ export async function GET() {
             
             Structure ta réponse en trois parties avec des titres en gras :
             1.  **Résumé de l'activité du jour :** Mentionne les événements importants.
-            2.  **Analyse KINT :** Fais un résumé des activités et points liées au jeu KINT.
+            2.  **Analyse KINT :** Fais un résumé des activités des joueurs et points liées au jeu KINT.
             3.  **Anomalies détectées :** Signale tout comportement suspect. Si tu ne vois rien, dis "Aucune anomalie détectée".
 
             Voici les logs :
