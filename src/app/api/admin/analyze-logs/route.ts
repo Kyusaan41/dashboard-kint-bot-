@@ -88,14 +88,17 @@ export async function GET() {
 
             Structure ta réponse en utilisant des titres en gras et des listes à puces. Voici le format attendu :
 
-            **1. Activité Générale du Jour**
+            **1. Date du jour** 
+            *Dis bonjour ou bonsoir, donne la date du jour et présente en une ligne le récap du jour*
+
+            **2. Activité Générale du Jour**
             * Résume les événements clés. Quantifie les actions si possible.
 
-            **2. Analyse de l'Économie KINT du Jour**
+            **3. Analyse de l'Économie KINT du Jour**
             * Identifie le plus grand gagnant et le plus grand perdant du jour.
             * Résume les tendances générales des points.
 
-            **3. Détection d'Anomalies du Jour**
+            **4. Détection d'Anomalies du Jour**
             * Cherche des comportements suspects survenus aujourd'hui.
             * Si aucune anomalie n'est détectée, indique-le clairement.
 
