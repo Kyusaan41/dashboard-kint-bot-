@@ -5,7 +5,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// Helper pour formater les logs KINT
+if (!process.env.GEMINI_API_KEY) {
+    throw new Error("La clé API GEMINI est manquante.");
+}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 type MemberInfo = { id: string; username: string; };
 const formatKintLogs = (allLogs: any, members: MemberInfo[]): string => {
     const formattedLogs = [];
@@ -16,15 +20,15 @@ const formatKintLogs = (allLogs: any, members: MemberInfo[]): string => {
             formattedLogs.push(`${log.date}: ${username} a ${log.actionType.toLowerCase()} ${log.points} points. Raison: ${log.reason}`);
         }
     }
-    return formattedLogs.sort((a, b) => new Date(b.split(':')[0]).getTime() - new Date(a.split(':')[0]).getTime()).slice(0, 50).join('\n');
+    // On trie par date pour s'assurer que les plus récents sont en premier
+    return formattedLogs.sort((a, b) => new Date(b.split('Z')[0]).getTime() - new Date(a.split('Z')[0]).getTime()).join('\n');
 };
 
 export async function GET() {
-    console.log("--- Début de l'analyse des logs ---");
+    console.log("--- Début de l'analyse des logs du jour ---");
 
-    // 1. On vérifie la clé API au début de la requête
     if (!process.env.GEMINI_API_KEY) {
-        console.error("ERREUR CRITIQUE: La variable d'environnement GEMINI_API_KEY est manquante ou n'est pas chargée. Avez-vous redémarré le serveur ?");
+        console.error("ERREUR CRITIQUE: La variable d'environnement GEMINI_API_KEY est manquante.");
         return NextResponse.json({ error: "La clé API pour le service IA n'est pas configurée sur le serveur." }, { status: 500 });
     }
     
@@ -35,8 +39,12 @@ export async function GET() {
         }
         console.log("Étape 1: Vérification admin réussie.");
 
-        // 2. Récupérer les vrais logs
-        console.log("Étape 2: Récupération des logs depuis le bot...");
+        // --- NOUVELLE LOGIQUE DE FILTRAGE PAR DATE ---
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Règle l'heure à minuit aujourd'hui
+
+        console.log(`Étape 2: Récupération des logs et filtrage à partir du ${today.toISOString()}`);
+        
         const [botLogsRes, kintLogsRes, usersRes] = await Promise.all([
             fetch(`${BOT_API_URL}/logs`),
             fetch(`${BOT_API_URL}/points/history/all`),
@@ -44,56 +52,70 @@ export async function GET() {
         ]);
 
         if (!botLogsRes.ok || !kintLogsRes.ok || !usersRes.ok) {
-            throw new Error(`Impossible de récupérer tous les logs depuis le bot. Statuts: Bot=${botLogsRes.status}, Kint=${kintLogsRes.status}, Users=${usersRes.status}`);
+            throw new Error("Impossible de récupérer les logs depuis le bot.");
         }
-        console.log("Étape 2: Récupération des logs réussie.");
         
         const botLogsData = await botLogsRes.json();
         const kintLogsData = await kintLogsRes.json();
         const serverInfo = await usersRes.json();
         const members: MemberInfo[] = serverInfo.members || [];
 
-        const recentBotLogs = botLogsData.logs.slice(-50).map((l: any) => `${l.timestamp}: ${l.log}`).join('\n');
-        const recentKintLogs = formatKintLogs(kintLogsData, members);
+        // On filtre les logs généraux pour ne garder que ceux d'aujourd'hui
+        const todaysBotLogs = botLogsData.logs
+            .filter((log: any) => new Date(log.timestamp) >= today)
+            .map((l: any) => `${l.timestamp}: ${l.log}`)
+            .join('\n');
 
-        // 3. Construire le prompt pour l'IA
-       const prompt = `
-    Tu es un analyste de communauté expert et un modérateur pour un serveur Discord.
-    Analyse les logs suivants et fournis un rapport de synthèse en français, clair, structuré et actionnable pour un administrateur.
+        // On filtre les logs KINT pour ne garder que ceux d'aujourd'hui
+        const todaysKintLogsData: { [key: string]: any[] } = {};
+        for (const userId in kintLogsData) {
+            const userLogsToday = kintLogsData[userId].filter((log: any) => new Date(log.date) >= today);
+            if (userLogsToday.length > 0) {
+                todaysKintLogsData[userId] = userLogsToday;
+            }
+        }
+        const todaysKintLogsFormatted = formatKintLogs(todaysKintLogsData, members);
+        // --- FIN DE LA LOGIQUE DE FILTRAGE ---
 
-    Structure ta réponse en utilisant des titres en gras et des listes à puces. Voici le format attendu :
+        // On vérifie s'il y a eu une activité aujourd'hui
+        if (!todaysBotLogs && !todaysKintLogsFormatted) {
+            return NextResponse.json({ analysis: "Aucune activité enregistrée aujourd'hui sur le serveur." });
+        }
 
-    **1. Activité Générale du Serveur**
-    * Fais un résumé des événements clés. Quantifie les actions si possible (ex: "5 utilisateurs ont utilisé /journalier"). Mentionne les commandes les plus utilisées.
+        const prompt = `
+            Tu es un analyste de communauté expert pour un serveur Discord.
+            Analyse les logs d'aujourd'hui uniquement et fournis un rapport de synthèse en français, clair et structuré.
 
-    **2. Analyse de l'Économie KINT**
-    * Identifie le **plus grand gagnant** et le **plus grand perdant** de la journée en termes de points.
-    * Résume les tendances générales (beaucoup de victoires, de défaites, d'échanges...).
-    * Mentionne toute transaction notable ou inhabituelle.
+            Structure ta réponse en utilisant des titres en gras et des listes à puces. Voici le format attendu :
 
-    **3. Détection d'Anomalies et Alertes**
-    * Cherche des comportements suspects : un utilisateur qui perd ou gagne une quantité de points anormalement élevée en peu de temps, des erreurs de bot répétées, ou des actions d'administration fréquentes sur un même utilisateur.
-    * Si aucune anomalie n'est détectée, indique-le clairement.
+            **1. Activité Générale du Jour**
+            * Résume les événements clés. Quantifie les actions si possible.
 
-    Voici les logs à analyser :
-    --- LOGS GÉNÉRAUX ---
-    ${recentBotLogs}
+            **2. Analyse de l'Économie KINT du Jour**
+            * Identifie le plus grand gagnant et le plus grand perdant du jour.
+            * Résume les tendances générales des points.
 
-    --- LOGS POINTS KINT ---
-    ${recentKintLogs}
-`;
+            **3. Détection d'Anomalies du Jour**
+            * Cherche des comportements suspects survenus aujourd'hui.
+            * Si aucune anomalie n'est détectée, indique-le clairement.
+
+            Voici les logs d'aujourd'hui :
+            --- LOGS GÉNÉRAUX ---
+            ${todaysBotLogs || "Aucun log général aujourd'hui."}
+
+            --- LOGS POINTS KINT ---
+            ${todaysKintLogsFormatted || "Aucune transaction KINT aujourd'hui."}
+        `;
         
-        // 4. Appeler l'IA Gemini
         console.log("Étape 3: Envoi de la requête à l'IA Gemini...");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Modèle plus rapide
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const analysisText = response.text();
         console.log("Étape 3: Réponse de l'IA reçue.");
 
-        // 5. Renvoyer la réponse
-        console.log("--- Analyse terminée avec succès ---");
+        console.log("--- Analyse du jour terminée avec succès ---");
         return NextResponse.json({ analysis: analysisText });
 
     } catch (error) {
