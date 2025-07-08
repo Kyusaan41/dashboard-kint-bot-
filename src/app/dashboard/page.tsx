@@ -6,9 +6,9 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getInventory, getAllAchievements } from '@/utils/api';
-import { 
-    Coins, Gift, Loader2, Package, Star, Zap, Trophy, 
-    BookOpen, Crown, Gem
+import {
+    Coins, Gift, Loader2, Package, Star, Zap, Trophy,
+    BookOpen, Crown, Gem, CheckCircle
 } from 'lucide-react';
 
 // --- Types Corrigés ---
@@ -19,21 +19,23 @@ type UserStats = {
     equippedTitle: string | null;
 };
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
-type KintHistoryData = { day: string; points: number; }; 
-type HistoryEntry = { 
+type KintHistoryData = { day: string; points: number; };
+type HistoryEntry = {
     actionType: 'GAGNÉ' | 'PERDU';
-    points: number; 
-    date: string; 
-    reason: string; 
+    points: number;
+    date: string;
+    reason: string;
     effect?: string;
 };
 type ServerInfo = { id: string; name: string; icon: string | null; };
 type InventoryItem = { id: string; name: string; quantity: number; icon?: string; };
 type AllAchievements = { [key: string]: { name: string; description: string; } };
+type Notification = { show: boolean; message: string; type: 'success' | 'error' };
+
 
 // --- UI Components ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <motion.div 
+    <motion.div
         whileHover={{ scale: 1.02, y: -5 }}
         transition={{ type: 'spring', stiffness: 300, damping: 15 }}
         className={`bg-[#1c222c] border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden group ${className}`}
@@ -80,7 +82,7 @@ export default function DashboardHomePage() {
     const [unlockedSuccesses, setUnlockedSuccesses] = useState<string[]>([]);
     const [allAchievements, setAllAchievements] = useState<AllAchievements>({});
     const [patchNotes, setPatchNotes] = useState<PatchNote | null>(null);
-    const [kintHistoryData, setKintHistoryData] = useState<KintHistoryData[]>([]); 
+    const [kintHistoryData, setKintHistoryData] = useState<KintHistoryData[]>([]);
     const [availableTitles, setAvailableTitles] = useState<string[]>([]);
     const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
     const [selectedTitle, setSelectedTitle] = useState('');
@@ -88,7 +90,15 @@ export default function DashboardHomePage() {
     const [claimStatus, setClaimStatus] = useState({ canClaim: false, timeLeft: '00:00:00' });
     const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
     const [isClaiming, setIsClaiming] = useState(false);
-    
+    const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
+
+    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => {
+            setNotification(prev => ({ ...prev, show: false }));
+        }, 3000);
+    };
+
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.id) {
             const fetchData = async () => {
@@ -108,13 +118,12 @@ export default function DashboardHomePage() {
 
                     setStats(statsData);
 
-                    // --- LOGIQUE DU GRAPHIQUE CORRIGÉE ---
-                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[]) 
+                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[])
                         .filter(entry => entry.reason !== 'Protégé par KShield')
                         .reduce((acc: { [key: string]: number }, entry) => {
                             const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
                             const points = entry.actionType === 'GAGNÉ' ? entry.points : -entry.points;
-                            acc[dayKey] = (acc[dayKey] || 0) + points; 
+                            acc[dayKey] = (acc[dayKey] || 0) + points;
                             return acc;
                         }, {});
 
@@ -134,7 +143,6 @@ export default function DashboardHomePage() {
 
                     const finalChartData = Array.from(last7DaysMap.entries()).map(([day, points]) => ({ day, points }));
                     setKintHistoryData(finalChartData);
-                    // --- FIN DE LA CORRECTION ---
 
                     setUnlockedSuccesses(successData.succes || []);
                     setAllAchievements(allAchievementsData || {});
@@ -173,19 +181,19 @@ export default function DashboardHomePage() {
             const res = await fetch(`/api/currency/claim/${session.user.id}`, { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
-                alert(data.message || "Récompense réclamée !");
+                showNotification(data.message || "Récompense réclamée !");
                 setStats(prev => prev ? { ...prev, currency: data.newBalance } : null);
                 setClaimStatus({ canClaim: false, timeLeft: '24:00:00' });
             } else {
-                alert(data.error || "Impossible de réclamer.");
+                showNotification(data.error || "Impossible de réclamer.", "error");
             }
         } catch (error) {
-            alert("Une erreur est survenue.");
+            showNotification("Une erreur est survenue.", "error");
         } finally {
             setIsClaiming(false);
         }
     };
-    
+
     const handleEquipTitle = async () => {
         if (!selectedTitle || !session?.user?.id) return;
         try {
@@ -196,26 +204,41 @@ export default function DashboardHomePage() {
             });
             setStats(prev => prev ? { ...prev, equippedTitle: selectedTitle } : null);
             setIsTitleModalOpen(false);
+            showNotification("Titre équipé avec succès!");
         } catch (error) {
-            alert("Une erreur est survenue.");
+            showNotification("Une erreur est survenue.", "error");
         }
     };
 
     if (loading || status === 'loading') {
-        return <div className="flex h-full items-center justify-center text-gray-400"><Loader2 className="h-8 w-8 animate-spin mr-3"/> Chargement...</div>;
+        return <div className="flex h-full items-center justify-center text-gray-400"><Loader2 className="h-8 w-8 animate-spin mr-3" /> KINT by Kyû</div>;
     }
 
     const totalAchievementsCount = Object.keys(allAchievements).length;
 
     return (
         <AnimatePresence>
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
                 className="space-y-6 md:space-y-8"
             >
+                <AnimatePresence>
+                    {notification.show && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 50, scale: 0.3 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
+                            className={`fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
+                        >
+                            <CheckCircle />
+                            <span className="font-semibold">{notification.message}</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <WelcomeHeader user={session?.user} server={serverInfo} />
 
                 <div className="flex flex-col md:flex-row gap-6">
@@ -227,16 +250,16 @@ export default function DashboardHomePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
                         <Card>
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Zap size={18}/> Historique des Points KINT sur 7 jours</h3>
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Zap size={18} /> Historique des Points KINT sur 7 jours</h3>
                             <ResponsiveContainer width="100%" height={250}>
-                               <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                     <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} />
                                     <YAxis stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} allowDecimals={false} />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: 'rgba(28, 34, 48, 0.8)', 
-                                            border: '1px solid rgba(255, 255, 255, 0.1)', 
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'rgba(28, 34, 48, 0.8)',
+                                            border: '1px solid rgba(255, 255, 255, 0.1)',
                                             borderRadius: '0.75rem',
                                             backdropFilter: 'blur(4px)'
                                         }}
@@ -245,8 +268,8 @@ export default function DashboardHomePage() {
                                     />
                                     <defs>
                                         <linearGradient id="kintPointsGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.4}/> 
-                                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.4} />
+                                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <Area type="monotone" dataKey="points" name="Points KINT" stroke="#22d3ee" strokeWidth={2} fill="url(#kintPointsGradient)" />
@@ -255,7 +278,7 @@ export default function DashboardHomePage() {
                         </Card>
                         {patchNotes && (
                             <Card>
-                                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><BookOpen size={18}/> {patchNotes.title}</h3>
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><BookOpen size={18} /> {patchNotes.title}</h3>
                                 <div className="space-y-4 text-gray-300">
                                     {patchNotes.ajouts?.length > 0 && <div><h4 className="font-semibold text-cyan-400 mb-2">Ajouts</h4><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajouts.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
                                     {patchNotes.ajustements?.length > 0 && <div><h4 className="font-semibold text-green-400 mb-2">Ajustements</h4><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajustements.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
@@ -266,19 +289,19 @@ export default function DashboardHomePage() {
                     <div className="lg:col-span-1 space-y-6">
                         <Card>
                             <div className="flex items-center gap-4 mb-4">
-                               <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-amber-500 text-white"><Gift size={24} /></div>
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-amber-500 text-white"><Gift size={24} /></div>
                                 <div>
                                     <h3 className="font-bold text-white">Récompense Quotidienne</h3>
                                     <p className="text-sm text-gray-400">Réclamez 500 pièces !</p>
                                 </div>
                             </div>
                             <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`w-full px-4 py-2 rounded-lg font-bold transition-all flex items-center justify-center ${!claimStatus.canClaim || isClaiming ? 'bg-gray-700/50 cursor-not-allowed text-gray-400' : 'bg-green-600 hover:bg-green-700'}`}>
-                                {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2"/>}
+                                {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
                                 {claimStatus.canClaim ? 'Réclamer' : `Prochaine dans ${claimStatus.timeLeft}`}
                             </button>
                         </Card>
-                         <Card>
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Gem size={18}/> Personnalisation</h3>
+                        <Card>
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Gem size={18} /> Personnalisation</h3>
                             <div className="bg-gray-800/50 p-4 rounded-lg flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-gray-400">Titre Actuel</p>
@@ -287,12 +310,12 @@ export default function DashboardHomePage() {
                                 <button onClick={() => setIsTitleModalOpen(true)} className="bg-cyan-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-cyan-700 transition">Changer</button>
                             </div>
                         </Card>
-                         <Card>
-                            <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Package size={18}/> Inventaire</h3>
+                        <Card>
+                            <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Package size={18} /> Inventaire</h3>
                             <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                                 {inventory.length > 0 ? inventory.map(item => (
                                     <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
-                                        {item.icon ? <Image src={item.icon} alt={item.name} width={20} height={20} /> : <Gem size={20} className="text-gray-500"/>}
+                                        {item.icon ? <Image src={item.icon} alt={item.name} width={20} height={20} /> : <Gem size={20} className="text-gray-500" />}
                                         <span className="ml-3 flex-1 font-semibold truncate">{item.name}</span>
                                         <span className="text-xs font-bold bg-cyan-800 text-cyan-200 px-2 py-1 rounded-full">x{item.quantity}</span>
                                     </div>
@@ -301,7 +324,7 @@ export default function DashboardHomePage() {
                         </Card>
                     </div>
                 </div>
-                
+
                 <Card>
                     <h2 className="font-bold text-white mb-4 flex items-center gap-2"><Trophy size={20} />Succès Débloqués ({unlockedSuccesses.length}/{totalAchievementsCount})</h2>
                     {unlockedSuccesses.length > 0 ? (
@@ -322,7 +345,7 @@ export default function DashboardHomePage() {
                             <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
                                 {availableTitles.length > 0 ? availableTitles.map(titre => (
                                     <label key={titre} className="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
-                                        <input type="radio" name="title" value={titre} checked={selectedTitle === titre} onChange={(e) => setSelectedTitle(e.target.value)} className="form-radio h-5 w-5 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500 focus:ring-offset-0"/>
+                                        <input type="radio" name="title" value={titre} checked={selectedTitle === titre} onChange={(e) => setSelectedTitle(e.target.value)} className="form-radio h-5 w-5 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500 focus:ring-offset-0" />
                                         <span className="ml-4">{titre}</span>
                                     </label>
                                 )) : <p className="text-gray-400 text-center py-4">Vous ne possédez aucun titre.</p>}
@@ -334,7 +357,7 @@ export default function DashboardHomePage() {
                         </motion.div>
                     </div>
                 )}
-                
+
                 <style jsx global>{`.bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
             </motion.div>
         </AnimatePresence>
