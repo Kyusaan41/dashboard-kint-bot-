@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { getUsers, giveMoney, giveKip, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api'; 
+import { getUsers, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, fetchPoints, updatePoints, updateCurrency } from '@/utils/api';
 import Image from 'next/image';
-import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck, CheckCircle } from 'lucide-react';
+import { Power, Shield, TrendingDown, TrendingUp, Users, Terminal, Zap, Coins, Search, UserCheck, CheckCircle, BrainCircuit, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Types ---
@@ -30,7 +30,7 @@ type SelectedUserStats = {
 type Notification = { show: boolean; message: string; type: 'success' | 'error' };
 
 
-// --- Composant Card ---
+// --- Composants UI ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-[#1c222c] border border-white/10 rounded-xl p-6 shadow-lg relative overflow-hidden group ${className}`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -38,6 +38,30 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
     </div>
 );
 
+const AnalysisRenderer: FC<{ content: string }> = ({ content }) => {
+    const lines = content.split('\n');
+    return (
+        <div className="space-y-3 text-sm text-gray-300">
+            {lines.map((line, index) => {
+                if (line.trim() === '') return null;
+                const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+                if (/^\s*\d+\.\s/.test(line)) {
+                    return <h3 key={index} className="text-base font-bold text-cyan-400 mt-4 first:mt-0" dangerouslySetInnerHTML={{ __html: formattedLine.replace(/^\s*\d+\.\s/, '') }} />;
+                }
+                if (line.trim().startsWith('* ')) {
+                    const listItemContent = formattedLine.trim().substring(1).trim();
+                    return (
+                        <div key={index} className="flex items-start pl-4">
+                            <span className="mr-2 mt-1 text-cyan-500">&bull;</span>
+                            <p dangerouslySetInnerHTML={{ __html: listItemContent }} />
+                        </div>
+                    );
+                }
+                return <p key={index} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+            })}
+        </div>
+    );
+};
 
 export default function AdminPage() {
     const { data: session, status } = useSession();
@@ -48,7 +72,7 @@ export default function AdminPage() {
     const [moneyAmount, setMoneyAmount] = useState<number | ''>('');
     const [pointsAmount, setPointsAmount] = useState<number | ''>('');
     const [searchQuery, setSearchQuery] = useState('');
-    
+
     const [selectedUserStats, setSelectedUserStats] = useState<SelectedUserStats>({ currency: null, points: null });
     const [loadingUserStats, setLoadingUserStats] = useState(false);
 
@@ -59,15 +83,17 @@ export default function AdminPage() {
 
     const [kintLogs, setKintLogs] = useState<KintLogEntry[]>([]);
     const [loadingKintLogs, setLoadingKintLogs] = useState(true);
-    
-    // --- NOUVEL ÉTAT POUR LA NOTIFICATION ---
+
     const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
+
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisResult, setAnalysisResult] = useState('');
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ show: true, message, type });
         setTimeout(() => {
             setNotification(prev => ({ ...prev, show: false }));
-        }, 3000); // La notification disparaît après 3 secondes
+        }, 3000);
     };
 
     useEffect(() => {
@@ -80,7 +106,7 @@ export default function AdminPage() {
         getDetailedKintLogs()
             .then(data => {
                 if (Array.isArray(data)) {
-                    const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) => 
+                    const sortedLogs = data.sort((a: KintLogEntry, b: KintLogEntry) =>
                         new Date(b.date).getTime() - new Date(a.date).getTime()
                     );
                     setKintLogs(sortedLogs);
@@ -97,12 +123,11 @@ export default function AdminPage() {
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.role === 'admin') {
             getUsers().then(setUsers).catch(console.error).finally(() => setLoadingUsers(false));
-            
             refreshAllLogs();
-            
+
             const fetchBotLogs = () => {
                 const container = botLogsContainerRef.current;
-                const isScrolledToBottom = container ? container.scrollHeight - container.scrollTop <= container.clientHeight + 50 : true;
+                const isScrolledToBottom = container ? Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 1 : true;
 
                 getBotLogs()
                     .then(data => {
@@ -156,20 +181,19 @@ export default function AdminPage() {
         setLoadingUserStats(true);
         try {
             if (actionType === 'points') {
-                await updatePoints(selectedUser.id, finalAmount, source); 
+                await updatePoints(selectedUser.id, finalAmount, source);
             } else if (actionType === 'currency') {
                 await updateCurrency(selectedUser.id, finalAmount, source);
             }
             showNotification(`Profil de ${selectedUser.username} mis à jour !`);
-            
+
             const updatedCurrencyData = await fetchCurrency(selectedUser.id);
             const updatedPointsData = await fetchPoints(selectedUser.id);
             setSelectedUserStats({
-                currency: updatedCurrencyData.balance ?? 0, 
+                currency: updatedCurrencyData.balance ?? 0,
                 points: updatedPointsData.points ?? 0
             });
-            refreshAllLogs(); // Rafraîchir les logs pour voir les changements (même si filtrés)
-
+            refreshAllLogs();
         } catch (error) {
             showNotification(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`, "error");
         } finally {
@@ -184,6 +208,24 @@ export default function AdminPage() {
             showNotification(res.message);
         } catch (error) {
             showNotification(`Échec du redémarrage : ${error instanceof Error ? error.message : 'Erreur inconnue'}`, "error");
+        }
+    };
+
+    const handleAnalysis = async () => {
+        setIsAnalyzing(true);
+        setAnalysisResult('');
+        try {
+            const response = await fetch('/api/admin/analyze-logs');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "L'analyse a échoué avec le statut " + response.status);
+            }
+            setAnalysisResult(data.analysis);
+        } catch (error) {
+            showNotification(error instanceof Error ? error.message : 'Erreur de communication avec l\'API', 'error');
+        } finally {
+            setIsAnalyzing(false);
         }
     };
 
@@ -217,7 +259,7 @@ export default function AdminPage() {
                     <Power className="h-5 w-5"/> Redémarrer le Bot
                 </motion.button>
             </div>
-            
+
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-1 space-y-8">
                     <Card>
@@ -281,18 +323,42 @@ export default function AdminPage() {
 
                 <div className="xl:col-span-2 space-y-8">
                     <Card>
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <Terminal /> Logs du Bot <span className="text-xs text-gray-500">(Rafraîchissement auto)</span>
-                        </h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold flex items-center gap-2">
+                                <Terminal /> Logs du Bot <span className="text-xs text-gray-500">(Rafraîchissement auto)</span>
+                            </h2>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleAnalysis}
+                                disabled={isAnalyzing}
+                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg text-sm disabled:opacity-50"
+                            >
+                                {isAnalyzing ? <Loader2 className="animate-spin" size={16} /> : <BrainCircuit size={16}/>}
+                                {isAnalyzing ? 'Analyse...' : 'Analyser la journée'}
+                            </motion.button>
+                        </div>
                         {loadingBotLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
                             <div ref={botLogsContainerRef} className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
                                 {botLogs.length > 0 ? botLogs.map((log, index) => (
                                     <p key={index}><span className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString('fr-FR')}</span><span className="ml-2">{log.log}</span></p>
-                                )) : <p>Aucun log à afficher.</p>}
+                                )) : <p className="text-gray-500 text-center py-4">Aucun log à afficher.</p>}
                                 <div ref={botLogsEndRef} />
                             </div>
                         )}
                     </Card>
+
+                    <AnimatePresence>
+                        {analysisResult && (
+                             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                                <Card>
+                                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-cyan-400"><BrainCircuit /> Résumé de la journée</h2>
+                                    <AnalysisRenderer content={analysisResult} />
+                                </Card>
+                             </motion.div>
+                        )}
+                    </AnimatePresence>
+                    
                     <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Zap /> Logs KINT (Transactions de points)</h2>
                         {loadingKintLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
@@ -333,7 +399,7 @@ export default function AdminPage() {
                                             )}
                                         </div>
                                     );
-                                }) : <p>Aucun log KINT à afficher.</p>}
+                                }) : <p className="text-gray-500 text-center py-4">Aucun log KINT à afficher.</p>}
                             </div>
                         )}
                     </Card>
