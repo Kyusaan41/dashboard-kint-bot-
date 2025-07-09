@@ -1,12 +1,15 @@
 // src/app/api/kint-stats/[userId]/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// Fonction GET pour lire les stats
-export async function GET(request: Request, { params }: { params: { userId: string } }) {
-    const { userId } = params;
-    if (!userId) return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+// La correction est ici : on utilise "NextRequest" et on type le deuxième argument "context".
+export async function GET(request: NextRequest, context: { params: { userId: string } }) {
+    const { userId } = context.params;
+
+    if (!userId) {
+        return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+    }
 
     try {
         const res = await fetch(`${BOT_API_URL}/kint-stats/${userId}`);
@@ -17,13 +20,16 @@ export async function GET(request: Request, { params }: { params: { userId: stri
     }
 }
 
-// Fonction POST pour mettre à jour les stats
-export async function POST(request: Request, { params }: { params: { userId: string } }) {
-    const { userId } = params;
-    if (!userId) return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+// On applique la même correction ici.
+export async function POST(request: NextRequest, context: { params: { userId: string } }) {
+    const { userId } = context.params;
+
+    if (!userId) {
+        return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+    }
 
     try {
-        const { responseType } = await request.json(); // 'oui' ou 'non'
+        const { responseType } = await request.json();
         const res = await fetch(`${BOT_API_URL}/kint-stats/${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
