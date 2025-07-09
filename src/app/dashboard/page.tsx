@@ -291,7 +291,7 @@ export default function DashboardHomePage() {
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-amber-500 text-white"><Gift size={24} /></div>
                                 <div>
-                                    <h3 className="font-bold text-white">Récompense Quotidienne</h3>
+                                    <h3 className="font-bold text-white">Bonus Quotidien</h3>
                                     <p className="text-sm text-gray-400">Réclamez 500 pièces !</p>
                                 </div>
                             </div>
