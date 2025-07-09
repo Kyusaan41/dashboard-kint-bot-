@@ -12,7 +12,7 @@ export default function MiniJeuHome() {
 
       <nav className="flex flex-col gap-14 w-full max-w-sm">
         {[
-          { href: '/dashboard/mini-jeu/kint', label: 'Classement KINT', icon: <FaTrophy className="text-cyan-400 w-6 h-6" /> },
+          { href: '/dashboard/mini-jeu/kint', label: 'KINT', icon: <FaTrophy className="text-cyan-400 w-6 h-6" /> },
           { href: '/dashboard/mini-jeu/1v1', label: 'Mode 1v1', icon: <FaGamepad className="text-cyan-400 w-6 h-6" /> },
         ].map(({ href, label, icon }) => (
           <Link
