@@ -3,32 +3,35 @@ import { NextResponse, NextRequest } from 'next/server';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// La correction est ici : on utilise "NextRequest" et on type le deuxième argument "context".
-export async function GET(request: NextRequest, context: { params: { userId: string } }) {
-    const { userId } = context.params;
-
-    if (!userId) {
-        return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
-    }
-
+// On utilise la même signature que vos autres routes fonctionnelles
+export async function GET(request: NextRequest, context: any) {
     try {
+        const { params } = context;
+        const { userId } = params;
+
+        if (!userId) {
+            return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+        }
+        
         const res = await fetch(`${BOT_API_URL}/kint-stats/${userId}`);
         const data = await res.json();
         return NextResponse.json(data);
     } catch (error) {
-        return NextResponse.json({ total: 0, oui: 0, non: 0 }, { status: 500 });
+        // En cas d'erreur ou si l'utilisateur n'existe pas, renvoyer des valeurs par défaut
+        return NextResponse.json({ total: 0, oui: 0, non: 0 }, { status: 200 });
     }
 }
 
-// On applique la même correction ici.
-export async function POST(request: NextRequest, context: { params: { userId: string } }) {
-    const { userId } = context.params;
-
-    if (!userId) {
-        return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
-    }
-
+// On applique aussi la correction à la fonction POST
+export async function POST(request: NextRequest, context: any) {
     try {
+        const { params } = context;
+        const { userId } = params;
+        
+        if (!userId) {
+            return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
+        }
+
         const { responseType } = await request.json();
         const res = await fetch(`${BOT_API_URL}/kint-stats/${userId}`, {
             method: 'POST',
@@ -36,11 +39,15 @@ export async function POST(request: NextRequest, context: { params: { userId: st
             body: JSON.stringify({ responseType }),
         });
 
-        if (!res.ok) throw new Error('Échec de la mise à jour des stats KINT sur le bot');
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Échec de la mise à jour des stats KINT sur le bot: ${errorText}`);
+        }
         
         const data = await res.json();
         return NextResponse.json(data);
     } catch (error) {
-        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
