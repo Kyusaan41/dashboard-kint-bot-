@@ -3,10 +3,12 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import FeedbackWidget from '@/components/FeedbackWidget'; // <-- 1. IMPORTER LE COMPOSANT
+import FeedbackWidget from '@/components/FeedbackWidget';
+import { useEffect } from 'react'; // 1. Importer useEffect
 
 const pages = [
   { id: '', label: 'Accueil' },
+  { id: 'inventory', label: 'Inventaire' },
   { id: 'mini-jeu', label: 'Mini-Jeux' },
   { id: 'boutique', label: 'Boutique' },
   { id: 'classement', label: 'Classement' },
@@ -17,6 +19,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+
+  // --- 2. Logique de déconnexion en cas de maintenance ---
+  useEffect(() => {
+    // On lit la variable d'environnement de maintenance
+    const isMaintenanceMode = process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE === 'true';
+
+    // Si le mode maintenance est actif ET que l'utilisateur est connecté
+    if (isMaintenanceMode && status === 'authenticated') {
+      // On force la déconnexion. NextAuth le redirigera vers la page de connexion,
+      // qui affichera alors l'écran de maintenance.
+      signOut({ callbackUrl: '/login' });
+    }
+    // On exécute cet effet à chaque fois que le statut de la session change
+  }, [status]);
+  // --- Fin de la logique de maintenance ---
+
 
   const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '')
     .split(',')
@@ -105,7 +123,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
 
-      {/* --- 2. AJOUTER LE WIDGET ICI --- */}
       <FeedbackWidget />
 
     </div>

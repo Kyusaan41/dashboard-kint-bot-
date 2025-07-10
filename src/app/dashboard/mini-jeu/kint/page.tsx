@@ -2,12 +2,14 @@
 
 import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
-import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory, sendKintLogToDiscord, getDetailedKintLogs } from '@/utils/api';
+import { getPointsLeaderboard, fetchPoints, updatePoints, getInventory, sendKintLogToDiscord, getDetailedKintLogs, getActiveEffects } from '@/utils/api';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History, Swords, Award, Medal, CheckCircle, BarChart2, X } from 'lucide-react';
 
-// --- Nouvelles fonctions pour l'API des stats KINT ---
+
+// --- Fonctions pour l'API des stats KINT ---
+// Ces fonctions communiquent avec les routes API de votre dashboard
 async function fetchKintLeaderboard() {
     const response = await fetch(`/api/kint-stats/leaderboard`);
     if (!response.ok) throw new Error('Failed to fetch KINT leaderboard');
@@ -24,12 +26,17 @@ async function updateKintStats(userId: string, responseType: 'oui' | 'non') {
     return response.json();
 }
 
+
 // --- Types ---
 type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
 type HistoryEntry = { userId: string; username: string; avatar?: string; actionType: 'GAGNÉ' | 'PERDU'; points: number; currentBalance: number; effect?: string; date: string; reason: string; source: 'Discord' | 'Dashboard'; };
 type InventoryItem = { id: string; name: string; quantity: number; };
 type Notification = { show: boolean; message: string; type: 'success' | 'error' };
 type KintStatEntry = { userId: string; username: string; avatar: string; total: number; oui: number; non: number; lossRate: number; };
+type UserEffect = {
+    type: string;
+    expiresAt: string;
+} | null;
 
 // --- Composants UI ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
@@ -75,6 +82,7 @@ export default function KintMiniGamePage() {
     const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
     const [kintLeaderboard, setKintLeaderboard] = useState<KintStatEntry[]>([]);
     const [mostGuez, setMostGuez] = useState<KintStatEntry | null>(null);
+    const [activeEffect, setActiveEffect] = useState<UserEffect>(null);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ show: true, message, type });
@@ -84,12 +92,13 @@ export default function KintMiniGamePage() {
     const fetchData = async () => {
         if (!session?.user?.id) return;
         try {
-            const [leaderboardData, pointsData, detailedHistoryData, inventoryData, kintBoardData] = await Promise.all([
+            const [leaderboardData, pointsData, detailedHistoryData, inventoryData, kintBoardData, effectsData] = await Promise.all([
                 getPointsLeaderboard(),
                 fetchPoints(session.user.id),
                 getDetailedKintLogs(),
                 getInventory(),
                 fetchKintLeaderboard(),
+                getActiveEffects(session.user.id),
             ]);
             const membersMap = new Map<string, { username?: string; avatar?: string; }>(leaderboardData.map((p: LeaderboardEntry) => [p.userId, { username: p.username, avatar: p.avatar }]));
             const enrichedHistory = detailedHistoryData.map((log: HistoryEntry) => ({...log, username: membersMap.get(log.userId)?.username || log.username, avatar: membersMap.get(log.userId)?.avatar || log.avatar,})).filter((log: HistoryEntry) => log.userId === session.user.id);
@@ -99,6 +108,7 @@ export default function KintMiniGamePage() {
             setHistory(enrichedHistory);
             setKintLeaderboard(kintBoardData.leaderboard);
             setMostGuez(kintBoardData.mostGuez);
+            setActiveEffect(effectsData.effect);
         } catch (error) {
             console.error("Erreur de chargement des données du jeu:", error);
         } finally {
@@ -122,7 +132,14 @@ export default function KintMiniGamePage() {
         }
 
         setIsSubmitting(true);
-        const amount = Number(manualPointsAmount);
+        let amount = Number(manualPointsAmount);
+        let effectType = "Aucun effet";
+
+        if (actionType === 'add' && activeEffect && activeEffect.type === 'epee-du-kint' && new Date(activeEffect.expiresAt).getTime() > Date.now()) {
+            amount *= 2;
+            effectType = 'Épée du KINT ⚔️';
+        }
+
         const pointsToModify = actionType === 'add' ? amount : -amount;
         const actionText = actionType === 'add' ? 'GAGNÉ' : 'PERDU';
         const reasonText = actionType === 'add' ? 'Victoire Dashboard' : 'Défaite Dashboard';
@@ -134,11 +151,14 @@ export default function KintMiniGamePage() {
             await updateKintStats(session.user.id, statsUpdateType);
             const updatedPointsData = await fetchPoints(session.user.id);
             const newCurrentBalance = updatedPointsData.points;
+            
             await sendKintLogToDiscord({
                 userId: session.user.id, username: session.user.name,
                 avatar: session.user.image, actionType: actionText,
-                points: amount, currentBalance: newCurrentBalance,
-                effect: "Manuel Dashboard", date: new Date().toISOString(),
+                points: Number(manualPointsAmount),
+                currentBalance: newCurrentBalance,
+                effect: effectType,
+                date: new Date().toISOString(),
                 source: source, reason: reasonText
             });
             await fetchData();
@@ -157,10 +177,11 @@ export default function KintMiniGamePage() {
 
     const topThree = leaderboard.slice(0, 3);
     const restOfLeaderboard = leaderboard.slice(3);
+    const isSwordActive = activeEffect && activeEffect.type === 'epee-du-kint' && new Date(activeEffect.expiresAt).getTime() > Date.now();
 
     return (
         <div className="space-y-8">
-            <AnimatePresence>
+             <AnimatePresence>
                 {notification.show && (
                     <motion.div initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 bg-green-600 text-white">
                         <CheckCircle />
@@ -210,7 +231,7 @@ export default function KintMiniGamePage() {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-1 space-y-8">
-                    <Card><div className="p-6"><div className="flex items-center gap-4 mb-6"><Image src={session?.user?.image || '/default-avatar.png'} alt="avatar" width={64} height={64} className="rounded-full border-2 border-cyan-500"/><div><h2 className="text-2xl font-bold text-white">{session?.user?.name}</h2><div className="flex items-center gap-2 text-sm text-blue-300"><Shield size={16}/><span>KShields: {inventory.find(i => i.id === 'KShield')?.quantity || 0}</span></div></div></div><div className="text-center mb-6"><p className="text-sm text-gray-400">Score KINT Actuel</p><p className="text-7xl font-bold text-cyan-400 my-1">{userPoints ?? '...'}</p></div><div className="bg-black/20 p-4 rounded-lg"><label className="block text-sm font-medium mb-2 text-white">Déclarer un résultat</label><div className="flex items-center gap-2"><input type="number" placeholder="Points" value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-[#12151d] p-3 rounded-md border border-white/20"/><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('add')} disabled={isSubmitting} title="Victoire" className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700 disabled:opacity-50"><TrendingUp size={20}/></motion.button><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('subtract')} disabled={isSubmitting} title="Défaite" className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700 disabled:opacity-50"><TrendingDown size={20}/></motion.button></div></div></div></Card>
+                    <Card><div className="p-6"><div className="flex items-center gap-4 mb-6"><Image src={session?.user?.image || '/default-avatar.png'} alt="avatar" width={64} height={64} className="rounded-full border-2 border-cyan-500"/><div><h2 className="text-2xl font-bold text-white">{session?.user?.name}</h2><div className="flex items-center gap-2 text-sm text-blue-300"><Shield size={16}/><span>KShields: {inventory.find(i => i.id === 'KShield')?.quantity || 0}</span></div></div></div><div className="text-center mb-6"><p className="text-sm text-gray-400">Score KINT Actuel</p><p className="text-7xl font-bold text-cyan-400 my-1">{userPoints ?? '...'}</p> {isSwordActive && ( <motion.div initial={{opacity: 0}} animate={{opacity: 1}} className="flex items-center justify-center gap-2 text-yellow-400 font-semibold mt-2"> <Swords size={16}/> <span>Points de victoire x2 !</span> </motion.div> )}</div><div className="bg-black/20 p-4 rounded-lg"><label className="block text-sm font-medium mb-2 text-white">Déclarer un résultat</label><div className="flex items-center gap-2"><input type="number" placeholder="Points" value={manualPointsAmount} onChange={e => setManualPointsAmount(e.target.value === '' ? '' : Number(e.target.value))} className="w-full bg-[#12151d] p-3 rounded-md border border-white/20"/><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('add')} disabled={isSubmitting} title="Victoire" className="p-3 bg-green-600 rounded-md font-bold hover:bg-green-700 disabled:opacity-50"><TrendingUp size={20}/></motion.button><motion.button whileTap={{scale: 0.95}} onClick={() => handleManualPointsAction('subtract')} disabled={isSubmitting} title="Défaite" className="p-3 bg-red-600 rounded-md font-bold hover:bg-red-700 disabled:opacity-50"><TrendingDown size={20}/></motion.button></div></div></div></Card>
                 </div>
                 <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <Card><div className="p-6"><h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><History/> Historique des parties</h2><div className="space-y-3 max-h-[400px] overflow-y-auto pr-2"><AnimatePresence>{history.length > 0 ? history.map((item, index) => <HistoryItem key={`${item.userId}-${item.date}-${index}`} item={item} />) : <p className="text-gray-500 text-center py-4">Aucune transaction récente.</p>}</AnimatePresence></div></div></Card>

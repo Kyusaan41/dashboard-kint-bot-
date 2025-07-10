@@ -142,6 +142,13 @@ export async function getInventory() {
 export async function getKshieldStatus(userId: string) {
     return handleApiResponse(await fetch(`/api/shop/kshield-status/${userId}`));
 }
+export async function useItem(itemId: string) {
+    return handleApiResponse(await fetch('/api/inventory/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId }),
+    }));
+}
 
 export async function useKshield() {
     return handleApiResponse(await fetch('/api/kint/use-shield', {
@@ -183,4 +190,13 @@ export async function sendKintLogToDiscord(logData: {
 export async function getDetailedKintLogs(userId?: string): Promise<any[]> { 
     const url = userId ? `/api/kint-detailed-logs?userId=${userId}` : '/api/kint-detailed-logs';
     return handleApiResponse(await fetch(url));
+}
+
+// --- AJOUT DE LA FONCTION POUR LES EFFETS ---
+/**
+ * Récupère les effets actifs pour un utilisateur.
+ * @param userId L'ID de l'utilisateur.
+ */
+export async function getActiveEffects(userId: string) {
+    return handleApiResponse(await fetch(`/api/effects/${userId}`));
 }
