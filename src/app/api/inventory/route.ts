@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
     try {
         const [inventoryRes, shopRes] = await Promise.all([
-            fetch(`${BOT_API_URL}/inventaire/${userId}`), // <-- Corrigé pour utiliser l'ID
+            fetch(`${BOT_API_URL}/inventaire/${userId}`),
             fetch(`${BOT_API_URL}/shop`)
         ]);
 
@@ -23,7 +23,6 @@ export async function GET(request: Request) {
         }
         const shopItems = await shopRes.json();
 
-        // Si l'inventaire n'est pas trouvé (404) ou qu'il y a une erreur, on traite comme un inventaire vide
         let userInventory = {};
         if (inventoryRes.ok) {
             userInventory = await inventoryRes.json();
@@ -39,7 +38,8 @@ export async function GET(request: Request) {
                 id: itemId,
                 quantity: data.quantity,
                 name: shopItem?.name || itemId,
-                icon: shopItem?.icon || null
+                icon: shopItem?.icon || null,
+                description: shopItem?.description || "Aucune description disponible." // <-- CORRECTION ICI
             };
         });
 
