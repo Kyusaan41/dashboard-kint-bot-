@@ -25,21 +25,25 @@ export async function GET(request: Request) {
 
         let userInventory = {};
         if (inventoryRes.ok) {
-            userInventory = await inventoryRes.json();
+            // Important : Katabump peut renvoyer une chaîne vide si l'inventaire n'existe pas
+            const inventoryText = await inventoryRes.text();
+            userInventory = inventoryText ? JSON.parse(inventoryText) : {};
         } else {
             console.warn(`Avertissement API /inventory: La requête pour l'inventaire de ${userId} a échoué. Statut: ${inventoryRes.status}. On continue avec un inventaire vide.`);
         }
 
-        const enrichedInventory = Object.entries(userInventory).map(([itemId, itemData]) => {
-            const shopItem = shopItems.find((s: any) => s.id === itemId);
+        const enrichedInventory = Object.entries(userInventory).map(([itemName, itemData]) => {
+            // --- CORRECTION ICI ---
+            // On cherche maintenant en comparant le nom de l'objet, pas son ID.
+            const shopItem = shopItems.find((s: any) => s.name === itemName);
             const data = itemData as { quantity: number };
 
             return {
-                id: itemId,
+                id: shopItem?.id || itemName, // On prend l'ID de la boutique s'il existe
                 quantity: data.quantity,
-                name: shopItem?.name || itemId,
+                name: itemName, // Le nom est la clé de l'inventaire
                 icon: shopItem?.icon || null,
-                description: shopItem?.description || "Aucune description disponible." // <-- CORRECTION ICI
+                description: shopItem?.description || "Aucune description disponible."
             };
         });
 
