@@ -33,15 +33,20 @@ export async function GET(request: Request) {
         let userInventory = {};
         if (inventoryRes.ok) {
             const inventoryText = await inventoryRes.text();
+            console.log('[API /inventory] Inventaire brut (texte) reçu du bot :', inventoryText);
             userInventory = inventoryText ? JSON.parse(inventoryText) : {};
         }
-        console.log('[API /inventory] Inventaire brut de l\'utilisateur reçu du bot :', userInventory);
+        console.log('[API /inventory] Inventaire brut (JSON) de l\'utilisateur :', userInventory);
 
 
         const enrichedInventory = Object.entries(userInventory).map(([itemName, itemData]) => {
-            // --- CORRECTION DÉFINITIVE ---
-            // On cherche un objet dans la boutique dont le NOM correspond à la clé dans l'inventaire
-            const shopItem = shopItems.find((s: any) => s.name === itemName);
+            // --- CORRECTION DÉFINITIVE AVEC TOLÉRANCE ---
+            // On nettoie les noms pour la comparaison : tout en minuscules et sans espaces superflus.
+            const normalizedItemName = itemName.trim().toLowerCase();
+            
+            const shopItem = shopItems.find(
+                (s: any) => s.name && s.name.trim().toLowerCase() === normalizedItemName
+            );
             
             if (!shopItem) {
                 console.warn(`[API /inventory] Attention : L'objet "${itemName}" de l'inventaire n'a pas été trouvé dans la boutique.`);
@@ -50,15 +55,15 @@ export async function GET(request: Request) {
             const data = itemData as { quantity: number };
 
             return {
-                id: shopItem?.id || itemName, // On utilise l'ID de la boutique, ou le nom si non trouvé
+                id: shopItem?.id || itemName,
                 quantity: data.quantity,
-                name: itemName,
+                name: shopItem?.name || itemName, // On garde le nom original de la boutique pour l'affichage
                 icon: shopItem?.icon || null,
                 description: shopItem?.description || "Aucune description disponible."
             };
         });
 
-        console.log('[API /inventory] Inventaire final envoyé au dashboard :', enrichedInventory);
+        console.log('[API /inventory] Inventaire final "enrichi" envoyé au dashboard :', enrichedInventory);
 
         return NextResponse.json(enrichedInventory);
 
