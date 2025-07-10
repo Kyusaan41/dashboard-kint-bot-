@@ -4,26 +4,15 @@ import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getInventory, useItem } from '@/utils/api';
-import { Gem, Loader2, CheckCircle, XCircle, Package, AlertTriangle } from 'lucide-react';
+import { getInventory, useItem, getUsers } from '@/utils/api';
+import { Gem, Loader2, CheckCircle, XCircle, Package, AlertTriangle, X } from 'lucide-react';
 
 // --- Types ---
-type InventoryItem = {
-    id: string;
-    name: string;
-    quantity: number;
-    icon?: string;
-    description?: string;
-    type?: string;
-};
+type InventoryItem = { id: string; name: string; quantity: number; icon?: string; description?: string; };
+type User = { id: string; username: string; avatar: string; };
+type Notification = { show: boolean; message: string; type: 'success' | 'error'; };
 
-type Notification = {
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-};
-
-// --- Composant Card (pour la cohérence) ---
+// --- Composant Card (inchangé) ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
     <div className={`bg-[#1c222c] border border-white/10 rounded-xl shadow-lg relative overflow-hidden group ${className}`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -31,12 +20,8 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
     </div>
 );
 
-// --- Composant pour un article de l'inventaire ---
-const InventoryItemCard: FC<{ item: InventoryItem; onUseItem: (itemId: string, itemName: string) => void; isUsing: boolean; }> = ({ item, onUseItem, isUsing }) => {
-    // MODIFICATION ICI : On considère tous les objets comme utilisables pour l'exemple.
-    // Vous pouvez affiner cette logique, par exemple : const isUsable = item.type === 'Consommable';
-    const isUsable = true; 
-
+// --- Composant pour un article (modifié pour ouvrir une modale) ---
+const InventoryItemCard: FC<{ item: InventoryItem; onUse: (item: InventoryItem) => void; }> = ({ item, onUse }) => {
     return (
         <Card className="flex flex-col !p-0 overflow-hidden">
             <div className="p-6 flex flex-col flex-grow">
@@ -46,114 +31,201 @@ const InventoryItemCard: FC<{ item: InventoryItem; onUseItem: (itemId: string, i
                 <h2 className="text-xl font-bold text-white text-center">{item.name}</h2>
                 <p className="text-sm text-gray-400 text-center mb-2">Quantité: {item.quantity}</p>
                 <p className="text-sm text-gray-400 text-center h-12 flex-grow">{item.description || 'Aucune description disponible.'}</p>
-                
-                {isUsable && (
-                    <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => onUseItem(item.id, item.name)}
-                        disabled={isUsing}
-                        className="mt-4 w-full font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-700/50 disabled:cursor-not-allowed"
-                    >
-                        {isUsing ? <Loader2 className="animate-spin" size={18}/> : 'Utiliser'}
-                    </motion.button>
-                )}
+                <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onUse(item)}
+                    className="mt-4 w-full font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700"
+                >
+                    Utiliser
+                </motion.button>
             </div>
         </Card>
     );
 };
 
 
+// --- La Page d'Inventaire Principale ---
 export default function InventoryPage() {
     const { data: session } = useSession();
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
+    const [members, setMembers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isUsingItem, setIsUsingItem] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
+    
+    // État pour gérer la modale active et l'objet sélectionné
+    const [activeModal, setActiveModal] = useState<string | null>(null);
+    const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+    // États pour les champs des modales
+    const [lottoNumbers, setLottoNumbers] = useState('');
+    const [targetPlayer, setTargetPlayer] = useState('');
+    const [champName, setChampName] = useState('');
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification(prev => ({ ...prev, show: false })), 4000);
     };
 
-    const fetchInventory = async () => {
-        if (!session) return;
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const inventoryData = await getInventory();
+            const [inventoryData, membersData] = await Promise.all([getInventory(), getUsers()]);
             setInventory(Array.isArray(inventoryData) ? inventoryData : []);
+            setMembers(Array.isArray(membersData) ? membersData : []);
         } catch (err) {
-            setError("Impossible de charger l'inventaire.");
-            console.error(err);
+            setError("Impossible de charger les données.");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchInventory();
+        if (session) fetchData();
     }, [session]);
+    
+    // Ouvre la modale appropriée pour l'objet cliqué
+    const handleOpenModal = (item: InventoryItem) => {
+        setSelectedItem(item);
+        setActiveModal(item.id);
+    };
+    
+    const handleCloseModal = () => {
+        setActiveModal(null);
+        setSelectedItem(null);
+        // Réinitialiser les champs
+        setLottoNumbers('');
+        setTargetPlayer('');
+        setChampName('');
+    };
 
-    const handleUseItem = async (itemId: string, itemName: string) => {
-        if (!confirm(`Voulez-vous vraiment utiliser "${itemName}" ?`)) return;
+    // Gère la soumission de la modale
+    const handleSubmitUse = async () => {
+        if (!selectedItem) return;
+        setIsSubmitting(true);
+        
+        let extraData = {};
+        if (selectedItem.id === 'Ticket Coin Million') {
+            extraData = { numbers: lottoNumbers };
+        }
+        if (selectedItem.id === 'My Champ') {
+            extraData = { targetUserId: targetPlayer, champName: champName };
+        }
+        if (selectedItem.id === 'Swap Lane') {
+            extraData = { targetUserId: targetPlayer };
+        }
 
-        setIsUsingItem(true);
         try {
-            const result = await useItem(itemId);
+            const result = await useItem(selectedItem.id, extraData);
             showNotification(result.message || 'Objet utilisé avec succès!', 'success');
-            await fetchInventory();
+            await fetchData(); // Recharger l'inventaire
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue.';
             showNotification(errorMessage, 'error');
         } finally {
-            setIsUsingItem(false);
+            setIsSubmitting(false);
+            handleCloseModal();
+        }
+    };
+    
+    // Affiche la bonne modale en fonction de l'objet
+    const renderModalContent = () => {
+        if (!selectedItem) return null;
+        
+        switch (selectedItem.id) {
+            case 'Épée du KINT':
+                return (
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-4">Confirmer l'utilisation</h3>
+                        <p className="text-gray-300">Voulez-vous activer l'Épée du KINT pour doubler vos gains de points pendant 2 heures ?</p>
+                    </div>
+                );
+
+            case 'Ticket Coin Million':
+                return (
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-4">Jouer au Loto</h3>
+                        <p className="text-gray-400 mb-2">Entrez 5 numéros (1-50) séparés par des espaces.</p>
+                        <input
+                            type="text"
+                            value={lottoNumbers}
+                            onChange={(e) => setLottoNumbers(e.target.value)}
+                            placeholder="ex: 5 12 23 34 45"
+                            className="w-full p-2 rounded bg-[#12151d] border border-white/20"
+                        />
+                    </div>
+                );
+
+            case 'My Champ':
+            case 'Swap Lane':
+                return (
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-4">{selectedItem.name}</h3>
+                        <p className="text-gray-400 mb-2">Choisissez un joueur sur le serveur :</p>
+                        <select
+                            value={targetPlayer}
+                            onChange={(e) => setTargetPlayer(e.target.value)}
+                            className="w-full p-2 rounded bg-[#12151d] border border-white/20 mb-4"
+                        >
+                            <option value="">Sélectionnez un joueur</option>
+                            {members.filter(m => m.id !== session?.user?.id).map(member => (
+                                <option key={member.id} value={member.id}>{member.username}</option>
+                            ))}
+                        </select>
+                        {selectedItem.id === 'My Champ' && (
+                            <>
+                                <p className="text-gray-400 mb-2">Nom du champion :</p>
+                                <input
+                                    type="text"
+                                    value={champName}
+                                    onChange={(e) => setChampName(e.target.value)}
+                                    placeholder="ex: Yasuo"
+                                    className="w-full p-2 rounded bg-[#12151d] border border-white/20"
+                                />
+                             </>
+                        )}
+                        <p className="text-xs text-amber-400 mt-4">Note : La demande sera envoyée à l'utilisateur sur Discord.</p>
+                    </div>
+                );
+
+            default:
+                return <p>Cet objet n'a pas d'action définie sur le dashboard.</p>;
         }
     };
 
-    if (loading) {
-        return <div className="flex items-center justify-center h-full"><Loader2 className="h-10 w-10 text-cyan-400 animate-spin" /></div>;
-    }
-    
-    if (error) {
-        return <div className="text-center text-red-400 p-8 flex flex-col items-center gap-4"><AlertTriangle size={40} /><p>{error}</p></div>;
-    }
+    if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 text-cyan-400 animate-spin" /></div>;
+    if (error) return <div className="text-center text-red-400 p-8 flex flex-col items-center gap-4"><AlertTriangle size={40} /><p>{error}</p></div>;
 
     return (
         <div className="space-y-8">
-            <AnimatePresence>
-                {notification.show && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.3 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-                        className={`fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
-                    >
-                        {notification.type === 'success' ? <CheckCircle /> : <XCircle />}
-                        <span className="font-semibold">{notification.message}</span>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-            
             <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Package /> Mon Inventaire</h1>
 
             {inventory.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {inventory.map(item => (
-                        <InventoryItemCard 
-                            key={item.id} 
-                            item={item} 
-                            onUseItem={handleUseItem}
-                            isUsing={isUsingItem}
-                        />
-                    ))}
+                    {inventory.map(item => <InventoryItemCard key={item.id} item={item} onUse={handleOpenModal} />)}
                 </div>
             ) : (
-                <Card className="text-center py-16">
-                    <p className="text-gray-500">Votre inventaire est vide pour le moment.</p>
-                </Card>
+                <Card className="text-center py-16"><p className="text-gray-500">Votre inventaire est vide.</p></Card>
             )}
 
-            <style jsx global>{`.bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
+            {/* Modale Générique */}
+            <AnimatePresence>
+                {activeModal && (
+                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-[#1c222c] p-6 rounded-2xl border border-cyan-700 w-full max-w-md shadow-2xl">
+                           <div className="flex justify-end"><button onClick={handleCloseModal}><X size={20} className="text-gray-500"/></button></div>
+                            {renderModalContent()}
+                            <div className="flex justify-end gap-4 mt-6">
+                                <button onClick={handleCloseModal} className="px-5 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition">Annuler</button>
+                                <button onClick={handleSubmitUse} disabled={isSubmitting} className="px-5 py-2 bg-cyan-600 rounded-lg hover:bg-cyan-700 font-bold transition disabled:opacity-50">
+                                    {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirmer"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

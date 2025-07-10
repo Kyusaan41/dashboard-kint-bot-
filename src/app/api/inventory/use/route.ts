@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'ID de l\'objet manquant.' }, { status: 400 });
         }
 
-        // C'est ici que vous appelez votre bot.
-        // Assurez-vous que votre bot a une route comme /inventory/use pour gérer cette logique.
-        const botResponse = await fetch(`${BOT_API_URL}/inventory/use`, {
+        // --- CORRECTION ICI ---
+        // On remplace 'inventory' par 'inventaire' pour correspondre à l'URL de votre bot
+        const botResponse = await fetch(`${BOT_API_URL}/inventaire/use`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -30,10 +30,14 @@ export async function POST(request: NextRequest) {
             }),
         });
 
+        // Si la réponse du bot n'est pas OK, on propage l'erreur
+        if (!botResponse.ok) {
+            const errorData = await botResponse.json();
+            return NextResponse.json({ message: errorData.message || "Erreur renvoyée par le bot." }, { status: botResponse.status });
+        }
+        
         const data = await botResponse.json();
-
-        // On transmet directement la réponse du bot (succès ou erreur) au client
-        return NextResponse.json(data, { status: botResponse.status });
+        return NextResponse.json(data);
 
     } catch (error) {
         console.error("Erreur dans l'API /api/inventory/use:", error);

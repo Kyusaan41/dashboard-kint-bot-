@@ -71,7 +71,6 @@ export async function updateXP(userId: string, newXP: number) {
 
 // --- Fonctions pour la Monnaie (Currency) ---
 
-// MODIFICATION ICI: Ajout du paramètre 'source'
 export async function fetchCurrency(userId: string) {
     return handleApiResponse(await fetch(`/api/currency/${userId}`));
 }
@@ -80,7 +79,7 @@ export async function updateCurrency(userId: string, amountChange: number, sourc
     return handleApiResponse(await fetch(`/api/currency/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: amountChange, source: source }), // Passe la différence et la source
+        body: JSON.stringify({ amount: amountChange, source: source }),
     }));
 }
 
@@ -90,12 +89,11 @@ export async function fetchPoints(userId: string) {
     return handleApiResponse(await fetch(`/api/points/${userId}`));
 }
 
-// MODIFICATION ICI: Ajout du paramètre 'source'
 export async function updatePoints(userId: string, amountChange: number, source?: string) {
     return handleApiResponse(await fetch(`/api/points/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: amountChange, source: source }), // Passe la différence et la source
+        body: JSON.stringify({ amount: amountChange, source: source }),
     }));
 }
 
@@ -118,13 +116,11 @@ export async function getShopItems(): Promise<any[]> {
     return handleApiResponse(await fetch('/api/shop'));
 }
 
-// --- MODIFICATION IMPORTANTE ICI ---
-// buyItem accepte maintenant un tableau d'IDs d'objets et l'envoie correctement
 export async function buyItem(itemIds: string[]) {
     return handleApiResponse(await fetch('/api/shop/buy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: itemIds }), // Le corps envoie un objet avec une clé 'items'
+        body: JSON.stringify({ items: itemIds }),
     }));
 }
 
@@ -134,19 +130,16 @@ export async function getInventory() {
     return handleApiResponse(await fetch('/api/inventory'));
 }
 
-// --- AJOUT ET EXPORTATION DE LA FONCTION ---
-/**
- * Récupère le statut du cooldown pour le KShield pour un utilisateur donné.
- * @param userId L'ID de l'utilisateur.
- */
 export async function getKshieldStatus(userId: string) {
     return handleApiResponse(await fetch(`/api/shop/kshield-status/${userId}`));
 }
-export async function useItem(itemId: string) {
+
+// MODIFICATION APPLIQUÉE ICI : `extraData` est ajouté comme deuxième argument.
+export async function useItem(itemId: string, extraData: object = {}) {
     return handleApiResponse(await fetch('/api/inventory/use', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId }),
+        body: JSON.stringify({ itemId, extraData }),
     }));
 }
 
@@ -156,6 +149,8 @@ export async function useKshield() {
     }));
 }
 
+// --- Fonctions diverses ---
+
 export async function getKintLogs() {
     return handleApiResponse(await fetch('/api/admin/kint-logs'));
 }
@@ -164,8 +159,6 @@ export async function getAllAchievements() {
     return handleApiResponse(await fetch('/api/success/all'));
 }
 
-// --- NOUVELLE FONCTION POUR ENVOYER UN LOG DÉTAILLÉ À DISCORD VIA LE BOT ---
-// Assurez-vous que cette définition de type est correcte et complète
 export async function sendKintLogToDiscord(logData: {
     userId: string;
     username: string;
@@ -185,18 +178,11 @@ export async function sendKintLogToDiscord(logData: {
     }));
 }
 
-// --- NOUVELLE FONCTION POUR RÉCUPÉRER LES LOGS KINT DÉTAILLÉS DEPUIS LE BOT ---
-// Elle accepte maintenant un userId optionnel pour le filtrage
 export async function getDetailedKintLogs(userId?: string): Promise<any[]> { 
     const url = userId ? `/api/kint-detailed-logs?userId=${userId}` : '/api/kint-detailed-logs';
     return handleApiResponse(await fetch(url));
 }
 
-// --- AJOUT DE LA FONCTION POUR LES EFFETS ---
-/**
- * Récupère les effets actifs pour un utilisateur.
- * @param userId L'ID de l'utilisateur.
- */
 export async function getActiveEffects(userId: string) {
     return handleApiResponse(await fetch(`/api/effects/${userId}`));
 }
