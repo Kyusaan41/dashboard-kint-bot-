@@ -10,16 +10,10 @@ async function handleApiResponse(response: Response) {
 }
 
 // --- NOUVELLE FONCTION POUR LES SERVER-SENT EVENTS ---
-/**
- * S'abonne au flux d'événements SSE du serveur.
- * @param onEvent - Une fonction callback qui sera appelée à chaque fois qu'un événement est reçu.
- * @returns Une fonction pour se désabonner et fermer la connexion.
- */
 export function subscribeToItemEvents(onEvent: (data: any) => void) {
     // On se connecte à notre propre route API qui sert de proxy
     const eventSource = new EventSource('/api/events');
 
-    // Callback pour chaque message reçu du serveur
     eventSource.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
@@ -29,14 +23,11 @@ export function subscribeToItemEvents(onEvent: (data: any) => void) {
         }
     };
 
-    // Gestion des erreurs de connexion
     eventSource.onerror = (err) => {
         console.error("Erreur de connexion EventSource:", err);
-        // Le navigateur tentera de se reconnecter automatiquement, mais on ferme ici en cas d'erreur fatale.
         eventSource.close();
     };
 
-    // Retourne une fonction de nettoyage pour fermer la connexion
     return () => {
         eventSource.close();
     };
@@ -47,6 +38,15 @@ export function subscribeToItemEvents(onEvent: (data: any) => void) {
 
 export async function getUsers() {
     return handleApiResponse(await fetch('/api/admin/users'));
+}
+
+// --- NOUVELLE FONCTION PUBLIQUE ---
+/**
+ * Récupère la liste des membres du serveur via une route publique.
+ */
+export async function getServerMembers() {
+    const serverInfo = await handleApiResponse(await fetch('/api/server/info'));
+    return serverInfo.members || [];
 }
 
 export async function giveMoney(userId: string, amount: number) {
@@ -168,7 +168,6 @@ export async function getKshieldStatus(userId: string) {
     return handleApiResponse(await fetch(`/api/shop/kshield-status/${userId}`));
 }
 
-// MODIFICATION APPLIQUÉE ICI : `extraData` est ajouté comme deuxième argument.
 export async function useItem(itemId: string, extraData: object = {}) {
     return handleApiResponse(await fetch('/api/inventory/use', {
         method: 'POST',

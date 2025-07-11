@@ -4,7 +4,8 @@ import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getInventory, useItem, getUsers, subscribeToItemEvents } from '@/utils/api';
+// MODIFICATION DE L'IMPORT : On remplace getUsers par getServerMembers
+import { getInventory, useItem, getServerMembers, subscribeToItemEvents } from '@/utils/api';
 import { Gem, Loader2, CheckCircle, XCircle, Package, AlertTriangle, X, Swords } from 'lucide-react';
 
 // --- Types ---
@@ -21,7 +22,6 @@ type ItemUsedEvent = {
         username: string;
     };
 };
-
 
 // --- Composants UI ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
@@ -87,7 +87,8 @@ export default function InventoryPage() {
         if (!session) return;
         setLoading(true);
         try {
-            const [inventoryData, membersData] = await Promise.all([getInventory(), getUsers()]);
+            // MODIFICATION DE LA LIGNE SUIVANTE
+            const [inventoryData, membersData] = await Promise.all([getInventory(), getServerMembers()]);
             setInventory(Array.isArray(inventoryData) ? inventoryData : []);
             setMembers(Array.isArray(membersData) ? membersData : []);
         } catch (err) {
@@ -116,11 +117,9 @@ export default function InventoryPage() {
         setChampName('');
     };
 
-    // MODIFICATION DE CETTE FONCTION
     const handleSubmitUse = async () => {
         if (!selectedItem) return;
 
-        // --- VALIDATION AJOUTÉE ---
         const requiresTarget = ['My Champ', 'Swap Lane'].includes(selectedItem.id);
         const requiresChampName = selectedItem.id === 'My Champ';
 
@@ -132,7 +131,6 @@ export default function InventoryPage() {
             showNotification('Veuillez entrer un nom de champion.', 'error');
             return;
         }
-        // --- FIN DE LA VALIDATION ---
 
         setIsSubmitting(true);
         
@@ -147,7 +145,7 @@ export default function InventoryPage() {
         try {
             const result = await useItem(selectedItem.id, extraData);
             showNotification(result.message || 'Action effectuée avec succès !', 'success');
-            await fetchData(); // Rafraîchit l'inventaire
+            await fetchData();
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue.';
             showNotification(errorMessage, 'error');
