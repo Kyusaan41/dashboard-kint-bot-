@@ -1,62 +1,60 @@
 // src/app/api/events/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import http from 'http';
 
-// L'URL de votre bot. Assurez-vous que c'est la bonne.
-const BOT_API_URL = 'http://51.83.103.24:20077/api/events';
+const BOT_HOST = '51.83.103.24';
+const BOT_PORT = 20077;
 
-export async function GET(request: Request) {
-    // 1. Vérification de la session utilisateur
+export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
         return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // 2. Création d'un flux (Stream) pour envoyer les données au client
+    // --- CORRECTION ---
+    // On utilise `nextUrl.searchParams` pour lire les paramètres de l'URL
+    const userId = request.nextUrl.searchParams.get('userId');
+    if (session.user.id !== userId) {
+        return new NextResponse('Forbidden', { status: 403 });
+    }
+
     const stream = new ReadableStream({
         start(controller) {
-            // Options pour la requête vers le bot
             const options = {
-                hostname: '51.83.103.24',
-                port: 20077,
-                path: '/api/events',
+                hostname: BOT_HOST,
+                port: BOT_PORT,
+                // On transmet l'userId au bot
+                path: `/api/events?userId=${userId}`,
                 method: 'GET',
                 headers: {
                     'Accept': 'text/event-stream',
-                    'Cache-Control': 'no-cache',
                     'Connection': 'keep-alive',
+                    'Cache-Control': 'no-cache',
                 }
             };
 
-            // 3. Établissement de la connexion avec le bot
             const botRequest = http.request(options, (botResponse) => {
-                console.log('[SSE Proxy] Connexion établie avec le bot.');
-
-                // 4. Dès qu'on reçoit des données du bot...
+                console.log(`[SSE Proxy] Connexion établie avec le bot pour l'utilisateur ${userId}`);
                 botResponse.on('data', (chunk) => {
-                    // ...on les envoie directement au client (le navigateur)
                     controller.enqueue(chunk);
                 });
-
                 botResponse.on('end', () => {
                     console.log('[SSE Proxy] Le bot a fermé la connexion.');
                     controller.close();
                 });
             });
 
-            // Gère les erreurs de connexion au bot
             botRequest.on('error', (err) => {
                 console.error('[SSE Proxy] Erreur de connexion au bot:', err);
                 controller.error(err);
             });
 
-            // Gère la déconnexion du client (si l'utilisateur ferme l'onglet)
             request.signal.onabort = () => {
                 console.log('[SSE Proxy] Le client a fermé la connexion.');
-                botRequest.abort(); // On termine la requête vers le bot
+                botRequest.abort();
                 controller.close();
             };
 
@@ -64,12 +62,11 @@ export async function GET(request: Request) {
         },
     });
 
-    // 5. On renvoie le flux au client
     return new Response(stream, {
         headers: {
             'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
             'Connection': 'keep-alive',
+            'Cache-Control': 'no-cache',
         },
     });
 }
