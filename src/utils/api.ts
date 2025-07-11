@@ -9,10 +9,21 @@ async function handleApiResponse(response: Response) {
     return response.json();
 }
 
-// --- NOUVELLE FONCTION POUR LES SERVER-SENT EVENTS ---
-export function subscribeToItemEvents(onEvent: (data: any) => void) {
-    // On se connecte à notre propre route API qui sert de proxy
-    const eventSource = new EventSource('/api/events');
+// --- FONCTION SSE MODIFIÉE ---
+/**
+ * S'abonne au flux d'événements SSE du serveur.
+ * @param userId - L'ID de l'utilisateur qui s'abonne. Important pour que le bot sache à qui parler.
+ * @param onEvent - Une fonction callback qui sera appelée à chaque fois qu'un événement est reçu.
+ * @returns Une fonction pour se désabonner et fermer la connexion.
+ */
+export function subscribeToItemEvents(userId: string, onEvent: (data: any) => void) {
+    if (!userId) {
+        console.error("Impossible de s'abonner aux événements SSE sans userId.");
+        return () => {}; // Retourne une fonction vide si pas d'ID
+    }
+
+    // On ajoute l'ID de l'utilisateur comme paramètre de requête.
+    const eventSource = new EventSource(`/api/events?userId=${userId}`);
 
     eventSource.onmessage = (event) => {
         try {
@@ -28,6 +39,7 @@ export function subscribeToItemEvents(onEvent: (data: any) => void) {
         eventSource.close();
     };
 
+    // Retourne une fonction de nettoyage pour fermer la connexion proprement
     return () => {
         eventSource.close();
     };
@@ -40,10 +52,6 @@ export async function getUsers() {
     return handleApiResponse(await fetch('/api/admin/users'));
 }
 
-// --- NOUVELLE FONCTION PUBLIQUE ---
-/**
- * Récupère la liste des membres du serveur via une route publique.
- */
 export async function getServerMembers() {
     const serverInfo = await handleApiResponse(await fetch('/api/server/info'));
     return serverInfo.members || [];

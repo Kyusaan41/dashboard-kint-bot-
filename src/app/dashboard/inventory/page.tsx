@@ -4,7 +4,6 @@ import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-// MODIFICATION DE L'IMPORT : On remplace getUsers par getServerMembers
 import { getInventory, useItem, getServerMembers, subscribeToItemEvents } from '@/utils/api';
 import { Gem, Loader2, CheckCircle, XCircle, Package, AlertTriangle, X, Swords } from 'lucide-react';
 
@@ -21,6 +20,7 @@ type ItemUsedEvent = {
         id: string;
         username: string;
     };
+    champName?: string;
 };
 
 // --- Composants UI ---
@@ -66,16 +66,23 @@ export default function InventoryPage() {
     const [champName, setChampName] = useState('');
     const [itemUsedEvent, setItemUsedEvent] = useState<ItemUsedEvent | null>(null);
 
+    // --- CORRECTION ---
+    // On s'abonne aux événements SEULEMENT si on a un ID d'utilisateur valide.
     useEffect(() => {
-        if (!session) return;
-        const unsubscribe = subscribeToItemEvents((data) => {
-            if (data.type === 'interaction_request' && data.payload.targetUserId === session.user.id) {
-                 setItemUsedEvent(data.payload);
-            }
-        });
-        return () => {
-            unsubscribe();
-        };
+        if (session?.user?.id) {
+            console.log(`Connexion au flux SSE pour l'utilisateur: ${session.user.id}`);
+            const unsubscribe = subscribeToItemEvents(session.user.id, (data) => {
+                console.log("Événement SSE reçu:", data);
+                if (data.type === 'interaction_request') {
+                     setItemUsedEvent(data.payload);
+                }
+            });
+
+            return () => {
+                console.log("Fermeture de la connexion SSE.");
+                unsubscribe();
+            };
+        }
     }, [session]);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -87,7 +94,6 @@ export default function InventoryPage() {
         if (!session) return;
         setLoading(true);
         try {
-            // MODIFICATION DE LA LIGNE SUIVANTE
             const [inventoryData, membersData] = await Promise.all([getInventory(), getServerMembers()]);
             setInventory(Array.isArray(inventoryData) ? inventoryData : []);
             setMembers(Array.isArray(membersData) ? membersData : []);
