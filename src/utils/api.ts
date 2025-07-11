@@ -9,6 +9,40 @@ async function handleApiResponse(response: Response) {
     return response.json();
 }
 
+// --- NOUVELLE FONCTION POUR LES SERVER-SENT EVENTS ---
+/**
+ * S'abonne au flux d'événements SSE du serveur.
+ * @param onEvent - Une fonction callback qui sera appelée à chaque fois qu'un événement est reçu.
+ * @returns Une fonction pour se désabonner et fermer la connexion.
+ */
+export function subscribeToItemEvents(onEvent: (data: any) => void) {
+    // On se connecte à notre propre route API qui sert de proxy
+    const eventSource = new EventSource('/api/events');
+
+    // Callback pour chaque message reçu du serveur
+    eventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            onEvent(data);
+        } catch (error) {
+            console.error("Erreur de parsing des données SSE:", event.data);
+        }
+    };
+
+    // Gestion des erreurs de connexion
+    eventSource.onerror = (err) => {
+        console.error("Erreur de connexion EventSource:", err);
+        // Le navigateur tentera de se reconnecter automatiquement, mais on ferme ici en cas d'erreur fatale.
+        eventSource.close();
+    };
+
+    // Retourne une fonction de nettoyage pour fermer la connexion
+    return () => {
+        eventSource.close();
+    };
+}
+
+
 // --- Fonctions pour l'Administration ---
 
 export async function getUsers() {
@@ -178,7 +212,7 @@ export async function sendKintLogToDiscord(logData: {
     }));
 }
 
-export async function getDetailedKintLogs(userId?: string): Promise<any[]> { 
+export async function getDetailedKintLogs(userId?: string): Promise<any[]> {
     const url = userId ? `/api/kint-detailed-logs?userId=${userId}` : '/api/kint-detailed-logs';
     return handleApiResponse(await fetch(url));
 }
