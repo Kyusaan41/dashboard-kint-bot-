@@ -1,10 +1,32 @@
 // src/utils/api.ts
 
+import { signOut } from 'next-auth/react';
+
 // Helper pour gérer les réponses de manière cohérente
 async function handleApiResponse(response: Response) {
+    // ---- LOGIQUE DE DÉCONNEXION AUTOMATIQUE ----
+    // Si le statut est 401 (Non autorisé) ou 403 (Interdit),
+    // cela signifie que la session n'est plus valide.
+    if (response.status === 401 || response.status === 403) {
+        console.error("Session invalide ou non autorisée. Déconnexion...");
+        // On utilise la fonction signOut de NextAuth pour déconnecter proprement l'utilisateur
+        // et le rediriger vers la page de connexion.
+        await signOut({ callbackUrl: '/login' });
+        
+        // On lève une erreur pour arrêter l'exécution du code qui a appelé cette fonction.
+        throw new Error('Non autorisé');
+    }
+    // ---- FIN DE LA LOGIQUE ----
+
+
     if (!response.ok) {
         const errorInfo = await response.json().catch(() => ({ message: `Erreur réseau: ${response.statusText}` }));
         throw new Error(errorInfo.message || 'Une erreur inconnue est survenue.');
+    }
+    
+    // Si la réponse n'a pas de contenu (cas d'un statut 204 No Content), on retourne null.
+    if (response.status === 204) {
+        return null;
     }
     return response.json();
 }
@@ -90,11 +112,7 @@ export async function giveItem(userId: string, itemName: string) {
 // --- Fonction pour les Logs ---
 
 export async function getBotLogs() {
-    const response = await fetch('/api/logs');
-    if (!response.ok) {
-        throw new Error('Impossible de récupérer les logs du bot.');
-    }
-    return handleApiResponse(response);
+    return handleApiResponse(await fetch('/api/logs'));
 }
 
 // --- Fonctions pour l'XP ---
