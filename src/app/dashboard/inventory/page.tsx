@@ -264,7 +264,7 @@ export default function InventoryPage() {
                            <Swords className="mx-auto h-12 w-12 text-amber-400" />
                            <h3 className="text-2xl font-bold text-white mt-4">Demande d'interaction !</h3>
                            <p className="text-gray-300 mt-2">
-                               <span className="font-bold text-cyan-400">{itemUsedEvent.fromUser.username}</span>
+                               <span className="font-bold text-cyan-400">{itemUsedEvent.fromUser.username} </span>
                                souhaite utiliser l'objet
                                <span className="font-bold text-amber-400"> "{itemUsedEvent.itemName}" </span>
                                sur vous.

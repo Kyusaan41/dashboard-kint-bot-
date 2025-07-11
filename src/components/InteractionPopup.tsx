@@ -39,10 +39,10 @@ export default function InteractionPopup({ event, onResponse }: InteractionPopup
                <Swords className="mx-auto h-12 w-12 text-amber-400" />
                <h3 className="text-2xl font-bold text-white mt-4">Demande d'interaction !</h3>
                <p className="text-gray-300 mt-2">
-                   <span className="font-bold text-cyan-400">{event.fromUser.username}</span>
-                   souhaite utiliser l'objet
+                   <span className="font-bold text-cyan-400">{event.fromUser.username} </span>
+                    souhaite utiliser l'objet
                    <span className="font-bold text-amber-400"> "{event.itemName}" </span>
-                   sur vous.
+                    sur vous.
                    {event.champName && ` (Champion: ${event.champName})`}
                </p>
                <p className="text-gray-400 text-sm mt-1">Acceptez-vous ?</p>
