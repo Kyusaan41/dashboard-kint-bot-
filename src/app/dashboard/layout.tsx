@@ -24,7 +24,7 @@ type ItemUsedEvent = {
 
 const pages = [
   { id: '', label: 'Accueil' },
-
+  { id: 'inventory', label: 'Inventaire' },
   { id: 'mini-jeu', label: 'Mini-Jeux' },
   { id: 'boutique', label: 'Boutique' },
   { id: 'classement', label: 'Classement' },
