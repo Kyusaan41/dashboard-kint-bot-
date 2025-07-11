@@ -1,27 +1,19 @@
+// src/app/dashboard/inventory/page.tsx (version finale corrigée)
+
 'use client';
 
 import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getInventory, useItem, getServerMembers, subscribeToItemEvents } from '@/utils/api';
-import { Gem, Loader2, CheckCircle, XCircle, Package, AlertTriangle, X, Swords } from 'lucide-react';
+import { getInventory, useItem, getServerMembers } from '@/utils/api';
+import InteractionPopup from '@/components/InteractionPopup'; // Assurez-vous que ce composant existe
+import { Gem, Loader2, CheckCircle, XCircle, Package, AlertTriangle, X, Ticket, Swords } from 'lucide-react';
 
 // --- Types ---
 type InventoryItem = { id: string; name: string; quantity: number; icon?: string; description?: string; };
 type User = { id: string; username: string; avatar: string; };
 type Notification = { show: boolean; message: string; type: 'success' | 'error'; };
-
-type ItemUsedEvent = {
-    interactionId: string;
-    itemId: string;
-    itemName: string;
-    fromUser: {
-        id: string;
-        username: string;
-    };
-    champName?: string;
-};
 
 // --- Composants UI ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
@@ -60,30 +52,12 @@ export default function InventoryPage() {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
-    const [activeModal, setActiveModal] = useState<string | null>(null);
-    const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+    const [activeModal, setActiveModal] = useState<InventoryItem | null>(null);
+
+    // États pour les formulaires dans la modale
     const [targetPlayer, setTargetPlayer] = useState('');
     const [champName, setChampName] = useState('');
-    const [itemUsedEvent, setItemUsedEvent] = useState<ItemUsedEvent | null>(null);
-
-    // --- CORRECTION ---
-    // On s'abonne aux événements SEULEMENT si on a un ID d'utilisateur valide.
-    useEffect(() => {
-        if (session?.user?.id) {
-            console.log(`Connexion au flux SSE pour l'utilisateur: ${session.user.id}`);
-            const unsubscribe = subscribeToItemEvents(session.user.id, (data) => {
-                console.log("Événement SSE reçu:", data);
-                if (data.type === 'interaction_request') {
-                     setItemUsedEvent(data.payload);
-                }
-            });
-
-            return () => {
-                console.log("Fermeture de la connexion SSE.");
-                unsubscribe();
-            };
-        }
-    }, [session]);
+    const [lotteryNumbers, setLotteryNumbers] = useState('');
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ show: true, message, type });
@@ -111,45 +85,48 @@ export default function InventoryPage() {
         }
     }, [session]);
     
-    const handleOpenModal = (item: InventoryItem) => {
-        setSelectedItem(item);
-        setActiveModal(item.id);
-    };
-    
     const handleCloseModal = () => {
         setActiveModal(null);
-        setSelectedItem(null);
         setTargetPlayer('');
         setChampName('');
+        setLotteryNumbers('');
     };
 
     const handleSubmitUse = async () => {
-        if (!selectedItem) return;
+        if (!activeModal) return;
 
-        const requiresTarget = ['My Champ', 'Swap Lane'].includes(selectedItem.id);
-        const requiresChampName = selectedItem.id === 'My Champ';
+        let extraData: any = {};
+        const normalizedItemId = activeModal.name.toLowerCase();
 
-        if (requiresTarget && !targetPlayer) {
-            showNotification('Veuillez sélectionner un joueur cible.', 'error');
-            return;
+        // Validation pour les objets interactifs
+        if (normalizedItemId === 'my champ' || normalizedItemId === 'swap lane') {
+            if (!targetPlayer) {
+                showNotification('Veuillez sélectionner un joueur cible.', 'error');
+                return;
+            }
+            extraData.targetUserId = targetPlayer;
+            if (normalizedItemId === 'my champ') {
+                if (!champName.trim()) {
+                    showNotification('Veuillez entrer un nom de champion.', 'error');
+                    return;
+                }
+                extraData.champName = champName;
+            }
         }
-        if (requiresChampName && !champName.trim()) {
-            showNotification('Veuillez entrer un nom de champion.', 'error');
-            return;
+
+        // Validation pour le ticket de loterie
+        if (normalizedItemId === 'ticket coin million') {
+            const numbers = lotteryNumbers.split(' ').map(n => parseInt(n)).filter(n => !isNaN(n));
+            if (numbers.length !== 5 || numbers.some(n => n < 1 || n > 50)) {
+                showNotification('Veuillez entrer 5 numéros valides entre 1 et 50.', 'error');
+                return;
+            }
+            extraData.numbers = numbers;
         }
 
         setIsSubmitting(true);
-        
-        let extraData = {};
-        if (requiresTarget) {
-            extraData = { targetUserId: targetPlayer };
-        }
-        if (requiresChampName) {
-            extraData = { ...extraData, champName };
-        }
-
         try {
-            const result = await useItem(selectedItem.id, extraData);
+            const result = await useItem(activeModal.name, extraData);
             showNotification(result.message || 'Action effectuée avec succès !', 'success');
             await fetchData();
         } catch (err) {
@@ -160,44 +137,27 @@ export default function InventoryPage() {
             handleCloseModal();
         }
     };
-
-    const handleInteractionResponse = async (accepted: boolean) => {
-        if (!itemUsedEvent) return;
-        try {
-            const response = await fetch('/api/interaction-response', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ interactionId: itemUsedEvent.interactionId, accepted: accepted }),
-            });
-            if (!response.ok) throw new Error("La réponse à l'interaction a échoué.");
-            const result = await response.json();
-            showNotification(result.message, 'success');
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Impossible d'envoyer la réponse.";
-            showNotification(errorMessage, 'error');
-        }
-        setItemUsedEvent(null);
-    };
     
     const renderModalContent = () => {
-        if (!selectedItem) return null;
+        if (!activeModal) return null;
         
-        switch (selectedItem.id) {
-            case 'Épée du KINT':
-                return ( <div> <h3 className="text-lg font-bold text-white mb-4">Confirmer l'utilisation</h3> <p className="text-gray-300">Voulez-vous activer l'Épée du KINT pour doubler vos gains de points pendant 2 heures ?</p> </div> );
-            case 'Ticket Coin Million':
-                return <p>Cet objet ne peut être utilisé que directement sur Discord pour le moment.</p>;
-            case 'My Champ':
-            case 'Swap Lane':
+        const normalizedItemId = activeModal.name.toLowerCase();
+
+        switch (normalizedItemId) {
+            case 'épée du kint':
+                return ( <div> <h3 className="text-lg font-bold text-white mb-4">Confirmer l'utilisation</h3> <p className="text-gray-300">Voulez-vous activer l'Épée du KINT pour doubler vos gains de points KINT pendant 2 heures ?</p> </div> );
+            
+            case 'my champ':
+            case 'swap lane':
                 return (
                     <div>
-                        <h3 className="text-lg font-bold text-white mb-4">{selectedItem.name}</h3>
+                        <h3 className="text-lg font-bold text-white mb-4">{activeModal.name}</h3>
                         <p className="text-gray-400 mb-2">Choisissez un joueur sur le serveur :</p>
                         <select value={targetPlayer} onChange={(e) => setTargetPlayer(e.target.value)} className="w-full p-2 rounded bg-[#12151d] border border-white/20 mb-4">
                             <option value="">Sélectionnez un joueur</option>
                             {members.filter(m => m.id !== session?.user?.id).map(member => ( <option key={member.id} value={member.id}>{member.username}</option> ))}
                         </select>
-                        {selectedItem.id === 'My Champ' && (
+                        {normalizedItemId === 'my champ' && (
                             <>
                                 <p className="text-gray-400 mb-2">Nom du champion :</p>
                                 <input type="text" value={champName} onChange={(e) => setChampName(e.target.value)} placeholder="ex: Yasuo" className="w-full p-2 rounded bg-[#12151d] border border-white/20"/>
@@ -206,6 +166,23 @@ export default function InventoryPage() {
                         <p className="text-xs text-amber-400 mt-4">Note : Une notification sera envoyée à l'utilisateur sur son dashboard.</p>
                     </div>
                 );
+
+            case 'ticket coin million':
+                return (
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-4">🎟️ Ticket Coin Million</h3>
+                        <p className="text-gray-400 mb-2">Entrez vos 5 numéros (de 1 à 50), séparés par des espaces.</p>
+                        <input
+                            type="text"
+                            value={lotteryNumbers}
+                            onChange={(e) => setLotteryNumbers(e.target.value)}
+                            placeholder="ex: 5 12 23 35 48"
+                            className="w-full p-2 rounded bg-[#12151d] border border-white/20"
+                        />
+                         <p className="text-xs text-gray-500 mt-2">Le tirage a lieu à une date définie. Bonne chance !</p>
+                    </div>
+                );
+
             default:
                 return <p>Cet objet n'a pas d'action définie sur le dashboard pour le moment.</p>;
         }
@@ -229,7 +206,7 @@ export default function InventoryPage() {
 
             {inventory.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {inventory.map(item => <InventoryItemCard key={item.id} item={item} onUse={handleOpenModal} />)}
+                    {inventory.map(item => <InventoryItemCard key={item.id} item={item} onUse={() => setActiveModal(item)} />)}
                 </div>
             ) : (
                 <Card className="text-center py-16"><p className="text-gray-500">Votre inventaire est vide.</p></Card>
@@ -237,9 +214,12 @@ export default function InventoryPage() {
 
             <AnimatePresence>
                 {activeModal && (
-                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-[#1c222c] p-6 rounded-2xl border border-cyan-700 w-full max-w-md shadow-2xl">
-                           <div className="flex justify-end"><button onClick={handleCloseModal}><X size={20} className="text-gray-500 hover:text-white"/></button></div>
+                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={handleCloseModal}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-[#1c222c] p-6 rounded-2xl border border-cyan-700 w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                           <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-bold">{activeModal.name}</h2>
+                                <button onClick={handleCloseModal}><X size={20} className="text-gray-500 hover:text-white"/></button>
+                           </div>
                             {renderModalContent()}
                             <div className="flex justify-end gap-4 mt-6">
                                 <button onClick={handleCloseModal} className="px-5 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition">Annuler</button>
@@ -247,33 +227,6 @@ export default function InventoryPage() {
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirmer"}
                                 </button>
                             </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-                {itemUsedEvent && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-                        <motion.div
-                            initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 30, scale: 0.9 }}
-                            className="bg-[#1c222c] p-8 rounded-2xl border border-amber-500 w-full max-w-md shadow-2xl text-center"
-                        >
-                           <Swords className="mx-auto h-12 w-12 text-amber-400" />
-                           <h3 className="text-2xl font-bold text-white mt-4">Demande d'interaction !</h3>
-                           <p className="text-gray-300 mt-2">
-                               <span className="font-bold text-cyan-400">{itemUsedEvent.fromUser.username} </span>
-                               souhaite utiliser l'objet
-                               <span className="font-bold text-amber-400"> "{itemUsedEvent.itemName}" </span>
-                               sur vous.
-                           </p>
-                           <p className="text-gray-400 text-sm mt-1">Acceptez-vous ?</p>
-                           <div className="flex justify-center gap-4 mt-8">
-                               <motion.button whileTap={{scale:0.95}} onClick={() => handleInteractionResponse(false)} className="px-8 py-3 bg-red-600 rounded-lg hover:bg-red-700 font-bold transition">Refuser</motion.button>
-                               <motion.button whileTap={{scale:0.95}} onClick={() => handleInteractionResponse(true)} className="px-8 py-3 bg-green-600 rounded-lg hover:bg-green-700 font-bold transition">Accepter</motion.button>
-                           </div>
                         </motion.div>
                     </div>
                 )}
