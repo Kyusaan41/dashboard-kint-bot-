@@ -1,3 +1,5 @@
+// src/app/api/inventory/use/route.ts
+
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -13,34 +15,36 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const { itemId } = await request.json();
+        // --- CORRECTION ICI ---
+        // On récupère à la fois 'itemId' ET 'extraData' du corps de la requête
+        const { itemId, extraData } = await request.json();
 
         if (!itemId) {
             return NextResponse.json({ message: 'ID de l\'objet manquant.' }, { status: 400 });
         }
 
-        // --- CORRECTION ICI ---
-        // On remplace 'inventory' par 'inventaire' pour correspondre à l'URL de votre bot
+        // On appelle le bot en incluant TOUTES les données
         const botResponse = await fetch(`${BOT_API_URL}/inventaire/use`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 userId: session.user.id,
-                itemId: itemId 
+                itemId: itemId,
+                extraData: extraData // On transmet les données supplémentaires
             }),
         });
 
         // Si la réponse du bot n'est pas OK, on propage l'erreur
         if (!botResponse.ok) {
-            const errorData = await botResponse.json();
+            const errorData = await botResponse.json().catch(() => ({ message: "Le bot a renvoyé une erreur non-JSON." }));
             return NextResponse.json({ message: errorData.message || "Erreur renvoyée par le bot." }, { status: botResponse.status });
         }
-        
+
         const data = await botResponse.json();
         return NextResponse.json(data);
 
     } catch (error) {
         console.error("Erreur dans l'API /api/inventory/use:", error);
-        return NextResponse.json({ message: 'Erreur interne du serveur.' }, { status: 500 });
+        return NextResponse.json({ message: 'Erreur interne du serveur du dashboard.' }, { status: 500 });
     }
 }
