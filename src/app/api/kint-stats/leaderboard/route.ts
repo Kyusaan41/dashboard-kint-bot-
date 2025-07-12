@@ -48,7 +48,7 @@ export async function GET() {
             .slice(0, 10);
 
         // ▼▼▼ LOGIQUE DU "PLUS GUEZ" SYNCHRONISÉE ▼▼▼
-        const MIN_GAMES = 20;
+        const MIN_GAMES = 10;
         // On indique ici que 'user' est de type 'any' pour le moment car il vient d'un JSON non typé.
         const candidates = allUsers.filter((user: any) => user.total >= MIN_GAMES);
 
