@@ -3,6 +3,17 @@ import { NextResponse } from 'next/server';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
+// On définit le "type" pour un utilisateur et ses statistiques Kint
+type KintUserStats = {
+    userId: string;
+    username: string;
+    avatar: string;
+    total: number;
+    oui: number;
+    non: number;
+    lossRate: number;
+};
+
 export async function GET() {
     try {
         const [statsRes, serverInfoRes] = await Promise.all([
@@ -25,8 +36,6 @@ export async function GET() {
                 username: memberInfo?.username || 'Utilisateur Inconnu',
                 avatar: memberInfo?.avatar || '/default-avatar.png',
                 ...stats,
-                // Le "taux d'int" est le ratio de défaites ('oui') sur le total des parties.
-                lossRate: stats.total > 0 ? (stats.oui / stats.total) * 100 : 0
             };
         });
 
@@ -34,37 +43,48 @@ export async function GET() {
             return NextResponse.json({ leaderboard: [], mostGuez: null });
         }
         
-        // On trie le classement principal par nombre total de parties jouées.
-        const leaderboard = allUsers.sort((a, b) => b.total - a.total).slice(0, 10);
+        const leaderboard = allUsers
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 10);
 
-        // ▼▼▼ NOUVELLE LOGIQUE AMÉLIORÉE ▼▼▼
+        // ▼▼▼ LOGIQUE DU "PLUS GUEZ" SYNCHRONISÉE ▼▼▼
+        const MIN_GAMES = 20;
+        // On indique ici que 'user' est de type 'any' pour le moment car il vient d'un JSON non typé.
+        const candidates = allUsers.filter((user: any) => user.total >= MIN_GAMES);
 
-        // 1. On définit le seuil minimum de parties pour être "éligible" au titre de plus guez.
-        const MIN_GAMES_FOR_GUEZ = 7; // Vous pouvez ajuster ce nombre.
+        let topUser = null;
 
-        // 2. On filtre les joueurs pour ne garder que les candidats valides.
-        const candidatesForGuez = allUsers.filter(user => user.total >= MIN_GAMES_FOR_GUEZ);
+        const calculateLossRatio = (user: any) => {
+            if (user.total === 0) return 0;
+            return user.oui / user.total;
+        };
         
-        let mostGuez = null;
-
-        // 3. On ne cherche le "plus guez" que s'il y a des candidats éligibles.
-        if (candidatesForGuez.length > 0) {
-            // On cherche le joueur avec le plus haut taux de défaite parmi les candidats.
-            mostGuez = candidatesForGuez.reduce((max, user) => {
-                if (user.lossRate > max.lossRate) {
-                    return user;
-                }
-                // En cas d'égalité, on peut prendre celui qui a joué le plus de parties.
-                if (user.lossRate === max.lossRate && user.total > max.total) {
-                    return user;
-                }
-                return max;
-            }, candidatesForGuez[0]);
+        if (candidates.length > 0) {
+            topUser = candidates.reduce((max: any, user: any) => {
+                return calculateLossRatio(user) > calculateLossRatio(max) ? user : max;
+            });
+        } else if (leaderboard.length > 0) {
+            const fallbackCandidates = leaderboard.filter((user: any) => user.total > 0);
+            if (fallbackCandidates.length > 0) {
+                topUser = fallbackCandidates.reduce((max: any, user: any) => {
+                    return calculateLossRatio(user) > calculateLossRatio(max) ? user : max;
+                }, fallbackCandidates[0]);
+            }
         }
         
-        // S'il n'y a aucun candidat, `mostGuez` restera `null` et rien ne s'affichera.
-        
-        return NextResponse.json({ leaderboard, mostGuez });
+        // On enrichit les données finales avec le taux de défaite en pourcentage
+        const enrichedTopUser = topUser ? {
+            ...topUser,
+            lossRate: topUser.total > 0 ? (topUser.oui / topUser.total) * 100 : 0
+        } : null;
+
+        // On type ici aussi pour la bonne pratique
+        const enrichedLeaderboard = leaderboard.map((user: any) => ({
+            ...user,
+            lossRate: user.total > 0 ? (user.oui / user.total) * 100 : 0
+        }));
+
+        return NextResponse.json({ leaderboard: enrichedLeaderboard, mostGuez: enrichedTopUser });
 
     } catch (error) {
         console.error("Erreur dans /api/kint-stats/leaderboard:", error);
