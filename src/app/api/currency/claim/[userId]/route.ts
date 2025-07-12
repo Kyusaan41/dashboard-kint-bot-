@@ -12,8 +12,15 @@ export async function POST(request: Request) {
     }
 
     try {
+        // ▼▼▼ MODIFICATION ICI ▼▼▼
+        // On récupère le corps de la requête pour obtenir le type
+        const { type } = await request.json();
+
         const res = await fetch(`${BOT_API_URL}/currency/claim/${session.user.id}`, {
             method: 'POST',
+            // On envoie le type au bot pour qu'il sache quel minuteur utiliser
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: type }),
         });
 
         const data = await res.json();

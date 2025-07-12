@@ -154,7 +154,9 @@ export default function DashboardHomePage() {
                     if (currency) {
                         const now = Date.now();
                         const twentyFourHours = 24 * 60 * 60 * 1000;
-                        const lastClaimTime = currency.lastClaim;
+                        // ▼▼▼ MODIFICATION ICI ▼▼▼
+                        // On utilise lastBonus, qui sera spécifique au bonus du dashboard
+                        const lastClaimTime = currency.lastBonus;
                         if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
                             const timeLeftValue = twentyFourHours - (now - lastClaimTime);
                             const displayTime = new Date(Math.max(0, timeLeftValue)).toISOString().substr(11, 8);
@@ -178,7 +180,13 @@ export default function DashboardHomePage() {
         if (!claimStatus.canClaim || isClaiming || !session?.user?.id) return;
         setIsClaiming(true);
         try {
-            const res = await fetch(`/api/currency/claim/${session.user.id}`, { method: 'POST' });
+            // ▼▼▼ MODIFICATION ICI ▼▼▼
+            // On précise au backend que l'on réclame le 'bonus'
+            const res = await fetch(`/api/currency/claim/${session.user.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'bonus' }),
+            });
             const data = await res.json();
             if (res.ok) {
                 showNotification(data.message || "Récompense réclamée !");
