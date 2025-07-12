@@ -25,6 +25,7 @@ export async function GET() {
                 username: memberInfo?.username || 'Utilisateur Inconnu',
                 avatar: memberInfo?.avatar || '/default-avatar.png',
                 ...stats,
+                // Le "taux d'int" est le ratio de défaites ('oui') sur le total des parties.
                 lossRate: stats.total > 0 ? (stats.oui / stats.total) * 100 : 0
             };
         });
@@ -33,17 +34,35 @@ export async function GET() {
             return NextResponse.json({ leaderboard: [], mostGuez: null });
         }
         
+        // On trie le classement principal par nombre total de parties jouées.
         const leaderboard = allUsers.sort((a, b) => b.total - a.total).slice(0, 10);
 
-        const MIN_GAMES = 20;
-        const candidates = allUsers.filter(user => user.total >= MIN_GAMES);
+        // ▼▼▼ NOUVELLE LOGIQUE AMÉLIORÉE ▼▼▼
+
+        // 1. On définit le seuil minimum de parties pour être "éligible" au titre de plus guez.
+        const MIN_GAMES_FOR_GUEZ = 7; // Vous pouvez ajuster ce nombre.
+
+        // 2. On filtre les joueurs pour ne garder que les candidats valides.
+        const candidatesForGuez = allUsers.filter(user => user.total >= MIN_GAMES_FOR_GUEZ);
+        
         let mostGuez = null;
 
-        if (candidates.length > 0) {
-            mostGuez = candidates.reduce((max, user) => user.lossRate > max.lossRate ? user : max, candidates[0]);
-        } else if (leaderboard.length > 0) {
-            mostGuez = leaderboard.reduce((max, user) => user.lossRate > max.lossRate ? user : max, leaderboard[0]);
+        // 3. On ne cherche le "plus guez" que s'il y a des candidats éligibles.
+        if (candidatesForGuez.length > 0) {
+            // On cherche le joueur avec le plus haut taux de défaite parmi les candidats.
+            mostGuez = candidatesForGuez.reduce((max, user) => {
+                if (user.lossRate > max.lossRate) {
+                    return user;
+                }
+                // En cas d'égalité, on peut prendre celui qui a joué le plus de parties.
+                if (user.lossRate === max.lossRate && user.total > max.total) {
+                    return user;
+                }
+                return max;
+            }, candidatesForGuez[0]);
         }
+        
+        // S'il n'y a aucun candidat, `mostGuez` restera `null` et rien ne s'affichera.
         
         return NextResponse.json({ leaderboard, mostGuez });
 
