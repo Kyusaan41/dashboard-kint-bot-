@@ -1,72 +1,59 @@
-// src/app/api/events/route.ts
+// Fichier : src/app/api/events/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import http from 'http';
 
-const BOT_HOST = '51.83.103.24';
-const BOT_PORT = 20077;
+const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-export async function GET(request: NextRequest) {
+// GET : Récupère la liste de tous les événements à venir
+export async function GET() {
+    // On vérifie la session pour s'assurer que l'utilisateur est connecté
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-        return new NextResponse('Unauthorized', { status: 401 });
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    // --- CORRECTION ---
-    // On utilise `nextUrl.searchParams` pour lire les paramètres de l'URL
-    const userId = request.nextUrl.searchParams.get('userId');
-    if (session.user.id !== userId) {
-        return new NextResponse('Forbidden', { status: 403 });
+    try {
+        const res = await fetch(`${BOT_API_URL}/events`);
+        if (!res.ok) {
+            console.error("Erreur de l'API du bot lors de la récupération des événements");
+            return NextResponse.json({ error: "Impossible de récupérer les événements depuis le bot." }, { status: res.status });
+        }
+        const data = await res.json();
+        return NextResponse.json(data);
+    } catch (error) {
+        console.error("Erreur dans /api/events:", error);
+        return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
+    }
+}
+
+// POST : Permet de créer un nouvel événement (sera utilisé par le panneau admin)
+export async function POST(request: Request) {
+    const session = await getServerSession(authOptions);
+    // On s'assure que seul un admin peut créer un événement
+    if (session?.user?.role !== 'admin') {
+        return NextResponse.json({ error: 'Accès interdit' }, { status: 403 });
     }
 
-    const stream = new ReadableStream({
-        start(controller) {
-            const options = {
-                hostname: BOT_HOST,
-                port: BOT_PORT,
-                // On transmet l'userId au bot
-                path: `/api/events?userId=${userId}`,
-                method: 'GET',
-                headers: {
-                    'Accept': 'text/event-stream',
-                    'Connection': 'keep-alive',
-                    'Cache-Control': 'no-cache',
-                }
-            };
+    try {
+        const body = await request.json();
+        const res = await fetch(`${BOT_API_URL}/events`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
 
-            const botRequest = http.request(options, (botResponse) => {
-                console.log(`[SSE Proxy] Connexion établie avec le bot pour l'utilisateur ${userId}`);
-                botResponse.on('data', (chunk) => {
-                    controller.enqueue(chunk);
-                });
-                botResponse.on('end', () => {
-                    console.log('[SSE Proxy] Le bot a fermé la connexion.');
-                    controller.close();
-                });
-            });
+        if (!res.ok) {
+            const errorData = await res.json();
+            return NextResponse.json({ error: errorData.error }, { status: res.status });
+        }
+        
+        const newEvent = await res.json();
+        return NextResponse.json(newEvent, { status: 201 });
 
-            botRequest.on('error', (err) => {
-                console.error('[SSE Proxy] Erreur de connexion au bot:', err);
-                controller.error(err);
-            });
-
-            request.signal.onabort = () => {
-                console.log('[SSE Proxy] Le client a fermé la connexion.');
-                botRequest.abort();
-                controller.close();
-            };
-
-            botRequest.end();
-        },
-    });
-
-    return new Response(stream, {
-        headers: {
-            'Content-Type': 'text/event-stream',
-            'Connection': 'keep-alive',
-            'Cache-Control': 'no-cache',
-        },
-    });
+    } catch (error) {
+        console.error("Erreur dans POST /api/events:", error);
+        return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
+    }
 }
