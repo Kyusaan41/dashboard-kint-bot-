@@ -33,42 +33,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   
   const [interactionEvent, setInteractionEvent] = useState<ItemUsedEvent | null>(null);
-  
-  // --- États pour les notifications d'événements ---
   const [hasNewEvents, setHasNewEvents] = useState(false);
 
-  // Vérifie s'il y a de nouveaux événements
+  // ... (toute votre logique useEffect existante reste la même)
   useEffect(() => {
     if (status === 'authenticated') {
       const checkEvents = async () => {
         try {
           const currentEvents = await fetchEvents();
           const seenEvents = JSON.parse(localStorage.getItem('seenEvents') || '[]');
-          
           const isNew = currentEvents.some((event: EventEntry) => !seenEvents.includes(event.id));
           setHasNewEvents(isNew);
-        } catch (error) {
-          console.error("Impossible de vérifier les nouveaux événements:", error);
-        }
+        } catch (error) { console.error("Impossible de vérifier les nouveaux événements:", error); }
       };
-      
       checkEvents();
-      const interval = setInterval(checkEvents, 60000); // Vérifie toutes les minutes
+      const interval = setInterval(checkEvents, 60000);
       return () => clearInterval(interval);
     }
   }, [status]);
-
-  // Logique pour les interactions SSE
+  
   useEffect(() => {
     if (session?.user?.id) {
         const unsubscribe = subscribeToItemEvents(session.user.id, (data) => {
             if (data.type === 'interaction_request') setInteractionEvent(data.payload);
+            else if (data.type === 'new_event_created') setHasNewEvents(true);
         });
         return () => unsubscribe();
     }
   }, [session]);
   
-  // Quand l'utilisateur navigue, on vérifie s'il va sur la page des événements pour retirer la notif
   useEffect(() => {
     if (pathname.endsWith('/events')) {
       setHasNewEvents(false);
@@ -81,38 +74,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           await fetch('/api/interaction-response', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  interactionId: interactionEvent.interactionId,
-                  accepted: accepted
-              }),
+              body: JSON.stringify({ interactionId: interactionEvent.interactionId, accepted: accepted }),
           });
       } catch (error) { console.error(error); }
       setInteractionEvent(null);
   };
-
   const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(id => id.trim());
-
   const getAvatarUrl = () => {
     if (!session?.user?.id) return '/default-avatar.png';
     const defaultDiscordAvatar = `https://cdn.discordapp.com/embed/avatars/${parseInt(session.user.id.slice(-1)) % 5}.png`;
     return session.user.image ?? defaultDiscordAvatar;
   };
-
   const filteredPages = pages.filter(page => page.id !== 'admin' || (session?.user?.id && adminIds.includes(session.user.id)));
 
   if (status === 'loading') {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0b0d13]">
-        <p className="animate-pulse text-white">Chargement...</p>
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center bg-[#0b0d13]"><p className="animate-pulse text-white">Chargement...</p></div>;
   }
 
   return (
     <div className="flex min-h-screen bg-[#0b0d13] text-white">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
       
-      <aside className="w-64 bg-[#12151d] p-6 border-r border-cyan-700/20 flex flex-col justify-between">
+      {/* ▼▼▼ MODIFICATION ICI ▼▼▼ */}
+      {/* On s'assure que la barre latérale prend toute la hauteur et reste fixe */}
+      <aside className="w-64 bg-[#12151d] p-6 border-r border-cyan-700/20 flex flex-col h-screen sticky top-0">
         <div>
           {session && (
             <div className="flex items-center space-x-4 mb-10">
@@ -139,11 +124,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             })}
           </nav>
         </div>
-        {session && (
-          <button onClick={() => signOut({ callbackUrl: '/' })} className="mt-6 w-full px-5 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition text-white font-semibold">Déconnexion</button>
-        )}
+
+        {/* ▼▼▼ MODIFICATION ICI ▼▼▼ */}
+        {/* On ajoute "mt-auto" pour pousser cet élément tout en bas de son conteneur flex */}
+        <div className="mt-auto">
+            {session && (
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full px-5 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition text-white font-semibold">
+                  Déconnexion
+              </button>
+            )}
+        </div>
       </aside>
-      <main className="flex-1 p-10 max-w-7xl mx-auto overflow-auto">
+      
+      <main className="flex-1 p-10 max-w-7xl mx-auto overflow-y-auto">
         {children}
       </main>
       <FeedbackWidget />
