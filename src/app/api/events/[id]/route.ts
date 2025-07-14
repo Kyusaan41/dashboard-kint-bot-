@@ -6,15 +6,16 @@ import { authOptions } from '@/lib/auth';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// On définit un type pour le contexte de la route, ce qui est plus robuste.
-type DeleteContext = {
-    params: {
-        id: string;
-    }
-};
+// On n'a plus besoin de définir un type DeleteContext séparé.
+// type DeleteContext = {
+//     params: {
+//         id: string;
+//     }
+// };
 
 // DELETE /api/events/[id] : Supprime un événement spécifique
-export async function DELETE(request: NextRequest, context: DeleteContext) {
+// CORRECTION ICI : Le type du 'context' est défini directement dans la signature.
+export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== 'admin') {
         return NextResponse.json({ error: 'Accès interdit' }, { status: 403 });
