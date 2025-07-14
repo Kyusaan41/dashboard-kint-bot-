@@ -10,7 +10,7 @@ import {
 import Image from 'next/image';
 import { 
     Power, Shield, Users, Terminal, Zap, Coins, Search, UserCheck, 
-    CheckCircle, BrainCircuit, Loader2, Calendar, PlusCircle, Trash2 
+    CheckCircle, BrainCircuit, Loader2, Calendar, PlusCircle, Trash2, TrendingUp, TrendingDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -44,6 +44,31 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
     </div>
 );
 
+const AnalysisRenderer: FC<{ content: string }> = ({ content }) => {
+    const lines = content.split('\n');
+    return (
+        <div className="space-y-3 text-sm text-gray-300">
+            {lines.map((line, index) => {
+                if (line.trim() === '') return null;
+                const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+                if (/^\s*\d+\.\s/.test(line)) {
+                    return <h3 key={index} className="text-base font-bold text-cyan-400 mt-4 first:mt-0" dangerouslySetInnerHTML={{ __html: formattedLine.replace(/^\s*\d+\.\s/, '') }} />;
+                }
+                if (line.trim().startsWith('* ')) {
+                    const listItemContent = formattedLine.trim().substring(1).trim();
+                    return (
+                        <div key={index} className="flex items-start pl-4">
+                            <span className="mr-2 mt-1 text-cyan-500">&bull;</span>
+                            <p dangerouslySetInnerHTML={{ __html: listItemContent }} />
+                        </div>
+                    );
+                }
+                return <p key={index} dangerouslySetInnerHTML={{ __html: formattedLine }} />;
+            })}
+        </div>
+    );
+};
+
 export default function AdminPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -62,7 +87,14 @@ export default function AdminPage() {
     const [botLogs, setBotLogs] = useState<LogEntry[]>([]);
     const [loadingBotLogs, setLoadingBotLogs] = useState(true);
     const botLogsContainerRef = useRef<HTMLDivElement>(null);
-    
+    const botLogsEndRef = useRef<HTMLDivElement>(null);
+    const [kintLogs, setKintLogs] = useState<KintLogEntry[]>([]);
+    const [loadingKintLogs, setLoadingKintLogs] = useState(true);
+
+    // États pour l'analyse IA
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [analysisResult, setAnalysisResult] = useState('');
+
     // États pour les événements
     const [events, setEvents] = useState<EventEntry[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
@@ -80,6 +112,21 @@ export default function AdminPage() {
         setLoadingEvents(true);
         fetchEvents().then(setEvents).catch(() => showNotification("Impossible de charger les événements.", "error")).finally(() => setLoadingEvents(false));
     };
+    
+    const refreshAllLogs = () => {
+        setLoadingKintLogs(true);
+        getDetailedKintLogs()
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const sortedLogs = data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    setKintLogs(sortedLogs);
+                } else {
+                    setKintLogs([]);
+                }
+            })
+            .catch(() => setKintLogs([]))
+            .finally(() => setLoadingKintLogs(false));
+    };
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -88,6 +135,13 @@ export default function AdminPage() {
             } else {
                 getUsers().then(setUsers).catch(console.error).finally(() => setLoadingUsers(false));
                 refreshEvents();
+                refreshAllLogs();
+                const fetchBotLogs = () => {
+                  getBotLogs().then(data => setBotLogs(data.logs.reverse())).catch(console.error).finally(() => setLoadingBotLogs(false));
+                };
+                fetchBotLogs();
+                const logInterval = setInterval(fetchBotLogs, 5000);
+                return () => clearInterval(logInterval);
             }
         }
     }, [status, session, router]);
@@ -107,6 +161,10 @@ export default function AdminPage() {
         }
     }, [selectedUser]);
 
+    useEffect(() => {
+        botLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [botLogs]);
+
     const filteredUsers = useMemo(() => {
         if (!searchQuery) return users;
         return users.filter(user => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -122,10 +180,36 @@ export default function AdminPage() {
             showNotification(`Profil de ${selectedUser.username} mis à jour !`);
             const [currencyData, pointsData] = await Promise.all([fetchCurrency(selectedUser.id), fetchPoints(selectedUser.id)]);
             setSelectedUserStats({ currency: currencyData.balance ?? 0, points: pointsData.points ?? 0 });
+            refreshAllLogs();
         } catch (error) {
             showNotification(`Échec de la mise à jour : ${error instanceof Error ? error.message : 'Erreur inconnue'}`, "error");
         } finally {
             setLoadingUserStats(false);
+        }
+    };
+    
+    const handleRestart = async () => {
+        if (!confirm("Êtes-vous sûr de vouloir redémarrer le bot ?")) return;
+        try {
+            const res = await restartBot();
+            showNotification(res.message);
+        } catch (error) {
+            showNotification(`Échec du redémarrage : ${error instanceof Error ? error.message : 'Erreur inconnue'}`, "error");
+        }
+    };
+
+    const handleAnalysis = async () => {
+        setIsAnalyzing(true);
+        setAnalysisResult('');
+        try {
+            const response = await fetch('/api/admin/analyze-logs');
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "L'analyse a échoué.");
+            setAnalysisResult(data.analysis);
+        } catch (error) {
+            showNotification(error instanceof Error ? error.message : 'Erreur de communication avec l\'API', 'error');
+        } finally {
+            setIsAnalyzing(false);
         }
     };
 
@@ -173,10 +257,15 @@ export default function AdminPage() {
                 )}
             </AnimatePresence>
 
-            <h1 className="text-3xl font-bold text-cyan-400">Panneau d'Administration</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-cyan-400">Panneau d'Administration</h1>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleRestart} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg">
+                    <Power className="h-5 w-5"/> Redémarrer le Bot
+                </motion.button>
+            </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                {/* --- Colonne de gauche --- */}
+                {/* --- Colonne de gauche (Utilisateurs et Événements) --- */}
                 <div className="space-y-8">
                     <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Users /> Gérer un utilisateur</h2>
@@ -223,7 +312,7 @@ export default function AdminPage() {
                     )}
                 </div>
 
-                {/* --- Colonne de droite --- */}
+                {/* --- Colonne de droite (Événements et Logs) --- */}
                 <div className="space-y-8">
                     <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Calendar /> Gérer les Événements</h2>
@@ -253,6 +342,23 @@ export default function AdminPage() {
                     </Card>
                 </div>
             </div>
+            
+            {/* --- Section des Logs en bas --- */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <Card>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold flex items-center gap-2"><Terminal /> Logs du Bot</h2>
+                        <button onClick={() => {}} className="text-sm text-gray-500">(Rafraîchissement auto)</button>
+                    </div>
+                    {loadingBotLogs ? <p>...</p> : <div ref={botLogsContainerRef} className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs h-[300px]">{botLogs.map((log, index) => (<p key={index}>...</p>))}<div ref={botLogsEndRef}/></div>}
+                </Card>
+
+                <Card>
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Zap /> Logs KINT</h2>
+                     {/* ... Le JSX pour afficher les logs KINT ... */}
+                </Card>
+            </div>
+
             <style jsx global>{`input[type="date"], input[type="time"] { color-scheme: dark; } .bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
         </div>
     );
