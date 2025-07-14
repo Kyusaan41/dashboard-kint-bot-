@@ -1,10 +1,9 @@
-// Fichier : src/app/dashboard/events/page.tsx
-
 'use client';
 
 import { useState, useEffect, FC, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Clock, Loader2, AlertTriangle, Info } from 'lucide-react';
+import { fetchEvents } from '@/utils/api';
 
 // --- Types ---
 type Event = {
@@ -14,15 +13,6 @@ type Event = {
     date: string;
     organizer: string;
 };
-
-// --- Fonctions API ---
-async function fetchEvents(): Promise<Event[]> {
-    const response = await fetch('/api/events');
-    if (!response.ok) {
-        throw new Error('Impossible de charger les événements.');
-    }
-    return response.json();
-}
 
 // --- Composants UI ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
@@ -48,14 +38,8 @@ const EventCard: FC<{ event: Event, index: number }> = ({ event, index }) => {
                 <p className="text-sm text-gray-500 mb-4">Organisé par : {event.organizer}</p>
                 <p className="text-gray-300 flex-grow">{event.description}</p>
                 <div className="mt-6 border-t border-white/10 pt-4 flex justify-between items-center text-gray-400">
-                    <div className="flex items-center gap-2">
-                        <Calendar size={16} />
-                        <span className="font-semibold">{formattedDate}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Clock size={16} />
-                        <span className="font-semibold">{formattedTime}</span>
-                    </div>
+                    <div className="flex items-center gap-2"><Calendar size={16} /><span className="font-semibold">{formattedDate}</span></div>
+                    <div className="flex items-center gap-2"><Clock size={16} /><span className="font-semibold">{formattedTime}</span></div>
                 </div>
             </Card>
         </motion.div>
@@ -73,6 +57,12 @@ export default function EventsPage() {
             try {
                 const data = await fetchEvents();
                 setEvents(data);
+
+                // ▼▼▼ CORRECTION ICI ▼▼▼
+                // On précise le type de la variable "event" pour aider TypeScript.
+                const eventIds = data.map((event: Event) => event.id);
+                localStorage.setItem('seenEvents', JSON.stringify(eventIds));
+                
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
             } finally {
