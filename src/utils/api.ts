@@ -245,3 +245,23 @@ export async function getDetailedKintLogs(userId?: string): Promise<any[]> {
 export async function getActiveEffects(userId: string) {
     return handleApiResponse(await fetch(`/api/effects/${userId}`));
 }
+
+// --- Fonctions pour les Événements ---
+
+export async function fetchEvents() {
+    return handleApiResponse(await fetch('/api/events'));
+}
+
+export async function createEvent(eventData: { title: string; description: string; date: string; organizer: string; }) {
+    return handleApiResponse(await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData),
+    }));
+}
+
+export async function deleteEvent(eventId: string) {
+    return handleApiResponse(await fetch(`/api/events/${eventId}`, {
+        method: 'DELETE',
+    }));
+}
