@@ -5,13 +5,13 @@ import { useEffect, useState, FC, ReactNode } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { getInventory, getAllAchievements } from '@/utils/api';
+import { getInventory, getAllAchievements, fetchGazette } from '@/utils/api';
 import {
     Coins, Gift, Loader2, Package, Star, Zap, Trophy,
-    BookOpen, Crown, Gem, CheckCircle
+    BookOpen, Crown, Gem, CheckCircle, Newspaper
 } from 'lucide-react';
 
-// --- Types Corrigés ---
+// --- Types ---
 type UserStats = {
     currency: number; currencyRank: number | null;
     xp: number; xpRank: number | null;
@@ -31,9 +31,16 @@ type ServerInfo = { id: string; name: string; icon: string | null; };
 type InventoryItem = { id: string; name: string; quantity: number; icon?: string; };
 type AllAchievements = { [key: string]: { name: string; description: string; } };
 type Notification = { show: boolean; message: string; type: 'success' | 'error' };
+type Article = {
+    id: string;
+    timestamp: string;
+    title: string;
+    content: string;
+    type: 'community' | 'economy' | 'kint';
+    icon: string;
+};
 
-
-// --- UI Components ---
+// --- Composants UI ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
     <motion.div
         whileHover={{ scale: 1.02, y: -5 }}
@@ -91,6 +98,8 @@ export default function DashboardHomePage() {
     const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
     const [isClaiming, setIsClaiming] = useState(false);
     const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
+    const [articles, setArticles] = useState<Article[]>([]);
+    const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ show: true, message, type });
@@ -104,7 +113,7 @@ export default function DashboardHomePage() {
             const fetchData = async () => {
                 setLoading(true);
                 try {
-                    const [statsData, successData, patchnoteData, titles, currency, server, inventoryData, allAchievementsData, kintHistoryRaw] = await Promise.all([
+                    const [statsData, successData, patchnoteData, titles, currency, server, inventoryData, allAchievementsData, kintHistoryRaw, gazetteData] = await Promise.all([
                         fetch(`/api/stats/me`).then(res => res.json()),
                         fetch(`/api/success/${session.user.id}`).then(res => res.json()),
                         fetch(`/api/patchnote`).then(res => res.json()),
@@ -114,39 +123,32 @@ export default function DashboardHomePage() {
                         getInventory(),
                         getAllAchievements(),
                         fetch(`/api/kint-detailed-logs?userId=${session.user.id}`).then(res => res.json()),
+                        fetchGazette(),
                     ]);
 
                     setStats(statsData);
+                    setPatchNotes(patchnoteData);
+                    setArticles(gazetteData);
 
-                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[])
-                        .filter(entry => entry.reason !== 'Protégé par KShield')
-                        .reduce((acc: { [key: string]: number }, entry) => {
-                            const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-                            const points = entry.actionType === 'GAGNÉ' ? entry.points : -entry.points;
-                            acc[dayKey] = (acc[dayKey] || 0) + points;
-                            return acc;
-                        }, {});
+                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[]).filter(entry => entry.reason !== 'Protégé par KShield').reduce((acc: { [key: string]: number }, entry) => {
+                        const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+                        acc[dayKey] = (acc[dayKey] || 0) + (entry.actionType === 'GAGNÉ' ? entry.points : -entry.points);
+                        return acc;
+                    }, {});
 
                     const last7DaysMap = new Map<string, number>();
                     for (let i = 6; i >= 0; i--) {
                         const d = new Date();
                         d.setDate(d.getDate() - i);
-                        const dayKey = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-                        last7DaysMap.set(dayKey, 0);
+                        last7DaysMap.set(d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), 0);
                     }
-
                     for (const day in processedKintHistory) {
-                        if (last7DaysMap.has(day)) {
-                            last7DaysMap.set(day, processedKintHistory[day]);
-                        }
+                        if (last7DaysMap.has(day)) last7DaysMap.set(day, processedKintHistory[day]);
                     }
 
-                    const finalChartData = Array.from(last7DaysMap.entries()).map(([day, points]) => ({ day, points }));
-                    setKintHistoryData(finalChartData);
-
+                    setKintHistoryData(Array.from(last7DaysMap.entries()).map(([day, points]) => ({ day, points })));
                     setUnlockedSuccesses(successData.succes || []);
                     setAllAchievements(allAchievementsData || {});
-                    setPatchNotes(patchnoteData);
                     setAvailableTitles(titles.titresPossedes || []);
                     setServerInfo(server);
                     setInventory(inventoryData || []);
@@ -154,13 +156,10 @@ export default function DashboardHomePage() {
                     if (currency) {
                         const now = Date.now();
                         const twentyFourHours = 24 * 60 * 60 * 1000;
-                        // ▼▼▼ MODIFICATION ICI ▼▼▼
-                        // On utilise lastBonus, qui sera spécifique au bonus du dashboard
                         const lastClaimTime = currency.lastBonus;
                         if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
                             const timeLeftValue = twentyFourHours - (now - lastClaimTime);
-                            const displayTime = new Date(Math.max(0, timeLeftValue)).toISOString().substr(11, 8);
-                            setClaimStatus({ canClaim: false, timeLeft: displayTime });
+                            setClaimStatus({ canClaim: false, timeLeft: new Date(Math.max(0, timeLeftValue)).toISOString().substr(11, 8) });
                         } else {
                             setClaimStatus({ canClaim: true, timeLeft: '' });
                         }
@@ -175,13 +174,20 @@ export default function DashboardHomePage() {
             fetchData();
         }
     }, [status, session]);
+    
+    useEffect(() => {
+        if (articles.length > 1) {
+            const timer = setInterval(() => {
+                setCurrentArticleIndex(prevIndex => (prevIndex + 1) % articles.length);
+            }, 5000); // Change toutes les 5 secondes
+            return () => clearInterval(timer);
+        }
+    }, [articles.length]);
 
     const handleClaimReward = async () => {
         if (!claimStatus.canClaim || isClaiming || !session?.user?.id) return;
         setIsClaiming(true);
         try {
-            // ▼▼▼ MODIFICATION ICI ▼▼▼
-            // On précise au backend que l'on réclame le 'bonus'
             const res = await fetch(`/api/currency/claim/${session.user.id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -235,12 +241,7 @@ export default function DashboardHomePage() {
             >
                 <AnimatePresence>
                     {notification.show && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 50, scale: 0.3 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-                            className={`fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
-                        >
+                        <motion.div initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} className={`fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
                             <CheckCircle />
                             <span className="font-semibold">{notification.message}</span>
                         </motion.div>
@@ -264,22 +265,8 @@ export default function DashboardHomePage() {
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
                                     <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} />
                                     <YAxis stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} allowDecimals={false} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: 'rgba(28, 34, 48, 0.8)',
-                                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                                            borderRadius: '0.75rem',
-                                            backdropFilter: 'blur(4px)'
-                                        }}
-                                        labelStyle={{ color: '#cbd5e1' }}
-                                        itemStyle={{ color: '#22d3ee' }}
-                                    />
-                                    <defs>
-                                        <linearGradient id="kintPointsGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
+                                    <Tooltip contentStyle={{ backgroundColor: 'rgba(28, 34, 48, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.75rem', backdropFilter: 'blur(4px)' }} labelStyle={{ color: '#cbd5e1' }} itemStyle={{ color: '#22d3ee' }} />
+                                    <defs><linearGradient id="kintPointsGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22d3ee" stopOpacity={0.4} /><stop offset="95%" stopColor="#06b6d4" stopOpacity={0} /></linearGradient></defs>
                                     <Area type="monotone" dataKey="points" name="Points KINT" stroke="#22d3ee" strokeWidth={2} fill="url(#kintPointsGradient)" />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -307,6 +294,26 @@ export default function DashboardHomePage() {
                                 {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
                                 {claimStatus.canClaim ? 'Réclamer' : `Prochaine dans ${claimStatus.timeLeft}`}
                             </button>
+                        </Card>
+                        <Card>
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Newspaper size={18} /> Les Actus</h3>
+                            <div className="relative h-24 flex items-center">
+                                <AnimatePresence mode="wait">
+                                    {articles.length > 0 ? (
+                                        <motion.div key={articles[currentArticleIndex].id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.4, ease: "easeInOut" }} className="w-full">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-xl mt-1">{articles[currentArticleIndex].icon}</span>
+                                                <div>
+                                                    <h4 className="font-semibold text-white">{articles[currentArticleIndex].title}</h4>
+                                                    <p className="text-sm text-gray-400">{articles[currentArticleIndex].content}</p>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <p className="text-gray-500 text-center w-full">Rien de neuf à signaler pour le moment.</p>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </Card>
                         <Card>
                             <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Gem size={18} /> Personnalisation</h3>

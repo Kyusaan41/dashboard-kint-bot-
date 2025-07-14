@@ -265,3 +265,7 @@ export async function deleteEvent(eventId: string) {
         method: 'DELETE',
     }));
 }
+
+export async function fetchGazette() {
+    return handleApiResponse(await fetch('/api/gazette'));
+}
