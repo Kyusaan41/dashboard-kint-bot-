@@ -163,9 +163,6 @@ export default function AdminPage() {
         }
     }, [selectedUser]);
 
-    useEffect(() => {
-        botLogsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [botLogs]);
 
     const filteredUsers = useMemo(() => {
         if (!searchQuery) return users;
