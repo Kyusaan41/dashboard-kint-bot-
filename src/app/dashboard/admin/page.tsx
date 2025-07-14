@@ -112,7 +112,7 @@ export default function AdminPage() {
         setLoadingEvents(true);
         fetchEvents().then(setEvents).catch(() => showNotification("Impossible de charger les événements.", "error")).finally(() => setLoadingEvents(false));
     };
-    
+
     const refreshAllLogs = () => {
         setLoadingKintLogs(true);
         getDetailedKintLogs()
@@ -265,7 +265,7 @@ export default function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                {/* --- Colonne de gauche (Utilisateurs et Événements) --- */}
+                {/* --- Colonne de gauche --- */}
                 <div className="space-y-8">
                     <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Users /> Gérer un utilisateur</h2>
@@ -312,7 +312,7 @@ export default function AdminPage() {
                     )}
                 </div>
 
-                {/* --- Colonne de droite (Événements et Logs) --- */}
+                {/* --- Colonne de droite --- */}
                 <div className="space-y-8">
                     <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Calendar /> Gérer les Événements</h2>
@@ -343,21 +343,62 @@ export default function AdminPage() {
                 </div>
             </div>
             
-            {/* --- Section des Logs en bas --- */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                <Card>
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold flex items-center gap-2"><Terminal /> Logs du Bot</h2>
-                        <button onClick={() => {}} className="text-sm text-gray-500">(Rafraîchissement auto)</button>
+            <Card>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold flex items-center gap-2"><Terminal /> Logs du Bot</h2>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleAnalysis} disabled={isAnalyzing} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg text-sm disabled:opacity-50">
+                        {isAnalyzing ? <Loader2 className="animate-spin" size={16} /> : <BrainCircuit size={16}/>}
+                        {isAnalyzing ? 'Analyse...' : 'Analyser la journée'}
+                    </motion.button>
+                </div>
+                {loadingBotLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
+                    <div ref={botLogsContainerRef} className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
+                        {botLogs.map((log, index) => (
+                            <p key={index}><span className="text-gray-500">{new Date(log.timestamp).toLocaleTimeString('fr-FR')}</span><span className="ml-2">{log.log}</span></p>
+                        ))}
+                        <div ref={botLogsEndRef} />
                     </div>
-                    {loadingBotLogs ? <p>...</p> : <div ref={botLogsContainerRef} className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs h-[300px]">{botLogs.map((log, index) => (<p key={index}>...</p>))}<div ref={botLogsEndRef}/></div>}
-                </Card>
+                )}
+            </Card>
 
-                <Card>
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Zap /> Logs KINT</h2>
-                     {/* ... Le JSX pour afficher les logs KINT ... */}
-                </Card>
-            </div>
+            <AnimatePresence>
+                {analysisResult && (
+                    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                        <Card>
+                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-cyan-400"><BrainCircuit /> Résumé de la journée</h2>
+                            <AnalysisRenderer content={analysisResult} />
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <Card>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Zap /> Logs KINT (Transactions de points)</h2>
+                {loadingKintLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
+                    <div className="bg-black/50 p-4 rounded-md overflow-y-auto font-mono text-xs text-gray-300 h-[300px]">
+                        {kintLogs.length > 0 ? kintLogs.map((log, index) => {
+                            const formattedDate = new Date(log.date).toLocaleString('fr-FR');
+                            const sourceColor = log.source === 'Discord' ? 'text-purple-400' : (log.source === 'admin_dashboard' ? 'text-yellow-500' : 'text-blue-400');
+                            const Icon = log.reason === 'Protégé par KShield' ? Shield : (log.actionType === 'GAGNÉ' ? TrendingUp : TrendingDown);
+                            const iconColor = log.reason === 'Protégé par KShield' ? 'text-blue-400' : (log.actionType === 'GAGNÉ' ? 'text-green-500' : 'text-red-500');
+                            const textColor = log.reason === 'Protégé par KShield' ? 'text-blue-300' : (log.actionType === 'GAGNÉ' ? 'text-green-400' : 'text-red-400');
+                            const actionSign = log.actionType === 'GAGNÉ' ? '+' : '-';
+                            const logText = log.reason === 'Protégé par KShield' ? `a perdu ${log.points} pts` : `a ${log.actionType.toLowerCase()} ${actionSign}${log.points} pts`;
+
+                            return (
+                                <div key={index} className="flex flex-col gap-1 py-1 hover:bg-white/5 px-2 rounded">
+                                    <span className="text-gray-500">{formattedDate} <span className={`${sourceColor} font-semibold`}>({log.source === 'admin_dashboard' ? 'Admin' : log.source})</span></span>
+                                    <div className="flex items-center gap-2">
+                                        <Icon size={14} className={iconColor}/>
+                                        <span className="font-semibold text-white truncate" title={log.username}>{log.username} <span className={`${textColor}`}>{logText}</span> ({log.reason})</span>
+                                    </div>
+                                    {log.effect && log.effect !== "Aucun effet" && (<span className="text-xs text-gray-500 ml-6">Effet: {log.effect}</span>)}
+                                </div>
+                            );
+                        }) : <p className="text-gray-500 text-center py-4">Aucun log KINT à afficher.</p>}
+                    </div>
+                )}
+            </Card>
 
             <style jsx global>{`input[type="date"], input[type="time"] { color-scheme: dark; } .bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
         </div>
