@@ -6,25 +6,22 @@ import { authOptions } from '@/lib/auth';
 
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
-// On n'a plus besoin de définir un type DeleteContext séparé.
-// type DeleteContext = {
-//     params: {
-//         id: string;
-//     }
-// };
-
-// DELETE /api/events/[id] : Supprime un événement spécifique
-// CORRECTION ICI : Le type du 'context' est défini directement dans la signature.
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+// ▼▼▼ CORRECTION MAJEURE DE LA SIGNATURE ▼▼▼
+// Nous n'utilisons plus le deuxième argument { params }.
+// Nous allons extraire l'ID directement depuis l'URL de la requête.
+export async function DELETE(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== 'admin') {
         return NextResponse.json({ error: 'Accès interdit' }, { status: 403 });
     }
 
-    // On récupère l'id depuis l'objet "context"
-    const { id } = context.params;
+    // On extrait l'ID de la fin de l'URL.
+    // Exemple: pour /api/events/123, pathname est "/api/events/123"
+    const pathname = request.nextUrl.pathname;
+    const id = pathname.split('/').pop(); // "pop()" prend le dernier élément
+
     if (!id) {
-        return NextResponse.json({ error: "L'ID de l'événement est manquant." }, { status: 400 });
+        return NextResponse.json({ error: "L'ID de l'événement est manquant dans l'URL." }, { status: 400 });
     }
 
     try {
