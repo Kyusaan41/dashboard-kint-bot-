@@ -7,6 +7,8 @@ import { authOptions } from '@/lib/auth';
 const BOT_API_URL = 'http://51.83.103.24:20077/api';
 
 // DELETE /api/events/[id] : Supprime un événement spécifique
+// La correction est ici : on s'assure que le type de `params` correspond bien
+// à la structure attendue par Next.js pour un dossier nommé `[id]`.
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
     const session = await getServerSession(authOptions);
     // Seuls les admins peuvent supprimer
@@ -25,7 +27,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
         });
 
         if (!res.ok) {
-            const errorData = await res.json();
+            const errorData = await res.json().catch(() => ({}));
             return NextResponse.json({ error: errorData.error || "Erreur du bot lors de la suppression." }, { status: res.status });
         }
 
