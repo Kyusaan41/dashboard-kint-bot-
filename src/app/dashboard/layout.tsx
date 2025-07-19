@@ -23,8 +23,7 @@ const pages = [
   { id: '', label: 'Accueil', icon: Home },
   { id: 'events', label: 'Évenements', icon: CalendarRange },
   { id: 'classement', label: 'Classement', icon: BarChart2 },
-  { id: 'shop', label: 'Magasin', icon: ShoppingCart },
-  { id: 'settings', label: 'Paramètres', icon: Settings },
+  { id: 'boutique', label: 'Magasin', icon: ShoppingCart },
   { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
 ];
 

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Types ---
+// --- Types (inchangés) ---
 type UserEntry = { id: string; username: string; avatar: string; };
 type LogEntry = { timestamp: string; log: string; };
 type KintLogEntry = {
@@ -36,16 +36,19 @@ type SelectedUserStats = {
 type Notification = { show: boolean; message: string; type: 'success' | 'error' };
 type EventEntry = { id: string; title: string; date: string; };
 
-// --- Composants UI ---
+// --- COMPOSANTS UI ADAPTÉS AU THÈME ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <div className={`bg-[#1c222c] border border-white/10 rounded-xl p-6 shadow-lg relative overflow-hidden group ${className}`}>
-        <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
-        <div className="relative z-10">{children}</div>
-    </div>
+    <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className={`futuristic-card rounded-xl shadow-xl relative overflow-hidden group p-6 ${className}`}
+    >
+        <div className="relative z-10 h-full flex flex-col">{children}</div>
+    </motion.div>
 );
 
-// ▼▼▼ CORRECTION ICI ▼▼▼
-// Le composant est maintenant défini en dehors de la page principale, le rendant accessible.
 const AnalysisRenderer: FC<{ content: string }> = ({ content }) => {
     const lines = content.split('\n');
     return (
@@ -75,7 +78,7 @@ export default function AdminPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     
-    // États pour la gestion des utilisateurs
+    // --- Logique métier (inchangée) ---
     const [users, setUsers] = useState<UserEntry[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
     const [selectedUser, setSelectedUser] = useState<UserEntry | null>(null);
@@ -85,7 +88,6 @@ export default function AdminPage() {
     const [selectedUserStats, setSelectedUserStats] = useState<SelectedUserStats>({ currency: null, points: null });
     const [loadingUserStats, setLoadingUserStats] = useState(false);
     
-    // États pour les logs
     const [botLogs, setBotLogs] = useState<LogEntry[]>([]);
     const [loadingBotLogs, setLoadingBotLogs] = useState(true);
     const botLogsContainerRef = useRef<HTMLDivElement>(null);
@@ -93,16 +95,13 @@ export default function AdminPage() {
     const [kintLogs, setKintLogs] = useState<KintLogEntry[]>([]);
     const [loadingKintLogs, setLoadingKintLogs] = useState(true);
 
-    // États pour l'analyse IA
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState('');
 
-    // États pour les événements
     const [events, setEvents] = useState<EventEntry[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(true);
     const [newEvent, setNewEvent] = useState({ title: '', description: '', date: '', time: '' });
 
-    // États généraux
     const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -257,25 +256,24 @@ export default function AdminPage() {
             </AnimatePresence>
 
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-cyan-400">Panneau d'Administration</h1>
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleRestart} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg">
-                    <Power className="h-5 w-5"/> Redémarrer le Bot
+                <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Shield/>Panneau d'Administration</h1>
+                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleRestart} className="futuristic-button bg-red-600/50 hover:bg-red-700/50">
+                    <Power className="h-5 w-5"/> <span>Redémarrer le Bot</span>
                 </motion.button>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 <div className="space-y-8">
-                    {/* Gestion des membres */}
                     <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Users /> Gérer un utilisateur</h2>
                         <div className="relative mb-4">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18}/>
-                            <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-[#12151d] p-2 pl-10 rounded-md text-white border border-white/20"/>
+                            <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full futuristic-input pl-10"/>
                         </div>
                         {loadingUsers ? <p className="text-center text-gray-500">Chargement...</p> : (
                             <div className="max-h-80 overflow-y-auto space-y-2 pr-2">
                                 {filteredUsers.map((user) => (
-                                    <div key={user.id} onClick={() => setSelectedUser(user)} className={`flex items-center p-2 rounded-md cursor-pointer ${selectedUser?.id === user.id ? 'bg-cyan-600' : 'bg-gray-800/50 hover:bg-gray-700/70'}`}>
+                                    <div key={user.id} onClick={() => setSelectedUser(user)} className={`flex items-center p-2 rounded-md cursor-pointer transition-colors ${selectedUser?.id === user.id ? 'bg-cyan-600/30' : 'bg-gray-800/50 hover:bg-white/5'}`}>
                                         <Image src={user.avatar || '/default-avatar.png'} alt={user.username} width={40} height={40} className="rounded-full" />
                                         <span className="ml-3 font-medium">{user.username}</span>
                                     </div>
@@ -292,7 +290,7 @@ export default function AdminPage() {
                                     <div>
                                         <label className="flex items-center justify-between mb-2"><span className="flex items-center gap-2"><Coins size={16}/> Gérer l'Argent</span>{loadingUserStats ? '...' : <span className="font-bold text-yellow-400">{selectedUserStats.currency?.toLocaleString()}</span>}</label>
                                         <div className="flex gap-2">
-                                            <input type="number" placeholder="Montant" value={moneyAmount} onChange={e => setMoneyAmount(Number(e.target.value))} className="w-full bg-[#12151d] p-2 rounded-md border border-white/20" />
+                                            <input type="number" placeholder="Montant" value={moneyAmount} onChange={e => setMoneyAmount(Number(e.target.value))} className="w-full futuristic-input" />
                                             <button onClick={() => handleStatAction('currency', moneyAmount)} className="px-3 bg-green-600 rounded-md hover:bg-green-700">+</button>
                                             <button onClick={() => handleStatAction('currency', moneyAmount, true)} className="px-3 bg-red-600 rounded-md hover:bg-red-700">-</button>
                                         </div>
@@ -300,7 +298,7 @@ export default function AdminPage() {
                                     <div>
                                         <label className="flex items-center justify-between mb-2"><span className="flex items-center gap-2"><Zap size={16}/> Gérer les Points KINT</span>{loadingUserStats ? '...' : <span className="font-bold text-cyan-400">{selectedUserStats.points?.toLocaleString()}</span>}</label>
                                         <div className="flex gap-2">
-                                            <input type="number" placeholder="Montant" value={pointsAmount} onChange={e => setPointsAmount(Number(e.target.value))} className="w-full bg-[#12151d] p-2 rounded-md border border-white/20" />
+                                            <input type="number" placeholder="Montant" value={pointsAmount} onChange={e => setPointsAmount(Number(e.target.value))} className="w-full futuristic-input" />
                                             <button onClick={() => handleStatAction('points', pointsAmount)} className="px-3 bg-green-600 rounded-md hover:bg-green-700">+</button>
                                             <button onClick={() => handleStatAction('points', pointsAmount, true)} className="px-3 bg-red-600 rounded-md hover:bg-red-700">-</button>
                                         </div>
@@ -310,21 +308,19 @@ export default function AdminPage() {
                         </motion.div>
                     )}
                     
-                    {/* Gestion des événements */}
                      <Card>
                         <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Calendar /> Gérer les Événements</h2>
                         <form onSubmit={handleCreateEvent} className="space-y-4 p-4 bg-black/20 rounded-lg">
-                            <input type="text" placeholder="Titre de l'événement" value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} className="w-full bg-[#12151d] p-2 rounded-md border border-white/20"/>
-                            <textarea placeholder="Description..." value={newEvent.description} onChange={e => setNewEvent({...newEvent, description: e.target.value})} className="w-full bg-[#12151d] p-2 rounded-md border border-white/20 h-20"/>
+                            <input type="text" placeholder="Titre de l'événement" value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} className="w-full futuristic-input"/>
+                            <textarea placeholder="Description..." value={newEvent.description} onChange={e => setNewEvent({...newEvent, description: e.target.value})} className="w-full futuristic-input h-20"/>
                             <div className="flex gap-4">
-                                <input type="date" value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="w-1/2 bg-[#12151d] p-2 rounded-md border border-white/20"/>
-                                <input type="time" value={newEvent.time} onChange={e => setNewEvent({...newEvent, time: e.target.value})} className="w-1/2 bg-[#12151d] p-2 rounded-md border border-white/20"/>
+                                <input type="date" value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="w-1/2 futuristic-input"/>
+                                <input type="time" value={newEvent.time} onChange={e => setNewEvent({...newEvent, time: e.target.value})} className="w-1/2 futuristic-input"/>
                             </div>
-                            <button type="submit" className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg"><PlusCircle size={18}/> Créer</button>
+                            <button type="submit" className="w-full futuristic-button flex items-center justify-center gap-2"><PlusCircle size={18}/> Créer</button>
                         </form>
-                    </Card>
-                    <Card>
-                        <h3 className="text-lg font-bold mb-4">Événements programmés</h3>
+                        
+                        <h3 className="text-lg font-bold my-4">Événements programmés</h3>
                         <div className="max-h-80 overflow-y-auto space-y-2 pr-2">
                             {loadingEvents ? <p className="text-center text-gray-500">Chargement...</p> : events.map(event => (
                                 <div key={event.id} className="flex items-center justify-between p-2 bg-gray-800/50 rounded-md">
@@ -339,14 +335,13 @@ export default function AdminPage() {
                     </Card>
                 </div>
 
-                {/* --- Colonne de droite --- */}
                 <div className="space-y-8">
                     <Card>
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold flex items-center gap-2"><Terminal /> Logs du Bot</h2>
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleAnalysis} disabled={isAnalyzing} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg text-sm disabled:opacity-50">
+                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleAnalysis} disabled={isAnalyzing} className="futuristic-button text-sm p-2 flex items-center gap-2 disabled:opacity-50">
                                 {isAnalyzing ? <Loader2 className="animate-spin" size={16} /> : <BrainCircuit size={16}/>}
-                                {isAnalyzing ? 'Analyse...' : 'Analyser la journée'}
+                                {isAnalyzing ? 'Analyse...' : 'Analyser'}
                             </motion.button>
                         </div>
                         {loadingBotLogs ? <p className="text-center text-gray-500">Chargement...</p> : (
@@ -399,7 +394,7 @@ export default function AdminPage() {
                     </Card>
                 </div>
             </div>
-            <style jsx global>{`input[type="date"], input[type="time"] { color-scheme: dark; } .bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
+            <style jsx global>{`input[type="date"], input[type="time"] { color-scheme: dark; }`}</style>
         </div>
     );
 }

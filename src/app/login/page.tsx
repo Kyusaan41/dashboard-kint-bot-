@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { signIn } from "next-auth/react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
 import Image from 'next/image';
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const isMaintenanceMode = process.env.NEXT_PUBLIC_BOT_MAINTENANCE_MODE === 'true';
@@ -17,103 +18,72 @@ export default function LoginPage() {
 
   if (isMaintenanceMode) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0b0d13] p-4 text-white text-center">
-        {/* Grenouille au-dessus de "Maintenance en cours" */}
-        <div className="relative w-48 h-48 mb-6 frog-animation">
-          <Image 
-            src="/frog-mascot.png"
-            alt="Mascotte Grenouille"
-            layout="fill"
-            objectFit="contain"
-            priority
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#0A0A0C] p-4 text-white text-center">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="futuristic-card border-orange-500 p-8 max-w-md w-full"
+        >
+          <div className="relative w-32 h-32 mx-auto mb-6">
+            <Image 
+              src="/frog-mascot.png"
+              alt="Mascotte Grenouille"
+              layout="fill"
+              objectFit="contain"
+              priority
+            />
+          </div>
+          <h1 className="text-3xl font-bold text-orange-400 mb-4 flex items-center justify-center gap-3">
+            <ShieldAlert size={28}/>
+            Maintenance en Cours
+          </h1>
+          <p className="text-lg text-gray-300 mb-4">{maintenanceMessage}</p>
+          <p className="text-md text-gray-400 mt-4">Nous travaillons pour améliorer le service. Merci de votre patience !</p>
+          <motion.div 
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-full h-1 bg-orange-500 rounded-full mt-8"
           />
-        </div>
-
-        {/* Titre clignotant avec les lumières des barrières */}
-        <h1 className="text-4xl font-bold text-red-500 mb-6 maintenance-text">
-          <span className="police-light-red mr-2">🚧</span> {/* Gyrophare rouge à gauche */}
-          Maintenance en cours
-          <span className="police-light-blue ml-2">🚧</span> {/* Gyrophare bleu à droite */}
-        </h1>
-        <p className="text-lg text-gray-300 mb-4">{maintenanceMessage}</p>
-        <p className="text-md text-gray-400 mt-4">Nous travaillons pour améliorer le service. Merci de votre patience !</p>
-        
-        {/* L'ancienne div avec les gyrophares séparés est supprimée */}
-        {/* <div className="flex mt-8 space-x-4">
-            <span className="text-6xl police-light-red">🚨</span>
-            <span className="text-6xl police-light-blue">🚨</span>
-        </div> */}
-
-        {/* Styles d'animation directement dans le composant */}
-        <style jsx>{`
-          /* Animation pour la grenouille sur la page de maintenance */
-          .frog-animation {
-            animation: bounce-slow 2s ease-in-out infinite;
-          }
-          @keyframes bounce-slow {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-          }
-
-          /* Animation pour le texte "Maintenance en cours" */
-          .maintenance-text {
-            animation: pulse-slow 2s ease-in-out infinite;
-          }
-          @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-          }
-
-          /* Animations pour les effets de lumière des gyrophares */
-          /* Ces animations ciblent maintenant les spans à l'intérieur de h1 */
-          .police-light-red {
-            animation: light-pulse-red 1.5s ease-in-out infinite;
-          }
-          @keyframes light-pulse-red {
-            0%, 100% { text-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
-            50% { text-shadow: 0 0 20px rgba(255, 0, 0, 0.8), 0 0 30px rgba(255, 0, 0, 0.6); }
-          }
-
-          .police-light-blue {
-            animation: light-pulse-blue 1.5s ease-in-out infinite;
-            animation-delay: 0.75s; /* Décalage pour un effet alterné */
-          }
-          @keyframes light-pulse-blue {
-            0%, 100% { text-shadow: 0 0 5px rgba(0, 0, 255, 0.5), 0 0 10px rgba(0, 0, 255, 0.3); }
-            50% { text-shadow: 0 0 20px rgba(0, 0, 255, 0.8), 0 0 30px rgba(0, 0, 255, 0.6); }
-          }
-        `}</style>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#202225] p-4 overflow-hidden">
-      <div className="flex flex-col items-center space-y-6 text-center">
-        
-        {/* L'image de la grenouille, maintenant avec son animation */}
-        <div className="relative w-64 h-64 animate-sway">
-          <Image 
-            src="/frog-mascot.png"
-            alt="Grenouille qui danse avec une pancarte KINT By Kyû"
-            layout="fill"
-            objectFit="contain"
-            priority
-          />
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
+        <div className="relative w-64 h-64">
+            <motion.div 
+                className="absolute inset-0 border-4 border-cyan-500 rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+            />
+            <motion.div 
+                className="absolute inset-4 border-2 border-white/20 rounded-full"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+                <Image 
+                    src="/frog-mascot.png"
+                    alt="Mascotte KINT"
+                    width={160}
+                    height={160}
+                    priority
+                />
+            </div>
         </div>
-        
-        {/* Le message de connexion */}
-        <div className="flex items-center space-x-3">
-          <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-          <p className="text-xl font-semibold text-gray-200">
-            Connexion à Discord en cours...
-          </p>
+        <div className="mt-12 text-center">
+            <div className="flex items-center justify-center space-x-3">
+              <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+              <p className="text-xl font-semibold text-gray-200">
+                Connexion à Discord en cours...
+              </p>
+            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Veuillez patienter, nous vous redirigeons.
+            </p>
         </div>
-        
-        <p className="text-sm text-gray-500">
-          Veuillez patienter, nous vous redirigeons.
-        </p>
-      </div>
     </div>
   );
 }

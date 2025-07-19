@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle, Sword, Palette, Wrench, Check, Gem, Loader2 } from 'lucide-react';
 
-// --- Types ---
+// --- Types (inchangés) ---
 type ShopItem = {
     id: string;
     name: string;
@@ -21,7 +21,7 @@ type ShopItem = {
 type InventoryItem = { id: string; name: string; quantity: number; icon?: string; };
 type KShieldStatus = { canPurchase: boolean; timeLeft?: number; };
 
-// --- Constantes & Helpers ---
+// --- Constantes & Helpers (inchangés) ---
 const formatTimeLeft = (ms: number) => {
     if (ms <= 0) return 'Indisponible';
     const s = Math.floor(ms / 1000);
@@ -39,23 +39,22 @@ const mainCategories = [
 ];
 
 const rarityConfig = {
-    'Légendaire': { color: 'text-orange-400', gradient: 'from-orange-500 to-amber-500' },
-    'Épique': { color: 'text-purple-400', gradient: 'from-purple-500 to-fuchsia-500' },
-    'Rare': { color: 'text-blue-400', gradient: 'from-blue-500 to-cyan-500' },
-    'Commun': { color: 'text-gray-400', gradient: 'from-gray-500 to-slate-500' },
-    'Divers': { color: 'text-gray-500', gradient: 'from-gray-600 to-slate-600' }
+    'Légendaire': { color: 'text-orange-400', border: 'border-orange-400', glow: 'shadow-orange-400/30' },
+    'Épique': { color: 'text-purple-400', border: 'border-purple-400', glow: 'shadow-purple-400/30' },
+    'Rare': { color: 'text-blue-400', border: 'border-blue-400', glow: 'shadow-blue-400/30' },
+    'Commun': { color: 'text-gray-400', border: 'border-gray-400', glow: 'shadow-gray-400/20' },
+    'Divers': { color: 'text-gray-500', border: 'border-gray-500', glow: 'shadow-gray-500/20' }
 };
 const rarityOrder = Object.keys(rarityConfig);
 
-// --- Composant Card (pour la cohérence) ---
+// --- COMPOSANTS UI REDÉSIGNÉS ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <div className={`bg-[#1c222c] border border-white/10 rounded-xl shadow-lg relative overflow-hidden group ${className}`}>
+    <div className={`futuristic-card rounded-xl shadow-lg relative overflow-hidden group ${className}`}>
         <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
         <div className="relative z-10">{children}</div>
     </div>
 );
 
-// --- Composant pour un article de la boutique ---
 const ShopItemCard: FC<{ item: ShopItem, onAddToCart: (item: ShopItem) => void, isOwned: boolean, kshieldStatus: KShieldStatus }> = ({ item, onAddToCart, isOwned, kshieldStatus }) => {
     const rarity = rarityConfig[item.category as keyof typeof rarityConfig] || rarityConfig['Divers'];
     let isDisabled = false;
@@ -78,36 +77,33 @@ const ShopItemCard: FC<{ item: ShopItem, onAddToCart: (item: ShopItem) => void, 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="flex flex-col group"
+            className={`futuristic-card flex flex-col group !p-0 overflow-hidden ${rarity.border}`}
         >
-            <Card className="flex flex-col flex-grow !p-0 overflow-hidden">
-                <div className={`h-1 w-full bg-gradient-to-r ${rarity.gradient}`}></div>
-                <div className="p-6 flex flex-col flex-grow">
-                    <div className="flex-grow">
-                        <div className="w-24 h-24 mx-auto bg-black/20 rounded-lg flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110">
-                            <Image src={item.icon || '/default-icon.png'} alt={item.name} width={64} height={64} className="object-contain" />
-                        </div>
-                        <h2 className="text-xl font-bold text-white text-center">{item.name}</h2>
-                        <p className={`text-sm font-bold text-center ${rarity.color} mb-2`}>{item.category}</p>
-                        <p className="text-sm text-gray-400 text-center h-12">{item.description}</p>
+            <div className="p-6 flex flex-col flex-grow">
+                <div className="flex-grow">
+                    <div className={`w-24 h-24 mx-auto rounded-lg flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 group-hover:${rarity.glow}`}>
+                        <Image src={item.icon || '/default-icon.png'} alt={item.name} width={64} height={64} className="object-contain" />
                     </div>
-                    <div className="mt-6 text-center">
-                        <p className="text-2xl font-bold text-yellow-400 flex items-center justify-center gap-2">
-                            <Coins size={20}/> {item.price.toLocaleString()}
-                        </p>
-                        <motion.button
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => onAddToCart(item)}
-                            disabled={isDisabled}
-                            className={`mt-4 w-full font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                                isDisabled ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-700'
-                            }`}
-                        >
-                            <ButtonIcon size={18}/> {buttonText}
-                        </motion.button>
-                    </div>
+                    <h2 className="text-xl font-bold text-white text-center">{item.name}</h2>
+                    <p className={`text-sm font-bold text-center ${rarity.color} mb-2`}>{item.category}</p>
+                    <p className="text-sm text-gray-400 text-center h-12">{item.description}</p>
                 </div>
-            </Card>
+                <div className="mt-6 text-center">
+                    <p className="text-2xl font-bold text-yellow-400 flex items-center justify-center gap-2">
+                        <Coins size={20}/> {item.price.toLocaleString()}
+                    </p>
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onAddToCart(item)}
+                        disabled={isDisabled}
+                        className={`mt-4 w-full font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                            isDisabled ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed' : 'futuristic-button'
+                        }`}
+                    >
+                        <ButtonIcon size={18}/> {buttonText}
+                    </motion.button>
+                </div>
+            </div>
         </motion.div>
     );
 };
@@ -117,7 +113,6 @@ export default function ShopPage() {
     const { data: session } = useSession();
     const [items, setItems] = useState<ShopItem[]>([]);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
-    // --- NOUVEL ETAT POUR LES TITRES ---
     const [ownedTitles, setOwnedTitles] = useState<string[]>([]);
     const [activeMainCategory, setActiveMainCategory] = useState<string>('Kint');
     const [activeRarity, setActiveRarity] = useState<string>('all');
@@ -133,7 +128,6 @@ export default function ShopPage() {
         if (!session?.user?.id) return;
         setLoading(true); setError(null);
         try {
-            // --- AJOUT DE LA RECUPERATION DES TITRES ---
             const [shopData, currencyData, kshieldData, inventoryData, titlesData] = await Promise.all([
                 getShopItems(),
                 fetchCurrency(session.user.id),
@@ -145,7 +139,7 @@ export default function ShopPage() {
             setUserBalance(currencyData.balance);
             setKshieldStatus(kshieldData);
             setInventory(Array.isArray(inventoryData) ? inventoryData : []);
-            setOwnedTitles(titlesData.titresPossedes || []); // Mise à jour de l'état des titres
+            setOwnedTitles(titlesData.titresPossedes || []);
         } catch (err) {
             setError("Impossible de charger les données de la boutique.");
         } finally {
@@ -197,7 +191,7 @@ export default function ShopPage() {
     if (error) return (
         <div className="text-center text-red-400 p-8">
             <p>{error}</p>
-            <button onClick={fetchData} className="mt-4 flex items-center gap-2 mx-auto bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg">
+            <button onClick={fetchData} className="mt-4 flex items-center gap-2 mx-auto futuristic-button">
                 <RefreshCw size={18} /> Réessayer
             </button>
         </div>
@@ -214,24 +208,39 @@ export default function ShopPage() {
             <header className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Gem /> Boutique</h1>
                 {userBalance !== null && (
-                    <div className="flex items-center gap-2 bg-[#1c222c] px-4 py-2 rounded-lg border border-white/10">
+                    <div className="flex items-center gap-2 futuristic-card px-4 py-2 rounded-lg">
                         <Coins className="text-yellow-400" />
                         <span className="text-lg font-semibold">{userBalance.toLocaleString()}</span>
                     </div>
                 )}
             </header>
-
-            <div className="flex flex-col md:flex-row gap-4 md:gap-8 border-b border-white/10 pb-4">
-                <div className="flex gap-4">
+            
+            <div className="futuristic-card p-4 space-y-4">
+                <div className="p-1 bg-black/20 rounded-lg flex gap-1 relative">
                     {mainCategories.map(cat => (
-                        <button key={cat.id} onClick={() => setActiveMainCategory(cat.id)} className={`flex items-center gap-2 px-4 py-2 font-semibold rounded-lg transition-colors duration-200 ${ activeMainCategory === cat.id ? 'bg-cyan-600 text-white' : 'bg-gray-800/50 hover:bg-gray-700/70' }`}>
+                        <button 
+                            key={cat.id} 
+                            onClick={() => { setActiveMainCategory(cat.id); setActiveRarity('all'); }} 
+                            className={`w-full relative flex items-center justify-center gap-2 px-4 py-2 font-semibold rounded-md transition-colors duration-300 z-10 ${ activeMainCategory === cat.id ? 'text-white' : 'text-gray-400 hover:text-white' }`}
+                        >
                             <cat.icon size={18} /> <span>{cat.label}</span>
                         </button>
                     ))}
+                    <AnimatePresence>
+                        {activeMainCategory && (
+                            <motion.div
+                                layoutId="active-main-cat-indicator"
+                                className="absolute inset-0 bg-cyan-600/30 rounded-md"
+                                style={{ width: `${100 / mainCategories.length}%`, left: `${(mainCategories.findIndex(t => t.id === activeMainCategory) * 100) / mainCategories.length}%` }}
+                                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                            />
+                        )}
+                    </AnimatePresence>
                 </div>
-                <div className="flex-grow flex items-center gap-2 overflow-x-auto">
+                 
+                <div className="flex items-center gap-2 overflow-x-auto pb-2">
                      {subCategories.map(rarity => (
-                        <button key={rarity} onClick={() => setActiveRarity(rarity)} className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap ${ activeRarity === rarity ? 'bg-white text-black' : 'bg-gray-700/70 hover:bg-gray-600' }`}>
+                        <button key={rarity} onClick={() => setActiveRarity(rarity)} className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap ${ activeRarity === rarity ? 'bg-white text-black font-semibold' : 'bg-white/5 text-gray-300 hover:bg-white/10' }`}>
                             {rarity === 'all' ? 'Toutes les raretés' : rarity}
                         </button>
                     ))}
@@ -242,9 +251,7 @@ export default function ShopPage() {
                 <AnimatePresence>
                     {filteredItems.length > 0 ? (
                         filteredItems.map(item => {
-                            // --- LOGIQUE DE POSSESSION CORRIGÉE ---
                             const isInventoryOwned = inventory.some(invItem => invItem.id === item.id);
-                            // La vérification normalise les noms pour éviter les erreurs de casse ou d'espaces
                             const isTitleOwned = item.type === 'Personnalisation' && ownedTitles.some(ownedTitle => ownedTitle.trim().toLowerCase() === item.name.trim().toLowerCase());
                             const isOwned = isInventoryOwned || isTitleOwned;
                             
@@ -256,11 +263,18 @@ export default function ShopPage() {
                 </AnimatePresence>
             </motion.div>
             
+            {/* ▼▼▼ PANIER FINALISÉ ▼▼▼ */}
             <AnimatePresence>
                 {cart.length > 0 && (
-                    <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }} className="fixed bottom-4 right-4 bg-[#1c222c]/80 backdrop-blur-lg border border-cyan-500 rounded-xl shadow-2xl w-96 p-6 z-50">
+                    <motion.div 
+                        initial={{ x: "110%", opacity: 0 }} 
+                        animate={{ x: 0, opacity: 1 }} 
+                        exit={{ x: "110%", opacity: 0 }} 
+                        transition={{ type: 'spring', stiffness: 250, damping: 30 }} 
+                        className="fixed top-24 right-6 futuristic-card border-cyan-500 rounded-xl shadow-2xl w-96 p-6 z-50"
+                    >
                         <h3 className="text-xl font-bold flex items-center gap-3"><ShoppingCart /> Panier ({cart.length})</h3>
-                        <div className="my-4 space-y-2 max-h-48 overflow-y-auto pr-2">
+                        <div className="my-4 space-y-2 max-h-64 overflow-y-auto pr-2">
                             {cart.map((item, index) => (
                                 <div key={`${item.id}-${index}`} className="flex justify-between items-center text-sm bg-black/20 p-2 rounded-md">
                                     <span className="font-medium">{item.name}</span>
@@ -276,7 +290,7 @@ export default function ShopPage() {
                                 <span>Total:</span>
                                 <span className="text-yellow-400 flex items-center gap-2">{cartTotal.toLocaleString()} <Coins size={18}/></span>
                             </div>
-                            <motion.button whileTap={{scale: 0.95}} onClick={handlePurchase} disabled={isPurchasing || (userBalance !== null && userBalance < cartTotal)} className="w-full mt-4 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            <motion.button whileTap={{scale: 0.95}} onClick={handlePurchase} disabled={isPurchasing || (userBalance !== null && userBalance < cartTotal)} className={`w-full mt-4 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${isPurchasing || (userBalance !== null && userBalance < cartTotal) ? 'bg-gray-600 cursor-not-allowed' : 'futuristic-button bg-green-600'}`}>
                                 {isPurchasing && <Loader2 className="animate-spin" size={18}/>}
                                 {isPurchasing ? 'Achat en cours...' : (userBalance !== null && userBalance < cartTotal) ? 'Fonds insuffisants' : `Valider l'achat`}
                             </motion.button>
@@ -284,12 +298,6 @@ export default function ShopPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-             <style jsx global>{`
-                .bg-grid-pattern {
-                    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-                    background-size: 20px 20px;
-                }
-            `}</style>
         </div>
     );
 }
