@@ -7,7 +7,7 @@ import FeedbackWidget from '@/components/FeedbackWidget';
 import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
-import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Settings, Shield } from 'lucide-react';
+import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon } from 'lucide-react';
 
 // --- Types ---
 type ItemUsedEvent = {
@@ -22,6 +22,7 @@ type EventEntry = { id: string; };
 const pages = [
   { id: '', label: 'Accueil', icon: Home },
   { id: 'events', label: 'Évenements', icon: CalendarRange },
+  { id: 'mini-jeu', label: 'Mini-Jeux', icon: GamepadIcon },
   { id: 'classement', label: 'Classement', icon: BarChart2 },
   { id: 'boutique', label: 'Magasin', icon: ShoppingCart },
   { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
@@ -80,32 +81,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(id => id.trim());
-  
   const getAvatarUrl = () => {
     if (!session?.user?.id) return '/default-avatar.png';
     const defaultDiscordAvatar = `https://cdn.discordapp.com/embed/avatars/${parseInt(session.user.id.slice(-1)) % 5}.png`;
     return session.user.image ?? defaultDiscordAvatar;
   };
-  
   const filteredPages = pages.filter(page => !page.adminOnly || (session?.user?.id && adminIds.includes(session.user.id)));
 
   if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center"><p className="animate-pulse">Chargement...</p></div>;
+    return <div className="flex min-h-screen items-center justify-center bg-[#0b0d13]"><p className="animate-pulse text-white">Chargement...</p></div>;
   }
 
   return (
-    <div className="flex min-h-screen text-white">
+    <div className="flex min-h-screen bg-[#0b0d13] text-white">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
       
       <aside className="w-20 hover:w-64 transition-all duration-300 ease-in-out bg-[rgba(18,18,24,0.8)] border-r border-white/10 flex flex-col h-screen sticky top-0 group">
-        <div className="p-4 flex items-center gap-4 border-b border-white/10">
+        {/* ▼▼▼ BLOC UTILISATEUR MODIFIÉ ▼▼▼ */}
+        <div className="p-4 flex items-center gap-4 border-b border-white/10 min-h-[81px]">
           {session && (
             <>
               <Image src={getAvatarUrl()} alt="Avatar" width={48} height={48} className="rounded-full border-2 border-cyan-500 shadow-md flex-shrink-0" />
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate flex-grow">
                 <p className="font-semibold text-cyan-400 truncate">{session.user.name}</p>
                 <p className="text-sm text-gray-400">Connecté</p>
               </div>
+              <button 
+                onClick={() => signOut({ callbackUrl: '/' })} 
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 hover:text-red-400 p-2 rounded-md hover:bg-red-500/10"
+                title="Déconnexion"
+              >
+                  <LogOut size={20} />
+              </button>
             </>
           )}
         </div>
@@ -131,14 +138,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
-            {session && (
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full flex items-center gap-4 p-3 rounded-lg font-medium text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors duration-200">
-                  <LogOut className="flex-shrink-0 h-6 w-6"/>
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">Déconnexion</span>
-              </button>
-            )}
-        </div>
+        {/* --- BOUTON DU BAS SUPPRIMÉ --- */}
       </aside>
       
       <main className="flex-1 p-6 md:p-10 max-w-full overflow-y-auto">

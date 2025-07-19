@@ -1,22 +1,36 @@
 'use client'
 
+import { motion } from 'framer-motion';
+import { Construction } from 'lucide-react';
+
 export default function ComingSoonPage() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-[#0b0d13] px-10 py-20 font-[IBM Plex Mono] text-white select-none">
-      <div className="text-center max-w-lg">
-        <h1 className="text-7xl font-extrabold mb-8 text-cyan-400 animate-pulse">
-          🚧
+    <div className="flex min-h-full flex-col items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.7, ease: 'easeOut' }}
+        className="futuristic-card border-cyan-500/50 p-10 text-center flex flex-col items-center max-w-lg w-full"
+      >
+        <motion.div
+            animate={{ scale: [1, 1.1, 1]}}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-24 h-24 flex items-center justify-center rounded-full bg-cyan-500/10 border-2 border-cyan-500/50 text-cyan-400 mb-8"
+        >
+            <Construction size={48} />
+        </motion.div>
+        
+        <h1 className="text-4xl font-bold text-white mb-4 tracking-wide">
+          Page en Construction
         </h1>
-        <h2 className="text-4xl font-bold mb-6 tracking-wide">
-          Page en construction
-        </h2>
-        <p className="text-cyan-300 text-lg mb-12">
-          Cette fonctionnalité arrive bientôt. Reste connecté et prépare-toi pour la suite !
+        <p className="text-lg text-gray-300 mb-8">
+          Cette fonctionnalité est en cours de développement. Préparez-vous pour des duels intenses, elle arrive très bientôt !
         </p>
-        <div className="inline-block px-8 py-3 rounded-2xl bg-[#12151d] shadow-lg text-cyan-400 font-semibold cursor-not-allowed select-none">
-          Arrive bientôt
+        
+        <div className="futuristic-button opacity-50 cursor-not-allowed select-none">
+          Prochainement
         </div>
-      </div>
-    </main>
+      </motion.div>
+    </div>
   )
 }

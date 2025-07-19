@@ -8,8 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, Crown, Shield, Loader2, Trophy, History, Swords, Award, Medal, CheckCircle, BarChart2, X } from 'lucide-react';
 
 
-// --- Fonctions pour l'API des stats KINT ---
-// Ces fonctions communiquent avec les routes API de votre dashboard
+// --- Fonctions API (inchangées) ---
 async function fetchKintLeaderboard() {
     const response = await fetch(`/api/kint-stats/leaderboard`);
     if (!response.ok) throw new Error('Failed to fetch KINT leaderboard');
@@ -26,8 +25,7 @@ async function updateKintStats(userId: string, responseType: 'oui' | 'non') {
     return response.json();
 }
 
-
-// --- Types ---
+// --- Types (inchangés) ---
 type LeaderboardEntry = { userId: string; points: number; username?: string; avatar?: string; };
 type HistoryEntry = { userId: string; username: string; avatar?: string; actionType: 'GAGNÉ' | 'PERDU'; points: number; currentBalance: number; effect?: string; date: string; reason: string; source: 'Discord' | 'Dashboard'; };
 type InventoryItem = { id: string; name: string; quantity: number; };
@@ -38,18 +36,17 @@ type UserEffect = {
     expiresAt: string;
 } | null;
 
-// --- Composants UI ---
+// --- COMPOSANTS UI REDÉSIGNÉS ---
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <div className={`bg-[#1c222c] border border-white/10 rounded-xl shadow-lg relative overflow-hidden group ${className}`}>
-        <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
-        <div className="relative z-10 h-full flex flex-col">{children}</div>
+    <div className={`futuristic-card h-full flex flex-col p-6 ${className}`}>
+        {children}
     </div>
 );
 
 const PodiumCard = ({ entry, rank }: { entry: LeaderboardEntry, rank: number }) => {
     const rankConfig = { 1: { border: 'border-yellow-400', shadow: 'shadow-yellow-400/20', icon: Crown }, 2: { border: 'border-gray-300', shadow: 'shadow-gray-300/20', icon: Award }, 3: { border: 'border-orange-400', shadow: 'shadow-orange-400/20', icon: Medal } };
     const config = rankConfig[rank as keyof typeof rankConfig];
-    return ( <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: rank * 0.1, type: 'spring' }} className={`relative rounded-xl bg-[#1c222c] border-2 ${config.border} p-6 text-center shadow-2xl ${config.shadow} ${rank === 1 ? 'scale-110 z-10' : 'lg:mt-8'}`}> <config.icon className={config.border.replace('border-', 'text-')} size={32} /> <Image src={entry.avatar || '/default-avatar.png'} alt={entry.username || 'avatar'} width={80} height={80} className="rounded-full mx-auto my-4 border-4 border-gray-600" /> <h3 className="font-bold text-xl text-white truncate max-w-full">{entry.username || 'Inconnu'}</h3> <p className={`font-semibold text-lg ${config.border.replace('border-', 'text-')}`}>{entry.points?.toLocaleString()} pts</p> </motion.div> );
+    return ( <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: rank * 0.1, type: 'spring' }} className={`relative rounded-xl futuristic-card border-2 ${config.border} p-6 text-center shadow-2xl ${config.shadow} ${rank === 1 ? 'scale-110 z-10' : 'lg:mt-8'}`}> <config.icon className={config.border.replace('border-', 'text-')} size={32} /> <Image src={entry.avatar || '/default-avatar.png'} alt={entry.username || 'avatar'} width={80} height={80} className="rounded-full mx-auto my-4 border-4 border-gray-600" /> <h3 className="font-bold text-xl text-white truncate max-w-full">{entry.username || 'Inconnu'}</h3> <p className={`font-semibold text-lg ${config.border.replace('border-', 'text-')}`}>{entry.points?.toLocaleString()} pts</p> </motion.div> );
 };
 
 const LeaderboardRow = ({ entry, rank, sessionUserId }: { entry: LeaderboardEntry, rank: number, sessionUserId?: string }) => {
@@ -71,6 +68,7 @@ const HistoryItem = ({ item }: { item: HistoryEntry }) => {
 
 export default function KintMiniGamePage() {
     const { data: session, status } = useSession();
+    // ... (toute la logique et les états restent les mêmes)
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [userPoints, setUserPoints] = useState<number | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);

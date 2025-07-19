@@ -1,42 +1,59 @@
 'use client'
 
 import Link from 'next/link'
-import { FaGamepad, FaTrophy } from 'react-icons/fa'
+import { motion } from 'framer-motion'
+import { Swords, Users } from 'lucide-react'
+
+const GameCard = ({ href, icon, title, description }: { href: string, icon: React.ReactNode, title: string, description: string }) => (
+    <Link href={href}>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="futuristic-card p-8 text-center flex flex-col items-center group h-full"
+        >
+            <motion.div 
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                className="w-24 h-24 flex items-center justify-center rounded-full bg-cyan-500/10 border-2 border-cyan-500/50 text-cyan-400 mb-6"
+            >
+                {icon}
+            </motion.div>
+            <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
+            <p className="text-gray-400 flex-grow">{description}</p>
+            <div className="mt-6 text-sm font-semibold text-cyan-300 group-hover:underline">
+                Entrer dans l'arène
+            </div>
+        </motion.div>
+    </Link>
+);
+
 
 export default function MiniJeuHome() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-[#0b0d13] px-10 py-20 font-[IBM Plex Mono] text-white select-none">
-      <h1 className="text-6xl font-extrabold mb-24 tracking-wide text-cyan-400">
-        🎮 Mini Jeux
-      </h1>
+    <div className="flex flex-col items-center justify-center min-h-full">
+      <motion.h1 
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+        className="text-5xl font-extrabold mb-16 tracking-wide text-cyan-400"
+      >
+        Arène des Mini-Jeux
+      </motion.h1>
 
-      <nav className="flex flex-col gap-14 w-full max-w-sm">
-        {[
-          { href: '/dashboard/mini-jeu/kint', label: 'KINT', icon: <FaTrophy className="text-cyan-400 w-6 h-6" /> },
-          { href: '/dashboard/mini-jeu/1v1', label: 'Mode 1v1', icon: <FaGamepad className="text-cyan-400 w-6 h-6" /> },
-        ].map(({ href, label, icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="
-              flex items-center gap-4 rounded-3xl bg-[#12151d] shadow-lg
-              py-6 px-10
-              font-semibold text-cyan-300
-              transition transform
-              hover:scale-[1.03] hover:shadow-cyan-600
-              focus:outline-none focus:ring-4 focus:ring-cyan-500
-            "
-            tabIndex={0}
-          >
-            {icon}
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      <footer className="mt-28 text-sm text-[#3e5873] tracking-wide select-none">
-        © 2025 Mini Jeux — Kyû
-      </footer>
-    </main>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+        <GameCard 
+            href="/dashboard/mini-jeu/kint"
+            icon={<Swords size={48} />}
+            title="KINT"
+            description="Affrontez vos amis, déclarez vos victoires et défaites, et grimpez dans le classement de l'arène."
+        />
+        <GameCard 
+            href="/dashboard/mini-jeu/1v1"
+            icon={<Users size={48} />}
+            title="Mode 1v1"
+            description="Bientôt disponible. Préparez-vous pour des duels intenses et des récompenses exclusives."
+        />
+      </div>
+    </div>
   )
 }
