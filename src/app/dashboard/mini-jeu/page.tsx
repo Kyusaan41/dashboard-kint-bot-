@@ -45,7 +45,7 @@ export default function MiniJeuHome() {
             href="/dashboard/mini-jeu/kint"
             icon={<Swords size={48} />}
             title="KINT"
-            description="Affrontez vos amis, déclarez vos victoires et défaites, et grimpez dans le classement de l'arène."
+            description="Jouez vos amis, déclarez vos victoires et défaites, et grimpez dans le classement de l'arène."
         />
         <GameCard 
             href="/dashboard/mini-jeu/1v1"
