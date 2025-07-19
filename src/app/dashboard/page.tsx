@@ -11,7 +11,7 @@ import {
     BookOpen, Crown, Gem, CheckCircle, Newspaper
 } from 'lucide-react';
 
-// --- Types ---
+// --- Types (inchangés) ---
 type UserStats = {
     currency: number; currencyRank: number | null;
     xp: number; xpRank: number | null;
@@ -40,15 +40,17 @@ type Article = {
     icon: string;
 };
 
-// --- Composants UI ---
+// --- NOUVEAU DESIGN DES COMPOSANTS ---
+
 const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <motion.div
-        whileHover={{ scale: 1.02, y: -5 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-        className={`bg-[#1c222c] border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden group ${className}`}
+    <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className={`futuristic-card rounded-xl shadow-xl relative overflow-hidden group ${className}`}
     >
-        <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
-        <div className="relative z-10">{children}</div>
+        <div className="relative z-10 h-full flex flex-col">{children}</div>
     </motion.div>
 );
 
@@ -59,16 +61,18 @@ const StatCard: FC<{ icon: ReactNode; title: string; value: number; rank: number
         return <span className={`font-semibold ${rankColor}`}>({r}e)</span>;
     };
     return (
-        <Card className="flex-1">
-            <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>{icon}</div>
-                <div>
-                    <p className="text-sm text-gray-400">{title}</p>
-                    <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
+        <div className="futuristic-card p-0 overflow-hidden rounded-xl">
+            <div className="p-5">
+                <div className="flex justify-between items-start">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>{icon}</div>
+                    <span className="text-sm font-semibold text-gray-400">{title}</span>
                 </div>
-                <div className="ml-auto">{formatRank(rank)}</div>
+                <div className="mt-4 text-right">
+                    <p className="text-4xl font-bold text-white">{value.toLocaleString()}</p>
+                    <div className="mt-1">{formatRank(rank)}</div>
+                </div>
             </div>
-        </Card>
+        </div>
     );
 };
 
@@ -179,7 +183,7 @@ export default function DashboardHomePage() {
         if (articles.length > 1) {
             const timer = setInterval(() => {
                 setCurrentArticleIndex(prevIndex => (prevIndex + 1) % articles.length);
-            }, 5000); // Change toutes les 5 secondes
+            }, 5000);
             return () => clearInterval(timer);
         }
     }, [articles.length]);
@@ -233,11 +237,10 @@ export default function DashboardHomePage() {
     return (
         <AnimatePresence>
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="space-y-6 md:space-y-8"
+                className="space-y-8"
             >
                 <AnimatePresence>
                     {notification.show && (
@@ -250,16 +253,16 @@ export default function DashboardHomePage() {
 
                 <WelcomeHeader user={session?.user} server={serverInfo} />
 
-                <div className="flex flex-col md:flex-row gap-6">
-                    {stats && <StatCard icon={<Coins size={28} />} title="Pièces" value={stats.currency} rank={stats.currencyRank} color="bg-yellow-500/20 text-yellow-400" />}
-                    {stats && <StatCard icon={<Star size={28} />} title="Expérience" value={stats.xp} rank={stats.xpRank} color="bg-green-500/20 text-green-400" />}
-                    {stats && <StatCard icon={<Zap size={28} />} title="Points KINT" value={stats.points} rank={stats.pointsRank} color="bg-cyan-500/20 text-cyan-400" />}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {stats && <StatCard icon={<Coins size={24} />} title="Pièces" value={stats.currency} rank={stats.currencyRank} color="bg-yellow-500/20 text-yellow-400" />}
+                    {stats && <StatCard icon={<Star size={24} />} title="Expérience" value={stats.xp} rank={stats.xpRank} color="bg-green-500/20 text-green-400" />}
+                    {stats && <StatCard icon={<Zap size={24} />} title="Points KINT" value={stats.points} rank={stats.pointsRank} color="bg-cyan-500/20 text-cyan-400" />}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
-                        <Card>
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Zap size={18} /> Historique des Points KINT sur 7 jours</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <div className="lg:col-span-3 space-y-8">
+                        <Card className="p-6">
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Zap size={18} /> Historique des Points KINT (7 jours)</h3>
                             <ResponsiveContainer width="100%" height={250}>
                                 <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
@@ -272,7 +275,7 @@ export default function DashboardHomePage() {
                             </ResponsiveContainer>
                         </Card>
                         {patchNotes && (
-                            <Card>
+                            <Card className="p-6">
                                 <h3 className="font-bold text-white mb-4 flex items-center gap-2"><BookOpen size={18} /> {patchNotes.title}</h3>
                                 <div className="space-y-4 text-gray-300">
                                     {patchNotes.ajouts?.length > 0 && <div><h4 className="font-semibold text-cyan-400 mb-2">Ajouts</h4><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajouts.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
@@ -281,8 +284,8 @@ export default function DashboardHomePage() {
                             </Card>
                         )}
                     </div>
-                    <div className="lg:col-span-1 space-y-6">
-                        <Card>
+                    <div className="lg:col-span-2 space-y-8">
+                        <Card className="p-6">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-amber-500 text-white"><Gift size={24} /></div>
                                 <div>
@@ -290,12 +293,12 @@ export default function DashboardHomePage() {
                                     <p className="text-sm text-gray-400">Réclamez 500 pièces !</p>
                                 </div>
                             </div>
-                            <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`w-full px-4 py-2 rounded-lg font-bold transition-all flex items-center justify-center ${!claimStatus.canClaim || isClaiming ? 'bg-gray-700/50 cursor-not-allowed text-gray-400' : 'bg-green-600 hover:bg-green-700'}`}>
+                            <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`w-full px-4 py-2 rounded-lg font-bold transition-all flex items-center justify-center ${!claimStatus.canClaim || isClaiming ? 'bg-gray-700/50 cursor-not-allowed text-gray-400' : 'futuristic-button'}`}>
                                 {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
                                 {claimStatus.canClaim ? 'Réclamer' : `Prochaine dans ${claimStatus.timeLeft}`}
                             </button>
                         </Card>
-                        <Card>
+                        <Card className="p-6">
                             <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Newspaper size={18} /> Les Actus</h3>
                             <div className="relative h-24 flex items-center">
                                 <AnimatePresence mode="wait">
@@ -315,7 +318,7 @@ export default function DashboardHomePage() {
                                 </AnimatePresence>
                             </div>
                         </Card>
-                        <Card>
+                        <Card className="p-6">
                             <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Gem size={18} /> Personnalisation</h3>
                             <div className="bg-gray-800/50 p-4 rounded-lg flex items-center justify-between">
                                 <div>
@@ -325,7 +328,7 @@ export default function DashboardHomePage() {
                                 <button onClick={() => setIsTitleModalOpen(true)} className="bg-cyan-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-cyan-700 transition">Changer</button>
                             </div>
                         </Card>
-                        <Card>
+                        <Card className="p-6 flex-grow">
                             <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Package size={18} /> Inventaire</h3>
                             <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                                 {inventory.length > 0 ? inventory.map(item => (
@@ -340,7 +343,7 @@ export default function DashboardHomePage() {
                     </div>
                 </div>
 
-                <Card>
+                <Card className="p-6">
                     <h2 className="font-bold text-white mb-4 flex items-center gap-2"><Trophy size={20} />Succès Débloqués ({unlockedSuccesses.length}/{totalAchievementsCount})</h2>
                     {unlockedSuccesses.length > 0 ? (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -367,7 +370,7 @@ export default function DashboardHomePage() {
                             </div>
                             <div className="flex justify-end gap-4 mt-6">
                                 <button onClick={() => setIsTitleModalOpen(false)} className="px-5 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition">Annuler</button>
-                                <button onClick={handleEquipTitle} className="px-5 py-2 bg-cyan-600 rounded-lg hover:bg-cyan-700 font-bold transition">Équiper</button>
+                                <button onClick={handleEquipTitle} className="futuristic-button">Équiper</button>
                             </div>
                         </motion.div>
                     </div>

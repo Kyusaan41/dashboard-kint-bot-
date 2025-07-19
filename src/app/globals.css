@@ -4,12 +4,13 @@
 :root {
   --background-start-rgb: 10, 10, 12;
   --background-end-rgb: 18, 18, 24;
-  --primary-glow: #00e5ff;
-  --secondary-glow: #7a00ff;
+  --primary-glow: rgba(0, 229, 255, 0.7);
+  --secondary-glow: rgba(122, 0, 255, 0.7);
   --text-primary: #f0f0f5;
   --text-secondary: #a0a0b0;
   --border-color: rgba(255, 255, 255, 0.1);
-  --card-background: rgba(20, 20, 28, 0.7);
+  --card-background: rgba(20, 20, 28, 0.6);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 body {
@@ -19,32 +20,112 @@ body {
     rgb(var(--background-end-rgb))
   );
   color: var(--text-primary);
-  font-family: var(--font-geist-sans);
+  background-attachment: fixed;
 }
 
-/* --- STYLES PERSONNALISÉS POUR LA SCROLLBAR --- */
-
-/* Pour Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #0891b2 #12151d;
+.futuristic-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Pour Chrome, Safari, Edge et autres navigateurs basés sur WebKit */
+.futuristic-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.futuristic-card:hover::before {
+  opacity: 1;
+}
+
+.futuristic-card:hover {
+  border-color: var(--primary-glow);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.futuristic-button {
+  background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
+}
+
+.futuristic-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 229, 255, 0.3);
+}
+
+.futuristic-input {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.futuristic-input:focus {
+    outline: none;
+    border-color: var(--primary-glow);
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+}
+
+/* Nouvel effet de bordure animée */
+.glow-border {
+  position: relative;
+}
+
+.glow-border::after {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    border-radius: 14px; /* un peu plus que le border-radius de la carte */
+    background: conic-gradient(from 180deg at 50% 50%, var(--secondary-glow), var(--primary-glow), var(--secondary-glow));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+    animation: rotate 4s linear infinite;
+}
+
+.futuristic-card:hover .glow-border::after {
+    opacity: 1;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #12151d;
+  background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background-color: #0891b2;
-  border-radius: 10px;
-  border: 2px solid #12151d;
+  background: var(--border-color);
+  border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #06b6d4;
+  background: var(--primary-glow);
 }
