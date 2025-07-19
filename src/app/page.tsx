@@ -5,10 +5,9 @@ import { LogIn, UserPlus, Shield, BarChart, Settings, Bot, ArrowRight, ToyBrick,
 import { motion, useAnimation } from "framer-motion";
 import { FC, ReactNode, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
-import { useSession } from 'next-auth/react'; // Importer useSession
-import { useRouter } from 'next/navigation'; // Importer useRouter
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
-// --- Composants ---
 const FeatureNode: FC<{
   icon: ReactNode;
   title: string;
@@ -33,7 +32,7 @@ const FeatureNode: FC<{
         hidden: { opacity: 0, y: 30 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay } }
       }}
-      className="flex items-start gap-4"
+      className="flex items-start gap-4 p-4 rounded-lg transition-all duration-300 hover:bg-white/5"
     >
       <div className="mt-1 w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-white/10 text-cyan-400">
         {icon}
@@ -46,12 +45,10 @@ const FeatureNode: FC<{
   );
 };
 
-// --- Page Principale ---
 export default function Home() {
-  const { data: session, status } = useSession(); // Utiliser useSession
-  const router = useRouter(); // Utiliser useRouter
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  // Rediriger si l'utilisateur est déjà connecté
   useEffect(() => {
     if (status === 'authenticated') {
       router.push('/dashboard');
@@ -63,38 +60,31 @@ export default function Home() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#030014] text-white">
+      <div className="flex min-h-screen items-center justify-center text-white">
         <p className="animate-pulse">Chargement de la session...</p>
       </div>
     );
   }
 
   return (
-    <main className="bg-[#030014] text-white font-sans overflow-x-hidden">
-      {/* Fond de particules */}
+    <main className="text-white font-sans overflow-x-hidden">
       <div className="absolute inset-0 z-0 opacity-50 bg-particle-pattern"></div>
-      <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#030014] via-transparent to-[#030014]"></div>
+      <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#0A0A0C] via-transparent to-[#121218]"></div>
 
       <div className="relative z-20 max-w-6xl mx-auto px-6">
-        {/* Header */}
         <header className="py-6 flex justify-between items-center">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
-                <ZapIcon   className="text-cyan-400"/>
+                <ZapIcon className="text-cyan-400"/>
                 KINT
             </Link>
-            {/* Afficher le bouton d'accès au tableau de bord uniquement si non authentifié */}
             {status !== 'authenticated' && (
-                <Link href="/login" className="group relative inline-flex items-center px-6 py-2.5 overflow-hidden rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
-                    <span className="absolute top-0 left-0 w-0 h-full bg-cyan-400 transition-all duration-300 group-hover:w-full"></span>
-                    <span className="relative flex items-center gap-2 transition-colors duration-300 group-hover:text-black">
-                        <LogIn size={16}/>
-                        Accès Dashboard
-                    </span>
+                <Link href="/login" className="futuristic-button">
+                    <LogIn size={16}/>
+                    <span>Accès Dashboard</span>
                 </Link>
             )}
         </header>
 
-        {/* Section Héros */}
         <section className="py-28 md:py-40 text-center">
              <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -118,17 +108,15 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="mt-12"
             >
-                {/* Afficher le bouton de connexion à Discord uniquement si non authentifié */}
                 {status !== 'authenticated' && (
-                    <Link href="/login" className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-bold rounded-full bg-cyan-400 text-black transition-transform transform hover:scale-105 shadow-2xl shadow-cyan-400/20">
+                    <Link href="/login" className="futuristic-button text-lg">
                         <LogIn size={22}/>
-                        Connexion à discord
+                        <span>Connexion à discord</span>
                     </Link>
                 )}
             </motion.div>
         </section>
 
-        {/* Section Fonctionnalités */}
         <section className="py-24">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <div className="relative h-96 flex items-center justify-center">
@@ -163,14 +151,13 @@ export default function Home() {
         </section>
       </div>
 
-       {/* Footer */}
       <footer className="border-t border-white/10 mt-16">
         <div className="max-w-6xl mx-auto px-6 py-12 text-center">
              <h2 className="text-4xl font-bold mb-4">Connectez Kint à votre serveur.</h2>
              <p className="text-gray-500 mb-8 max-w-xl mx-auto">
                 L'installation ne prend qu'un instant. Le potentiel est infini.
              </p>
-             <Link href={inviteUrl} target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-3 px-8 py-4 text-lg font-bold bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-white transition-transform transform hover:scale-105 shadow-2xl shadow-cyan-500/20">
+             <Link href={inviteUrl} target="_blank" rel="noopener noreferrer" className="futuristic-button text-lg">
                 Inviter le Bot
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1"/>
             </Link>

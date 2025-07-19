@@ -1,31 +1,28 @@
 @import "tailwindcss";
 
+/* Variables CSS personnalisées pour le thème */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background-start-rgb: 10, 10, 12;
+  --background-end-rgb: 18, 18, 24;
+  --primary-glow: #00e5ff;
+  --secondary-glow: #7a00ff;
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b0;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --card-background: rgba(20, 20, 28, 0.7);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(
+    to bottom right,
+    rgb(var(--background-start-rgb)),
+    rgb(var(--background-end-rgb))
+  );
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans);
 }
 
-/* --- STYLE PERSONNALISÉ POUR LA SCROLLBAR --- */
+/* --- STYLES PERSONNALISÉS POUR LA SCROLLBAR --- */
 
 /* Pour Firefox */
 * {
@@ -35,19 +32,19 @@ body {
 
 /* Pour Chrome, Safari, Edge et autres navigateurs basés sur WebKit */
 ::-webkit-scrollbar {
-  width: 8px; /* Largeur de la scrollbar */
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #12151d; /* Couleur de fond de la piste */
+  background: #12151d;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #0891b2; /* Couleur de la barre de défilement (le "pouce") */
-  border-radius: 10px; /* Arrondi des bords */
-  border: 2px solid #12151d; /* Crée une petite bordure autour de la barre */
+  background-color: #0891b2;
+  border-radius: 10px;
+  border: 2px solid #12151d;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #06b6d4; /* La barre devient plus claire au survol */
+  background-color: #06b6d4;
 }

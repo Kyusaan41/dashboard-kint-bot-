@@ -7,6 +7,7 @@ import FeedbackWidget from '@/components/FeedbackWidget';
 import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
+import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Settings, Shield } from 'lucide-react';
 
 // --- Types ---
 type ItemUsedEvent = {
@@ -19,12 +20,12 @@ type ItemUsedEvent = {
 type EventEntry = { id: string; };
 
 const pages = [
-  { id: '', label: 'Accueil' },
-  { id: 'events', label: 'Événements' },
-  { id: 'mini-jeu', label: 'Mini-Jeux' },
-  { id: 'boutique', label: 'Boutique' },
-  { id: 'classement', label: 'Classement' },
-  { id: 'admin', label: 'Admin' },
+  { id: '', label: 'Accueil', icon: Home },
+  { id: 'events', label: 'Évenements', icon: CalendarRange },
+  { id: 'classement', label: 'Classement', icon: BarChart2 },
+  { id: 'shop', label: 'Magasin', icon: ShoppingCart },
+  { id: 'settings', label: 'Paramètres', icon: Settings },
+  { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +36,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [interactionEvent, setInteractionEvent] = useState<ItemUsedEvent | null>(null);
   const [hasNewEvents, setHasNewEvents] = useState(false);
 
-  // ... (toute votre logique useEffect existante reste la même)
   useEffect(() => {
     if (status === 'authenticated') {
       const checkEvents = async () => {
@@ -79,65 +79,73 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       } catch (error) { console.error(error); }
       setInteractionEvent(null);
   };
+
   const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(id => id.trim());
+  
   const getAvatarUrl = () => {
     if (!session?.user?.id) return '/default-avatar.png';
     const defaultDiscordAvatar = `https://cdn.discordapp.com/embed/avatars/${parseInt(session.user.id.slice(-1)) % 5}.png`;
     return session.user.image ?? defaultDiscordAvatar;
   };
-  const filteredPages = pages.filter(page => page.id !== 'admin' || (session?.user?.id && adminIds.includes(session.user.id)));
+  
+  const filteredPages = pages.filter(page => !page.adminOnly || (session?.user?.id && adminIds.includes(session.user.id)));
 
   if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center bg-[#0b0d13]"><p className="animate-pulse text-white">Chargement...</p></div>;
+    return <div className="flex min-h-screen items-center justify-center"><p className="animate-pulse">Chargement...</p></div>;
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0b0d13] text-white">
+    <div className="flex min-h-screen text-white">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
       
-      {/* ▼▼▼ MODIFICATION ICI ▼▼▼ */}
-      {/* On s'assure que la barre latérale prend toute la hauteur et reste fixe */}
-      <aside className="w-64 bg-[#12151d] p-6 border-r border-cyan-700/20 flex flex-col h-screen sticky top-0">
-        <div>
+      <aside className="w-20 hover:w-64 transition-all duration-300 ease-in-out bg-[rgba(18,18,24,0.8)] border-r border-white/10 flex flex-col h-screen sticky top-0 group">
+        <div className="p-4 flex items-center gap-4 border-b border-white/10">
           {session && (
-            <div className="flex items-center space-x-4 mb-10">
-              <Image src={getAvatarUrl()} alt="Avatar" width={56} height={56} className="w-14 h-14 rounded-full border-2 border-cyan-500 shadow-md" />
-              <div className="truncate max-w-[calc(100%-70px)]">
+            <>
+              <Image src={getAvatarUrl()} alt="Avatar" width={48} height={48} className="rounded-full border-2 border-cyan-500 shadow-md flex-shrink-0" />
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">
                 <p className="font-semibold text-cyan-400 truncate">{session.user.name}</p>
                 <p className="text-sm text-gray-400">Connecté</p>
               </div>
-            </div>
+            </>
           )}
-          <nav className="flex flex-col space-y-3">
+        </div>
+        
+        <nav className="flex flex-col space-y-2 mt-4 flex-grow px-4">
             {filteredPages.map((page) => {
               const isActive = pathname === `/dashboard/${page.id}` || (page.id === '' && pathname === '/dashboard');
               const showNotification = page.id === 'events' && hasNewEvents;
 
               return (
-                <button key={page.id} onClick={() => router.push(`/dashboard/${page.id}`)} className={`relative w-full text-left px-5 py-3 rounded-lg font-medium transition ${isActive ? (page.id === 'admin' ? 'bg-red-600 text-white shadow-lg' : 'bg-cyan-600 text-white shadow-md') : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
-                  {page.label}
+                <button 
+                    key={page.id} 
+                    onClick={() => router.push(`/dashboard/${page.id}`)} 
+                    className={`w-full flex items-center gap-4 p-3 rounded-lg font-medium transition-colors duration-200 ${isActive ? 'bg-cyan-600/20 text-cyan-300' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+                >
+                  <page.icon className="flex-shrink-0 h-6 w-6" />
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">{page.label}</span>
                   {showNotification && (
-                    <span className="absolute top-1/2 right-4 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full border-2 border-[#12151d]"></span>
+                    <span className="ml-auto w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
               );
             })}
-          </nav>
-        </div>
+        </nav>
 
-        {/* ▼▼▼ MODIFICATION ICI ▼▼▼ */}
-        {/* On ajoute "mt-auto" pour pousser cet élément tout en bas de son conteneur flex */}
-        <div className="mt-auto">
+        <div className="p-4 border-t border-white/10">
             {session && (
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full px-5 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition text-white font-semibold">
-                  Déconnexion
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full flex items-center gap-4 p-3 rounded-lg font-medium text-gray-400 hover:bg-red-600/20 hover:text-red-400 transition-colors duration-200">
+                  <LogOut className="flex-shrink-0 h-6 w-6"/>
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">Déconnexion</span>
               </button>
             )}
         </div>
       </aside>
       
-      <main className="flex-1 p-10 max-w-7xl mx-auto overflow-y-auto">
-        {children}
+      <main className="flex-1 p-6 md:p-10 max-w-full overflow-y-auto">
+        <div className="max-w-7xl mx-auto">
+            {children}
+        </div>
       </main>
       <FeedbackWidget />
     </div>
