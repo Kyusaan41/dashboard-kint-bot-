@@ -9,7 +9,6 @@ import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
 import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon } from 'lucide-react';
 
-// --- Types ---
 type ItemUsedEvent = {
   interactionId: string;
   itemId: string;
@@ -32,7 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [interactionEvent, setInteractionEvent] = useState<ItemUsedEvent | null>(null);
   const [hasNewEvents, setHasNewEvents] = useState(false);
 
@@ -44,24 +43,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           const seenEvents = JSON.parse(localStorage.getItem('seenEvents') || '[]');
           const isNew = currentEvents.some((event: EventEntry) => !seenEvents.includes(event.id));
           setHasNewEvents(isNew);
-        } catch (error) { console.error("Impossible de vérifier les nouveaux événements:", error); }
+        } catch (error) {
+          console.error("Erreur lors de la vérification des événements :", error);
+        }
       };
       checkEvents();
       const interval = setInterval(checkEvents, 60000);
       return () => clearInterval(interval);
     }
   }, [status]);
-  
+
   useEffect(() => {
     if (session?.user?.id) {
-        const unsubscribe = subscribeToItemEvents(session.user.id, (data) => {
-            if (data.type === 'interaction_request') setInteractionEvent(data.payload);
-            else if (data.type === 'new_event_created') setHasNewEvents(true);
-        });
-        return () => unsubscribe();
+      const unsubscribe = subscribeToItemEvents(session.user.id, (data) => {
+        if (data.type === 'interaction_request') setInteractionEvent(data.payload);
+        else if (data.type === 'new_event_created') setHasNewEvents(true);
+      });
+      return () => unsubscribe();
     }
   }, [session]);
-  
+
   useEffect(() => {
     if (pathname.endsWith('/events')) {
       setHasNewEvents(false);
@@ -69,15 +70,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname]);
 
   const handleInteractionResponse = async (accepted: boolean) => {
-      if (!interactionEvent) return;
-      try {
-          await fetch('/api/interaction-response', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ interactionId: interactionEvent.interactionId, accepted: accepted }),
-          });
-      } catch (error) { console.error(error); }
-      setInteractionEvent(null);
+    if (!interactionEvent) return;
+    try {
+      await fetch('/api/interaction-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interactionId: interactionEvent.interactionId, accepted }),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    setInteractionEvent(null);
   };
 
   const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(id => id.trim());
@@ -89,63 +92,78 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const filteredPages = pages.filter(page => !page.adminOnly || (session?.user?.id && adminIds.includes(session.user.id)));
 
   if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center bg-[#0b0d13]"><p className="animate-pulse text-white">Chargement...</p></div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0b0d13]">
+        <p className="animate-pulse text-white">Chargement...</p>
+      </div>
+    );
   }
 
   return (
     <div className="flex min-h-screen bg-[#0b0d13] text-white">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
-      
-      <aside className="w-20 hover:w-64 transition-all duration-300 ease-in-out bg-[rgba(18,18,24,0.8)] border-r border-white/10 flex flex-col h-screen sticky top-0 group">
-        {/* ▼▼▼ BLOC UTILISATEUR MODIFIÉ ▼▼▼ */}
+
+      {/* ▼ SIDEBAR STYLÉE ▼ */}
+      <aside className="w-20 hover:w-64 transition-all duration-300 ease-in-out bg-gradient-to-b from-[#0f1118] to-[#0b0d13] backdrop-blur-md border-r border-white/10 flex flex-col h-screen sticky top-0 group shadow-lg">
+        {/* UTILISATEUR */}
         <div className="p-4 flex items-center gap-4 border-b border-white/10 min-h-[81px]">
           {session && (
             <>
               <Image src={getAvatarUrl()} alt="Avatar" width={48} height={48} className="rounded-full border-2 border-cyan-500 shadow-md flex-shrink-0" />
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate flex-grow">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate flex-grow">
                 <p className="font-semibold text-cyan-400 truncate">{session.user.name}</p>
                 <p className="text-sm text-gray-400">Connecté</p>
               </div>
-              <button 
-                onClick={() => signOut({ callbackUrl: '/' })} 
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-gray-400 hover:text-red-400 p-2 rounded-md hover:bg-red-500/10"
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-gray-400 hover:text-red-400 p-2 rounded-md hover:bg-red-500/10"
                 title="Déconnexion"
               >
-                  <LogOut size={20} />
+                <LogOut size={20} />
               </button>
             </>
           )}
         </div>
-        
-        <nav className="flex flex-col space-y-2 mt-4 flex-grow px-4">
-            {filteredPages.map((page) => {
-              const isActive = pathname === `/dashboard/${page.id}` || (page.id === '' && pathname === '/dashboard');
-              const showNotification = page.id === 'events' && hasNewEvents;
 
-              return (
-                <button 
-                    key={page.id} 
-                    onClick={() => router.push(`/dashboard/${page.id}`)} 
-                    className={`w-full flex items-center gap-4 p-3 rounded-lg font-medium transition-colors duration-200 ${isActive ? 'bg-cyan-600/20 text-cyan-300' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
-                >
-                  <page.icon className="flex-shrink-0 h-6 w-6" />
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 truncate">{page.label}</span>
-                  {showNotification && (
-                    <span className="ml-auto w-2 h-2 bg-red-500 rounded-full"></span>
-                  )}
-                </button>
-              );
-            })}
+        {/* NAVIGATION */}
+        <nav className="flex flex-col space-y-2 mt-4 px-4 flex-grow">
+          {filteredPages.map((page) => {
+            const isActive = pathname === `/dashboard/${page.id}` || (page.id === '' && pathname === '/dashboard');
+            const showNotification = page.id === 'events' && hasNewEvents;
+
+            return (
+              <button
+                key={page.id}
+                onClick={() => router.push(`/dashboard/${page.id}`)}
+                className={`w-full flex items-center gap-4 p-3 rounded-lg font-medium transition-all duration-200 ${isActive
+                  ? 'bg-cyan-600/20 text-cyan-300'
+                  : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                  }`}
+              >
+                <page.icon className="flex-shrink-0 h-6 w-6" />
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate">{page.label}</span>
+                {showNotification && (
+                  <span className="ml-auto w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* --- BOUTON DU BAS SUPPRIMÉ --- */}
+        {/* FOOTER FIXÉ EN BAS */}
+        <div className="border-t border-white/10 px-4 py-4 text-center text-[0.7rem] text-gray-500 font-mono leading-tight tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          Dashboard KINT v2.10<br />
+          Créé par Kyû
+        </div>
       </aside>
-      
+
+      {/* ▼ CONTENU PRINCIPAL ▼ */}
       <main className="flex-1 p-6 md:p-10 max-w-full overflow-y-auto">
         <div className="max-w-7xl mx-auto">
-            {children}
+          {children}
         </div>
       </main>
+
       <FeedbackWidget />
     </div>
   );
