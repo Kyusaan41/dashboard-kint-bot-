@@ -103,30 +103,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen bg-[#0b0d13] text-white">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
 
-      {/* ▼ SIDEBAR STYLÉE ▼ */}
-      <aside className="w-20 hover:w-64 transition-all duration-300 ease-in-out bg-gradient-to-b from-[#0f1118] to-[#0b0d13] backdrop-blur-md border-r border-white/10 flex flex-col h-screen sticky top-0 group shadow-lg">
-        {/* UTILISATEUR */}
-        <div className="p-4 flex items-center gap-4 border-b border-white/10 min-h-[81px]">
+      <aside className="w-[70px] hover:w-72 transition-all duration-500 bg-[#0d1117]/80 backdrop-blur-xl border-r border-white/[0.02] flex flex-col h-screen sticky top-0 group">
+        {/* Profil utilisateur */}
+        <div className="p-4 flex items-center gap-3">
           {session && (
             <>
-              <Image src={getAvatarUrl()} alt="Avatar" width={48} height={48} className="rounded-full border-2 border-cyan-500 shadow-md flex-shrink-0" />
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate flex-grow">
-                <p className="font-semibold text-cyan-400 truncate">{session.user.name}</p>
-                <p className="text-sm text-gray-400">Connecté</p>
+              <div className="relative">
+                <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[2px]">
+                  <Image 
+                    src={getAvatarUrl()} 
+                    alt="Avatar" 
+                    width={38} 
+                    height={38} 
+                    className="rounded-[10px] object-cover" 
+                  />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#0d1117]"></div>
+              </div>
+              <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden pl-1">
+                <p className="font-semibold text-sm tracking-wide truncate">{session.user.name}</p>
+                <p className="text-[11px] text-cyan-400">connecté</p>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-gray-400 hover:text-red-400 p-2 rounded-md hover:bg-red-500/10"
+                className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400 p-2 rounded-lg hover:bg-white/5 transition-all"
                 title="Déconnexion"
               >
-                <LogOut size={20} />
+                <LogOut size={16} />
               </button>
             </>
           )}
         </div>
 
-        {/* NAVIGATION */}
-        <nav className="flex flex-col space-y-2 mt-4 px-4 flex-grow">
+        {/* Navigation */}
+        <nav className="flex-1 py-6 px-3 space-y-2">
           {filteredPages.map((page) => {
             const isActive = pathname === `/dashboard/${page.id}` || (page.id === '' && pathname === '/dashboard');
             const showNotification = page.id === 'events' && hasNewEvents;
@@ -135,29 +145,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <button
                 key={page.id}
                 onClick={() => router.push(`/dashboard/${page.id}`)}
-                className={`w-full flex items-center gap-4 p-3 rounded-lg font-medium transition-all duration-200 ${isActive
-                  ? 'bg-cyan-600/20 text-cyan-300'
-                  : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium 
+                  transition-all duration-300 relative overflow-hidden
+                  ${isActive 
+                    ? 'bg-gradient-to-r from-cyan-500/20 via-cyan-500/10 to-transparent text-cyan-400'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
                   }`}
               >
-                <page.icon className="flex-shrink-0 h-6 w-6" />
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate">{page.label}</span>
+                <div className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
+                  <page.icon size={18} />
+                </div>
+                <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 truncate">
+                  {page.label}
+                </span>
                 {showNotification && (
-                  <span className="ml-auto w-2 h-2 bg-red-500 rounded-full"></span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ring-4 ring-red-500/20"></span>
+                )}
+                {isActive && (
+                  <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-cyan-400 to-blue-600 rounded-full"></div>
                 )}
               </button>
             );
           })}
         </nav>
 
-        {/* FOOTER FIXÉ EN BAS */}
-        <div className="border-t border-white/10 px-4 py-4 text-center text-[0.7rem] text-gray-500 font-mono leading-tight tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          Dashboard KINT v2.10<br />
-          Créé par Kyû
+        {/* Footer */}
+        <div className="p-3">
+          <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <div className="border-t border-white/5 pt-3 flex items-center justify-center">
+              <div className="px-3 py-1.5 rounded-lg bg-white/[0.02] backdrop-blur">
+                <p className="text-[10px] font-medium text-gray-400">
+                  KINT DASHBOARD
+                  <span className="block text-center mt-0.5 text-cyan-500/50 font-mono">v2.10 by Kyû</span>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
 
-      {/* ▼ CONTENU PRINCIPAL ▼ */}
       <main className="flex-1 p-6 md:p-10 max-w-full overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {children}

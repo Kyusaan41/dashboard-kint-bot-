@@ -48,42 +48,60 @@ const Card: FC<{ children: ReactNode; className?: string }> = ({ children, class
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className={`futuristic-card rounded-xl shadow-xl relative overflow-hidden group ${className}`}
+        className={`bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 ${className}`}
     >
-        <div className="relative z-10 h-full flex flex-col">{children}</div>
+        {children}
     </motion.div>
 );
 
 const StatCard: FC<{ icon: ReactNode; title: string; value: number; rank: number | null; color: string }> = ({ icon, title, value, rank, color }) => {
     const formatRank = (r: number | null) => {
         if (!r) return <span className="text-gray-500">(Non classé)</span>;
-        const rankColor = r <= 3 ? "text-yellow-500" : "text-gray-400";
-        return <span className={`font-semibold ${rankColor}`}>({r}e)</span>;
+        const rankColor = r <= 3 ? "text-amber-400" : "text-gray-400";
+        return <span className={`font-semibold ${rankColor}`}>#{r}</span>;
     };
+    
     return (
-        <div className="futuristic-card p-0 overflow-hidden rounded-xl">
-            <div className="p-5">
-                <div className="flex justify-between items-start">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>{icon}</div>
-                    <span className="text-sm font-semibold text-gray-400">{title}</span>
+        <Card className="p-6 hover:scale-102 transition-transform duration-300">
+            <div className="flex items-start justify-between">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${color}`}>
+                    {icon}
                 </div>
-                <div className="mt-4 text-right">
-                    <p className="text-4xl font-bold text-white">{value.toLocaleString()}</p>
-                    <div className="mt-1">{formatRank(rank)}</div>
+                <div className="text-right">
+                    <p className="text-3xl font-bold text-white mb-1">{value.toLocaleString()}</p>
+                    <div className="flex items-center justify-end gap-2">
+                        <span className="text-sm text-gray-400">{title}</span>
+                        {formatRank(rank)}
+                    </div>
                 </div>
             </div>
-        </div>
+        </Card>
     );
 };
 
 const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, server }) => (
-    <div className="flex items-center gap-4">
-        <Image src={user?.image || '/default-avatar.png'} alt="Avatar" width={64} height={64} className="rounded-full border-2 border-cyan-500" />
-        <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Bienvenue, <span className="text-cyan-400">{user?.name || 'Utilisateur'}</span>!</h1>
-            <p className="text-gray-400">Ravi de vous revoir sur le dashboard de {server?.name || 'KTS'}.</p>
+    <Card className="p-6 flex items-center gap-6">
+        <div className="relative">
+            <Image 
+                src={user?.image || '/default-avatar.png'} 
+                alt="Avatar" 
+                width={80} 
+                height={80} 
+                className="rounded-2xl shadow-lg border-2 border-cyan-500/30"
+            />
+            <div className="absolute -bottom-2 -right-2 bg-cyan-500 rounded-full p-2">
+                <Crown size={16} className="text-white" />
+            </div>
         </div>
-    </div>
+        <div>
+            <h1 className="text-3xl font-bold">
+                Bienvenue, <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{user?.name || 'Utilisateur'}</span>
+            </h1>
+            <p className="text-gray-400 mt-1 text-lg">
+                Dashboard de {server?.name || 'KTS'} • {new Date().toLocaleDateString('fr-FR', { dateStyle: 'full' })}
+            </p>
+        </div>
+    </Card>
 );
 
 export default function DashboardHomePage() {
@@ -240,7 +258,7 @@ export default function DashboardHomePage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="space-y-8"
+                className="space-y-6 p-6"
             >
                 <AnimatePresence>
                     {notification.show && (
@@ -253,10 +271,32 @@ export default function DashboardHomePage() {
 
                 <WelcomeHeader user={session?.user} server={serverInfo} />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {stats && <StatCard icon={<Coins size={24} />} title="Pièces" value={stats.currency} rank={stats.currencyRank} color="bg-yellow-500/20 text-yellow-400" />}
-                    {stats && <StatCard icon={<Star size={24} />} title="Expérience" value={stats.xp} rank={stats.xpRank} color="bg-green-500/20 text-green-400" />}
-                    {stats && <StatCard icon={<Zap size={24} />} title="Points KINT" value={stats.points} rank={stats.pointsRank} color="bg-cyan-500/20 text-cyan-400" />}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {stats && (
+                        <>
+                            <StatCard 
+                                icon={<Coins size={24} className="text-amber-300" />} 
+                                title="Pièces" 
+                                value={stats.currency} 
+                                rank={stats.currencyRank} 
+                                color="from-amber-500/20 to-yellow-600/20" 
+                            />
+                            <StatCard 
+                                icon={<Star size={24} className="text-emerald-300" />} 
+                                title="Expérience" 
+                                value={stats.xp} 
+                                rank={stats.xpRank} 
+                                color="from-emerald-500/20 to-green-600/20" 
+                            />
+                            <StatCard 
+                                icon={<Zap size={24} className="text-cyan-300" />} 
+                                title="Points KINT" 
+                                value={stats.points} 
+                                rank={stats.pointsRank} 
+                                color="from-cyan-500/20 to-blue-600/20" 
+                            />
+                        </>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
