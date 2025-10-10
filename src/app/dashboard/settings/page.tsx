@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 
@@ -18,12 +18,12 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Récupérer les settings au chargement
+  // RÃ©cupÃ©rer les settings au chargement
   useEffect(() => {
     async function fetchSettings() {
       try {
         const res = await fetch('/api/settings');
-        if (!res.ok) throw new Error('Erreur récupération paramètres');
+        if (!res.ok) throw new Error('Erreur rÃ©cupÃ©ration paramÃ¨tres');
         const data = await res.json();
         setSettings(data);
       } catch (err) {
@@ -62,8 +62,8 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-      if (!res.ok) throw new Error('Erreur mise à jour paramètres');
-      setMessage('Paramètres sauvegardés avec succès !');
+      if (!res.ok) throw new Error('Erreur mise Ã  jour paramÃ¨tres');
+      setMessage('ParamÃ¨tres sauvegardÃ©s avec succÃ¨s !');
     } catch (err) {
       setMessage('Erreur lors de la sauvegarde');
     }
@@ -72,10 +72,10 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-[#12151d] rounded-2xl shadow-lg">
-      <h1 className="text-3xl font-bold mb-6 text-cyan-400">Paramètres du bot</h1>
+      <h1 className="text-3xl font-bold mb-6 text-cyan-400">ParamÃ¨tres du bot</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="prefix" className="block mb-2 font-semibold text-white">Préfixe du bot</label>
+          <label htmlFor="prefix" className="block mb-2 font-semibold text-white">PrÃ©fixe du bot</label>
           <input
             type="text"
             id="prefix"

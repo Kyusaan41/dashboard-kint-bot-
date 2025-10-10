@@ -1,11 +1,11 @@
-// src/components/InteractionPopup.tsx
+﻿// src/components/InteractionPopup.tsx
 
 'use client';
 
 import { motion } from 'framer-motion';
 import { Swords } from 'lucide-react';
 
-// Le type de l'événement d'interaction
+// Le type de l'Ã©vÃ©nement d'interaction
 type ItemUsedEvent = {
     interactionId: string;
     itemId: string;

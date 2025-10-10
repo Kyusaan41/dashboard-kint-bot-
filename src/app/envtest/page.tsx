@@ -1,4 +1,4 @@
-export default function EnvTestPage() {
+﻿export default function EnvTestPage() {
   return (
     <pre>
       Client ID: {process.env.DISCORD_CLIENT_ID || 'undefined'}

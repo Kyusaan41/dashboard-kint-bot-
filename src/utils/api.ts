@@ -1,50 +1,50 @@
-// src/utils/api.ts
+﻿// src/utils/api.ts
 
 import { signOut } from 'next-auth/react';
 
-// Helper pour gérer les réponses de manière cohérente
+// Helper pour gÃ©rer les rÃ©ponses de maniÃ¨re cohÃ©rente
 async function handleApiResponse(response: Response) {
-    // ---- LOGIQUE DE DÉCONNEXION AUTOMATIQUE ----
-    // Si le statut est 401 (Non autorisé) ou 403 (Interdit),
+    // ---- LOGIQUE DE DÃ‰CONNEXION AUTOMATIQUE ----
+    // Si le statut est 401 (Non autorisÃ©) ou 403 (Interdit),
     // cela signifie que la session n'est plus valide.
     if (response.status === 401 || response.status === 403) {
-        console.error("Session invalide ou non autorisée. Déconnexion...");
-        // On utilise la fonction signOut de NextAuth pour déconnecter proprement l'utilisateur
+        console.error("Session invalide ou non autorisÃ©e. DÃ©connexion...");
+        // On utilise la fonction signOut de NextAuth pour dÃ©connecter proprement l'utilisateur
         // et le rediriger vers la page de connexion.
         await signOut({ callbackUrl: '/login' });
         
-        // On lève une erreur pour arrêter l'exécution du code qui a appelé cette fonction.
-        throw new Error('Non autorisé');
+        // On lÃ¨ve une erreur pour arrÃªter l'exÃ©cution du code qui a appelÃ© cette fonction.
+        throw new Error('Non autorisÃ©');
     }
     // ---- FIN DE LA LOGIQUE ----
 
 
     if (!response.ok) {
-        const errorInfo = await response.json().catch(() => ({ message: `Erreur réseau: ${response.statusText}` }));
+        const errorInfo = await response.json().catch(() => ({ message: `Erreur rÃ©seau: ${response.statusText}` }));
         throw new Error(errorInfo.message || 'Une erreur inconnue est survenue.');
     }
     
-    // Si la réponse n'a pas de contenu (cas d'un statut 204 No Content), on retourne null.
+    // Si la rÃ©ponse n'a pas de contenu (cas d'un statut 204 No Content), on retourne null.
     if (response.status === 204) {
         return null;
     }
     return response.json();
 }
 
-// --- FONCTION SSE MODIFIÉE ---
+// --- FONCTION SSE MODIFIÃ‰E ---
 /**
- * S'abonne au flux d'événements SSE du serveur.
- * @param userId - L'ID de l'utilisateur qui s'abonne. Important pour que le bot sache à qui parler.
- * @param onEvent - Une fonction callback qui sera appelée à chaque fois qu'un événement est reçu.
- * @returns Une fonction pour se désabonner et fermer la connexion.
+ * S'abonne au flux d'Ã©vÃ©nements SSE du serveur.
+ * @param userId - L'ID de l'utilisateur qui s'abonne. Important pour que le bot sache Ã  qui parler.
+ * @param onEvent - Une fonction callback qui sera appelÃ©e Ã  chaque fois qu'un Ã©vÃ©nement est reÃ§u.
+ * @returns Une fonction pour se dÃ©sabonner et fermer la connexion.
  */
 export function subscribeToItemEvents(userId: string, onEvent: (data: any) => void) {
     if (!userId) {
-        console.error("Impossible de s'abonner aux événements SSE sans userId.");
+        console.error("Impossible de s'abonner aux Ã©vÃ©nements SSE sans userId.");
         return () => {}; // Retourne une fonction vide si pas d'ID
     }
 
-    // On ajoute l'ID de l'utilisateur comme paramètre de requête.
+    // On ajoute l'ID de l'utilisateur comme paramÃ¨tre de requÃªte.
     const eventSource = new EventSource(`/api/events?userId=${userId}`);
 
     eventSource.onmessage = (event) => {
@@ -52,7 +52,7 @@ export function subscribeToItemEvents(userId: string, onEvent: (data: any) => vo
             const data = JSON.parse(event.data);
             onEvent(data);
         } catch (error) {
-            console.error("Erreur de parsing des données SSE:", event.data);
+            console.error("Erreur de parsing des donnÃ©es SSE:", event.data);
         }
     };
 
@@ -222,7 +222,7 @@ export async function sendKintLogToDiscord(logData: {
     userId: string;
     username: string;
     avatar: string;
-    actionType: 'GAGNÉ' | 'PERDU';
+    actionType: 'GAGNÃ‰' | 'PERDU';
     points: number;
     currentBalance: number;
     effect?: string;
@@ -246,7 +246,7 @@ export async function getActiveEffects(userId: string) {
     return handleApiResponse(await fetch(`/api/effects/${userId}`));
 }
 
-// --- Fonctions pour les Événements ---
+// --- Fonctions pour les Ã‰vÃ©nements ---
 
 export async function fetchEvents() {
     return handleApiResponse(await fetch('/api/events'));

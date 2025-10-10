@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions);

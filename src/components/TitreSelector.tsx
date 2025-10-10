@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 
@@ -11,7 +11,7 @@ export default function TitreSelector({ userId }: TitreSelectorProps) {
   const [titreActuel, setTitreActuel] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showTitres, setShowTitres] = useState(false);  // état pour afficher/cacher la liste
+  const [showTitres, setShowTitres] = useState(false);  // Ã©tat pour afficher/cacher la liste
 
   useEffect(() => {
     if (!userId) return;
@@ -47,7 +47,7 @@ export default function TitreSelector({ userId }: TitreSelectorProps) {
       if (!res.ok) throw new Error('Erreur lors du changement de titre');
       const data = await res.json();
       setTitreActuel(data.titreActuel ?? newTitre);
-      setShowTitres(false);  // on peut cacher la liste après le changement
+      setShowTitres(false);  // on peut cacher la liste aprÃ¨s le changement
     } catch (err) {
       alert((err as Error).message);
     }
@@ -64,7 +64,7 @@ export default function TitreSelector({ userId }: TitreSelectorProps) {
         onClick={() => setShowTitres(!showTitres)}
          className="mb-4 px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
       >
-        {showTitres ? '👀 Cacher les titres' : '🎨 Changer le titre'}
+        {showTitres ? 'ðŸ‘€ Cacher les titres' : 'ðŸŽ¨ Changer le titre'}
       </button>
 
       {showTitres && (

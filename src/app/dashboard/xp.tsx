@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 // On importe le bon nom de fonction pour le classement
 import { getXPLeaderboard, getXPByUser, updateXP } from '@/utils/api';
 
-// On définit un type pour les données du classement
+// On dÃ©finit un type pour les donnÃ©es du classement
 type XPData = {
     userId: string;
     xp: number;
@@ -18,11 +18,11 @@ export default function XPDashboard() {
     useEffect(() => {
         const fetchXPData = async () => {
             try {
-                // On appelle la bonne fonction pour récupérer le classement
+                // On appelle la bonne fonction pour rÃ©cupÃ©rer le classement
                 const leaderboard = await getXPLeaderboard();
                 setXpData(leaderboard);
             } catch (error) {
-                console.error("Erreur lors de la récupération du classement XP:", error);
+                console.error("Erreur lors de la rÃ©cupÃ©ration du classement XP:", error);
             } finally {
                 setLoading(false);
             }
@@ -37,7 +37,7 @@ export default function XPDashboard() {
 
     return (
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold text-cyan-400 mb-4">Classement par Points d'Expérience</h2>
+            <h2 className="text-2xl font-bold text-cyan-400 mb-4">Classement par Points d'ExpÃ©rience</h2>
             <ul className="space-y-2">
                 {xpData.length > 0 ? (
                     xpData.map((user, index) => (
@@ -49,7 +49,7 @@ export default function XPDashboard() {
                         </li>
                     ))
                 ) : (
-                    <p className="text-gray-500">Aucune donnée de classement à afficher.</p>
+                    <p className="text-gray-500">Aucune donnÃ©e de classement Ã  afficher.</p>
                 )}
             </ul>
         </div>

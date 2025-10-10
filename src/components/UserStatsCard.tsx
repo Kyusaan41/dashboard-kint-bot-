@@ -1,4 +1,4 @@
-// components/UserStatsCard.tsx
+﻿// components/UserStatsCard.tsx
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -27,7 +27,7 @@ export default function UserStatsCard() {
   return (
     <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl shadow">
       <img
-        src={session.user.image || "/default-avatar.png"} // met un fallback si pas d’image
+        src={session.user.image || "/default-avatar.png"} // met un fallback si pas dâ€™image
         alt="avatar"
         className="rounded-full w-16 h-16 border border-white/20"
       />

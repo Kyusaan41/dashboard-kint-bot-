@@ -1,10 +1,10 @@
-import 'next-auth';
+﻿import 'next-auth';
 import { DefaultSession } from 'next-auth';
 
-// On étend les types de base de NextAuth
+// On Ã©tend les types de base de NextAuth
 declare module 'next-auth' {
     /**
-     * Le type User. On rend le rôle OPTIONNEL avec le '?'.
+     * Le type User. On rend le rÃ´le OPTIONNEL avec le '?'.
      */
     interface User {
         id: string;
@@ -12,7 +12,7 @@ declare module 'next-auth' {
     }
 
     /**
-     * La session côté client. On rend aussi le rôle optionnel.
+     * La session cÃ´tÃ© client. On rend aussi le rÃ´le optionnel.
      */
     interface Session {
         user: {
@@ -24,7 +24,7 @@ declare module 'next-auth' {
 
 declare module 'next-auth/jwt' {
     /**
-     * Le token JWT. Le rôle devient optionnel ici aussi.
+     * Le token JWT. Le rÃ´le devient optionnel ici aussi.
      */
     interface JWT {
         id: string;

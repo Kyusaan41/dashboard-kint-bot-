@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,7 +9,7 @@ const navLinks = [
     { name: 'Inventaire', href: '/dashboard/inventory', icon: ShoppingCart },
     { name: 'Classement', href: '/dashboard/classement', icon: BarChart2 },
     { name: 'Magasin', href: '/dashboard/shop', icon: Gem },
-    { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
+    { name: 'ParamÃ¨tres', href: '/dashboard/settings', icon: Settings },
     { name: 'Admin', href: '/dashboard/admin', icon: Shield, adminOnly: true },
 ];
 
@@ -29,7 +29,7 @@ export function Sidebar({ userRole }: { userRole?: string }) {
 
                     return (
                         <Link 
-                            key={link.name} // Correction: Ajout de la clé unique
+                            key={link.name} // Correction: Ajout de la clÃ© unique
                             href={link.href}
                             className={`flex items-center py-3 px-4 rounded-lg transition-colors text-lg ${
                                 isActive 

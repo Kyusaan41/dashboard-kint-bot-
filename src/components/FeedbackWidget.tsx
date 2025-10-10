@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { MessageSquare, Send, X, ThumbsUp, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Fonction API que nous créerons à l'étape 3
+// Fonction API que nous crÃ©erons Ã  l'Ã©tape 3
 async function submitFeedback(feedbackText: string) {
     const response = await fetch('/api/feedback', {
         method: 'POST',
@@ -66,7 +66,7 @@ export default function FeedbackWidget() {
                                 <ThumbsUp className="mx-auto h-12 w-12 text-green-500" />
                                 <h3 className="mt-4 font-bold text-lg text-white">Merci !</h3>
                                 <p className="mt-2 text-sm text-gray-300">
-                                    Kyû a bien reçu ton avis 👍🏼 ! Merci beaucoup de participer au développement de KINT ! ❣️
+                                    KyÃ» a bien reÃ§u ton avis ðŸ‘ðŸ¼ ! Merci beaucoup de participer au dÃ©veloppement de KINT ! â£ï¸
                                 </p>
                                 <button
                                     onClick={resetWidget}
@@ -89,7 +89,7 @@ export default function FeedbackWidget() {
                                 <textarea
                                     value={feedbackText}
                                     onChange={(e) => setFeedbackText(e.target.value)}
-                                    placeholder="Écris ton feedback ici..."
+                                    placeholder="Ã‰cris ton feedback ici..."
                                     className="w-full h-28 p-2 bg-[#12151d] border border-white/20 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                                     required
                                 />
@@ -99,7 +99,7 @@ export default function FeedbackWidget() {
                                     className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 text-white font-semibold transition hover:bg-cyan-700 disabled:opacity-50"
                                 >
                                     {isSubmitting ? <Loader2 className="animate-spin" /> : <Send size={16} />}
-                                    Envoyer à Kyû
+                                    Envoyer Ã  KyÃ»
                                 </button>
                             </form>
                         )}

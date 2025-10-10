@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { motion } from 'framer-motion';
 import { Construction } from 'lucide-react';
@@ -24,7 +24,7 @@ export default function ComingSoonPage() {
           Page en Construction
         </h1>
         <p className="text-lg text-gray-300 mb-8">
-          Cette fonctionnalité est en cours de développement. Préparez-vous pour des duels intenses, elle arrive très bientôt !
+          Cette fonctionnalitÃ© est en cours de dÃ©veloppement. PrÃ©parez-vous pour des duels intenses, elle arrive trÃ¨s bientÃ´t !
         </p>
         
         <div className="futuristic-button opacity-50 cursor-not-allowed select-none">

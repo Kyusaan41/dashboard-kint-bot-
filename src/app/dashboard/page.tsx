@@ -3,15 +3,17 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, FC, ReactNode } from 'react';
 import Image from 'next/image';
+import { useHasMounted } from '@/hooks/useHasMounted';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getInventory, getAllAchievements, fetchGazette } from '@/utils/api';
 import {
     Coins, Gift, Loader2, Package, Star, Zap, Trophy,
-    BookOpen, Crown, Gem, CheckCircle, Newspaper
+    BookOpen, Crown, Gem, CheckCircle, Newspaper, 
+    Bot, TrendingUp, Activity, Users, Shield, Sparkles, Settings
 } from 'lucide-react';
 
-// --- Types (inchangés) ---
+// --- Types (inchangÃ©s) ---
 type UserStats = {
     currency: number; currencyRank: number | null;
     xp: number; xpRank: number | null;
@@ -21,7 +23,7 @@ type UserStats = {
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
 type KintHistoryData = { day: string; points: number; };
 type HistoryEntry = {
-    actionType: 'GAGNÉ' | 'PERDU';
+    actionType: 'GAGNÃ‰' | 'PERDU';
     points: number;
     date: string;
     reason: string;
@@ -40,72 +42,140 @@ type Article = {
     icon: string;
 };
 
-// --- NOUVEAU DESIGN DES COMPOSANTS ---
+// --- NYXBOT COMPONENTS ---
 
-const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
+const NyxCard: FC<{ children: ReactNode; className?: string; delay?: number }> = ({ children, className = '', delay = 0 }) => (
     <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className={`bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 ${className}`}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay, ease: 'easeOut' }}
+        className={`nyx-card p-6 hover:scale-[1.02] transition-all duration-300 ${className}`}
     >
         {children}
     </motion.div>
 );
 
-const StatCard: FC<{ icon: ReactNode; title: string; value: number; rank: number | null; color: string }> = ({ icon, title, value, rank, color }) => {
+const StatCard: FC<{ 
+    icon: ReactNode; 
+    title: string; 
+    value: number; 
+    rank: number | null; 
+    trend?: number;
+    delay?: number;
+}> = ({ icon, title, value, rank, trend, delay = 0 }) => {
     const formatRank = (r: number | null) => {
-        if (!r) return <span className="text-gray-500">(Non classé)</span>;
-        const rankColor = r <= 3 ? "text-amber-400" : "text-gray-400";
+        if (!r) return <span className="text-gray-500">(Non classÃ©)</span>;
+        const rankColor = r <= 3 ? "text-purple-secondary" : "text-gray-400";
         return <span className={`font-semibold ${rankColor}`}>#{r}</span>;
     };
     
     return (
-        <Card className="p-6 hover:scale-102 transition-transform duration-300">
-            <div className="flex items-start justify-between">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br ${color}`}>
-                    {icon}
+        <NyxCard delay={delay} className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500 to-purple-400 opacity-10 rounded-full blur-2xl transform translate-x-8 -translate-y-8"></div>
+            <div className="relative">
+                <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                        {icon}
+                    </div>
+                    {trend && (
+                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg ${
+                            trend > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                        }`}>
+                            <TrendingUp size={12} className={trend < 0 ? 'rotate-180' : ''} />
+                            {Math.abs(trend)}%
+                        </div>
+                    )}
                 </div>
-                <div className="text-right">
+                <div>
                     <p className="text-3xl font-bold text-white mb-1">{value.toLocaleString()}</p>
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-400">{title}</span>
                         {formatRank(rank)}
                     </div>
                 </div>
             </div>
-        </Card>
+        </NyxCard>
     );
 };
 
-const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, server }) => (
-    <Card className="p-6 flex items-center gap-6">
-        <div className="relative">
-            <Image 
-                src={user?.image || '/default-avatar.png'} 
-                alt="Avatar" 
-                width={80} 
-                height={80} 
-                className="rounded-2xl shadow-lg border-2 border-cyan-500/30"
-            />
-            <div className="absolute -bottom-2 -right-2 bg-cyan-500 rounded-full p-2">
-                <Crown size={16} className="text-white" />
+const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, server }) => {
+    const hasMounted = useHasMounted();
+    const [time, setTime] = useState<string>('');
+    
+    useEffect(() => {
+        if (hasMounted) {
+            const updateTime = () => {
+                setTime(new Date().toLocaleTimeString('fr-FR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                }));
+            };
+            updateTime();
+            const interval = setInterval(updateTime, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [hasMounted]);
+    
+    return (
+        <NyxCard className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500 to-purple-400 opacity-5 rounded-full blur-3xl"></div>
+            <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <div className="relative">
+                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-400 p-[2px]">
+                            <Image 
+                                src={user?.image || '/default-avatar.png'} 
+                                alt="Avatar" 
+                                width={76} 
+                                height={76} 
+                                className="rounded-[14px] object-cover" 
+                            />
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-purple-500 to-purple-400 rounded-xl p-2">
+                            <Crown size={16} className="text-white" />
+                        </div>
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl font-bold text-white">
+                                Salut, 
+                            </h1>
+                            <span className="text-3xl font-bold text-gradient-purple">
+                                {user?.name || 'Utilisateur'}
+                            </span>
+                            <motion.div
+                                animate={{ rotate: [0, 20, 0] }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                            >
+                                👋
+                            </motion.div>
+                        </div>
+                        <p className="text-gray-400 flex items-center gap-2">
+                            <Bot size={16} className="text-purple-secondary" />
+                            NyxBot Dashboard • {server?.name || 'Serveur'}
+                            {hasMounted && (
+                                <span className="text-purple-secondary ml-2">{time}</span>
+                            )}
+                        </p>
+                    </div>
+                </div>
+                <div className="hidden md:flex items-center gap-4">
+                    <div className="text-right">
+                        <p className="text-sm text-gray-400">Statut</p>
+                        <div className="flex items-center gap-2 text-green-400">
+                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium">En ligne</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div>
-            <h1 className="text-3xl font-bold">
-                Bienvenue, <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{user?.name || 'Utilisateur'}</span>
-            </h1>
-            <p className="text-gray-400 mt-1 text-lg">
-                Dashboard de {server?.name || 'KTS'} • {new Date().toLocaleDateString('fr-FR', { dateStyle: 'full' })}
-            </p>
-        </div>
-    </Card>
-);
+        </NyxCard>
+    );
+};
 
 export default function DashboardHomePage() {
     const { data: session, status } = useSession();
+    const hasMounted = useHasMounted();
     const [stats, setStats] = useState<UserStats | null>(null);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [unlockedSuccesses, setUnlockedSuccesses] = useState<string[]>([]);
@@ -152,9 +222,9 @@ export default function DashboardHomePage() {
                     setPatchNotes(patchnoteData);
                     setArticles(gazetteData);
 
-                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[]).filter(entry => entry.reason !== 'Protégé par KShield').reduce((acc: { [key: string]: number }, entry) => {
+                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[]).filter(entry => entry.reason !== 'ProtÃ©gÃ© par KShield').reduce((acc: { [key: string]: number }, entry) => {
                         const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-                        acc[dayKey] = (acc[dayKey] || 0) + (entry.actionType === 'GAGNÉ' ? entry.points : -entry.points);
+                        acc[dayKey] = (acc[dayKey] || 0) + (entry.actionType === 'GAGNÃ‰' ? entry.points : -entry.points);
                         return acc;
                     }, {});
 
@@ -176,15 +246,22 @@ export default function DashboardHomePage() {
                     setInventory(inventoryData || []);
 
                     if (currency) {
-                        const now = Date.now();
-                        const twentyFourHours = 24 * 60 * 60 * 1000;
-                        const lastClaimTime = currency.lastBonus;
-                        if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
-                            const timeLeftValue = twentyFourHours - (now - lastClaimTime);
-                            setClaimStatus({ canClaim: false, timeLeft: new Date(Math.max(0, timeLeftValue)).toISOString().substr(11, 8) });
-                        } else {
-                            setClaimStatus({ canClaim: true, timeLeft: '' });
-                        }
+                        const updateClaimStatus = () => {
+                            const now = Date.now();
+                            const twentyFourHours = 24 * 60 * 60 * 1000;
+                            const lastClaimTime = currency.lastBonus;
+                            if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
+                                const timeLeftValue = twentyFourHours - (now - lastClaimTime);
+                                const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
+                                const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));
+                                const seconds = Math.floor((timeLeftValue % (1000 * 60)) / 1000);
+                                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                                setClaimStatus({ canClaim: false, timeLeft: timeString });
+                            } else {
+                                setClaimStatus({ canClaim: true, timeLeft: '' });
+                            }
+                        };
+                        updateClaimStatus();
                     }
                     if (statsData) setSelectedTitle(statsData.equippedTitle || '');
                 } catch (error) {
@@ -206,6 +283,39 @@ export default function DashboardHomePage() {
         }
     }, [articles.length]);
 
+    // Timer en temps réel pour la récompense quotidienne
+    useEffect(() => {
+        if (!claimStatus.canClaim && session?.user?.id) {
+            const interval = setInterval(async () => {
+                try {
+                    const currency = await fetch(`/api/currency/${session.user.id}`).then(res => res.json());
+                    if (currency) {
+                        const now = Date.now();
+                        const twentyFourHours = 24 * 60 * 60 * 1000;
+                        const lastClaimTime = currency.lastBonus;
+                        if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
+                            const timeLeftValue = twentyFourHours - (now - lastClaimTime);
+                            if (timeLeftValue > 0) {
+                                const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
+                                const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));
+                                const seconds = Math.floor((timeLeftValue % (1000 * 60)) / 1000);
+                                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                                setClaimStatus({ canClaim: false, timeLeft: timeString });
+                            } else {
+                                setClaimStatus({ canClaim: true, timeLeft: '' });
+                            }
+                        } else {
+                            setClaimStatus({ canClaim: true, timeLeft: '' });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur de mise à jour du timer:', error);
+                }
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [claimStatus.canClaim, session?.user?.id]);
+
     const handleClaimReward = async () => {
         if (!claimStatus.canClaim || isClaiming || !session?.user?.id) return;
         setIsClaiming(true);
@@ -217,11 +327,19 @@ export default function DashboardHomePage() {
             });
             const data = await res.json();
             if (res.ok) {
-                showNotification(data.message || "Récompense réclamée !");
+                showNotification(data.message || "RÃ©compense rÃ©clamÃ©e !");
                 setStats(prev => prev ? { ...prev, currency: data.newBalance } : null);
-                setClaimStatus({ canClaim: false, timeLeft: '24:00:00' });
+                const now = Date.now();
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+                const nextClaimTime = now + twentyFourHours;
+                const timeLeftValue = nextClaimTime - now;
+                const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeftValue % (1000 * 60)) / 1000);
+                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                setClaimStatus({ canClaim: false, timeLeft: timeString });
             } else {
-                showNotification(data.error || "Impossible de réclamer.", "error");
+                showNotification(data.error || "Impossible de rÃ©clamer.", "error");
             }
         } catch (error) {
             showNotification("Une erreur est survenue.", "error");
@@ -240,184 +358,444 @@ export default function DashboardHomePage() {
             });
             setStats(prev => prev ? { ...prev, equippedTitle: selectedTitle } : null);
             setIsTitleModalOpen(false);
-            showNotification("Titre équipé avec succès!");
+            showNotification("Titre Ã©quipÃ© avec succÃ¨s!");
         } catch (error) {
             showNotification("Une erreur est survenue.", "error");
         }
     };
 
     if (loading || status === 'loading') {
-        return <div className="flex h-full items-center justify-center text-gray-400"><Loader2 className="h-8 w-8 animate-spin mr-3" /> KINT by Kyû</div>;
+        return (
+            <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                    <div className="nyx-spinner mb-4"></div>
+                    <p className="text-gray-300">NyxBot Dashboard se charge...</p>
+                </div>
+            </div>
+        );
     }
 
     const totalAchievementsCount = Object.keys(allAchievements).length;
 
     return (
-        <AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="space-y-6 p-6"
-            >
-                <AnimatePresence>
-                    {notification.show && (
-                        <motion.div initial={{ opacity: 0, y: 50, scale: 0.3 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }} className={`fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3 rounded-full shadow-lg z-50 text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-                            <CheckCircle />
-                            <span className="font-semibold">{notification.message}</span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+        <div className="space-y-8">
+            {/* Notifications */}
+            <AnimatePresence>
+                {notification.show && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -50, scale: 0.9 }} 
+                        animate={{ opacity: 1, y: 0, scale: 1 }} 
+                        exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
+                        className={`fixed top-8 right-8 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl z-50 backdrop-blur-xl ${
+                            notification.type === 'success' 
+                                ? 'bg-green-500/20 border border-green-500/30 text-green-300' 
+                                : 'bg-red-500/20 border border-red-500/30 text-red-300'
+                        }`}
+                    >
+                        {notification.type === 'success' ? 
+                            <CheckCircle size={20} /> : 
+                            <Shield size={20} />
+                        }
+                        <span className="font-semibold">{notification.message}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                <WelcomeHeader user={session?.user} server={serverInfo} />
+            {/* Welcome Header */}
+            <WelcomeHeader user={session?.user} server={serverInfo} />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {stats && (
-                        <>
-                            <StatCard 
-                                icon={<Coins size={24} className="text-amber-300" />} 
-                                title="Pièces" 
-                                value={stats.currency} 
-                                rank={stats.currencyRank} 
-                                color="from-amber-500/20 to-yellow-600/20" 
-                            />
-                            <StatCard 
-                                icon={<Star size={24} className="text-emerald-300" />} 
-                                title="Expérience" 
-                                value={stats.xp} 
-                                rank={stats.xpRank} 
-                                color="from-emerald-500/20 to-green-600/20" 
-                            />
-                            <StatCard 
-                                icon={<Zap size={24} className="text-cyan-300" />} 
-                                title="Points KINT" 
-                                value={stats.points} 
-                                rank={stats.pointsRank} 
-                                color="from-cyan-500/20 to-blue-600/20" 
-                            />
-                        </>
-                    )}
-                </div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats && (
+                    <>
+                        <StatCard 
+                            icon={<Coins size={24} className="text-white" />} 
+                            title="NyxCoins" 
+                            value={stats.currency} 
+                            rank={stats.currencyRank}
+                            trend={12}
+                            delay={0}
+                        />
+                        <StatCard 
+                            icon={<Star size={24} className="text-white" />} 
+                            title="Expérience" 
+                            value={stats.xp} 
+                            rank={stats.xpRank}
+                            trend={8}
+                            delay={0.1}
+                        />
+                        <StatCard 
+                            icon={<Zap size={24} className="text-white" />} 
+                            title="Points NyxBot" 
+                            value={stats.points} 
+                            rank={stats.pointsRank}
+                            trend={-3}
+                            delay={0.2}
+                        />
+                        <StatCard 
+                            icon={<Trophy size={24} className="text-white" />} 
+                            title="Succès" 
+                            value={unlockedSuccesses.length} 
+                            rank={null}
+                            delay={0.3}
+                        />
+                    </>
+                )}
+            </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <div className="lg:col-span-3 space-y-8">
-                        <Card className="p-6">
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Zap size={18} /> Historique des Points KINT (7 jours)</h3>
-                            <ResponsiveContainer width="100%" height={250}>
+            {/* Main Dashboard Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column - Analytics */}
+                <div className="lg:col-span-2 space-y-8">
+                    {/* Activity Chart */}
+                    <NyxCard delay={0.4} className="relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-500 to-purple-400 opacity-5 rounded-full blur-3xl transform translate-x-8 -translate-y-8"></div>
+                        <div className="relative">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                                        <Activity size={18} className="text-white" />
+                                    </div>
+                                    Activité NyxBot (7 derniers jours)
+                                </h3>
+                                <div className="flex items-center gap-2 text-xs text-purple-secondary bg-purple-primary/10 px-3 py-1 rounded-lg">
+                                    <TrendingUp size={12} />
+                                    +24% cette semaine
+                                </div>
+                            </div>
+                            <ResponsiveContainer width="100%" height={280}>
                                 <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                                    <XAxis dataKey="day" stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} />
-                                    <YAxis stroke="#9ca3af" fontSize={12} axisLine={false} tickLine={false} allowDecimals={false} />
-                                    <Tooltip contentStyle={{ backgroundColor: 'rgba(28, 34, 48, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '0.75rem', backdropFilter: 'blur(4px)' }} labelStyle={{ color: '#cbd5e1' }} itemStyle={{ color: '#22d3ee' }} />
-                                    <defs><linearGradient id="kintPointsGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#22d3ee" stopOpacity={0.4} /><stop offset="95%" stopColor="#06b6d4" stopOpacity={0} /></linearGradient></defs>
-                                    <Area type="monotone" dataKey="points" name="Points KINT" stroke="#22d3ee" strokeWidth={2} fill="url(#kintPointsGradient)" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
+                                    <XAxis 
+                                        dataKey="day" 
+                                        stroke="var(--text-tertiary)" 
+                                        fontSize={12} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                    />
+                                    <YAxis 
+                                        stroke="var(--text-tertiary)" 
+                                        fontSize={12} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        allowDecimals={false} 
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{ 
+                                            backgroundColor: 'rgba(26, 26, 34, 0.9)', 
+                                            border: '1px solid var(--purple-primary)', 
+                                            borderRadius: '12px', 
+                                            backdropFilter: 'blur(20px)',
+                                            boxShadow: 'var(--shadow-purple)'
+                                        }} 
+                                        labelStyle={{ color: 'var(--text-secondary)' }} 
+                                        itemStyle={{ color: 'var(--purple-secondary)' }} 
+                                    />
+                                    <defs>
+                                        <linearGradient id="nyxPointsGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="var(--purple-primary)" stopOpacity={0.6} />
+                                            <stop offset="95%" stopColor="var(--purple-primary)" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="points" 
+                                        name="Points NyxBot" 
+                                        stroke="var(--purple-primary)" 
+                                        strokeWidth={3} 
+                                        fill="url(#nyxPointsGradient)" 
+                                    />
                                 </AreaChart>
                             </ResponsiveContainer>
-                        </Card>
-                        {patchNotes && (
-                            <Card className="p-6">
-                                <h3 className="font-bold text-white mb-4 flex items-center gap-2"><BookOpen size={18} /> {patchNotes.title}</h3>
-                                <div className="space-y-4 text-gray-300">
-                                    {patchNotes.ajouts?.length > 0 && <div><h4 className="font-semibold text-cyan-400 mb-2">Ajouts</h4><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajouts.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
-                                    {patchNotes.ajustements?.length > 0 && <div><h4 className="font-semibold text-green-400 mb-2">Ajustements</h4><ul className="list-disc list-inside space-y-1 text-sm">{patchNotes.ajustements.map((note, i) => <li key={i}>{note}</li>)}</ul></div>}
+                        </div>
+                    </NyxCard>
+
+                    {/* Update Notes */}
+                    {patchNotes && (
+                        <NyxCard delay={0.5}>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                                    <BookOpen size={18} className="text-white" />
                                 </div>
-                            </Card>
-                        )}
-                    </div>
-                    <div className="lg:col-span-2 space-y-8">
-                        <Card className="p-6">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-amber-500 text-white"><Gift size={24} /></div>
-                                <div>
-                                    <h3 className="font-bold text-white">Bonus Quotidien</h3>
-                                    <p className="text-sm text-gray-400">Réclamez 500 pièces !</p>
+                                <h3 className="text-xl font-bold text-white">{patchNotes.title}</h3>
+                                <div className="ml-auto px-3 py-1 bg-purple-primary/20 text-purple-secondary text-xs rounded-lg font-medium">
+                                    Nouveautés
                                 </div>
                             </div>
-                            <button onClick={handleClaimReward} disabled={!claimStatus.canClaim || isClaiming} className={`w-full px-4 py-2 rounded-lg font-bold transition-all flex items-center justify-center ${!claimStatus.canClaim || isClaiming ? 'bg-gray-700/50 cursor-not-allowed text-gray-400' : 'futuristic-button'}`}>
-                                {isClaiming && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
-                                {claimStatus.canClaim ? 'Réclamer' : `Prochaine dans ${claimStatus.timeLeft}`}
-                            </button>
-                        </Card>
-                        <Card className="p-6">
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Newspaper size={18} /> Les Actus</h3>
-                            <div className="relative h-24 flex items-center">
-                                <AnimatePresence mode="wait">
-                                    {articles.length > 0 ? (
-                                        <motion.div key={articles[currentArticleIndex].id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.4, ease: "easeInOut" }} className="w-full">
-                                            <div className="flex items-start gap-3">
-                                                <span className="text-xl mt-1">{articles[currentArticleIndex].icon}</span>
-                                                <div>
-                                                    <h4 className="font-semibold text-white">{articles[currentArticleIndex].title}</h4>
-                                                    <p className="text-sm text-gray-400">{articles[currentArticleIndex].content}</p>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ) : (
-                                        <p className="text-gray-500 text-center w-full">Rien de neuf à signaler pour le moment.</p>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </Card>
-                        <Card className="p-6">
-                            <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Gem size={18} /> Personnalisation</h3>
-                            <div className="bg-gray-800/50 p-4 rounded-lg flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-400">Titre Actuel</p>
-                                    <p className="font-semibold text-white">{stats?.equippedTitle || 'Aucun'}</p>
-                                </div>
-                                <button onClick={() => setIsTitleModalOpen(true)} className="bg-cyan-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-cyan-700 transition">Changer</button>
-                            </div>
-                        </Card>
-                        <Card className="p-6 flex-grow">
-                            <h3 className="font-bold text-white mb-3 flex items-center gap-2"><Package size={18} /> Inventaire</h3>
-                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                                {inventory.length > 0 ? inventory.map(item => (
-                                    <div key={item.id} className="flex items-center bg-gray-800/50 p-2 rounded-md">
-                                        {item.icon ? <Image src={item.icon} alt={item.name} width={20} height={20} /> : <Gem size={20} className="text-gray-500" />}
-                                        <span className="ml-3 flex-1 font-semibold truncate">{item.name}</span>
-                                        <span className="text-xs font-bold bg-cyan-800 text-cyan-200 px-2 py-1 rounded-full">x{item.quantity}</span>
+                            <div className="space-y-4">
+                                {patchNotes.ajouts?.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-purple-secondary mb-3 flex items-center gap-2">
+                                            <Sparkles size={16} />
+                                            Nouveautés
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {patchNotes.ajouts.map((note, i) => (
+                                                <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
+                                                    <div className="w-1.5 h-1.5 bg-purple-primary rounded-full mt-2 flex-shrink-0"></div>
+                                                    {note}
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </div>
-                                )) : <p className="text-sm text-center text-gray-500 py-4">Votre inventaire est vide.</p>}
+                                )}
+                                {patchNotes.ajustements?.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-green-400 mb-3 flex items-center gap-2">
+                                            <Settings size={16} />
+                                            Améliorations
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {patchNotes.ajustements.map((note, i) => (
+                                                <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
+                                                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                                                    {note}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
-                        </Card>
-                    </div>
+                        </NyxCard>
+                    )}
                 </div>
 
-                <Card className="p-6">
-                    <h2 className="font-bold text-white mb-4 flex items-center gap-2"><Trophy size={20} />Succès Débloqués ({unlockedSuccesses.length}/{totalAchievementsCount})</h2>
-                    {unlockedSuccesses.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                            {unlockedSuccesses.map(successId => (
-                                <div key={successId} className="bg-gray-800/50 p-3 rounded-lg text-center truncate group hover:bg-gray-700/70 transition-colors" title={allAchievements[successId]?.description || 'Succès secret'}>
-                                    <p className="text-sm font-semibold text-white">{allAchievements[successId]?.name || successId}</p>
+                {/* Right Column - Quick Actions & Info */}
+                <div className="space-y-6">
+                    {/* Daily Bonus */}
+                    <NyxCard delay={0.6} className="relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500 to-purple-400 opacity-10 rounded-full blur-2xl"></div>
+                        <div className="relative">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                                    <Gift size={24} className="text-white" />
                                 </div>
-                            ))}
+                                <div>
+                                    <h3 className="font-bold text-white">Récompense Quotidienne</h3>
+                                    <p className="text-sm text-gray-400">500 NyxCoins vous attendent !</p>
+                                </div>
+                            </div>
+                            <motion.button 
+                                onClick={handleClaimReward} 
+                                disabled={!claimStatus.canClaim || isClaiming}
+                                className={`w-full py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 ${
+                                    !claimStatus.canClaim || isClaiming 
+                                        ? 'bg-gray-700/50 cursor-not-allowed text-gray-400' 
+                                        : 'btn-nyx-primary'
+                                }`}
+                                whileHover={claimStatus.canClaim ? { scale: 1.02 } : {}}
+                                whileTap={claimStatus.canClaim ? { scale: 0.98 } : {}}
+                            >
+                                {isClaiming && <Loader2 className="h-5 w-5 animate-spin" />}
+                                {claimStatus.canClaim ? 'Réclamer maintenant' : `Disponible dans ${claimStatus.timeLeft}`}
+                            </motion.button>
                         </div>
-                    ) : <p className="text-gray-500 text-sm text-center py-8">Aucun succès débloqué.</p>}
-                </Card>
+                    </NyxCard>
 
-                {isTitleModalOpen && (
-                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-[#1c222c] p-6 rounded-2xl border border-cyan-700 w-full max-w-md shadow-2xl">
-                            <h2 className="text-xl font-bold mb-5">Changer de titre</h2>
-                            <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                                {availableTitles.length > 0 ? availableTitles.map(titre => (
-                                    <label key={titre} className="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 transition-colors">
-                                        <input type="radio" name="title" value={titre} checked={selectedTitle === titre} onChange={(e) => setSelectedTitle(e.target.value)} className="form-radio h-5 w-5 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500 focus:ring-offset-0" />
-                                        <span className="ml-4">{titre}</span>
-                                    </label>
-                                )) : <p className="text-gray-400 text-center py-4">Vous ne possédez aucun titre.</p>}
+                    {/* News Feed */}
+                    <NyxCard delay={0.7}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                                <Newspaper size={18} className="text-white" />
                             </div>
-                            <div className="flex justify-end gap-4 mt-6">
-                                <button onClick={() => setIsTitleModalOpen(false)} className="px-5 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition">Annuler</button>
-                                <button onClick={handleEquipTitle} className="futuristic-button">Équiper</button>
+                            <h3 className="font-bold text-white">Actualités NyxBot</h3>
+                        </div>
+                        <div className="relative min-h-[100px] flex items-center">
+                            <AnimatePresence mode="wait">
+                                {articles.length > 0 ? (
+                                    <motion.div 
+                                        key={articles[currentArticleIndex].id} 
+                                        initial={{ opacity: 0, x: 20 }} 
+                                        animate={{ opacity: 1, x: 0 }} 
+                                        exit={{ opacity: 0, x: -20 }} 
+                                        transition={{ duration: 0.4 }}
+                                        className="w-full"
+                                    >
+                                        <div className="flex items-start gap-3 p-4 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
+                                            <span className="text-2xl">{articles[currentArticleIndex].icon}</span>
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-white mb-1">{articles[currentArticleIndex].title}</h4>
+                                                <p className="text-sm text-gray-400">{articles[currentArticleIndex].content}</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <div className="w-full text-center py-8">
+                                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
+                                            <Newspaper size={24} className="text-gray-500" />
+                                        </div>
+                                        <p className="text-gray-500">Aucune actualité pour le moment</p>
+                                    </div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </NyxCard>
+
+                    {/* Customization */}
+                    <NyxCard delay={0.8}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                                <Crown size={18} className="text-white" />
                             </div>
-                        </motion.div>
+                            <h3 className="font-bold text-white">Personnalisation</h3>
+                        </div>
+                        <div className="p-4 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <p className="text-sm text-gray-400">Titre actuel</p>
+                                    <p className="font-semibold text-white">{stats?.equippedTitle || 'Aucun titre'}</p>
+                                </div>
+                                <motion.button 
+                                    onClick={() => setIsTitleModalOpen(true)} 
+                                    className="btn-nyx-secondary"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    Modifier
+                                </motion.button>
+                            </div>
+                        </div>
+                    </NyxCard>
+
+                    {/* Quick Inventory */}
+                    <NyxCard delay={0.9}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                                <Package size={18} className="text-white" />
+                            </div>
+                            <h3 className="font-bold text-white">Inventaire</h3>
+                            <div className="ml-auto px-2 py-1 bg-purple-primary/20 text-purple-secondary text-xs rounded-lg">
+                                {inventory.length} objets
+                            </div>
+                        </div>
+                        <div className="space-y-3 max-h-48 overflow-y-auto">
+                            {inventory.length > 0 ? inventory.slice(0, 5).map(item => (
+                                <div key={item.id} className="flex items-center gap-3 p-3 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
+                                    {item.icon ? 
+                                        <Image src={item.icon} alt={item.name} width={24} height={24} className="rounded" /> : 
+                                        <div className="w-6 h-6 rounded bg-purple-primary/20 flex items-center justify-center">
+                                            <Gem size={14} className="text-purple-secondary" />
+                                        </div>
+                                    }
+                                    <span className="flex-1 font-medium text-white truncate">{item.name}</span>
+                                    <span className="text-xs font-bold bg-purple-primary/20 text-purple-secondary px-2 py-1 rounded-lg">
+                                        x{item.quantity}
+                                    </span>
+                                </div>
+                            )) : (
+                                <div className="text-center py-6">
+                                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-800/50 flex items-center justify-center">
+                                        <Package size={20} className="text-gray-500" />
+                                    </div>
+                                    <p className="text-sm text-gray-500">Inventaire vide</p>
+                                </div>
+                            )}
+                        </div>
+                    </NyxCard>
+                </div>
+            </div>
+
+            {/* Achievements Section */}
+            <NyxCard delay={1.0}>
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                        <Trophy size={18} className="text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white">Succès Débloqués</h2>
+                    <div className="ml-auto px-3 py-1 bg-purple-primary/20 text-purple-secondary text-xs rounded-lg font-medium">
+                        {unlockedSuccesses.length}/{totalAchievementsCount}
+                    </div>
+                </div>
+                {unlockedSuccesses.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                        {unlockedSuccesses.map((successId, index) => (
+                            <motion.div 
+                                key={successId} 
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="p-4 bg-purple-primary/5 rounded-lg border border-purple-primary/20 text-center group hover:bg-purple-primary/10 transition-all duration-300 cursor-pointer" 
+                                title={allAchievements[successId]?.description || 'Succès secret'}
+                            >
+                                <div className="w-8 h-8 mx-auto mb-2 bg-gradient-to-br from-purple-500 to-purple-400 rounded-lg flex items-center justify-center">
+                                    <Trophy size={16} className="text-white" />
+                                </div>
+                                <p className="text-xs font-medium text-white truncate">
+                                    {allAchievements[successId]?.name || successId}
+                                </p>
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
+                            <Trophy size={32} className="text-gray-500" />
+                        </div>
+                        <p className="text-gray-500 text-sm">Aucun succès débloqué pour le moment</p>
                     </div>
                 )}
+            </NyxCard>
 
-                <style jsx global>{`.bg-grid-pattern { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 20px 20px; }`}</style>
-            </motion.div>
-        </AnimatePresence>
+            {/* Title Modal */}
+            <AnimatePresence>
+                {isTitleModalOpen && (
+                    <motion.div 
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9 }} 
+                            animate={{ opacity: 1, scale: 1 }} 
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="nyx-card w-full max-w-md shadow-2xl"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                                    <Crown size={18} className="text-white" />
+                                </div>
+                                <h2 className="text-xl font-bold text-white">Changer de titre</h2>
+                            </div>
+                            <div className="space-y-3 max-h-64 overflow-y-auto">
+                                {availableTitles.length > 0 ? availableTitles.map(titre => (
+                                    <label key={titre} className="flex items-center p-3 bg-purple-primary/5 rounded-lg border border-purple-primary/20 cursor-pointer hover:bg-purple-primary/10 transition-colors">
+                                        <input 
+                                            type="radio" 
+                                            name="title" 
+                                            value={titre} 
+                                            checked={selectedTitle === titre} 
+                                            onChange={(e) => setSelectedTitle(e.target.value)} 
+                                            className="w-4 h-4 text-purple-primary bg-gray-700 border-gray-600 focus:ring-purple-primary focus:ring-offset-0" 
+                                        />
+                                        <span className="ml-3 text-white">{titre}</span>
+                                    </label>
+                                )) : (
+                                    <p className="text-gray-400 text-center py-8">Vous ne possédez aucun titre.</p>
+                                )}
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <motion.button 
+                                    onClick={() => setIsTitleModalOpen(false)} 
+                                    className="btn-nyx-secondary"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    Annuler
+                                </motion.button>
+                                <motion.button 
+                                    onClick={handleEquipTitle} 
+                                    className="btn-nyx-primary"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    Équiper
+                                </motion.button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 }

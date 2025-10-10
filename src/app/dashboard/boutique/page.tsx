@@ -5,9 +5,12 @@ import { useSession } from 'next-auth/react';
 import { getShopItems, buyItem, fetchCurrency, getKshieldStatus, getInventory } from '@/utils/api';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle, Sword, Palette, Wrench, Check, Gem, Loader2 } from 'lucide-react';
+import { 
+    ShoppingCart, X, Coins, RefreshCw, Lock, CheckCircle, Sword, Palette, Wrench, 
+    Check, Gem, Loader2, Store, Filter, Search, Star, Sparkles, Crown, Zap, Package
+} from 'lucide-react';
 
-// --- Types (inchangés) ---
+// --- Types (inchangÃ©s) ---
 type ShopItem = {
     id: string;
     name: string;
@@ -15,13 +18,13 @@ type ShopItem = {
     description: string;
     icon: string;
     type: 'Kint' | 'Utilitaire' | 'Personnalisation' | string;
-    category: 'Légendaire' | 'Épique' | 'Rare' | 'Commun' | string;
+    category: 'LÃ©gendaire' | 'Ã‰pique' | 'Rare' | 'Commun' | string;
     action?: string;
 };
 type InventoryItem = { id: string; name: string; quantity: number; icon?: string; };
 type KShieldStatus = { canPurchase: boolean; timeLeft?: number; };
 
-// --- Constantes & Helpers (inchangés) ---
+// --- Constantes & Helpers (inchangÃ©s) ---
 const formatTimeLeft = (ms: number) => {
     if (ms <= 0) return 'Indisponible';
     const s = Math.floor(ms / 1000);
@@ -33,77 +36,284 @@ const formatTimeLeft = (ms: number) => {
 };
 
 const mainCategories = [
-    { id: 'Kint', label: 'Kint', icon: Sword },
-    { id: 'Utilitaire', label: 'Utilitaire', icon: Wrench },
-    { id: 'Personnalisation', label: 'Personnalisation', icon: Palette },
+    { id: 'Kint', label: '⚔️ Combat', icon: Sword, gradient: 'from-red-500 to-orange-500' },
+    { id: 'Utilitaire', label: '🔧 Utilitaire', icon: Wrench, gradient: 'from-blue-500 to-cyan-500' },
+    { id: 'Personnalisation', label: '👑 Style', icon: Palette, gradient: 'from-purple-500 to-pink-500' },
 ];
 
 const rarityConfig = {
-    'Légendaire': { color: 'text-orange-400', border: 'border-orange-400', glow: 'shadow-orange-400/30' },
-    'Épique': { color: 'text-purple-400', border: 'border-purple-400', glow: 'shadow-purple-400/30' },
-    'Rare': { color: 'text-blue-400', border: 'border-blue-400', glow: 'shadow-blue-400/30' },
-    'Commun': { color: 'text-gray-400', border: 'border-gray-400', glow: 'shadow-gray-400/20' },
-    'Divers': { color: 'text-gray-500', border: 'border-gray-500', glow: 'shadow-gray-500/20' }
+    'Légendaire': { 
+        color: 'text-orange-400', 
+        bg: 'bg-gradient-to-br from-orange-500/20 to-yellow-500/20', 
+        border: 'border-orange-500/50', 
+        glow: 'shadow-orange-500/30',
+        icon: '✨'
+    },
+    'Épique': { 
+        color: 'text-purple-400', 
+        bg: 'bg-gradient-to-br from-purple-500/20 to-pink-500/20', 
+        border: 'border-purple-500/50', 
+        glow: 'shadow-purple-500/30',
+        icon: '💜'
+    },
+    'Rare': { 
+        color: 'text-blue-400', 
+        bg: 'bg-gradient-to-br from-blue-500/20 to-cyan-500/20', 
+        border: 'border-blue-500/50', 
+        glow: 'shadow-blue-500/30',
+        icon: '💎'
+    },
+    'Commun': { 
+        color: 'text-gray-400', 
+        bg: 'bg-gradient-to-br from-gray-500/20 to-gray-600/20', 
+        border: 'border-gray-500/50', 
+        glow: 'shadow-gray-500/20',
+        icon: '⚪'
+    },
+    'Divers': { 
+        color: 'text-gray-500', 
+        bg: 'bg-gradient-to-br from-gray-600/20 to-gray-700/20', 
+        border: 'border-gray-600/50', 
+        glow: 'shadow-gray-600/20',
+        icon: '📦'
+    }
 };
 const rarityOrder = Object.keys(rarityConfig);
 
-// --- COMPOSANTS UI REDÉSIGNÉS ---
-const Card: FC<{ children: ReactNode; className?: string }> = ({ children, className = '' }) => (
-    <div className={`futuristic-card rounded-xl shadow-lg relative overflow-hidden group ${className}`}>
-        <div className="absolute inset-0 bg-grid-pattern opacity-5 group-hover:opacity-10 transition-opacity duration-300"></div>
-        <div className="relative z-10">{children}</div>
-    </div>
+// --- NYXBOT SHOP COMPONENTS ---
+const NyxCard: FC<{ children: ReactNode; className?: string; delay?: number }> = ({ children, className = '', delay = 0 }) => (
+    <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay }}
+        className={`nyx-card ${className}`}
+    >
+        {children}
+    </motion.div>
 );
 
-const ShopItemCard: FC<{ item: ShopItem, onAddToCart: (item: ShopItem) => void, isOwned: boolean, kshieldStatus: KShieldStatus }> = ({ item, onAddToCart, isOwned, kshieldStatus }) => {
+const ShopItemCard: FC<{ 
+    item: ShopItem, 
+    onAddToCart: (item: ShopItem) => void, 
+    isOwned: boolean, 
+    kshieldStatus: KShieldStatus,
+    index: number 
+}> = ({ item, onAddToCart, isOwned, kshieldStatus, index }) => {
     const rarity = rarityConfig[item.category as keyof typeof rarityConfig] || rarityConfig['Divers'];
     let isDisabled = false;
-    let buttonText = "Ajouter au panier";
+    let buttonText = "Acheter";
     let ButtonIcon = ShoppingCart;
+    let buttonClass = 'btn-nyx-primary';
 
     if (isOwned) {
         isDisabled = true;
         buttonText = "Possédé";
         ButtonIcon = CheckCircle;
+        buttonClass = 'bg-green-500/20 text-green-400 cursor-not-allowed border border-green-500/30';
     } else if (item.id === 'KShield' && !kshieldStatus.canPurchase) {
         isDisabled = true;
-        buttonText = `Dans ${formatTimeLeft(kshieldStatus.timeLeft || 0)}`;
+        buttonText = `Disponible dans ${formatTimeLeft(kshieldStatus.timeLeft || 0)}`;
         ButtonIcon = Lock;
+        buttonClass = 'bg-gray-700/50 text-gray-400 cursor-not-allowed';
     }
 
     return (
         <motion.div
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className={`futuristic-card flex flex-col group !p-0 overflow-hidden ${rarity.border}`}
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            whileHover={{ y: -8, scale: 1.02 }}
+            className={`relative overflow-hidden group cursor-pointer`}
         >
-            <div className="p-6 flex flex-col flex-grow">
-                <div className="flex-grow">
-                    <div className={`w-24 h-24 mx-auto rounded-lg flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 group-hover:${rarity.glow}`}>
-                        <Image src={item.icon || '/default-icon.png'} alt={item.name} width={64} height={64} className="object-contain" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white text-center">{item.name}</h2>
-                    <p className={`text-sm font-bold text-center ${rarity.color} mb-2`}>{item.category}</p>
-                    <p className="text-sm text-gray-400 text-center h-12">{item.description}</p>
+            {/* Glow Effect */}
+            <div className={`absolute inset-0 ${rarity.bg} rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500 scale-95 group-hover:scale-100`}></div>
+            
+            {/* Main Card */}
+            <div className={`relative nyx-card border ${rarity.border} hover:border-opacity-100 transition-all duration-300`}>
+                {/* Rarity Badge */}
+                <div className={`absolute top-4 right-4 ${rarity.bg} ${rarity.border} border rounded-lg px-2 py-1 z-10`}>
+                    <span className="text-xs font-bold flex items-center gap-1">
+                        <span>{rarity.icon}</span>
+                        <span className={rarity.color}>{item.category}</span>
+                    </span>
                 </div>
-                <div className="mt-6 text-center">
-                    <p className="text-2xl font-bold text-yellow-400 flex items-center justify-center gap-2">
-                        <Coins size={20}/> {item.price.toLocaleString()}
+
+                <div className="p-6">
+                    {/* Item Image */}
+                    <div className="relative mb-4">
+                        <div className={`w-20 h-20 mx-auto rounded-xl ${rarity.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-300`}>
+                            <Image 
+                                src={item.icon || '/default-icon.png'} 
+                                alt={item.name} 
+                                width={48} 
+                                height={48} 
+                                className="object-contain" 
+                            />
+                        </div>
+                        
+                        {/* Sparkle Effect */}
+                        <motion.div 
+                            className="absolute top-0 left-1/2 transform -translate-x-1/2 text-purple-secondary"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                        >
+                            <Sparkles size={16} className="opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </motion.div>
+                    </div>
+
+                    {/* Item Info */}
+                    <h3 className="text-lg font-bold text-white text-center mb-2 group-hover:text-purple-secondary transition-colors duration-300">
+                        {item.name}
+                    </h3>
+                    <p className="text-sm text-gray-400 text-center mb-4 h-10 line-clamp-2">
+                        {item.description}
                     </p>
+
+                    {/* Price */}
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <div className="flex items-center gap-1 px-3 py-1 bg-gradient-purple rounded-lg">
+                            <Coins size={16} className="text-yellow-400" />
+                            <span className="text-lg font-bold text-white">
+                                {item.price.toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Action Button */}
                     <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => onAddToCart(item)}
+                        onClick={() => !isDisabled && onAddToCart(item)}
                         disabled={isDisabled}
-                        className={`mt-4 w-full font-bold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                            isDisabled ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed' : 'futuristic-button'
-                        }`}
+                        className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${buttonClass}`}
+                        whileHover={!isDisabled ? { scale: 1.05 } : {}}
+                        whileTap={!isDisabled ? { scale: 0.95 } : {}}
                     >
-                        <ButtonIcon size={18}/> {buttonText}
+                        <ButtonIcon size={18} />
+                        <span>{buttonText}</span>
                     </motion.button>
                 </div>
             </div>
+        </motion.div>
+    );
+};
+
+// Cart Component
+const CartCard: FC<{ 
+    cart: ShopItem[], 
+    cartTotal: number, 
+    userBalance: number | null,
+    onRemoveItem: (index: number) => void,
+    onPurchase: () => void,
+    isPurchasing: boolean
+}> = ({ cart, cartTotal, userBalance, onRemoveItem, onPurchase, isPurchasing }) => {
+    return (
+        <motion.div
+            initial={{ opacity: 0, x: 300 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="nyx-card sticky top-8"
+        >
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-purple flex items-center justify-center">
+                    <ShoppingCart size={20} className="text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-white">Panier</h2>
+                <div className="ml-auto px-2 py-1 bg-purple-primary/20 text-purple-secondary text-sm rounded-lg">
+                    {cart.length} articles
+                </div>
+            </div>
+
+            {cart.length === 0 ? (
+                <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
+                        <ShoppingCart size={24} className="text-gray-500" />
+                    </div>
+                    <p className="text-gray-500">Votre panier est vide</p>
+                </div>
+            ) : (
+                <>
+                    <div className="space-y-3 mb-6 max-h-60 overflow-y-auto">
+                        {cart.map((item, index) => (
+                            <motion.div 
+                                key={`${item.id}-${index}`}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex items-center gap-3 p-3 bg-purple-primary/5 rounded-lg border border-purple-primary/20"
+                            >
+                                <Image 
+                                    src={item.icon || '/default-icon.png'} 
+                                    alt={item.name} 
+                                    width={32} 
+                                    height={32} 
+                                    className="rounded"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-white truncate">{item.name}</p>
+                                    <p className="text-sm text-purple-secondary flex items-center gap-1">
+                                        <Coins size={14} />
+                                        {item.price.toLocaleString()}
+                                    </p>
+                                </div>
+                                <motion.button
+                                    onClick={() => onRemoveItem(index)}
+                                    className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors flex items-center justify-center"
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                >
+                                    <X size={14} />
+                                </motion.button>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    <div className="border-t border-purple-primary/20 pt-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="text-lg font-bold text-white">Total</span>
+                            <div className="flex items-center gap-2 text-xl font-bold text-purple-secondary">
+                                <Coins size={20} />
+                                {cartTotal.toLocaleString()}
+                            </div>
+                        </div>
+                        
+                        <div className="mb-4">
+                            <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
+                                <span>Solde actuel</span>
+                                <span className="flex items-center gap-1">
+                                    <Coins size={14} />
+                                    {userBalance?.toLocaleString() || '0'}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                                <span>Solde après achat</span>
+                                <span className={`flex items-center gap-1 font-medium ${
+                                    (userBalance || 0) >= cartTotal ? 'text-green-400' : 'text-red-400'
+                                }`}>
+                                    <Coins size={14} />
+                                    {((userBalance || 0) - cartTotal).toLocaleString()}
+                                </span>
+                            </div>
+                        </div>
+
+                        <motion.button
+                            onClick={onPurchase}
+                            disabled={isPurchasing || (userBalance !== null && userBalance < cartTotal)}
+                            className={`w-full py-3 px-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
+                                isPurchasing || (userBalance !== null && userBalance < cartTotal)
+                                    ? 'bg-gray-700/50 text-gray-400 cursor-not-allowed'
+                                    : 'btn-nyx-primary'
+                            }`}
+                            whileHover={!isPurchasing && (userBalance === null || userBalance >= cartTotal) ? { scale: 1.02 } : {}}
+                            whileTap={!isPurchasing && (userBalance === null || userBalance >= cartTotal) ? { scale: 0.98 } : {}}
+                        >
+                            {isPurchasing ? (
+                                <><Loader2 className="animate-spin" size={18} /> Traitement...</>
+                            ) : (userBalance !== null && userBalance < cartTotal) ? (
+                                <>❌ Fonds insuffisants</>
+                            ) : (
+                                <>🛒 Confirmer l'achat</>
+                            )}
+                        </motion.button>
+                    </div>
+                </>
+            )}
         </motion.div>
     );
 };
@@ -141,7 +351,7 @@ export default function ShopPage() {
             setInventory(Array.isArray(inventoryData) ? inventoryData : []);
             setOwnedTitles(titlesData.titresPossedes || []);
         } catch (err) {
-            setError("Impossible de charger les données de la boutique.");
+            setError("Impossible de charger les donnÃ©es de la boutique.");
         } finally {
             setLoading(false);
         }
@@ -181,123 +391,218 @@ export default function ShopPage() {
             setCart([]);
             await fetchData();
         } catch (err) {
-            alert(`Échec de l'achat : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+            alert(`Ã‰chec de l'achat : ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
         } finally {
             setIsPurchasing(false);
         }
     };
 
-    if (loading) return <p className="text-center text-gray-400 p-8 animate-pulse">Chargement de la boutique...</p>;
-    if (error) return (
-        <div className="text-center text-red-400 p-8">
-            <p>{error}</p>
-            <button onClick={fetchData} className="mt-4 flex items-center gap-2 mx-auto futuristic-button">
-                <RefreshCw size={18} /> Réessayer
-            </button>
-        </div>
-    );
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                    <div className="nyx-spinner mb-4"></div>
+                    <p className="text-gray-300 text-lg">NyxBot Shop se charge...</p>
+                </div>
+            </div>
+        );
+    }
+    
+    if (error) {
+        return (
+            <div className="text-center py-16">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <Store size={32} className="text-red-400" />
+                </div>
+                <p className="text-red-400 text-lg mb-4">{error}</p>
+                <motion.button 
+                    onClick={fetchData} 
+                    className="btn-nyx-primary"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <RefreshCw size={18} /> Réessayer
+                </motion.button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">
+            {/* Success Notification */}
             <AnimatePresence>
-                {showSuccess && <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-24 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 z-50">
-                    <CheckCircle /> <span className="font-semibold">Achat réussi !</span>
-                </motion.div>}
-            </AnimatePresence>
-
-            <header className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Gem /> Boutique</h1>
-                {userBalance !== null && (
-                    <div className="flex items-center gap-2 futuristic-card px-4 py-2 rounded-lg">
-                        <Coins className="text-yellow-400" />
-                        <span className="text-lg font-semibold">{userBalance.toLocaleString()}</span>
-                    </div>
-                )}
-            </header>
-            
-            <div className="futuristic-card p-4 space-y-4">
-                <div className="p-1 bg-black/20 rounded-lg flex gap-1 relative">
-                    {mainCategories.map(cat => (
-                        <button 
-                            key={cat.id} 
-                            onClick={() => { setActiveMainCategory(cat.id); setActiveRarity('all'); }} 
-                            className={`w-full relative flex items-center justify-center gap-2 px-4 py-2 font-semibold rounded-md transition-colors duration-300 z-10 ${ activeMainCategory === cat.id ? 'text-white' : 'text-gray-400 hover:text-white' }`}
-                        >
-                            <cat.icon size={18} /> <span>{cat.label}</span>
-                        </button>
-                    ))}
-                    <AnimatePresence>
-                        {activeMainCategory && (
-                            <motion.div
-                                layoutId="active-main-cat-indicator"
-                                className="absolute inset-0 bg-cyan-600/30 rounded-md"
-                                style={{ width: `${100 / mainCategories.length}%`, left: `${(mainCategories.findIndex(t => t.id === activeMainCategory) * 100) / mainCategories.length}%` }}
-                                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                            />
-                        )}
-                    </AnimatePresence>
-                </div>
-                 
-                <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                     {subCategories.map(rarity => (
-                        <button key={rarity} onClick={() => setActiveRarity(rarity)} className={`px-3 py-1 text-sm rounded-full transition-colors whitespace-nowrap ${ activeRarity === rarity ? 'bg-white text-black font-semibold' : 'bg-white/5 text-gray-300 hover:bg-white/10' }`}>
-                            {rarity === 'all' ? 'Toutes les raretés' : rarity}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <AnimatePresence>
-                    {filteredItems.length > 0 ? (
-                        filteredItems.map(item => {
-                            const isInventoryOwned = inventory.some(invItem => invItem.id === item.id);
-                            const isTitleOwned = item.type === 'Personnalisation' && ownedTitles.some(ownedTitle => ownedTitle.trim().toLowerCase() === item.name.trim().toLowerCase());
-                            const isOwned = isInventoryOwned || isTitleOwned;
-                            
-                            return <ShopItemCard key={item.id} item={item} onAddToCart={addToCart} isOwned={isOwned} kshieldStatus={kshieldStatus} />;
-                        })
-                    ) : (
-                        <p className="col-span-full text-center text-gray-500 py-16">Aucun objet ne correspond à cette sélection.</p>
-                    )}
-                </AnimatePresence>
-            </motion.div>
-            
-            {/* ▼▼▼ PANIER FINALISÉ ▼▼▼ */}
-            <AnimatePresence>
-                {cart.length > 0 && (
+                {showSuccess && (
                     <motion.div 
-                        initial={{ x: "110%", opacity: 0 }} 
-                        animate={{ x: 0, opacity: 1 }} 
-                        exit={{ x: "110%", opacity: 0 }} 
-                        transition={{ type: 'spring', stiffness: 250, damping: 30 }} 
-                        className="fixed top-24 right-6 futuristic-card border-cyan-500 rounded-xl shadow-2xl w-96 p-6 z-50"
+                        initial={{ opacity: 0, y: -50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -50, scale: 0.9 }}
+                        className="fixed top-8 right-8 z-50 bg-green-500/20 border border-green-500/30 text-green-300 px-6 py-4 rounded-2xl shadow-xl backdrop-blur-xl flex items-center gap-3"
                     >
-                        <h3 className="text-xl font-bold flex items-center gap-3"><ShoppingCart /> Panier ({cart.length})</h3>
-                        <div className="my-4 space-y-2 max-h-64 overflow-y-auto pr-2">
-                            {cart.map((item, index) => (
-                                <div key={`${item.id}-${index}`} className="flex justify-between items-center text-sm bg-black/20 p-2 rounded-md">
-                                    <span className="font-medium">{item.name}</span>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-yellow-400 font-semibold">{item.price.toLocaleString()}</span>
-                                        <button onClick={() => removeFromCart(index)} className="text-gray-500 hover:text-red-500"><X size={16} /></button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="border-t border-white/10 pt-4 mt-4">
-                            <div className="flex justify-between font-bold text-lg">
-                                <span>Total:</span>
-                                <span className="text-yellow-400 flex items-center gap-2">{cartTotal.toLocaleString()} <Coins size={18}/></span>
-                            </div>
-                            <motion.button whileTap={{scale: 0.95}} onClick={handlePurchase} disabled={isPurchasing || (userBalance !== null && userBalance < cartTotal)} className={`w-full mt-4 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${isPurchasing || (userBalance !== null && userBalance < cartTotal) ? 'bg-gray-600 cursor-not-allowed' : 'futuristic-button bg-green-600'}`}>
-                                {isPurchasing && <Loader2 className="animate-spin" size={18}/>}
-                                {isPurchasing ? 'Achat en cours...' : (userBalance !== null && userBalance < cartTotal) ? 'Fonds insuffisants' : `Valider l'achat`}
-                            </motion.button>
-                        </div>
+                        <CheckCircle size={20} />
+                        <span className="font-semibold">Achat réalisé avec succès !</span>
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-4"
+                >
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-purple flex items-center justify-center">
+                        <Store size={32} className="text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-4xl font-bold text-gradient-purple">NyxBot Shop</h1>
+                        <p className="text-gray-400 mt-1">Découvrez nos articles exclusifs</p>
+                    </div>
+                </motion.div>
+
+                {userBalance !== null && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="nyx-card px-6 py-4 bg-gradient-purple-soft"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-purple flex items-center justify-center">
+                                <Coins size={18} className="text-yellow-400" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-400">NyxCoins</p>
+                                <p className="text-2xl font-bold text-white">{userBalance.toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Main Content */}
+                <div className="lg:col-span-3 space-y-6">
+                    {/* Category Navigation */}
+                    <NyxCard>
+                        <div className="mb-6">
+                            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <Filter size={18} className="text-purple-secondary" />
+                                Catégories
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {mainCategories.map((cat, index) => (
+                                    <motion.button
+                                        key={cat.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        onClick={() => { setActiveMainCategory(cat.id); setActiveRarity('all'); }}
+                                        className={`relative overflow-hidden p-4 rounded-xl transition-all duration-300 ${
+                                            activeMainCategory === cat.id
+                                                ? 'bg-gradient-purple text-white shadow-lg shadow-purple-primary/20'
+                                                : 'bg-purple-primary/5 hover:bg-purple-primary/10 text-gray-300'
+                                        }`}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <div className={`absolute inset-0 bg-gradient-to-r ${cat.gradient} opacity-0 transition-opacity duration-300 ${
+                                            activeMainCategory === cat.id ? 'opacity-20' : 'group-hover:opacity-10'
+                                        }`}></div>
+                                        <div className="relative flex items-center justify-center gap-2">
+                                            <cat.icon size={20} />
+                                            <span className="font-semibold">{cat.label}</span>
+                                        </div>
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Rarity Filter */}
+                        <div className="border-t border-purple-primary/20 pt-6">
+                            <h3 className="text-sm font-semibold text-gray-400 mb-3">Filtrer par rareté</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {subCategories.map(rarity => {
+                                    const rarityInfo = rarityConfig[rarity as keyof typeof rarityConfig];
+                                    return (
+                                        <motion.button
+                                            key={rarity}
+                                            onClick={() => setActiveRarity(rarity)}
+                                            className={`px-3 py-2 text-sm rounded-lg transition-all duration-300 flex items-center gap-2 ${
+                                                activeRarity === rarity
+                                                    ? 'bg-purple-primary text-white shadow-md'
+                                                    : 'bg-purple-primary/10 text-gray-400 hover:bg-purple-primary/20 hover:text-white'
+                                            }`}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            {rarity !== 'all' && rarityInfo && (
+                                                <span>{rarityInfo.icon}</span>
+                                            )}
+                                            <span>{rarity === 'all' ? 'Toutes' : rarity}</span>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </NyxCard>
+
+                    {/* Items Grid */}
+                    <AnimatePresence mode="wait">
+                        {filteredItems.length > 0 ? (
+                            <motion.div
+                                key={`${activeMainCategory}-${activeRarity}`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                            >
+                                {filteredItems.map((item, index) => {
+                                    const isInventoryOwned = inventory.some(invItem => invItem.id === item.id);
+                                    const isTitleOwned = item.type === 'Personnalisation' && ownedTitles.some(ownedTitle => 
+                                        ownedTitle.trim().toLowerCase() === item.name.trim().toLowerCase()
+                                    );
+                                    const isOwned = isInventoryOwned || isTitleOwned;
+                                    
+                                    return (
+                                        <ShopItemCard 
+                                            key={item.id} 
+                                            item={item} 
+                                            onAddToCart={addToCart} 
+                                            isOwned={isOwned} 
+                                            kshieldStatus={kshieldStatus}
+                                            index={index}
+                                        />
+                                    );
+                                })}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="text-center py-16"
+                            >
+                                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-800/50 flex items-center justify-center">
+                                    <Package size={32} className="text-gray-500" />
+                                </div>
+                                <p className="text-gray-500 text-lg">Aucun article dans cette catégorie</p>
+                                <p className="text-gray-600 text-sm mt-2">Essayez une autre catégorie ou rareté</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Sidebar with Cart */}
+                <div className="lg:col-span-1">
+                    <CartCard
+                        cart={cart}
+                        cartTotal={cartTotal}
+                        userBalance={userBalance}
+                        onRemoveItem={removeFromCart}
+                        onPurchase={handlePurchase}
+                        isPurchasing={isPurchasing}
+                    />
+                </div>
+            </div>
         </div>
     );
 }

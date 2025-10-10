@@ -1,4 +1,4 @@
-import { NextAuthOptions, Profile, User } from "next-auth";
+﻿import { NextAuthOptions, Profile, User } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { JWT } from "next-auth/jwt";
 import { Session } from "next-auth";
@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
                 // --- CORRECTION : On nettoie les IDs pour enlever les espaces ---
                 const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '')
                     .split(',')
-                    .map(id => id.trim()); // Ajout de .trim() pour enlever les espaces avant/après
+                    .map(id => id.trim()); // Ajout de .trim() pour enlever les espaces avant/aprÃ¨s
 
                 const userRole = adminIds.includes(profile.id) ? 'admin' : 'user';
 

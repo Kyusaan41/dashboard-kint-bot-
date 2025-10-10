@@ -7,7 +7,8 @@ import FeedbackWidget from '@/components/FeedbackWidget';
 import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
-import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon } from 'lucide-react';
+import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type ItemUsedEvent = {
   interactionId: string;
@@ -19,12 +20,13 @@ type ItemUsedEvent = {
 type EventEntry = { id: string; };
 
 const pages = [
-  { id: '', label: 'Accueil', icon: Home },
-  { id: 'events', label: 'Évenements', icon: CalendarRange },
+  { id: '', label: 'Dashboard', icon: Home },
+  { id: 'events', label: 'Événements', icon: CalendarRange },
   { id: 'mini-jeu', label: 'Mini-Jeux', icon: GamepadIcon },
-  { id: 'classement', label: 'Classement', icon: BarChart2 },
-  { id: 'boutique', label: 'Magasin', icon: ShoppingCart },
-  { id: 'admin', label: 'Admin', icon: Shield, adminOnly: true },
+  { id: 'classement', label: 'Classements', icon: BarChart2 },
+  { id: 'boutique', label: 'Boutique', icon: ShoppingCart },
+  { id: 'membres', label: 'Profil', icon: User },
+  { id: 'admin', label: 'Administration', icon: Shield, adminOnly: true },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -44,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           const isNew = currentEvents.some((event: EventEntry) => !seenEvents.includes(event.id));
           setHasNewEvents(isNew);
         } catch (error) {
-          console.error("Erreur lors de la vérification des événements :", error);
+          console.error("Erreur lors de la vÃ©rification des Ã©vÃ©nements :", error);
         }
       };
       checkEvents();
@@ -93,102 +95,160 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0b0d13]">
-        <p className="animate-pulse text-white">Chargement...</p>
+      <div className="min-h-screen bg-gradient-nyx flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="nyx-spinner mb-4"></div>
+          <p className="text-gray-300 text-lg">NyxBot Dashboard se charge...</p>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0b0d13] text-white">
+    <div className="min-h-screen bg-gradient-nyx">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
-
-      <aside className="w-[70px] hover:w-72 transition-all duration-500 bg-[#0d1117]/80 backdrop-blur-xl border-r border-white/[0.02] flex flex-col h-screen sticky top-0 group">
-        {/* Profil utilisateur */}
-        <div className="p-4 flex items-center gap-3">
-          {session && (
-            <>
-              <div className="relative">
-                <div className="w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[2px]">
-                  <Image 
-                    src={getAvatarUrl()} 
-                    alt="Avatar" 
-                    width={38} 
-                    height={38} 
-                    className="rounded-[10px] object-cover" 
-                  />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#0d1117]"></div>
-              </div>
-              <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden pl-1">
-                <p className="font-semibold text-sm tracking-wide truncate">{session.user.name}</p>
-                <p className="text-[11px] text-cyan-400">connecté</p>
-              </div>
-              <button
-                onClick={() => signOut({ callbackUrl: '/' })}
-                className="ml-auto opacity-0 group-hover:opacity-100 hover:text-red-400 p-2 rounded-lg hover:bg-white/5 transition-all"
-                title="Déconnexion"
+      
+      {/* Sidebar */}
+      <motion.aside 
+        className="fixed left-0 top-0 z-40 w-20 hover:w-80 h-screen transition-all duration-300 group"
+        initial={false}
+      >
+        <div className="h-full nyx-card-glass backdrop-blur-xl border-r border-purple-primary/20">
+          {/* Header avec logo NyxBot */}
+          <div className="p-4 border-b border-purple-primary/10">
+            <div className="flex items-center gap-3">
+              <motion.div 
+                className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-400 rounded-xl flex items-center justify-center flex-shrink-0"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <LogOut size={16} />
-              </button>
-            </>
-          )}
-        </div>
+                <Bot size={24} className="text-white" />
+              </motion.div>
+              <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden">
+                <h1 className="text-lg font-bold text-gradient-purple">NyxBot</h1>
+                <p className="text-xs text-gray-400">Dashboard</p>
+              </div>
+            </div>
+          </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 py-6 px-3 space-y-2">
-          {filteredPages.map((page) => {
-            const isActive = pathname === `/dashboard/${page.id}` || (page.id === '' && pathname === '/dashboard');
-            const showNotification = page.id === 'events' && hasNewEvents;
-
-            return (
-              <button
-                key={page.id}
-                onClick={() => router.push(`/dashboard/${page.id}`)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium 
-                  transition-all duration-300 relative overflow-hidden
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-cyan-500/20 via-cyan-500/10 to-transparent text-cyan-400'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                  }`}
-              >
-                <div className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
-                  <page.icon size={18} />
+          {/* Profil utilisateur */}
+          <div className="p-4 border-b border-purple-primary/10">
+            {session && (
+              <div className="flex items-center gap-3">
+                <div className="relative flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-400 p-[2px]">
+                    <Image 
+                      src={getAvatarUrl()} 
+                      alt="Avatar" 
+                      width={44} 
+                      height={44} 
+                      className="rounded-[10px] object-cover" 
+                    />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-bg-primary"></div>
                 </div>
-                <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 truncate">
-                  {page.label}
-                </span>
-                {showNotification && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse ring-4 ring-red-500/20"></span>
-                )}
-                {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-cyan-400 to-blue-600 rounded-full"></div>
-                )}
-              </button>
-            );
-          })}
-        </nav>
+                <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden flex-1 min-w-0">
+                  <p className="font-semibold text-white truncate">{session.user.name}</p>
+                  <p className="text-xs text-purple-secondary">En ligne</p>
+                </div>
+                <motion.button
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="opacity-0 group-hover:opacity-100 hover:text-red-400 p-2 rounded-lg hover:bg-white/5 transition-all flex-shrink-0"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  title="Déconnexion"
+                >
+                  <LogOut size={18} />
+                </motion.button>
+              </div>
+            )}
+          </div>
 
-        {/* Footer */}
-        <div className="p-3">
-          <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <div className="border-t border-white/5 pt-3 flex items-center justify-center">
-              <div className="px-3 py-1.5 rounded-lg bg-white/[0.02] backdrop-blur">
-                <p className="text-[10px] font-medium text-gray-400">
-                  KINT DASHBOARD
-                  <span className="block text-center mt-0.5 text-cyan-500/50 font-mono">v2.10 by Kyû</span>
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            {filteredPages.map((page, index) => {
+              const isActive = pathname === `/dashboard/${page.id}` || (page.id === '' && pathname === '/dashboard');
+              const showNotification = page.id === 'events' && hasNewEvents;
+
+              return (
+                <motion.button
+                  key={page.id}
+                  onClick={() => router.push(`/dashboard/${page.id}`)}
+                  className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative group/item
+                    ${isActive 
+                      ? 'bg-gradient-to-br from-purple-500 to-purple-400 text-white shadow-lg shadow-purple-primary/20'
+                      : 'text-gray-400 hover:bg-purple-primary/10 hover:text-white'
+                    }`}
+                  whileHover={{ x: isActive ? 0 : 4 }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <motion.div 
+                    className={`transition-transform duration-200 flex-shrink-0 ${isActive ? 'scale-110' : 'group-hover/item:scale-105'}`}
+                    whileHover={{ rotate: isActive ? 0 : 5 }}
+                  >
+                    <page.icon size={20} />
+                  </motion.div>
+                  <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 truncate">
+                    {page.label}
+                  </span>
+                  {showNotification && (
+                    <motion.span 
+                      className="absolute right-3 w-2 h-2 rounded-full bg-red-500 flex-shrink-0"
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    />
+                  )}
+                  {isActive && (
+                    <motion.div 
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-full"
+                      layoutId="activeIndicator"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </motion.button>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-purple-primary/10">
+            <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <div className="text-center">
+                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-400/10">
+                  <Sparkles size={12} className="text-purple-secondary" />
+                  <span className="text-xs font-medium text-purple-secondary">
+                    NyxBot Dashboard
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2">
+                  v3.0 • Crafted with 💜
                 </p>
               </div>
             </div>
           </div>
         </div>
-      </aside>
+      </motion.aside>
 
-      <main className="flex-1 p-6 md:p-10 max-w-full overflow-y-auto">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
-      </main>
+      {/* Main Content */}
+      <div className="pl-20">
+        <motion.main 
+          className="min-h-screen p-6 lg:p-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
+        </motion.main>
+      </div>
 
       <FeedbackWidget />
     </div>

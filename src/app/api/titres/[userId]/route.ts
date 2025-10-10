@@ -2,13 +2,13 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 // On utilise la signature simplifiée avec 'any' pour le contexte
 export async function GET(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
 
         const res = await fetch(`${BOT_API_URL}/titres/${userId}`);
         if (!res.ok) {
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, context: any) {
 export async function POST(request: NextRequest, context: any) {
     const session = await getServerSession(authOptions);
     const { params } = context;
-    const { userId } = params;
+    const { userId } = await params;
 
     if (session?.user?.id !== userId) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });

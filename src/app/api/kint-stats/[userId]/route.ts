@@ -1,13 +1,13 @@
 // src/app/api/kint-stats/[userId]/route.ts
 import { NextResponse, NextRequest } from 'next/server';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 // On utilise la même signature que vos autres routes fonctionnelles
 export async function GET(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
 
         if (!userId) {
             return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, context: any) {
 export async function POST(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
         
         if (!userId) {
             return NextResponse.json({ error: "User ID manquant" }, { status: 400 });

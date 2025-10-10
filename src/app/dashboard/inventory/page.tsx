@@ -1,4 +1,4 @@
-// src/app/dashboard/inventory/page.tsx (version finale corrigée)
+﻿// src/app/dashboard/inventory/page.tsx (version finale corrigÃ©e)
 
 'use client';
 
@@ -30,7 +30,7 @@ const InventoryItemCard: FC<{ item: InventoryItem; onUse: (item: InventoryItem) 
                 <Image src={item.icon || '/default-icon.png'} alt={item.name} width={64} height={64} className="object-contain" />
             </div>
             <h2 className="text-xl font-bold text-white text-center">{item.name}</h2>
-            <p className="text-sm text-gray-400 text-center mb-2">Quantité: {item.quantity}</p>
+            <p className="text-sm text-gray-400 text-center mb-2">QuantitÃ©: {item.quantity}</p>
             <p className="text-sm text-gray-400 text-center h-12 flex-grow">{item.description || 'Aucune description disponible.'}</p>
             <motion.button
                 whileTap={{ scale: 0.95 }}
@@ -54,7 +54,7 @@ export default function InventoryPage() {
     const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
     const [activeModal, setActiveModal] = useState<InventoryItem | null>(null);
 
-    // États pour les formulaires dans la modale
+    // Ã‰tats pour les formulaires dans la modale
     const [targetPlayer, setTargetPlayer] = useState('');
     const [champName, setChampName] = useState('');
     const [lotteryNumbers, setLotteryNumbers] = useState('');
@@ -72,7 +72,7 @@ export default function InventoryPage() {
             setInventory(Array.isArray(inventoryData) ? inventoryData : []);
             setMembers(Array.isArray(membersData) ? membersData : []);
         } catch (err) {
-            setError("Impossible de charger les données.");
+            setError("Impossible de charger les donnÃ©es.");
             console.error(err);
         } finally {
             setLoading(false);
@@ -101,7 +101,7 @@ export default function InventoryPage() {
         // Validation pour les objets interactifs
         if (normalizedItemId === 'my champ' || normalizedItemId === 'swap lane') {
             if (!targetPlayer) {
-                showNotification('Veuillez sélectionner un joueur cible.', 'error');
+                showNotification('Veuillez sÃ©lectionner un joueur cible.', 'error');
                 return;
             }
             extraData.targetUserId = targetPlayer;
@@ -118,7 +118,7 @@ export default function InventoryPage() {
         if (normalizedItemId === 'ticket coin million') {
             const numbers = lotteryNumbers.split(' ').map(n => parseInt(n)).filter(n => !isNaN(n));
             if (numbers.length !== 5 || numbers.some(n => n < 1 || n > 50)) {
-                showNotification('Veuillez entrer 5 numéros valides entre 1 et 50.', 'error');
+                showNotification('Veuillez entrer 5 numÃ©ros valides entre 1 et 50.', 'error');
                 return;
             }
             extraData.numbers = numbers;
@@ -127,7 +127,7 @@ export default function InventoryPage() {
         setIsSubmitting(true);
         try {
             const result = await useItem(activeModal.name, extraData);
-            showNotification(result.message || 'Action effectuée avec succès !', 'success');
+            showNotification(result.message || 'Action effectuÃ©e avec succÃ¨s !', 'success');
             await fetchData();
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue.';
@@ -144,8 +144,8 @@ export default function InventoryPage() {
         const normalizedItemId = activeModal.name.toLowerCase();
 
         switch (normalizedItemId) {
-            case 'épée du kint':
-                return ( <div> <h3 className="text-lg font-bold text-white mb-4">Confirmer l'utilisation</h3> <p className="text-gray-300">Voulez-vous activer l'Épée du KINT pour doubler vos gains de points KINT pendant 2 heures ?</p> </div> );
+            case 'Ã©pÃ©e du kint':
+                return ( <div> <h3 className="text-lg font-bold text-white mb-4">Confirmer l'utilisation</h3> <p className="text-gray-300">Voulez-vous activer l'Ã‰pÃ©e du KINT pour doubler vos gains de points KINT pendant 2 heures ?</p> </div> );
             
             case 'my champ':
             case 'swap lane':
@@ -154,7 +154,7 @@ export default function InventoryPage() {
                         <h3 className="text-lg font-bold text-white mb-4">{activeModal.name}</h3>
                         <p className="text-gray-400 mb-2">Choisissez un joueur sur le serveur :</p>
                         <select value={targetPlayer} onChange={(e) => setTargetPlayer(e.target.value)} className="w-full p-2 rounded bg-[#12151d] border border-white/20 mb-4">
-                            <option value="">Sélectionnez un joueur</option>
+                            <option value="">SÃ©lectionnez un joueur</option>
                             {members.filter(m => m.id !== session?.user?.id).map(member => ( <option key={member.id} value={member.id}>{member.username}</option> ))}
                         </select>
                         {normalizedItemId === 'my champ' && (
@@ -163,15 +163,15 @@ export default function InventoryPage() {
                                 <input type="text" value={champName} onChange={(e) => setChampName(e.target.value)} placeholder="ex: Yasuo" className="w-full p-2 rounded bg-[#12151d] border border-white/20"/>
                              </>
                         )}
-                        <p className="text-xs text-amber-400 mt-4">Note : Une notification sera envoyée à l'utilisateur sur son dashboard.</p>
+                        <p className="text-xs text-amber-400 mt-4">Note : Une notification sera envoyÃ©e Ã  l'utilisateur sur son dashboard.</p>
                     </div>
                 );
 
             case 'ticket coin million':
                 return (
                     <div>
-                        <h3 className="text-lg font-bold text-white mb-4">🎟️ Ticket Coin Million</h3>
-                        <p className="text-gray-400 mb-2">Entrez vos 5 numéros (de 1 à 50), séparés par des espaces.</p>
+                        <h3 className="text-lg font-bold text-white mb-4">ðŸŽŸï¸ Ticket Coin Million</h3>
+                        <p className="text-gray-400 mb-2">Entrez vos 5 numÃ©ros (de 1 Ã  50), sÃ©parÃ©s par des espaces.</p>
                         <input
                             type="text"
                             value={lotteryNumbers}
@@ -179,12 +179,12 @@ export default function InventoryPage() {
                             placeholder="ex: 5 12 23 35 48"
                             className="w-full p-2 rounded bg-[#12151d] border border-white/20"
                         />
-                         <p className="text-xs text-gray-500 mt-2">Le tirage a lieu à une date définie. Bonne chance !</p>
+                         <p className="text-xs text-gray-500 mt-2">Le tirage a lieu Ã  une date dÃ©finie. Bonne chance !</p>
                     </div>
                 );
 
             default:
-                return <p>Cet objet n'a pas d'action définie sur le dashboard pour le moment.</p>;
+                return <p>Cet objet n'a pas d'action dÃ©finie sur le dashboard pour le moment.</p>;
         }
     };
 

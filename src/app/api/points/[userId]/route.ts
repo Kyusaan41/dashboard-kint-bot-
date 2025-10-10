@@ -2,13 +2,13 @@
 
 import { NextResponse, NextRequest } from 'next/server';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 // GET : Récupère les points d'un utilisateur
 export async function GET(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
 
         if (!userId) {
             return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, context: any) {
 export async function POST(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
         const { amount, source } = await request.json(); // <-- Récupère la différence (amount) et la source
 
         if (typeof amount !== 'number') {

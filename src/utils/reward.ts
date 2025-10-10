@@ -1,4 +1,4 @@
-// src/utils/reward.ts
+﻿// src/utils/reward.ts
 
 type DailyData = {
   lastClaim: number | null;
@@ -13,13 +13,13 @@ type RewardResult = {
 };
 
 export async function getDailyRewardData(userId: string): Promise<DailyData> {
-  // TODO: Récupérer depuis ta DB la date du dernier claim pour userId
+  // TODO: RÃ©cupÃ©rer depuis ta DB la date du dernier claim pour userId
   // Exemple statique pour test
   return { lastClaim: null };
 }
 
 export async function claimRewardForUser(userId: string): Promise<RewardResult> {
-  // TODO: Logique pour donner la récompense (mettre à jour DB)
+  // TODO: Logique pour donner la rÃ©compense (mettre Ã  jour DB)
   // Exemple statique
   return {
     success: true,

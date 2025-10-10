@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { getXPByUser, updateXP, fetchPoints, fetchCurrency, updateCurrency, updatePoints } from '@/utils/api';
@@ -23,7 +23,7 @@ export default function UserStatsEditor() {
       setCurrency(currencyData.coins ?? 0);  // <- correction ici
       setPoints(pointsData.points ?? 0);
     } catch (err) {
-      setMessage('Erreur lors de la récupération des données.');
+      setMessage('Erreur lors de la rÃ©cupÃ©ration des donnÃ©es.');
     }
     setLoading(false);
   };
@@ -37,16 +37,16 @@ export default function UserStatsEditor() {
       await updateXP(userId, xp ?? 0);
       await updateCurrency(userId, currency ?? 0);
       await updatePoints(userId, points ?? 0);
-      setMessage('Statistiques mises à jour !');
+      setMessage('Statistiques mises Ã  jour !');
     } catch (err) {
-      setMessage('Erreur lors de la mise à jour.');
+      setMessage('Erreur lors de la mise Ã  jour.');
     }
     setLoading(false);
   };
 
   return (
     <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-md w-full max-w-xl mx-auto mt-10 space-y-4">
-      <h2 className="text-xl font-semibold">Éditeur de statistiques utilisateur</h2>
+      <h2 className="text-xl font-semibold">Ã‰diteur de statistiques utilisateur</h2>
       <input
         type="text"
         placeholder="ID utilisateur Discord"
@@ -60,7 +60,7 @@ export default function UserStatsEditor() {
         className="px-4 py-2 bg-blue-600 rounded text-white hover:bg-blue-700"
         disabled={loading}
       >
-        Charger les données
+        Charger les donnÃ©es
       </button>
 
       {xp !== null && (
@@ -75,7 +75,7 @@ export default function UserStatsEditor() {
             />
           </div>
           <div>
-            <label className="block">Pièces :</label>
+            <label className="block">PiÃ¨ces :</label>
             <input
               type="number"
               value={currency ?? 0}
@@ -98,7 +98,7 @@ export default function UserStatsEditor() {
             className="px-4 py-2 bg-green-600 rounded text-white hover:bg-green-700"
             disabled={loading}
           >
-            Mettre à jour
+            Mettre Ã  jour
           </button>
         </div>
       )}

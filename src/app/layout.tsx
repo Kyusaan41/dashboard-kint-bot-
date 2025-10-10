@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "./futuristic-theme.css"; // Ajout du nouveau thème
+import "./nyx-theme.css"; // NyxBot Dark Purple Theme
 import Providers from "./providers";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KINT Dashboard",
-  description: "Dashboard by Kyû",
+  title: "NyxBot Dashboard",
+  description: "Professional NyxBot Management Dashboard",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
           {children}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { fetchPoints, fetchCurrency, updatePoints, updateCurrency } from "@/utils/api";
 
@@ -28,21 +28,21 @@ export default function UserStats({ userId }: { userId: string }) {
 
   const handleUpdate = async () => {
     if (points === null) {
-      alert("❌ Points non chargés.");
+      alert("âŒ Points non chargÃ©s.");
       return;
     }
     const coinsNumber = Number(coins);
     if (isNaN(coinsNumber)) {
-      alert("❌ La valeur des pièces n'est pas un nombre valide.");
+      alert("âŒ La valeur des piÃ¨ces n'est pas un nombre valide.");
       return;
     }
     try {
       setUpdating(true);
       await updatePoints(userId, points);
       await updateCurrency(userId, coinsNumber);
-      alert("✅ Mise à jour réussie !");
+      alert("âœ… Mise Ã  jour rÃ©ussie !");
     } catch (error) {
-      alert("❌ Erreur lors de la mise à jour : " + (error as Error).message);
+      alert("âŒ Erreur lors de la mise Ã  jour : " + (error as Error).message);
     } finally {
       setUpdating(false);
     }
@@ -51,7 +51,7 @@ export default function UserStats({ userId }: { userId: string }) {
   if (loading || points === null) {
     return (
       <p className="text-gray-400 italic text-center py-6">
-        Chargement des données utilisateur...
+        Chargement des donnÃ©es utilisateur...
       </p>
     );
   }
@@ -84,7 +84,7 @@ export default function UserStats({ userId }: { userId: string }) {
           htmlFor="coins"
           className="block mb-2 text-sm font-medium text-cyan-300"
         >
-          Pièces
+          PiÃ¨ces
         </label>
         <input
           id="coins"
@@ -107,7 +107,7 @@ export default function UserStats({ userId }: { userId: string }) {
           }`}
         aria-busy={updating}
       >
-        {updating ? "Mise à jour..." : "Enregistrer"}
+        {updating ? "Mise Ã  jour..." : "Enregistrer"}
       </button>
     </div>
   );

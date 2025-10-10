@@ -6,7 +6,7 @@ const BOT_API_URL = 'http://193.70.34.25:20007/api';
 export async function GET(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
 
         if (!userId) {
             return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, context: any) {
 export async function POST(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
         // Le frontend envoie la différence de montant dans le champ 'amount'.
         const { amount } = await request.json();
 
