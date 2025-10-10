@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const res = await fetch('http://51.83.103.24:20077/api/serverinfo');
+    const res = await fetch('http://193.70.34.25:20007/api/server/info');
     if (!res.ok) {
-      return NextResponse.json({ error: 'Erreur lors de la récupération des infos serveur' }, { status: res.status });
+      return NextResponse.json({ error: 'Erreur lors de la rÃ©cupÃ©ration des infos serveur' }, { status: res.status });
     }
 
     const data = await res.json();
@@ -14,3 +14,4 @@ export async function GET() {
     return NextResponse.json({ error: 'Impossible de charger les infos serveur' }, { status: 500 });
   }
 }
+

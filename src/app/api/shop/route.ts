@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
-// GET pour récupérer les articles
+// GET pour rÃ©cupÃ©rer les articles
 export async function GET() {
     try {
         // Assurez-vous que l'endpoint `/shop` existe sur votre bot et renvoie les articles
@@ -11,7 +11,7 @@ export async function GET() {
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`Erreur de l'API du bot [${response.status}]: ${errorText}`);
-            return NextResponse.json({ message: "Impossible de récupérer les articles du magasin." }, { status: response.status });
+            return NextResponse.json({ message: "Impossible de rÃ©cupÃ©rer les articles du magasin." }, { status: response.status });
         }
 
         const items = await response.json();

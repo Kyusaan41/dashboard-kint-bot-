@@ -1,23 +1,23 @@
-// Fichier : src/app/api/gazette/route.ts
+﻿// Fichier : src/app/api/gazette/route.ts
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
-// GET : Récupère la liste de tous les articles de la gazette
+// GET : RÃ©cupÃ¨re la liste de tous les articles de la gazette
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+        return NextResponse.json({ error: 'Non autorisÃ©' }, { status: 401 });
     }
 
     try {
         const res = await fetch(`${BOT_API_URL}/gazette`);
         if (!res.ok) {
-            console.error("Erreur de l'API du bot lors de la récupération de la gazette");
-            return NextResponse.json({ error: "Impossible de récupérer la gazette depuis le bot." }, { status: res.status });
+            console.error("Erreur de l'API du bot lors de la rÃ©cupÃ©ration de la gazette");
+            return NextResponse.json({ error: "Impossible de rÃ©cupÃ©rer la gazette depuis le bot." }, { status: res.status });
         }
         const data = await res.json();
         return NextResponse.json(data);

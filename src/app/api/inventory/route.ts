@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
     if (!userId) {
-        return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
+        return NextResponse.json({ message: 'Non autorisÃ©' }, { status: 401 });
     }
 
-    console.log(`[API /inventory] Début de la récupération pour l'utilisateur : ${userId}`);
+    console.log(`[API /inventory] DÃ©but de la rÃ©cupÃ©ration pour l'utilisateur : ${userId}`);
 
     try {
         const [inventoryRes, shopRes] = await Promise.all([
@@ -19,28 +19,28 @@ export async function GET(request: Request) {
             fetch(`${BOT_API_URL}/shop`)
         ]);
 
-        console.log(`[API /inventory] Statut de la réponse du bot pour l'inventaire : ${inventoryRes.status}`);
-        console.log(`[API /inventory] Statut de la réponse du bot pour la boutique : ${shopRes.status}`);
+        console.log(`[API /inventory] Statut de la rÃ©ponse du bot pour l'inventaire : ${inventoryRes.status}`);
+        console.log(`[API /inventory] Statut de la rÃ©ponse du bot pour la boutique : ${shopRes.status}`);
 
         if (!shopRes.ok) {
-            console.error("[API /inventory] Erreur critique: Impossible de récupérer les articles de la boutique.");
+            console.error("[API /inventory] Erreur critique: Impossible de rÃ©cupÃ©rer les articles de la boutique.");
             return NextResponse.json({ message: "Impossible de charger la boutique." }, { status: 502 });
         }
         const shopItems = await shopRes.json();
-        console.log('[API /inventory] Articles de la boutique chargés :', shopItems);
+        console.log('[API /inventory] Articles de la boutique chargÃ©s :', shopItems);
 
 
         let userInventory = {};
         if (inventoryRes.ok) {
             const inventoryText = await inventoryRes.text();
-            console.log('[API /inventory] Inventaire brut (texte) reçu du bot :', inventoryText);
+            console.log('[API /inventory] Inventaire brut (texte) reÃ§u du bot :', inventoryText);
             userInventory = inventoryText ? JSON.parse(inventoryText) : {};
         }
         console.log('[API /inventory] Inventaire brut (JSON) de l\'utilisateur :', userInventory);
 
 
         const enrichedInventory = Object.entries(userInventory).map(([itemName, itemData]) => {
-            // --- CORRECTION DÉFINITIVE AVEC TOLÉRANCE ---
+            // --- CORRECTION DÃ‰FINITIVE AVEC TOLÃ‰RANCE ---
             // On nettoie les noms pour la comparaison : tout en minuscules et sans espaces superflus.
             const normalizedItemName = itemName.trim().toLowerCase();
             
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
             );
             
             if (!shopItem) {
-                console.warn(`[API /inventory] Attention : L'objet "${itemName}" de l'inventaire n'a pas été trouvé dans la boutique.`);
+                console.warn(`[API /inventory] Attention : L'objet "${itemName}" de l'inventaire n'a pas Ã©tÃ© trouvÃ© dans la boutique.`);
             }
 
             const data = itemData as { quantity: number };
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
             };
         });
 
-        console.log('[API /inventory] Inventaire final "enrichi" envoyé au dashboard :', enrichedInventory);
+        console.log('[API /inventory] Inventaire final "enrichi" envoyÃ© au dashboard :', enrichedInventory);
 
         return NextResponse.json(enrichedInventory);
 

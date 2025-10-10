@@ -1,14 +1,14 @@
-// app/api/logs/route.ts
+﻿// app/api/logs/route.ts
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // L'URL de ton bot hébergé sur Katabump
-    const response = await fetch('http://51.83.103.24:20077/api/logs');
+    // L'URL de ton bot hÃ©bergÃ© sur Katabump
+    const response = await fetch('http://193.70.34.25:20007/api/logs');
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Erreur côté bot lors de la récupération des logs' },
+        { error: 'Erreur cÃ´tÃ© bot lors de la rÃ©cupÃ©ration des logs' },
         { status: 500 }
       );
     }
@@ -18,8 +18,9 @@ export async function GET() {
   } catch (error) {
     console.error('Erreur dans l\'API logs (route.ts) :', error);
     return NextResponse.json(
-      { error: 'Impossible de récupérer les logs du bot.' },
+      { error: 'Impossible de rÃ©cupÃ©rer les logs du bot.' },
       { status: 500 }
     );
   }
 }
+

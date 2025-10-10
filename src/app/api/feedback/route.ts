@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-// L'URL de votre bot qui écoutera les feedbacks
-const BOT_FEEDBACK_WEBHOOK_URL = 'http://51.83.103.24:20077/api/submit-feedback';
+// L'URL de votre bot qui Ã©coutera les feedbacks
+const BOT_FEEDBACK_WEBHOOK_URL = 'http://193.70.34.25:20007/api/submit-feedback';
 
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-        return NextResponse.json({ message: 'Non autorisé' }, { status: 401 });
+        return NextResponse.json({ message: 'Non autorisÃ©' }, { status: 401 });
     }
 
     try {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
             feedback: feedbackText,
         };
 
-        // Envoyer les données au bot
+        // Envoyer les donnÃ©es au bot
         const botResponse = await fetch(BOT_FEEDBACK_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -33,10 +33,10 @@ export async function POST(request: Request) {
         });
 
         if (!botResponse.ok) {
-            throw new Error('La requête vers le bot a échoué.');
+            throw new Error('La requÃªte vers le bot a Ã©chouÃ©.');
         }
 
-        return NextResponse.json({ message: 'Feedback envoyé avec succès !' });
+        return NextResponse.json({ message: 'Feedback envoyÃ© avec succÃ¨s !' });
 
     } catch (error) {
         console.error("Erreur dans l'API de feedback :", error);

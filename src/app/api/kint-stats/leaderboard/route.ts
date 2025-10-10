@@ -1,7 +1,7 @@
-// src/app/api/kint-stats/leaderboard/route.ts
+﻿// src/app/api/kint-stats/leaderboard/route.ts
 import { NextResponse } from 'next/server';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 type KintUserStats = {
     userId: string;
@@ -21,7 +21,7 @@ export async function GET() {
         ]);
 
         if (!statsRes.ok || !serverInfoRes.ok) {
-            throw new Error("Impossible de récupérer les données nécessaires depuis le bot.");
+            throw new Error("Impossible de rÃ©cupÃ©rer les donnÃ©es nÃ©cessaires depuis le bot.");
         }
 
         const statsData = await statsRes.json();
@@ -48,10 +48,10 @@ export async function GET() {
 
         const MIN_GAMES = 20;
 
-        // ❗ Étape 1 : filtrer les vrais candidats à l’humiliation
+        // â— Ã‰tape 1 : filtrer les vrais candidats Ã  lâ€™humiliation
         let candidates = allUsers.filter(user => user.total >= MIN_GAMES && user.oui > 0);
 
-        // Si aucun candidat sérieux, on ne désigne personne
+        // Si aucun candidat sÃ©rieux, on ne dÃ©signe personne
         let topUser = null;
 
         if (candidates.length > 0) {
@@ -88,3 +88,4 @@ export async function GET() {
         return NextResponse.json({ leaderboard: [], mostGuez: null }, { status: 500 });
     }
 }
+

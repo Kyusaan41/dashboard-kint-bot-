@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization');
@@ -25,3 +25,4 @@ export async function GET(req: Request) {
   const data = await response.json();
   return NextResponse.json(data);
 }
+

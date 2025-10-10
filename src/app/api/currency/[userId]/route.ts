@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 // GET : Récupère le solde et le dernier claim d'un utilisateur
 export async function GET(request: NextRequest, context: any) {

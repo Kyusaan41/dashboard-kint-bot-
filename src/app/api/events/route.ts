@@ -1,24 +1,24 @@
-// Fichier : src/app/api/events/route.ts
+﻿// Fichier : src/app/api/events/route.ts
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
-// GET : Récupère la liste de tous les événements à venir
+// GET : RÃ©cupÃ¨re la liste de tous les Ã©vÃ©nements Ã  venir
 export async function GET() {
-    // On vérifie la session pour s'assurer que l'utilisateur est connecté
+    // On vÃ©rifie la session pour s'assurer que l'utilisateur est connectÃ©
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+        return NextResponse.json({ error: 'Non autorisÃ©' }, { status: 401 });
     }
 
     try {
         const res = await fetch(`${BOT_API_URL}/events`);
         if (!res.ok) {
-            console.error("Erreur de l'API du bot lors de la récupération des événements");
-            return NextResponse.json({ error: "Impossible de récupérer les événements depuis le bot." }, { status: res.status });
+            console.error("Erreur de l'API du bot lors de la rÃ©cupÃ©ration des Ã©vÃ©nements");
+            return NextResponse.json({ error: "Impossible de rÃ©cupÃ©rer les Ã©vÃ©nements depuis le bot." }, { status: res.status });
         }
         const data = await res.json();
         return NextResponse.json(data);
@@ -28,12 +28,12 @@ export async function GET() {
     }
 }
 
-// POST : Permet de créer un nouvel événement (sera utilisé par le panneau admin)
+// POST : Permet de crÃ©er un nouvel Ã©vÃ©nement (sera utilisÃ© par le panneau admin)
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
-    // On s'assure que seul un admin peut créer un événement
+    // On s'assure que seul un admin peut crÃ©er un Ã©vÃ©nement
     if (session?.user?.role !== 'admin') {
-        return NextResponse.json({ error: 'Accès interdit' }, { status: 403 });
+        return NextResponse.json({ error: 'AccÃ¨s interdit' }, { status: 403 });
     }
 
     try {

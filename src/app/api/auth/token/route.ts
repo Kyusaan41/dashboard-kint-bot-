@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   const { code } = await req.json();
@@ -25,3 +25,4 @@ export async function POST(req: Request) {
 
   return NextResponse.json(data);
 }
+

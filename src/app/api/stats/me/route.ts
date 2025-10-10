@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-const BOT_API_URL = 'http://51.83.103.24:20077/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 const findUserRank = (leaderboard: any[], userId: string, key: string): number | null => {
     if (!Array.isArray(leaderboard)) return null;
@@ -13,7 +13,7 @@ const findUserRank = (leaderboard: any[], userId: string, key: string): number |
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+        return NextResponse.json({ error: 'Non autorisÃ©' }, { status: 401 });
     }
     const userId = session.user.id;
 
@@ -28,7 +28,7 @@ export async function GET() {
             fetch(`${BOT_API_URL}/titres/${userId}`),
         ]);
 
-        // --- CORRECTION ICI : On traite les promesses résolues de manière plus sûre ---
+        // --- CORRECTION ICI : On traite les promesses rÃ©solues de maniÃ¨re plus sÃ»re ---
         const [
             currencyRes, pointsRes, xpRes,
             currencyBoardRes, pointsBoardRes, xpBoardRes,
@@ -37,7 +37,7 @@ export async function GET() {
             if (result.status === 'fulfilled' && result.value.ok) {
                 return result.value.json();
             }
-            return null; // Retourne null si la promesse a été rejetée ou si la réponse n'est pas OK
+            return null; // Retourne null si la promesse a Ã©tÃ© rejetÃ©e ou si la rÃ©ponse n'est pas OK
         }));
         
         const combinedStats = {
@@ -53,6 +53,6 @@ export async function GET() {
         return NextResponse.json(combinedStats);
     } catch (error) {
         console.error("Erreur API /api/stats/me:", error);
-        return NextResponse.json({ error: "Erreur lors de la récupération des statistiques." }, { status: 500 });
+        return NextResponse.json({ error: "Erreur lors de la rÃ©cupÃ©ration des statistiques." }, { status: 500 });
     }
 }

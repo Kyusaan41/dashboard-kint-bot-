@@ -1,4 +1,4 @@
-// /pages/api/leaderboard.ts
+﻿// /pages/api/leaderboard.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getXPLeaderboard, getCurrencyLeaderboard, getPointsLeaderboard } from '../../utils/api';
 
@@ -20,3 +20,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: (error as Error).message });
   }
 }
+
