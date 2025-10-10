@@ -23,7 +23,7 @@ type KintLogEntry = {
     userId: string;
     username: string;
     avatar?: string;
-    actionType: 'GAGNÃ‰' | 'PERDU';
+    actionType: 'GAGNÉ' | 'PERDU';
     points: number;
     currentBalance: number;
     effect?: string;

@@ -118,9 +118,10 @@ const PodiumCard = ({ entry, rank, icon: Icon }: { entry: LeaderboardEntry, rank
             
             {/* Podium Card */}
             <motion.div 
-                initial={{ scaleY: 0, originY: 1 }}
+                initial={{ scaleY: 0 }}
                 animate={{ scaleY: 1 }}
                 transition={{ delay: (4 - rank) * 0.2, duration: 0.6, ease: "easeOut" }}
+                style={{ transformOrigin: "bottom" }}
                 className={`relative flex flex-col items-center justify-end p-6 pt-16 ${config.height} w-full rounded-t-2xl ${config.bg} ${config.border} border-2 border-b-0 backdrop-blur-sm ${config.shadow} group-hover:scale-105 transition-transform duration-300`}
             >
                 {/* Username */}
