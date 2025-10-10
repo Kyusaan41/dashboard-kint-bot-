@@ -259,7 +259,7 @@ export default function MemberPage(props: any) {
                                 </div>
                                 <div className="text-center">
                                     <p className="text-2xl font-bold text-yellow-400">{userData.coins.toLocaleString()}</p>
-                                    <p className="text-sm text-gray-400">NyxCoins</p>
+                                    <p className="text-sm text-gray-400">Pièces</p>
                                 </div>
                                 <div className="text-center">
                                     <p className="text-2xl font-bold text-blue-400">{userData.xp.toLocaleString()}</p>

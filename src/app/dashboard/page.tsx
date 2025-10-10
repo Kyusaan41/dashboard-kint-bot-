@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, FC, ReactNode } from 'react';
@@ -410,7 +410,7 @@ export default function DashboardHomePage() {
                     <>
                         <StatCard 
                             icon={<Coins size={24} className="text-white" />} 
-                            title="NyxCoins" 
+                            title="Pièces" 
                             value={stats.currency} 
                             rank={stats.currencyRank}
                             trend={12}
@@ -492,7 +492,7 @@ export default function DashboardHomePage() {
                                         itemStyle={{ color: 'var(--purple-secondary)' }} 
                                     />
                                     <defs>
-                                        <linearGradient id="nyxPointsGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <linearGradient id="PointsGradient" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="var(--purple-primary)" stopOpacity={0.6} />
                                             <stop offset="95%" stopColor="var(--purple-primary)" stopOpacity={0} />
                                         </linearGradient>
@@ -503,7 +503,7 @@ export default function DashboardHomePage() {
                                         name="Points NyxBot" 
                                         stroke="var(--purple-primary)" 
                                         strokeWidth={3} 
-                                        fill="url(#nyxPointsGradient)" 
+                                        fill="url(#PointsGradient)" 
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -572,7 +572,7 @@ export default function DashboardHomePage() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-white">Récompense Quotidienne</h3>
-                                    <p className="text-sm text-gray-400">500 NyxCoins vous attendent !</p>
+                                    <p className="text-sm text-gray-400">500 Pièces vous attendent !</p>
                                 </div>
                             </div>
                             <motion.button 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
@@ -427,7 +427,7 @@ export default function AdminPage() {
                                                         <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
                                                             <Coins className="h-5 w-5 text-yellow-400" />
                                                         </div>
-                                                        <span className="font-semibold text-white">NyxCoins</span>
+                                                        <span className="font-semibold text-white">Pièces</span>
                                                     </div>
                                                     {loadingUserStats ? (
                                                         <Loader2 className="animate-spin h-5 w-5 text-purple-500" />

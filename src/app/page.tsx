@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from "next/link";
 import { LogIn, ArrowRight, Shield, BarChart, ToyBrick, Gamepad2, Sparkles, Crown } from "lucide-react";
@@ -359,7 +359,7 @@ export default function Home() {
                 delay={0.3}
                 icon={<BarChart size={32}/>}
                 title="Économie & Classements"
-                description="Système économique intégré avec NyxCoins, boutique, récompenses et classements compétitifs en temps réel."
+                description="Système économique intégré avec Pièces, boutique, récompenses et classements compétitifs en temps réel."
               />
               <FeatureCard
                 delay={0.5}

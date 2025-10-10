@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
@@ -471,7 +471,7 @@ export default function ShopPage() {
                                 <Coins size={18} className="text-yellow-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-400">NyxCoins</p>
+                                <p className="text-sm text-gray-400">Pièces</p>
                                 <p className="text-2xl font-bold text-white">{userBalance.toLocaleString()}</p>
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -363,7 +363,7 @@ export default function MiniJeuHome() {
                     />
                     <StatsCard 
                         icon={<Coins className="h-8 w-8 text-white" />}
-                        title="NyxCoins Distribués"
+                        title="Pièces Distribués"
                         value="2.4M"
                         description="En récompenses"
                     />
@@ -389,7 +389,7 @@ export default function MiniJeuHome() {
                             description="Affrontez vos adversaires dans des duels stratégiques. Déclarez vos victoires, assumez vos défaites, et grimpez dans le classement de l'arène pour devenir légende."
                             isAvailable={true}
                             players="342 en ligne"
-                            rewards="50-500 NyxCoins"
+                            rewards="50-500 Pièces"
                             difficulty="Moyen"
                             isPopular={true}
                         />
@@ -401,7 +401,7 @@ export default function MiniJeuHome() {
                             description="Défiez directement un adversaire dans des combats intenses. Modes variés, récompenses exclusives et classements personnalisés vous attendent."
                             isAvailable={false}
                             players="Bientôt"
-                            rewards="100-1000 NyxCoins"
+                            rewards="100-1000 Pièces"
                             difficulty="Difficile"
                             isNew={true}
                         />

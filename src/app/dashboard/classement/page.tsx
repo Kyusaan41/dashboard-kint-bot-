@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
@@ -352,7 +352,7 @@ export default function ClassementPage() {
 
     const tabs = [
         { id: 'xp', label: 'Expérience', icon: Star, color: 'text-blue-400', bgColor: 'bg-blue-400/20', borderColor: 'border-blue-400/50' },
-        { id: 'currency', label: 'NyxCoins', icon: Coins, color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400/50' },
+        { id: 'currency', label: 'Pièces', icon: Coins, color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', borderColor: 'border-yellow-400/50' },
         { id: 'points', label: 'Points NyxBot', icon: Zap, color: 'text-purple-400', bgColor: 'bg-purple-400/20', borderColor: 'border-purple-400/50' },
     ];
 
