@@ -352,19 +352,19 @@ export default function MiniJeuHome() {
                     <StatsCard 
                         icon={<Users className="h-8 w-8 text-white" />}
                         title="Joueurs Actifs"
-                        value="1,247"
+                        value="-"
                         description="Dans toutes les arènes"
                     />
                     <StatsCard 
                         icon={<Trophy className="h-8 w-8 text-white" />}
                         title="Parties Jouées"
-                        value="15,892"
+                        value="-"
                         description="Ce mois-ci"
                     />
                     <StatsCard 
                         icon={<Coins className="h-8 w-8 text-white" />}
-                        title="Pièces Distribués"
-                        value="2.4M"
+                        title="Points Distribués"
+                        value="-"
                         description="En récompenses"
                     />
                 </div>
@@ -386,10 +386,10 @@ export default function MiniJeuHome() {
                             href="/dashboard/mini-jeu/kint"
                             icon={<Swords />}
                             title="KINT Arena"
-                            description="Affrontez vos adversaires dans des duels stratégiques. Déclarez vos victoires, assumez vos défaites, et grimpez dans le classement de l'arène pour devenir légende."
+                            description="Déclarez vos victoires, assumez vos défaites, et grimpez dans le classement de l'arène pour devenir légende."
                             isAvailable={true}
-                            players="342 en ligne"
-                            rewards="50-500 Pièces"
+                            players="- en ligne"
+                            rewards="MAX 100 Points KIP"
                             difficulty="Moyen"
                             isPopular={true}
                         />
