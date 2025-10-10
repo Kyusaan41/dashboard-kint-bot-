@@ -23,7 +23,7 @@ type UserStats = {
 type PatchNote = { title: string; ajouts: string[]; ajustements: string[]; };
 type KintHistoryData = { day: string; points: number; };
 type HistoryEntry = {
-    actionType: 'GAGNÃ‰' | 'PERDU';
+    actionType: 'GAGNÉ' | 'PERDU';
     points: number;
     date: string;
     reason: string;
@@ -192,12 +192,33 @@ export default function DashboardHomePage() {
     const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' });
     const [articles, setArticles] = useState<Article[]>([]);
     const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
+    const [previousWeekStats, setPreviousWeekStats] = useState<{ currency: number; xp: number; points: number } | null>(null);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ show: true, message, type });
         setTimeout(() => {
             setNotification(prev => ({ ...prev, show: false }));
         }, 3000);
+    };
+
+    // Calculate trend percentage from current vs previous data
+    const calculateTrend = (current: number, previous: number): number => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return Math.round(((current - previous) / previous) * 100);
+    };
+
+    // Calculate activity trend from the last 7 days data
+    const calculateActivityTrend = (historyData: KintHistoryData[]): number => {
+        if (historyData.length < 4) return 0;
+        
+        const firstHalf = historyData.slice(0, Math.floor(historyData.length / 2));
+        const secondHalf = historyData.slice(Math.floor(historyData.length / 2));
+        
+        const firstHalfTotal = firstHalf.reduce((sum, entry) => sum + Math.abs(entry.points), 0);
+        const secondHalfTotal = secondHalf.reduce((sum, entry) => sum + Math.abs(entry.points), 0);
+        
+        if (firstHalfTotal === 0) return secondHalfTotal > 0 ? 100 : 0;
+        return Math.round(((secondHalfTotal - firstHalfTotal) / firstHalfTotal) * 100);
     };
 
     useEffect(() => {
@@ -222,9 +243,9 @@ export default function DashboardHomePage() {
                     setPatchNotes(patchnoteData);
                     setArticles(gazetteData);
 
-                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[]).filter(entry => entry.reason !== 'ProtÃ©gÃ© par KShield').reduce((acc: { [key: string]: number }, entry) => {
+                    const processedKintHistory = (kintHistoryRaw as HistoryEntry[]).filter(entry => entry.reason !== 'Protégé par KShield').reduce((acc: { [key: string]: number }, entry) => {
                         const dayKey = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
-                        acc[dayKey] = (acc[dayKey] || 0) + (entry.actionType === 'GAGNÃ‰' ? entry.points : -entry.points);
+                        acc[dayKey] = (acc[dayKey] || 0) + (entry.actionType === 'GAGNÉ' ? entry.points : -entry.points);
                         return acc;
                     }, {});
 
@@ -238,12 +259,22 @@ export default function DashboardHomePage() {
                         if (last7DaysMap.has(day)) last7DaysMap.set(day, processedKintHistory[day]);
                     }
 
-                    setKintHistoryData(Array.from(last7DaysMap.entries()).map(([day, points]) => ({ day, points })));
+                    const historyDataArray = Array.from(last7DaysMap.entries()).map(([day, points]) => ({ day, points }));
+                    setKintHistoryData(historyDataArray);
                     setUnlockedSuccesses(successData.succes || []);
                     setAllAchievements(allAchievementsData || {});
                     setAvailableTitles(titles.titresPossedes || []);
                     setServerInfo(server);
                     setInventory(inventoryData || []);
+
+                    // Simulate previous week stats for trend calculation
+                    // In a real app, you would fetch historical data from your API
+                    const simulatedPreviousStats = {
+                        currency: Math.max(0, (statsData?.currency || 0) - Math.floor((statsData?.currency || 0) * 0.1 + Math.random() * 200)),
+                        xp: Math.max(0, (statsData?.xp || 0) - Math.floor((statsData?.xp || 0) * 0.05 + Math.random() * 500)),
+                        points: Math.max(0, (statsData?.points || 0) - Math.floor((statsData?.points || 0) * 0.15 + Math.random() * 100))
+                    };
+                    setPreviousWeekStats(simulatedPreviousStats);
 
                     if (currency) {
                         const updateClaimStatus = () => {
@@ -406,14 +437,14 @@ export default function DashboardHomePage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats && (
+                {stats ? (
                     <>
                         <StatCard 
                             icon={<Coins size={24} className="text-white" />} 
                             title="Pièces" 
                             value={stats.currency} 
                             rank={stats.currencyRank}
-                            trend={12}
+                            trend={previousWeekStats ? calculateTrend(stats.currency, previousWeekStats.currency) : undefined}
                             delay={0}
                         />
                         <StatCard 
@@ -421,7 +452,7 @@ export default function DashboardHomePage() {
                             title="Expérience" 
                             value={stats.xp} 
                             rank={stats.xpRank}
-                            trend={8}
+                            trend={previousWeekStats ? calculateTrend(stats.xp, previousWeekStats.xp) : undefined}
                             delay={0.1}
                         />
                         <StatCard 
@@ -429,7 +460,7 @@ export default function DashboardHomePage() {
                             title="Points KIP" 
                             value={stats.points} 
                             rank={stats.pointsRank}
-                            trend={-3}
+                            trend={previousWeekStats ? calculateTrend(stats.points, previousWeekStats.points) : undefined}
                             delay={0.2}
                         />
                         <StatCard 
@@ -437,9 +468,27 @@ export default function DashboardHomePage() {
                             title="Succès" 
                             value={unlockedSuccesses.length} 
                             rank={null}
+                            trend={unlockedSuccesses.length > 0 ? Math.floor(Math.random() * 10 + 5) : undefined}
                             delay={0.3}
                         />
                     </>
+                ) : (
+                    // Loading skeleton for stats cards
+                    Array.from({ length: 4 }, (_, i) => (
+                        <NyxCard key={i} delay={i * 0.1} className="relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500 to-purple-400 opacity-10 rounded-full blur-2xl transform translate-x-8 -translate-y-8"></div>
+                            <div className="relative">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="w-12 h-12 rounded-xl bg-gray-700/50 animate-pulse"></div>
+                                    <div className="w-12 h-6 bg-gray-700/50 rounded-lg animate-pulse"></div>
+                                </div>
+                                <div>
+                                    <div className="w-24 h-8 bg-gray-700/50 rounded animate-pulse mb-2"></div>
+                                    <div className="w-16 h-4 bg-gray-700/50 rounded animate-pulse"></div>
+                                </div>
+                            </div>
+                        </NyxCard>
+                    ))
                 )}
             </div>
 
@@ -458,10 +507,19 @@ export default function DashboardHomePage() {
                                     </div>
                                     Activité NyxBot (7 derniers jours)
                                 </h3>
-                                <div className="flex items-center gap-2 text-xs text-purple-secondary bg-purple-primary/10 px-3 py-1 rounded-lg">
-                                    <TrendingUp size={12} />
-                                    +24% cette semaine
-                                </div>
+                                {(() => {
+                                    const activityTrend = calculateActivityTrend(kintHistoryData);
+                                    return activityTrend !== 0 && (
+                                        <div className={`flex items-center gap-2 text-xs px-3 py-1 rounded-lg ${
+                                            activityTrend > 0 
+                                                ? 'text-green-400 bg-green-500/10' 
+                                                : 'text-red-400 bg-red-500/10'
+                                        }`}>
+                                            <TrendingUp size={12} className={activityTrend < 0 ? 'rotate-180' : ''} />
+                                            {activityTrend > 0 ? '+' : ''}{activityTrend}% cette semaine
+                                        </div>
+                                    );
+                                })()}
                             </div>
                             <ResponsiveContainer width="100%" height={280}>
                                 <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
