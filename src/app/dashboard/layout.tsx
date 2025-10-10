@@ -228,7 +228,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-500 mt-2">
-                  v3.0 • Crafted with 💜
+                  v3.0 • NyxBot créé par Kyû 💜
                 </p>
               </div>
             </div>
