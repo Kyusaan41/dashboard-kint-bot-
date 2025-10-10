@@ -64,7 +64,7 @@ const StatCard: FC<{
     delay?: number;
 }> = ({ icon, title, value, rank, trend, delay = 0 }) => {
     const formatRank = (r: number | null) => {
-        if (!r) return <span className="text-gray-500">(Non classÃ©)</span>;
+        if (!r) return <span className="text-gray-500">(Non classe)</span>;
         const rankColor = r <= 3 ? "text-purple-secondary" : "text-gray-400";
         return <span className={`font-semibold ${rankColor}`}>#{r}</span>;
     };
