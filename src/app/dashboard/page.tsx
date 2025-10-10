@@ -426,7 +426,7 @@ export default function DashboardHomePage() {
                         />
                         <StatCard 
                             icon={<Zap size={24} className="text-white" />} 
-                            title="Points NyxBot" 
+                            title="Points KIP" 
                             value={stats.points} 
                             rank={stats.pointsRank}
                             trend={-3}
