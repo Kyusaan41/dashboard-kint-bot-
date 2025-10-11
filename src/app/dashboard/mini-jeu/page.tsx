@@ -251,6 +251,8 @@ const FloatingParticle = ({ delay }: { delay: number }) => (
 
 export default function MiniJeuHome() {
     const [currentTime, setCurrentTime] = useState('');
+    const [stats, setStats] = useState<{ activePlayers: number; gamesPlayed: number; pointsDistributed: number } | null>(null);
+    const [statsError, setStatsError] = useState<string | null>(null);
     
     useEffect(() => {
         const updateTime = () => {
@@ -260,6 +262,23 @@ export default function MiniJeuHome() {
         updateTime();
         const interval = setInterval(updateTime, 1000);
         return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        // Fetch aggregated mini-jeu stats from the dashboard API
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('/api/mini-jeu/stats');
+                if (!res.ok) throw new Error(`Status ${res.status}`);
+                const data = await res.json();
+                setStats(data);
+            } catch (e: any) {
+                console.error('Erreur en récupérant les stats mini-jeu:', e);
+                setStatsError('Impossible de récupérer les statistiques');
+            }
+        };
+
+        fetchStats();
     }, []);
 
     return (
@@ -352,19 +371,19 @@ export default function MiniJeuHome() {
                     <StatsCard 
                         icon={<Users className="h-8 w-8 text-white" />}
                         title="Joueurs Actifs"
-                        value="-"
+                        value={stats ? stats.activePlayers.toLocaleString('fr-FR') : (statsError ? 'Erreur' : 'Chargement...')}
                         description="Dans toutes les arènes"
                     />
                     <StatsCard 
                         icon={<Trophy className="h-8 w-8 text-white" />}
                         title="Parties Jouées"
-                        value="-"
-                        description="Ce mois-ci"
+                        value={stats ? stats.gamesPlayed.toLocaleString('fr-FR') : (statsError ? 'Erreur' : 'Chargement...')}
+                        description="Total de kints joués"
                     />
                     <StatsCard 
                         icon={<Coins className="h-8 w-8 text-white" />}
                         title="Points Distribués"
-                        value="-"
+                        value={stats ? stats.pointsDistributed.toLocaleString('fr-FR') : (statsError ? 'Erreur' : 'Chargement...')}
                         description="En récompenses"
                     />
                 </div>
@@ -388,8 +407,8 @@ export default function MiniJeuHome() {
                             title="KINT Arena"
                             description="Déclarez vos victoires, assumez vos défaites, et grimpez dans le classement de l'arène pour devenir légende."
                             isAvailable={true}
-                            players="- en ligne"
-                            rewards="MAX 100 Points KIP"
+                            players={stats ? `${stats.activePlayers.toLocaleString('fr-FR')} en ligne` : (statsError ? 'N/A' : '- en ligne')}
+                            rewards="0-100 Points"
                             difficulty="Moyen"
                             isPopular={true}
                         />
