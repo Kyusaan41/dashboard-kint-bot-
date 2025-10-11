@@ -9,6 +9,7 @@ import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
 import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 type ItemUsedEvent = {
   interactionId: string;
