@@ -228,7 +228,7 @@ export default function Home() {
             </motion.div>
             <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent">NyxBot</h1>
-              <p className="text-sm text-gray-400">Dashboard Gaming</p>
+              <p className="text-sm text-gray-400">Dashboard NyxBot</p>
             </div>
           </div>
           
@@ -265,7 +265,7 @@ export default function Home() {
                 >
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-primary/20 text-purple-secondary text-sm rounded-full border border-purple-primary/30 mb-6">
                     <Sparkles className="h-4 w-4" />
-                    <span>La nouvelle ère du gaming Discord</span>
+                    <span>Bot créé par Kyû</span>
                   </div>
                   
                   <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6">
@@ -281,9 +281,8 @@ export default function Home() {
                   transition={{ duration: 0.8, delay: 0.4 }}
                   className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
                 >
-                  Plongez dans l'univers ultime du gaming Discord. Gestion avancée, économie intégrée, 
-                  mini-jeux, classements et bien plus encore. Transformez votre serveur en véritable 
-                  communauté de joueurs.
+                  Plongez dans l'univers de NyxBot. Gestion avancée, économie intégrée, 
+                  mini-jeux, classements et bien plus encore. Transformez votre serveur avec NyxBot.
                 </motion.p>
                 
                 {/* CTA Buttons */}
@@ -460,7 +459,7 @@ export default function Home() {
                 Fonctionnalités <span className="bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent">NyxBot</span>
               </h2>
               <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-                Découvrez l'écosystème complet qui transformera votre serveur Discord en communauté gaming
+                Découvrez l'écosystème complet qui transformera votre serveur Discord.
               </p>
             </motion.div>
             
@@ -470,7 +469,7 @@ export default function Home() {
                 delay={0.1}
                 icon={<Shield size={32}/>}
                 title="Administration Avancée"
-                description="Contrôle total avec gestion des utilisateurs, logs détaillés, modération automatique et permissions granulaires."
+                description="Contrôle total avec gestion des utilisateurs, logs détaillés, modération automatique et plus."
               />
               <FeatureCard
                 delay={0.3}
@@ -482,7 +481,7 @@ export default function Home() {
                 delay={0.5}
                 icon={<Gamepad2 size={32}/>}
                 title="Arène Gaming"
-                description="Mini-jeux interactifs, tournois, défis quotidiens et système de progression avec titres à débloquer."
+                description="Mini-jeux interactifs, défis quotidiens et système de progression avec titres à débloquer."
               />
             </div>
           </div>
@@ -506,7 +505,7 @@ export default function Home() {
                 Prêt à <span className="bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent">dominer</span> Discord ?
               </h2>
               <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-                Rejoignez des milliers de serveurs qui ont déjà adopté NyxBot. 
+                Rejoignez-nous parmi plusieurs serveurs qui ont déjà adopté NyxBot. 
                 L'installation est instantanée, les possibilités sont infinies.
               </p>
               
@@ -541,7 +540,7 @@ export default function Home() {
                 transition={{ delay: 0.5 }}
                 className="mt-16 pt-8 border-t border-gray-700/30 text-center text-gray-500"
               >
-                <p>© 2025 NyxBot Dashboard. Conçu pour les gamers, par des gamers.</p>
+                <p>© 2025 NyxBot Dashboard. Conçu pour des potes, par un pote.</p>
               </motion.div>
             </motion.div>
           </div>
