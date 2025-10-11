@@ -314,82 +314,37 @@ export default function Home() {
                 </motion.div>
                 
                 {/* Real-time Stats Preview */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.8 }}
-                  className="mt-16 grid grid-cols-3 gap-8 text-center lg:text-left"
-                >
-                  <motion.div
-                    key={serverStats.activeUsers}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <div className="relative">
-                      <p className="text-3xl font-bold text-purple-secondary">
-                        {serverStats.activeUsers > 0 ? (
-                          <>
-                            {serverStats.activeUsers.toLocaleString()}
-                            <span className="text-lg">+</span>
-                          </>
-                        ) : (
-                          <span className="inline-block w-12 h-8 bg-purple-secondary/20 rounded animate-pulse"></span>
-                        )}
-                      </p>
-                      <p className="text-sm text-gray-400 flex items-center justify-center lg:justify-start gap-1">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        Joueurs actifs
-                      </p>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div
-                    key={serverStats.totalServers}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                  >
-                    <div className="relative">
-                      <p className="text-3xl font-bold text-purple-secondary">
-                        {serverStats.totalServers > 0 ? (
-                          <>
-                            {serverStats.totalServers}
-                            <span className="text-lg">+</span>
-                          </>
-                        ) : (
-                          <span className="inline-block w-10 h-8 bg-purple-secondary/20 rounded animate-pulse"></span>
-                        )}
-                      </p>
-                      <p className="text-sm text-gray-400">Serveurs</p>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    <div className="relative">
-                      <p className="text-3xl font-bold text-purple-secondary flex items-center justify-center lg:justify-start gap-2">
-                        <motion.span
-                          animate={{ 
-                            textShadow: [
-                              "0 0 0px rgba(139, 92, 246, 0.5)",
-                              "0 0 10px rgba(139, 92, 246, 0.8)",
-                              "0 0 0px rgba(139, 92, 246, 0.5)"
-                            ]
-                          }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          {serverStats.uptime}
-                        </motion.span>
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      </p>
-                      <p className="text-sm text-gray-400">Disponibilité</p>
-                    </div>
-                  </motion.div>
-                </motion.div>
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8, delay: 0.8 }}
+  className="mt-10 flex justify-left"
+>
+  <motion.div
+    initial={{ scale: 0.8, opacity: 0 }}
+    animate={{ scale: 1, opacity: 1 }}
+    transition={{ duration: 0.5 }}
+  >
+    <div className="relative text-left">
+      <p className="text-3xl font-bold text-purple-secondary flex items-center justify-center gap-2">
+        <motion.span
+          animate={{
+            textShadow: [
+              "0 0 0px rgba(139, 92, 246, 0.5)",
+              "0 0 10px rgba(139, 92, 246, 0.8)",
+              "0 0 0px rgba(139, 92, 246, 0.5)"
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          {serverStats.uptime}
+        </motion.span>
+        <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+      </p>
+      <p className="text-sm text-gray-400 mt-1">Disponibilité</p>
+    </div>
+  </motion.div>
+</motion.div>
               </div>
               
               {/* Right Visual */}
