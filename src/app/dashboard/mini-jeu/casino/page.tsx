@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Trophy, Crown, Target, Flame, Sparkles } from 'lucide-react';
+import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown } from 'lucide-react';
 
 // Slot Machine page using real currency via /api/currency/me
 
@@ -36,6 +36,213 @@ function useWindowSizeLocal() {
     return size;
 }
 
+// Floating particles component
+const FloatingParticles = ({ count = 20 }: { count?: number }) => {
+    return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {Array.from({ length: count }).map((_, i) => (
+                <motion.div
+                    key={i}
+                    className="absolute w-1 h-1 bg-purple-400/30 rounded-full"
+                    initial={{
+                        x: Math.random() * 100 + '%',
+                        y: Math.random() * 100 + '%',
+                    }}
+                    animate={{
+                        y: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
+                        x: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
+                        opacity: [0, 1, 0],
+                        scale: [0, 1.5, 0],
+                    }}
+                    transition={{
+                        duration: Math.random() * 3 + 2,
+                        repeat: Infinity,
+                        delay: Math.random() * 2,
+                    }}
+                />
+            ))}
+        </div>
+    );
+};
+
+// Confetti component
+const Confetti = () => {
+    const colors = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
+    return (
+        <div className="fixed inset-0 pointer-events-none z-50">
+            {Array.from({ length: 100 }).map((_, i) => (
+                <motion.div
+                    key={i}
+                    className="absolute w-3 h-3 rounded-full"
+                    style={{
+                        backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                        left: `${Math.random() * 100}%`,
+                        top: '-5%',
+                    }}
+                    initial={{ y: 0, opacity: 1, rotate: 0 }}
+                    animate={{
+                        y: window.innerHeight + 100,
+                        opacity: [1, 1, 0],
+                        rotate: Math.random() * 720,
+                        x: (Math.random() - 0.5) * 200,
+                    }}
+                    transition={{
+                        duration: Math.random() * 2 + 2,
+                        ease: 'easeOut',
+                        delay: Math.random() * 0.5,
+                    }}
+                />
+            ))}
+        </div>
+    );
+};
+
+// Coin rain effect
+const CoinRain = ({ amount }: { amount: number }) => {
+    const coinCount = Math.min(Math.floor(amount / 10), 50);
+    return (
+        <div className="fixed inset-0 pointer-events-none z-50">
+            {Array.from({ length: coinCount }).map((_, i) => (
+                <motion.div
+                    key={i}
+                    className="absolute text-3xl"
+                    style={{
+                        left: `${Math.random() * 100}%`,
+                        top: '-10%',
+                    }}
+                    initial={{ y: 0, opacity: 1, rotate: 0, scale: 0 }}
+                    animate={{
+                        y: window.innerHeight + 100,
+                        opacity: [0, 1, 1, 0],
+                        rotate: Math.random() * 720,
+                        scale: [0, 1, 1, 0],
+                        x: (Math.random() - 0.5) * 100,
+                    }}
+                    transition={{
+                        duration: Math.random() * 1.5 + 1.5,
+                        ease: 'easeIn',
+                        delay: Math.random() * 0.3,
+                    }}
+                >
+                    💰
+                </motion.div>
+            ))}
+        </div>
+    );
+};
+
+// Winning line component - connects the 3 winning symbols
+const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'two-right' }) => {
+    // Calculate line position based on win type
+    const getLineConfig = () => {
+        switch (type) {
+            case 'three':
+                return { width: '100%', left: '0%' }; // Full line across all 3 reels
+            case 'two-left':
+                return { width: '50%', left: '0%' }; // Line across first 2 reels
+            case 'two-middle':
+                return { width: '50%', left: '25%' }; // Line across middle 2 reels
+            case 'two-right':
+                return { width: '50%', left: '50%' }; // Line across last 2 reels
+            default:
+                return { width: '100%', left: '0%' };
+        }
+    };
+
+    const config = getLineConfig();
+
+    return (
+        <div className="absolute top-1/2 left-0 right-0 pointer-events-none z-30" style={{ transform: 'translateY(-50%)' }}>
+            {/* Glowing animated line */}
+            <motion.div
+                className="absolute h-2 rounded-full"
+                style={{
+                    width: config.width,
+                    left: config.left,
+                    background: 'linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.8), rgba(251, 191, 36, 1), rgba(251, 191, 36, 0.8), transparent)',
+                }}
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{
+                    scaleX: [0, 1, 1],
+                    opacity: [0, 1, 1],
+                }}
+                transition={{
+                    duration: 0.6,
+                    ease: "easeOut"
+                }}
+            />
+            
+            {/* Pulsing glow effect */}
+            <motion.div
+                className="absolute h-4 rounded-full blur-md"
+                style={{
+                    width: config.width,
+                    left: config.left,
+                    background: 'linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.6), rgba(251, 191, 36, 0.8), rgba(251, 191, 36, 0.6), transparent)',
+                }}
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{
+                    scaleX: [0, 1, 1],
+                    opacity: [0, 0.8, 0.8],
+                }}
+                transition={{
+                    duration: 0.6,
+                    ease: "easeOut"
+                }}
+            />
+            
+            {/* Animated shine effect */}
+            <motion.div
+                className="absolute h-3 rounded-full"
+                style={{
+                    width: config.width,
+                    left: config.left,
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent)',
+                }}
+                initial={{ x: '-100%', opacity: 0 }}
+                animate={{
+                    x: ['0%', '100%'],
+                    opacity: [0, 1, 0],
+                }}
+                transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 0.6
+                }}
+            />
+            
+            {/* Star particles along the line */}
+            {type === 'three' && (
+                <>
+                    {[0, 33, 66, 100].map((pos, i) => (
+                        <motion.div
+                            key={i}
+                            className="absolute top-1/2 text-yellow-300"
+                            style={{
+                                left: `${pos}%`,
+                                transform: 'translate(-50%, -50%)',
+                            }}
+                            initial={{ scale: 0, rotate: 0, opacity: 0 }}
+                            animate={{
+                                scale: [0, 1.5, 1],
+                                rotate: [0, 180, 360],
+                                opacity: [0, 1, 1],
+                            }}
+                            transition={{
+                                duration: 0.8,
+                                delay: i * 0.1 + 0.3,
+                            }}
+                        >
+                            <Star size={20} fill="currentColor" />
+                        </motion.div>
+                    ))}
+                </>
+            )}
+        </div>
+    );
+};
+
 export default function CasinoSlotPage() {
     const [balance, setBalance] = useState<number>(0);
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
@@ -43,13 +250,40 @@ export default function CasinoSlotPage() {
     const [reels, setReels] = useState<Reel[]>([randomReel(), randomReel(), randomReel()]);
     const [spinning, setSpinning] = useState(false);
     const [message, setMessage] = useState<string>('Bonne chance !');
-    const [jackpot, setJackpot] = useState<number>(10000);
+    
+    // Initialize from localStorage with lazy initialization
+    const [jackpot, setJackpot] = useState<number>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('casino_jackpot');
+            return saved ? Number(saved) : 10000;
+        }
+        return 10000;
+    });
+    
     const [showConfetti, setShowConfetti] = useState(false);
     const [winAnimation, setWinAnimation] = useState(false);
     const [loseAnimation, setLoseAnimation] = useState(false);
     const [lastWinAmount, setLastWinAmount] = useState(0);
-    const [biggestWin, setBiggestWin] = useState<number>(0);
-    const [biggestLoss, setBiggestLoss] = useState<number>(0);
+    
+    const [biggestWin, setBiggestWin] = useState<number>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('casino_biggest_win');
+            return saved ? Number(saved) : 0;
+        }
+        return 0;
+    });
+    
+    const [biggestLoss, setBiggestLoss] = useState<number>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('casino_biggest_loss');
+            return saved ? Number(saved) : 0;
+        }
+        return 0;
+    });
+    
+    const [showCoinRain, setShowCoinRain] = useState(false);
+    const [reelsStopped, setReelsStopped] = useState([false, false, false]);
+    const [winningLineType, setWinningLineType] = useState<'three' | 'two-left' | 'two-middle' | 'two-right' | null>(null);
     const { width, height } = useWindowSizeLocal();
     const spinTimeouts = useRef<any[]>([]);
 
@@ -61,6 +295,7 @@ export default function CasinoSlotPage() {
 
     const setInitialReels = () => setReels([randomReel(20), randomReel(20), randomReel(20)]);
 
+    // Load balance from API on mount
     useEffect(() => {
         setInitialReels();
 
@@ -82,27 +317,73 @@ export default function CasinoSlotPage() {
         })();
     }, []);
 
+    // Save jackpot to localStorage whenever it changes
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('casino_jackpot', jackpot.toString());
+        }
+    }, [jackpot]);
+
+    // Save biggest win to localStorage whenever it changes
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('casino_biggest_win', biggestWin.toString());
+        }
+    }, [biggestWin]);
+
+    // Save biggest loss to localStorage whenever it changes
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('casino_biggest_loss', biggestLoss.toString());
+        }
+    }, [biggestLoss]);
+
     const computeResult = (finalSymbols: string[], currentBet: number) => {
         const [s1, s2, s3] = finalSymbols;
+        
+        // 3 symboles identiques = GROS GAIN
         if (s1 === s2 && s2 === s3) {
             const multiplier = PAYOUTS[s1] || 1;
-            if (s1 === '7️⃣') return { win: true, amount: Math.max(jackpot, currentBet * multiplier) };
-            return { win: true, amount: Math.max(1, Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE))) };
+            
+            // JACKPOT avec 7️⃣
+            if (s1 === '7️⃣') {
+                return { win: true, amount: Math.max(jackpot, currentBet * multiplier), isJackpot: true, lineType: 'three' as const };
+            }
+            
+            // Gain normal avec 3 symboles identiques
+            // On garantit au minimum le double de la mise
+            const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
+            const finalAmount = Math.max(currentBet * 2, baseAmount);
+            return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' as const };
         }
 
+        // 2 symboles identiques = PETIT GAIN
         if (s1 === s2 || s2 === s3 || s1 === s3) {
             const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
             const multiplier = PAYOUTS[sym] ? Math.max(1, Math.floor(PAYOUTS[sym] / 4)) : 1;
-            return { win: true, amount: Math.max(1, Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE))) };
+            
+            // Déterminer le type de ligne selon les symboles qui matchent
+            let lineType: 'two-left' | 'two-middle' | 'two-right' = 'two-left';
+            if (s1 === s2) lineType = 'two-left';
+            else if (s2 === s3) lineType = 'two-middle';
+            else if (s1 === s3) lineType = 'two-right';
+            
+            // On garantit au minimum la mise (remboursement)
+            const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
+            const finalAmount = Math.max(currentBet, baseAmount);
+            return { win: true, amount: finalAmount, isJackpot: false, lineType };
         }
 
-        return { win: false, amount: 0 };
+        // Aucun symbole identique = PERTE
+        return { win: false, amount: 0, isJackpot: false, lineType: null };
     };
 
     const triggerWinAnimation = (amount: number) => {
         setLastWinAmount(amount);
         setWinAnimation(true);
+        setShowCoinRain(true);
         setTimeout(() => setWinAnimation(false), 3000);
+        setTimeout(() => setShowCoinRain(false), 3000);
     };
 
     const triggerLoseAnimation = () => {
@@ -117,10 +398,13 @@ export default function CasinoSlotPage() {
             return;
         }
 
+        setReelsStopped([false, false, false]);
+        setWinningLineType(null); // Reset winning line
+
         // Reserve funds server-side: deduct bet before spinning
         try {
             setSpinning(true);
-            setMessage('Réservation en cours...');
+            setMessage('🎰 Spinning...');
 
             const reserve = await fetch('/api/currency/me', {
                 method: 'POST',
@@ -132,15 +416,12 @@ export default function CasinoSlotPage() {
                 const json = await reserve.json();
                 if (typeof json.balance === 'number') setBalance(json.balance);
             } else {
-                // fallback: optimistic local deduction
                 setBalance((b) => b - bet);
             }
         } catch (e) {
             console.error('Erreur réservation:', e);
             setBalance((b) => b - bet);
         }
-
-        setMessage('Spinning...');
 
         const makeWeightedReel = () => {
             const arr: string[] = [];
@@ -166,33 +447,44 @@ export default function CasinoSlotPage() {
                 const reel = newReels[idx];
                 const final = reel[reel.length - 1];
                 finalSymbols[idx] = final;
+                
+                // Mark this reel as stopped
+                setReelsStopped(prev => {
+                    const newStopped = [...prev];
+                    newStopped[idx] = true;
+                    return newStopped;
+                });
 
                 if (idx === delays.length - 1) {
-                    // Stop spinning first
                     setSpinning(false);
                     
-                    // Wait a bit before showing result
                     setTimeout(async () => {
                         const result = computeResult(finalSymbols as string[], bet);
                         if (result.win) {
-                            // Update biggest win
+                            // Show winning line
+                            if (result.lineType) {
+                                setWinningLineType(result.lineType);
+                                setTimeout(() => setWinningLineType(null), 4000); // Hide after 4 seconds
+                            }
+                            
                             if (result.amount > biggestWin) {
                                 setBiggestWin(result.amount);
                             }
                             
-                            if (result.amount >= jackpot) {
-                                setMessage(`JACKPOT! +${result.amount} Pièces`);
+                            if (result.isJackpot) {
+                                setMessage(`🎉 JACKPOT! +${result.amount} Pièces 🎉`);
                                 setShowConfetti(true);
                                 setTimeout(() => setShowConfetti(false), 8000);
+                                // Reset jackpot to minimum after jackpot win
                                 setJackpot(1000);
                                 triggerWinAnimation(result.amount);
                             } else {
-                                setMessage(`Gagné +${result.amount} Pièces`);
-                                setJackpot((j) => Math.max(1000, j - Math.floor(result.amount / 10)));
+                                setMessage(`✨ Gagné +${result.amount} Pièces ✨`);
+                                // Le jackpot ne descend JAMAIS, il monte seulement
+                                // On ne fait rien ici, le jackpot reste tel quel
                                 triggerWinAnimation(result.amount);
                             }
 
-                            // Credit winnings server-side
                             try {
                                 const post = await fetch('/api/currency/me', {
                                     method: 'POST',
@@ -210,15 +502,13 @@ export default function CasinoSlotPage() {
                                 setBalance((b) => b + result.amount);
                             }
                         } else {
-                            // Update biggest loss
                             if (bet > biggestLoss) {
                                 setBiggestLoss(bet);
                             }
                             
-                            setMessage('Perdu...');
+                            setMessage('💔 Perdu...');
                             setJackpot((j) => j + Math.max(1, Math.floor(bet * 0.2)));
                             triggerLoseAnimation();
-                            // Already deducted on reserve; nothing else to do.
                         }
                     }, 300);
                 }
@@ -229,71 +519,226 @@ export default function CasinoSlotPage() {
 
     const formatMoney = (n: number) => n.toLocaleString('fr-FR');
 
-    const reelDisplay = (reel: Reel, index: number) => (
-        <div className="relative w-32 h-40 bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl border-2 border-purple-500/30 shadow-2xl overflow-hidden">
-            {/* Glow effect when spinning */}
-            {spinning && (
-                <motion.div 
-                    className="absolute inset-0 bg-purple-500/20 rounded-2xl"
-                    animate={{ opacity: [0.2, 0.5, 0.2] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                />
-            )}
-            
+    const reelDisplay = (reel: Reel, index: number) => {
+        const isStopped = reelsStopped[index];
+        
+        return (
             <motion.div 
-                className="flex flex-col items-center justify-center h-full relative z-10"
-                animate={spinning ? {
-                    y: [0, -280]
+                className="relative w-36 h-48 rounded-3xl overflow-hidden"
+                animate={isStopped ? {
+                    scale: [1, 1.05, 1],
                 } : {}}
-                transition={spinning ? {
-                    duration: 0.5,
-                    repeat: Infinity,
-                    ease: "linear",
-                    delay: index * 0.2
-                } : {}}
+                transition={{ duration: 0.3 }}
             >
-                {reel.map((s, i) => (
+                {/* Outer glow container */}
+                <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-purple-500/10 to-purple-600/20 rounded-3xl blur-xl" />
+                
+                {/* Main reel container */}
+                <div className="relative w-full h-full bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-3xl border-4 border-purple-500/40 shadow-2xl overflow-hidden">
+                    {/* Animated border glow */}
                     <motion.div 
-                        key={`${s}-${i}`} 
-                        className={`flex items-center justify-center h-14 w-full transition-all duration-300 ${
-                            i === reel.length - 1 && !spinning 
-                                ? 'bg-gradient-to-r from-purple-500/30 via-purple-400/30 to-purple-500/30 border-y-2 border-purple-400/50 shadow-lg shadow-purple-500/50' 
-                                : ''
-                        }`}
-                        animate={i === reel.length - 1 && !spinning ? {
-                            scale: [1, 1.1, 1],
+                        className="absolute inset-0 rounded-3xl"
+                        style={{
+                            background: 'linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.3), transparent)',
+                        }}
+                        animate={spinning ? {
+                            rotate: [0, 360],
                         } : {}}
                         transition={{
-                            duration: 0.5,
-                            delay: index * 0.1
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "linear"
                         }}
+                    />
+                    
+                    {/* Spinning glow effect */}
+                    {spinning && (
+                        <motion.div 
+                            className="absolute inset-0 bg-gradient-to-b from-purple-500/30 via-transparent to-purple-500/30"
+                            animate={{ 
+                                opacity: [0.3, 0.7, 0.3],
+                                y: [-50, 50, -50]
+                            }}
+                            transition={{ 
+                                duration: 0.8, 
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                        />
+                    )}
+                    
+                    {/* Reel symbols */}
+                    <motion.div 
+                        className="flex flex-col items-center justify-center h-full relative z-10"
+                        animate={spinning ? {
+                            y: [0, -320]
+                        } : {}}
+                        transition={spinning ? {
+                            duration: 0.4,
+                            repeat: Infinity,
+                            ease: "linear",
+                            delay: index * 0.15
+                        } : {}}
                     >
-                        <span className="text-4xl drop-shadow-lg leading-none flex items-center justify-center">{s}</span>
+                        {reel.map((s, i) => (
+                            <motion.div 
+                                key={`${s}-${i}`} 
+                                className={`flex items-center justify-center h-16 w-full transition-all duration-300 ${
+                                    i === reel.length - 1 && !spinning 
+                                        ? 'relative' 
+                                        : ''
+                                }`}
+                            >
+                                {/* Winning symbol highlight */}
+                                {i === reel.length - 1 && !spinning && (
+                                    <>
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/40 to-transparent"
+                                            animate={{
+                                                opacity: [0.3, 0.8, 0.3],
+                                                scale: [0.95, 1.05, 0.95],
+                                            }}
+                                            transition={{
+                                                duration: 1.5,
+                                                repeat: Infinity,
+                                                ease: "easeInOut"
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 border-y-4 border-purple-400/60 shadow-lg shadow-purple-500/50" />
+                                        <motion.div
+                                            className="absolute -left-2 -right-2 -top-2 -bottom-2"
+                                            animate={{
+                                                boxShadow: [
+                                                    '0 0 20px rgba(139, 92, 246, 0.3)',
+                                                    '0 0 40px rgba(139, 92, 246, 0.6)',
+                                                    '0 0 20px rgba(139, 92, 246, 0.3)',
+                                                ],
+                                            }}
+                                            transition={{
+                                                duration: 1.5,
+                                                repeat: Infinity,
+                                            }}
+                                        />
+                                    </>
+                                )}
+                                
+                                <motion.span 
+                                    className="text-5xl drop-shadow-2xl leading-none flex items-center justify-center relative z-10"
+                                    animate={i === reel.length - 1 && !spinning ? {
+                                        scale: [1, 1.2, 1],
+                                        rotate: [0, 5, -5, 0],
+                                    } : {}}
+                                    transition={{
+                                        duration: 0.6,
+                                        delay: index * 0.1
+                                    }}
+                                    style={{
+                                        filter: i === reel.length - 1 && !spinning 
+                                            ? 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.8))' 
+                                            : 'none'
+                                    }}
+                                >
+                                    {s}
+                                </motion.span>
+                            </motion.div>
+                        ))}
                     </motion.div>
-                ))}
+                    
+                    {/* Enhanced overlay effects */}
+                    <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-20" />
+                    <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-20" />
+                    
+                    {/* Corner sparkles */}
+                    {!spinning && (
+                        <>
+                            <motion.div
+                                className="absolute top-2 left-2 text-purple-400"
+                                animate={{
+                                    opacity: [0, 1, 0],
+                                    scale: [0, 1, 0],
+                                    rotate: [0, 180, 360],
+                                }}
+                                transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    delay: index * 0.3,
+                                }}
+                            >
+                                <Sparkles size={16} />
+                            </motion.div>
+                            <motion.div
+                                className="absolute top-2 right-2 text-purple-400"
+                                animate={{
+                                    opacity: [0, 1, 0],
+                                    scale: [0, 1, 0],
+                                    rotate: [360, 180, 0],
+                                }}
+                                transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    delay: index * 0.3 + 0.5,
+                                }}
+                            >
+                                <Sparkles size={16} />
+                            </motion.div>
+                        </>
+                    )}
+                    
+                    {/* Side glow effects */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-purple-400/70 to-transparent pointer-events-none z-20" />
+                    <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-purple-400/70 to-transparent pointer-events-none z-20" />
+                </div>
             </motion.div>
-            
-            {/* Enhanced overlay effects */}
-            <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none z-20" />
-            <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none z-20" />
-            <div className="absolute inset-0 border-2 border-white/5 rounded-2xl pointer-events-none z-20" />
-            
-            {/* Side glow effects */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-purple-400/50 to-transparent pointer-events-none z-20" />
-            <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-purple-400/50 to-transparent pointer-events-none z-20" />
-        </div>
-    );
+        );
+    };
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 md:p-8 text-white relative overflow-hidden">
+            {/* Animated background particles */}
+            <FloatingParticles count={30} />
+            
+            {/* Confetti effect */}
+            <AnimatePresence>
+                {showConfetti && <Confetti />}
+            </AnimatePresence>
+            
+            {/* Coin rain effect */}
+            <AnimatePresence>
+                {showCoinRain && <CoinRain amount={lastWinAmount} />}
+            </AnimatePresence>
+            
             <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 items-start relative z-10">
                 {/* Main Slot Machine */}
                 <div className="lg:col-span-3 futuristic-card rounded-3xl p-6 md:p-8 shadow-purple relative overflow-hidden">
-                    {/* Decorative corner elements */}
-                    <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-purple-500/30 rounded-tl-3xl" />
-                    <div className="absolute top-0 right-0 w-20 h-20 border-t-2 border-r-2 border-purple-500/30 rounded-tr-3xl" />
-                    <div className="absolute bottom-0 left-0 w-20 h-20 border-b-2 border-l-2 border-purple-500/30 rounded-bl-3xl" />
-                    <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-purple-500/30 rounded-br-3xl" />
+                    {/* Animated corner elements */}
+                    <motion.div 
+                        className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-purple-500/40 rounded-tl-3xl"
+                        animate={{
+                            borderColor: ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                    />
+                    <motion.div 
+                        className="absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 border-purple-500/40 rounded-tr-3xl"
+                        animate={{
+                            borderColor: ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                    />
+                    <motion.div 
+                        className="absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 border-purple-500/40 rounded-bl-3xl"
+                        animate={{
+                            borderColor: ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                    />
+                    <motion.div 
+                        className="absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 border-purple-500/40 rounded-br-3xl"
+                        animate={{
+                            borderColor: ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
+                        }}
+                        transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
+                    />
                     
                     {/* Header */}
                     <motion.div
@@ -303,539 +748,477 @@ export default function CasinoSlotPage() {
                     >
                         <div className="flex items-center gap-4">
                             <motion.div 
-                                className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/50"
-                                animate={{ rotate: [0, 5, -5, 0] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/50 relative overflow-hidden"
+                                animate={{ 
+                                    rotate: spinning ? [0, 360] : [0, 5, -5, 0],
+                                    scale: spinning ? [1, 1.1, 1] : 1,
+                                }}
+                                transition={spinning ? {
+                                    rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                                    scale: { duration: 0.5, repeat: Infinity },
+                                } : {
+                                    duration: 2,
+                                    repeat: Infinity
+                                }}
                             >
-                                <Sparkles size={28} className="text-white" />
+                                <motion.div
+                                    className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"
+                                    animate={{
+                                        opacity: [0.2, 0.5, 0.2],
+                                    }}
+                                    transition={{
+                                        duration: 1.5,
+                                        repeat: Infinity,
+                                    }}
+                                />
+                                <Zap size={32} className="text-white relative z-10" />
                             </motion.div>
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-purple-400 bg-clip-text text-transparent">
-                                    Slot Machine
+                                <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-purple-400 via-purple-300 to-purple-400 bg-clip-text text-transparent">
+                                    Casino Slot
                                 </h1>
-                                <p className="text-gray-400 text-sm md:text-base">Tentez votre chance et gagnez gros !</p>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Stats Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 relative z-10">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="relative bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-2xl p-5 border border-green-500/30 shadow-lg overflow-hidden group hover:shadow-green-500/20 transition-all duration-300"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <div className="flex items-center gap-4 relative z-10">
-                                <motion.div 
-                                    className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/30"
-                                    whileHover={{ scale: 1.1, rotate: 5 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
-                                >
-                                    <Zap size={24} className="text-white" />
-                                </motion.div>
-                                <div className="flex-1">
-                                    <p className="text-xs md:text-sm text-gray-400 font-medium mb-1">Votre Solde</p>
-                                    <p className="text-xl md:text-2xl font-bold text-green-400 tracking-tight">
-                                        {loadingBalance ? (
-                                            <motion.span
-                                                animate={{ opacity: [0.5, 1, 0.5] }}
-                                                transition={{ duration: 1.5, repeat: Infinity }}
-                                            >
-                                                Chargement...
-                                            </motion.span>
-                                        ) : (
-                                            `${formatMoney(balance)} 💰`
-                                        )}
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="relative bg-gradient-to-br from-yellow-500/10 to-orange-600/5 rounded-2xl p-5 border border-yellow-500/30 shadow-lg overflow-hidden group hover:shadow-yellow-500/20 transition-all duration-300"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <motion.div 
-                                className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-3xl"
-                                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                                transition={{ duration: 3, repeat: Infinity }}
-                            />
-                            <div className="flex items-center gap-4 relative z-10">
-                                <motion.div 
-                                    className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-500/30"
-                                    animate={{ rotate: [0, -10, 10, 0] }}
-                                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                                >
-                                    <Crown size={24} className="text-white" />
-                                </motion.div>
-                                <div className="flex-1">
-                                    <p className="text-xs md:text-sm text-gray-400 font-medium mb-1">Jackpot</p>
-                                    <motion.p 
-                                        className="text-xl md:text-2xl font-bold text-yellow-400 tracking-tight"
-                                        animate={{ scale: [1, 1.05, 1] }}
-                                        transition={{ duration: 2, repeat: Infinity }}
-                                    >
-                                        {formatMoney(jackpot)} 🏆
-                                    </motion.p>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-
-                    {/* Slot Machine Reels */}
-                    <motion.div 
-                        className="relative mb-8 p-6 md:p-10 bg-gradient-to-br from-gray-900/80 via-purple-900/20 to-gray-900/80 rounded-3xl border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20 overflow-hidden"
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                    >
-                        {/* Animated background pattern */}
-                        <div className="absolute inset-0 opacity-10">
-                            <div className="absolute inset-0" style={{
-                                backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(139, 92, 246, 0.1) 10px, rgba(139, 92, 246, 0.1) 20px)'
-                            }} />
-                        </div>
-                        
-                        {/* Glow effect when spinning */}
-                        {spinning && (
-                            <motion.div 
-                                className="absolute inset-0 bg-purple-500/10"
-                                animate={{ opacity: [0.1, 0.3, 0.1] }}
-                                transition={{ duration: 1, repeat: Infinity }}
-                            />
-                        )}
-                        
-                        <div className="flex items-center justify-center gap-4 md:gap-8 mb-6 relative z-10">
-                            {reels.map((r, i) => (
-                                <motion.div 
-                                    key={i} 
-                                    className="flex items-center justify-center"
-                                    initial={{ y: 20, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    transition={{ delay: 0.4 + i * 0.1 }}
-                                >
-                                    {reelDisplay(r, i)}
-                                </motion.div>
-                            ))}
-                        </div>
-                        
-                        {/* Enhanced winning line indicators */}
-                        <motion.div 
-                            className="absolute top-1/2 left-8 right-8 h-1 bg-gradient-to-r from-transparent via-purple-400/40 to-transparent transform -translate-y-1/2 rounded-full"
-                            animate={spinning ? { opacity: [0.4, 0.8, 0.4] } : {}}
-                            transition={{ duration: 1, repeat: Infinity }}
-                        />
-                        <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-gradient-to-r from-transparent via-purple-400/20 to-transparent transform -translate-y-1/2 rounded-full blur-sm" />
-                        
-                        {/* Corner decorations */}
-                        <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-purple-400/30 rounded-tl-lg" />
-                        <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-purple-400/30 rounded-tr-lg" />
-                        <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-purple-400/30 rounded-bl-lg" />
-                        <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-purple-400/30 rounded-br-lg" />
-                    </motion.div>
-
-                    {/* Controls */}
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mb-6 relative z-10">
-                        <motion.div 
-                            className="flex items-center gap-3 bg-gradient-to-br from-gray-900/90 to-gray-800/90 px-5 py-4 rounded-2xl border-2 border-purple-500/30 shadow-lg backdrop-blur-sm"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            whileHover={{ scale: 1.02, borderColor: 'rgba(139, 92, 246, 0.5)' }}
-                        >
-                            <motion.div
-                                animate={{ rotate: [0, 10, -10, 0] }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                            >
-                                <Target size={22} className="text-purple-400" />
-                            </motion.div>
-                            <label className="text-sm text-gray-300 font-semibold">Mise</label>
-                            <input
-                                type="number"
-                                min={1}
-                                max={Math.max(1, balance)}
-                                value={bet}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    // Allow empty input for editing
-                                    if (value === '') {
-                                        setBet(0);
-                                        return;
-                                    }
-                                    const numValue = Number(value);
-                                    // Allow any number input, validation happens on spin
-                                    if (!isNaN(numValue)) {
-                                        setBet(numValue);
-                                    }
-                                }}
-                                onBlur={(e) => {
-                                    // Validate on blur to ensure valid range
-                                    const numValue = Number(e.target.value);
-                                    if (isNaN(numValue) || numValue < 1) {
-                                        setBet(1);
-                                    } else if (numValue > balance) {
-                                        setBet(Math.max(1, balance));
-                                    }
-                                }}
-                                disabled={spinning || loadingBalance}
-                                className="nyx-input w-28 text-center font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                            />
-                        </motion.div>
-
-                        <motion.button
-                            onClick={handleSpin}
-                            disabled={spinning || loadingBalance || bet > balance}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.6 }}
-                            whileHover={{ scale: spinning ? 1 : 1.08 }}
-                            whileTap={{ scale: spinning ? 1 : 0.92 }}
-                            className={`relative px-10 py-4 rounded-2xl font-bold text-lg shadow-2xl flex items-center gap-3 overflow-hidden transition-all duration-300 ${
-                                spinning 
-                                    ? 'bg-gray-700 cursor-not-allowed' 
-                                    : bet > balance
-                                    ? 'bg-gray-700 cursor-not-allowed opacity-50'
-                                    : 'btn-nyx-primary'
-                            }`}
-                        >
-                            {!spinning && !loadingBalance && bet <= balance && (
-                                <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-purple-400/0 via-white/20 to-purple-400/0"
-                                    animate={{ x: ['-100%', '200%'] }}
-                                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                />
-                            )}
-                            {spinning ? (
-                                <>
-                                    <motion.div
-                                        animate={{ rotate: 360 }}
-                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                        className="text-2xl"
-                                    >
-                                        🎰
-                                    </motion.div>
-                                    <span>Rotation...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <motion.div
-                                        animate={{ rotate: [0, 15, -15, 0] }}
-                                        transition={{ duration: 2, repeat: Infinity }}
-                                    >
-                                        <Sparkles size={22} />
-                                    </motion.div>
-                                    <span>JOUER</span>
-                                </>
-                            )}
-                        </motion.button>
-                    </div>
-
-                    {/* Message Display */}
-                    <motion.div 
-                        className="text-center min-h-12 mb-2 relative z-10"
-                        key={message}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        <motion.div
-                            className={`inline-block px-6 py-3 rounded-2xl font-bold text-lg md:text-xl ${
-                                message.includes('Gagné') || message.includes('JACKPOT')
-                                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 text-green-400 shadow-lg shadow-green-500/30'
-                                    : message.includes('Perdu')
-                                    ? 'bg-gradient-to-r from-red-500/20 to-rose-500/20 border-2 border-red-500/50 text-red-400 shadow-lg shadow-red-500/30'
-                                    : 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-2 border-purple-500/50 text-purple-300 shadow-lg shadow-purple-500/30'
-                            }`}
-                            animate={message.includes('JACKPOT') ? { 
-                                scale: [1, 1.1, 1],
-                                rotate: [0, 2, -2, 0]
-                            } : {}}
-                            transition={{ duration: 0.5, repeat: message.includes('JACKPOT') ? Infinity : 0 }}
-                        >
-                            {message}
-                        </motion.div>
-                    </motion.div>
-
-                    {/* Win/Lose Animations */}
-                    <AnimatePresence>
-                        {winAnimation && (
-                            <motion.div
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 1.5, opacity: 0 }}
-                                className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
-                            >
-                                <motion.div
-                                    className="relative"
-                                    animate={{ 
-                                        y: [0, -20, 0],
-                                        rotate: [0, 5, -5, 0]
+                                <motion.p 
+                                    className="text-sm text-gray-400 font-medium"
+                                    animate={{
+                                        opacity: [0.5, 1, 0.5],
                                     }}
-                                    transition={{ duration: 0.6, repeat: 3 }}
+                                    transition={{
+                                        duration: 2,
+                                        repeat: Infinity,
+                                    }}
                                 >
-                                    <div className="text-4xl md:text-6xl font-black bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent drop-shadow-2xl">
-                                        +{formatMoney(lastWinAmount)} 💰
+                                    Tentez votre chance !
+                                </motion.p>
+                            </div>
+                        </div>
+                        
+                        <motion.div
+                            className="text-right"
+                            animate={loadingBalance ? { opacity: [0.5, 1, 0.5] } : {}}
+                            transition={{ duration: 1, repeat: Infinity }}
+                        >
+                            <p className="text-sm text-gray-400 font-semibold mb-1">Solde</p>
+                            <motion.p 
+                                className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent"
+                                key={balance}
+                                initial={{ scale: 1.2, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                            >
+                                {formatMoney(balance)} 💰
+                            </motion.p>
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Reels Container */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="relative mb-8"
+                    >
+                        {/* Slot machine frame */}
+                        <div className="relative bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-8 border-4 border-purple-500/30 shadow-2xl">
+                            {/* Top decorative bar */}
+                            <motion.div 
+                                className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 via-purple-500 to-purple-600 px-8 py-3 rounded-full border-4 border-purple-400/50 shadow-lg shadow-purple-500/50"
+                                animate={{
+                                    boxShadow: [
+                                        '0 0 20px rgba(139, 92, 246, 0.5)',
+                                        '0 0 40px rgba(139, 92, 246, 0.8)',
+                                        '0 0 20px rgba(139, 92, 246, 0.5)',
+                                    ],
+                                }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            >
+                                <motion.div 
+                                    className="flex items-center gap-2"
+                                    animate={spinning ? {
+                                        scale: [1, 1.1, 1],
+                                    } : {}}
+                                    transition={{ duration: 0.5, repeat: Infinity }}
+                                >
+                                    <Star className="text-yellow-300" size={20} />
+                                    <span className="text-white font-black text-lg">SLOT MACHINE</span>
+                                    <Star className="text-yellow-300" size={20} />
+                                </motion.div>
+                            </motion.div>
+                            
+                            {/* Reels */}
+                            <div className="flex justify-center items-center gap-6 mb-6 relative">
+                                {reels.map((reel, idx) => (
+                                    <div key={idx}>
+                                        {reelDisplay(reel, idx)}
                                     </div>
+                                ))}
+                                
+                                {/* Winning Line Animation */}
+                                <AnimatePresence>
+                                    {winningLineType && (
+                                        <WinningLine type={winningLineType} />
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                            
+                            {/* Message Display */}
+                            <motion.div
+                                className="text-center mb-6"
+                                key={message}
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: "spring", stiffness: 200 }}
+                            >
+                                <motion.div
+                                    className={`inline-block px-8 py-4 rounded-2xl font-black text-xl md:text-2xl shadow-lg ${
+                                        winAnimation 
+                                            ? 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500 text-white' 
+                                            : loseAnimation
+                                            ? 'bg-gradient-to-r from-red-500 via-red-400 to-red-500 text-white'
+                                            : 'bg-gradient-to-r from-purple-500/20 to-purple-600/20 text-purple-300 border-2 border-purple-500/30'
+                                    }`}
+                                    animate={winAnimation ? {
+                                        scale: [1, 1.1, 1],
+                                        rotate: [0, 2, -2, 0],
+                                    } : loseAnimation ? {
+                                        x: [0, -10, 10, -10, 10, 0],
+                                    } : {}}
+                                    transition={{ duration: 0.5, repeat: winAnimation || loseAnimation ? 3 : 0 }}
+                                >
+                                    {message}
+                                </motion.div>
+                            </motion.div>
+
+                            {/* Controls */}
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+                                <motion.div
+                                    className="flex items-center gap-3 bg-gradient-to-br from-gray-900/90 to-gray-800/90 px-6 py-4 rounded-2xl border-2 border-purple-500/30 shadow-lg backdrop-blur-sm"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                    whileHover={{ scale: 1.03, borderColor: 'rgba(139, 92, 246, 0.6)' }}
+                                >
                                     <motion.div
-                                        className="absolute -inset-4 bg-gradient-to-r from-yellow-400/30 to-orange-500/30 rounded-3xl blur-2xl"
-                                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                                        transition={{ duration: 0.5, repeat: Infinity }}
+                                        animate={{ 
+                                            rotate: [0, 15, -15, 0],
+                                            scale: [1, 1.1, 1],
+                                        }}
+                                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                    >
+                                        <Target size={24} className="text-purple-400" />
+                                    </motion.div>
+                                    <label className="text-sm text-gray-300 font-bold">Mise</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={Math.max(1, balance)}
+                                        value={bet}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (value === '') {
+                                                setBet(0);
+                                                return;
+                                            }
+                                            const numValue = Number(value);
+                                            if (!isNaN(numValue)) {
+                                                setBet(numValue);
+                                            }
+                                        }}
+                                        onBlur={(e) => {
+                                            const numValue = Number(e.target.value);
+                                            if (isNaN(numValue) || numValue < 1) {
+                                                setBet(1);
+                                            } else if (numValue > balance) {
+                                                setBet(Math.max(1, balance));
+                                            }
+                                        }}
+                                        disabled={spinning || loadingBalance}
+                                        className="nyx-input w-32 text-center font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                 </motion.div>
-                                <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 via-orange-500/10 to-yellow-400/10 rounded-3xl"
-                                    animate={{ opacity: [0.3, 0.6, 0.3] }}
-                                    transition={{ duration: 0.5, repeat: Infinity }}
-                                />
-                            </motion.div>
-                        )}
-                        
-                        {loseAnimation && (
-                            <motion.div
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 1.5, opacity: 0 }}
-                                className="absolute inset-0 flex items-center justify-center pointer-events-none z-50"
-                            >
-                                <motion.div
-                                    animate={{ 
-                                        x: [-10, 10, -10, 10, 0],
-                                    }}
-                                    transition={{ duration: 0.5 }}
+
+                                <motion.button
+                                    onClick={handleSpin}
+                                    disabled={spinning || loadingBalance || bet > balance}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.6 }}
+                                    whileHover={{ scale: spinning ? 1 : 1.1 }}
+                                    whileTap={{ scale: spinning ? 1 : 0.95 }}
+                                    className={`relative px-12 py-5 rounded-2xl font-black text-xl shadow-2xl flex items-center gap-3 overflow-hidden transition-all duration-300 ${
+                                        spinning 
+                                            ? 'bg-gray-700 cursor-not-allowed' 
+                                            : bet > balance
+                                            ? 'bg-gray-700 cursor-not-allowed opacity-50'
+                                            : 'btn-nyx-primary'
+                                    }`}
                                 >
-                                    <div className="text-3xl md:text-5xl font-bold text-gray-400 drop-shadow-lg">
-                                        Essayez encore! 🎲
-                                    </div>
-                                </motion.div>
-                                <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-gray-600/10 to-gray-700/10 rounded-3xl"
-                                    animate={{ opacity: [0.2, 0.4, 0.2] }}
-                                    transition={{ duration: 0.5, repeat: 3 }}
-                                />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                    {!spinning && (
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                            animate={{
+                                                x: ['-100%', '200%'],
+                                            }}
+                                            transition={{
+                                                duration: 2,
+                                                repeat: Infinity,
+                                                ease: "linear",
+                                            }}
+                                        />
+                                    )}
+                                    <motion.div
+                                        animate={spinning ? {
+                                            rotate: [0, 360],
+                                        } : {}}
+                                        transition={{
+                                            duration: 1,
+                                            repeat: Infinity,
+                                            ease: "linear"
+                                        }}
+                                    >
+                                        <Zap size={24} />
+                                    </motion.div>
+                                    <span className="relative z-10">
+                                        {spinning ? 'SPINNING...' : 'SPIN'}
+                                    </span>
+                                </motion.button>
+                            </div>
+                        </div>
+                    </motion.div>
 
                     {/* Statistics Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 relative z-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
+                        {/* Biggest Win */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.7 }}
-                            className="relative bg-gradient-to-br from-emerald-500/10 to-green-600/5 rounded-2xl p-5 border border-emerald-500/30 shadow-lg overflow-hidden group hover:shadow-emerald-500/20 transition-all duration-300"
+                            className="relative bg-gradient-to-br from-emerald-500/10 via-emerald-600/5 to-emerald-500/10 rounded-2xl p-6 border-2 border-emerald-500/30 shadow-lg overflow-hidden"
+                            whileHover={{ scale: 1.02, borderColor: 'rgba(16, 185, 129, 0.5)' }}
+                            animate={biggestWin > 0 ? {
+                                boxShadow: [
+                                    '0 0 20px rgba(16, 185, 129, 0.2)',
+                                    '0 0 30px rgba(16, 185, 129, 0.4)',
+                                    '0 0 20px rgba(16, 185, 129, 0.2)',
+                                ],
+                            } : {}}
+                            transition={{ duration: 2, repeat: Infinity }}
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <div className="flex items-center gap-4 relative z-10">
-                                <motion.div 
-                                    className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30"
-                                    whileHover={{ scale: 1.1, rotate: 360 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
-                                >
-                                    <Trophy size={24} className="text-white" />
-                                </motion.div>
-                                <div className="flex-1">
-                                    <p className="text-xs md:text-sm text-gray-400 font-medium mb-1">Plus Gros Gain</p>
-                                    <motion.p 
-                                        className="text-xl md:text-2xl font-bold text-emerald-400 tracking-tight"
-                                        key={biggestWin}
-                                        initial={{ scale: 1.2, color: '#10b981' }}
-                                        animate={{ scale: 1, color: '#34d399' }}
-                                        transition={{ duration: 0.3 }}
+                            <motion.div
+                                className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"
+                                animate={{
+                                    scale: [1, 1.2, 1],
+                                    opacity: [0.3, 0.6, 0.3],
+                                }}
+                                transition={{ duration: 3, repeat: Infinity }}
+                            />
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <motion.div
+                                        className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/50"
+                                        animate={{
+                                            rotate: [0, 10, -10, 0],
+                                            scale: [1, 1.1, 1],
+                                        }}
+                                        transition={{ duration: 2, repeat: Infinity }}
                                     >
-                                        {biggestWin > 0 ? `${formatMoney(biggestWin)} 🏆` : '- -'}
-                                    </motion.p>
+                                        <Trophy size={24} className="text-white" />
+                                    </motion.div>
+                                    <div>
+                                        <p className="text-sm text-emerald-300 font-bold mb-1">Plus Gros Gain</p>
+                                        <motion.p 
+                                            className="text-2xl font-black text-emerald-400"
+                                            key={biggestWin}
+                                            initial={{ scale: 1.3, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ type: "spring", stiffness: 200 }}
+                                        >
+                                            {biggestWin > 0 ? `${formatMoney(biggestWin)} 💰` : '- -'}
+                                        </motion.p>
+                                    </div>
                                 </div>
+                                <motion.div
+                                    animate={{
+                                        y: [0, -5, 0],
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <TrendingUp size={32} className="text-emerald-400/50" />
+                                </motion.div>
                             </div>
                         </motion.div>
 
+                        {/* Biggest Loss */}
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.8 }}
-                            className="relative bg-gradient-to-br from-red-500/10 to-rose-600/5 rounded-2xl p-5 border border-red-500/30 shadow-lg overflow-hidden group hover:shadow-red-500/20 transition-all duration-300"
+                            className="relative bg-gradient-to-br from-red-500/10 via-red-600/5 to-red-500/10 rounded-2xl p-6 border-2 border-red-500/30 shadow-lg overflow-hidden"
+                            whileHover={{ scale: 1.02, borderColor: 'rgba(239, 68, 68, 0.5)' }}
+                            animate={biggestLoss > 0 ? {
+                                boxShadow: [
+                                    '0 0 20px rgba(239, 68, 68, 0.2)',
+                                    '0 0 30px rgba(239, 68, 68, 0.4)',
+                                    '0 0 20px rgba(239, 68, 68, 0.2)',
+                                ],
+                            } : {}}
+                            transition={{ duration: 2, repeat: Infinity }}
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                            <div className="flex items-center gap-4 relative z-10">
-                                <motion.div 
-                                    className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30"
-                                    whileHover={{ scale: 1.1, rotate: -360 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
-                                >
-                                    <Flame size={24} className="text-white" />
-                                </motion.div>
-                                <div className="flex-1">
-                                    <p className="text-xs md:text-sm text-gray-400 font-medium mb-1">Plus Grosse Perte</p>
-                                    <motion.p 
-                                        className="text-xl md:text-2xl font-bold text-red-400 tracking-tight"
-                                        key={biggestLoss}
-                                        initial={{ scale: 1.2, color: '#ef4444' }}
-                                        animate={{ scale: 1, color: '#f87171' }}
-                                        transition={{ duration: 0.3 }}
+                            <motion.div
+                                className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl"
+                                animate={{
+                                    scale: [1, 1.2, 1],
+                                    opacity: [0.3, 0.6, 0.3],
+                                }}
+                                transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                            />
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <motion.div
+                                        className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/50"
+                                        animate={{
+                                            rotate: [0, -10, 10, 0],
+                                            scale: [1, 1.1, 1],
+                                        }}
+                                        transition={{ duration: 2, repeat: Infinity }}
                                     >
-                                        {biggestLoss > 0 ? `${formatMoney(biggestLoss)} 💸` : '- -'}
-                                    </motion.p>
+                                        <Flame size={24} className="text-white" />
+                                    </motion.div>
+                                    <div>
+                                        <p className="text-sm text-red-300 font-bold mb-1">Plus Grosse Perte</p>
+                                        <motion.p 
+                                            className="text-2xl font-black text-red-400"
+                                            key={biggestLoss}
+                                            initial={{ scale: 1.3, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ type: "spring", stiffness: 200 }}
+                                        >
+                                            {biggestLoss > 0 ? `${formatMoney(biggestLoss)} 💸` : '- -'}
+                                        </motion.p>
+                                    </div>
                                 </div>
+                                <motion.div
+                                    animate={{
+                                        y: [0, 5, 0],
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <TrendingDown size={32} className="text-red-400/50" />
+                                </motion.div>
                             </div>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 </div>
 
                 {/* Sidebar */}
-                <motion.div 
-                    className="futuristic-card rounded-3xl p-6 shadow-purple relative overflow-hidden"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                >
-                    {/* Decorative background */}
-                    <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl" />
-                    
-                    <div className="flex items-center gap-3 mb-6 relative z-10">
-                        <motion.div 
-                            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/50"
-                            whileHover={{ rotate: 360 }}
-                            transition={{ duration: 0.6 }}
-                        >
-                            <Trophy size={22} className="text-white" />
-                        </motion.div>
-                        <div>
-                            <h3 className="text-xl font-bold text-white">Règles du Jeu</h3>
-                            <p className="text-xs text-gray-400">Comment gagner</p>
-                        </div>
-                    </div>
-
-                    <ul className="text-sm text-gray-300 space-y-3 mb-6 relative z-10">
-                        <motion.li 
-                            className="flex items-start gap-3 p-3 rounded-xl bg-green-500/5 border border-green-500/20 hover:bg-green-500/10 transition-all"
-                            whileHover={{ x: 5 }}
-                        >
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-500/30">
-                                <div className="w-2 h-2 rounded-full bg-white" />
+                <div className="lg:col-span-1 space-y-6">
+                    {/* Jackpot Card */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="futuristic-card rounded-2xl p-6 shadow-purple relative overflow-hidden"
+                        whileHover={{ scale: 1.03 }}
+                    >
+                        <motion.div
+                            className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-orange-500/10"
+                            animate={{
+                                opacity: [0.3, 0.6, 0.3],
+                            }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        />
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-3 mb-4">
+                                <motion.div
+                                    className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-500/50"
+                                    animate={{
+                                        rotate: [0, 360],
+                                        scale: [1, 1.1, 1],
+                                    }}
+                                    transition={{
+                                        rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+                                        scale: { duration: 1, repeat: Infinity },
+                                    }}
+                                >
+                                    <Crown size={24} className="text-white" />
+                                </motion.div>
+                                <h3 className="text-xl font-black text-yellow-400">JACKPOT</h3>
                             </div>
-                            <span className="font-medium">3 symboles identiques = Gros gain</span>
-                        </motion.li>
-                        <motion.li 
-                            className="flex items-start gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 hover:bg-yellow-500/10 transition-all"
-                            whileHover={{ x: 5 }}
-                        >
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-yellow-500/30">
-                                <div className="w-2 h-2 rounded-full bg-white" />
-                            </div>
-                            <span className="font-medium">7️⃣ = Jackpot instantané</span>
-                        </motion.li>
-                        <motion.li 
-                            className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20 hover:bg-blue-500/10 transition-all"
-                            whileHover={{ x: 5 }}
-                        >
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
-                                <div className="w-2 h-2 rounded-full bg-white" />
-                            </div>
-                            <span className="font-medium">2 symboles identiques = Petit gain</span>
-                        </motion.li>
-                        <motion.li 
-                            className="flex items-start gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/20 hover:bg-purple-500/10 transition-all"
-                            whileHover={{ x: 5 }}
-                        >
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/30">
-                                <div className="w-2 h-2 rounded-full bg-white" />
-                            </div>
-                            <span className="font-medium">Chaque perte alimente le jackpot</span>
-                        </motion.li>
-                    </ul>
-
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-4">
-                            <motion.div
-                                animate={{ scale: [1, 1.2, 1] }}
+                            <motion.p 
+                                className="text-3xl font-black bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400 bg-clip-text text-transparent"
+                                key={jackpot}
+                                initial={{ scale: 1.2, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: "spring", stiffness: 200 }}
+                            >
+                                {formatMoney(jackpot)} 💎
+                            </motion.p>
+                            <motion.p 
+                                className="text-xs text-gray-400 mt-2 font-semibold"
+                                animate={{
+                                    opacity: [0.5, 1, 0.5],
+                                }}
                                 transition={{ duration: 2, repeat: Infinity }}
                             >
-                                <Flame size={20} className="text-orange-400" />
+                                Alignez 3x 7️⃣ pour gagner !
+                            </motion.p>
+                        </div>
+                    </motion.div>
+
+                    {/* Payouts Table */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="futuristic-card rounded-2xl p-6 shadow-purple"
+                    >
+                        <div className="flex items-center gap-3 mb-4">
+                            <motion.div
+                                className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/50"
+                                animate={{
+                                    scale: [1, 1.1, 1],
+                                }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            >
+                                <Coins size={20} className="text-white" />
                             </motion.div>
-                            <h4 className="text-lg font-bold text-white">Multiplicateurs</h4>
+                            <h3 className="text-lg font-black text-purple-300">Gains</h3>
                         </div>
-                        <div className="grid gap-2">
-                            {Object.entries(PAYOUTS).map(([sym, mult], index) => (
-                                <motion.div 
-                                    key={sym} 
-                                    className="flex justify-between items-center bg-gradient-to-r from-gray-900/80 to-gray-800/80 px-4 py-3 rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all shadow-lg backdrop-blur-sm group"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.5 + index * 0.05 }}
-                                    whileHover={{ scale: 1.03, x: 5 }}
-                                >
-                                    <span className="text-2xl group-hover:scale-110 transition-transform">{sym}</span>
-                                    <motion.span 
-                                        className="text-yellow-400 font-bold bg-gradient-to-r from-yellow-400/20 to-orange-400/20 px-4 py-1.5 rounded-lg border border-yellow-400/30 shadow-lg shadow-yellow-500/20"
-                                        whileHover={{ scale: 1.1 }}
+                        <div className="space-y-2">
+                            {Object.entries(PAYOUTS)
+                                .sort(([, a], [, b]) => b - a)
+                                .map(([symbol, multiplier], idx) => (
+                                    <motion.div
+                                        key={symbol}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.5 + idx * 0.05 }}
+                                        className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-500/10 to-transparent rounded-xl border border-purple-500/20 hover:border-purple-500/40 transition-all"
+                                        whileHover={{ scale: 1.03, x: 5 }}
                                     >
-                                        x{mult}
-                                    </motion.span>
-                                </motion.div>
-                            ))}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl">{symbol}</span>
+                                            <span className="text-xs text-gray-400 font-semibold">x3</span>
+                                        </div>
+                                        <motion.span 
+                                            className="text-sm font-black text-purple-300"
+                                            whileHover={{ scale: 1.1 }}
+                                        >
+                                            {multiplier}x
+                                        </motion.span>
+                                    </motion.div>
+                                ))}
                         </div>
-                    </div>
-                </motion.div>
+                        <motion.p 
+                            className="text-xs text-gray-500 mt-4 text-center font-semibold"
+                            animate={{
+                                opacity: [0.5, 1, 0.5],
+                            }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        >
+                            2 symboles identiques = gain réduit
+                        </motion.p>
+                    </motion.div>
+                </div>
             </div>
-
-            {/* Confetti */}
-            <AnimatePresence>
-                {showConfetti && (
-                    <EmojiConfetti key="emoji-confetti" count={150} area={{ width, height }} />
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
-
-// Enhanced Emoji Confetti
-function EmojiConfetti({ count = 80, area = { width: 1200, height: 800 } }: { count?: number; area?: { width: number; height: number } }) {
-    type Particle = { id: number; left: number; delay: number; duration: number; emoji: string; size: number; rotation: number };
-    const particles: Particle[] = useMemo(() => Array.from({ length: count }).map((_, i) => ({
-        id: i,
-        left: Math.random() * area.width,
-        delay: Math.random() * 2,
-        duration: 3 + Math.random() * 4,
-        emoji: SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
-        size: 20 + Math.random() * 30,
-        rotation: Math.random() * 360
-    })), [count, area.width]);
-
-    return (
-        <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
-            {particles.map((p) => (
-                <motion.div
-                    key={p.id}
-                    initial={{ 
-                        y: -100, 
-                        opacity: 0, 
-                        x: p.left,
-                        rotate: 0
-                    }}
-                    animate={{ 
-                        y: area.height + 100, 
-                        opacity: [0, 1, 1, 0],
-                        rotate: p.rotation + 360,
-                        x: p.left + (Math.random() - 0.5) * 200
-                    }}
-                    transition={{ 
-                        delay: p.delay, 
-                        duration: p.duration, 
-                        ease: 'easeOut' 
-                    }}
-                    style={{ 
-                        left: p.left,
-                        fontSize: `${p.size}px`
-                    }}
-                    className="absolute"
-                >
-                    {p.emoji}
-                </motion.div>
-            ))}
         </div>
     );
 }
