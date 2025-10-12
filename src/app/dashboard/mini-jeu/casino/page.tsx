@@ -460,7 +460,28 @@ export default function CasinoSlotPage() {
                                 min={1}
                                 max={Math.max(1, balance)}
                                 value={bet}
-                                onChange={(e) => setBet(Math.max(1, Math.min(Math.max(1, balance), Number(e.target.value || 0))))}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    // Allow empty input for editing
+                                    if (value === '') {
+                                        setBet(0);
+                                        return;
+                                    }
+                                    const numValue = Number(value);
+                                    // Allow any number input, validation happens on spin
+                                    if (!isNaN(numValue)) {
+                                        setBet(numValue);
+                                    }
+                                }}
+                                onBlur={(e) => {
+                                    // Validate on blur to ensure valid range
+                                    const numValue = Number(e.target.value);
+                                    if (isNaN(numValue) || numValue < 1) {
+                                        setBet(1);
+                                    } else if (numValue > balance) {
+                                        setBet(Math.max(1, balance));
+                                    }
+                                }}
                                 disabled={spinning || loadingBalance}
                                 className="nyx-input w-28 text-center font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             />
