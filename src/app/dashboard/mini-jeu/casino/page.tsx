@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown } from 'lucide-react';
+import { CASINO_ENDPOINTS } from '@/config/api';
 
 // Slot Machine page using real currency via /api/currency/me
 
@@ -312,11 +313,11 @@ export default function CasinoSlotPage() {
             }
         })();
 
-        // Charger le jackpot global
+        // Charger le jackpot global depuis NyxNode
         (async () => {
             try {
                 setJackpotLoading(true);
-                const res = await fetch('/api/casino/jackpot');
+                const res = await fetch(CASINO_ENDPOINTS.jackpot);
                 if (res.ok) {
                     const data = await res.json();
                     if (typeof data.amount === 'number') setJackpot(data.amount);
@@ -483,10 +484,10 @@ export default function CasinoSlotPage() {
                                 setShowConfetti(true);
                                 setTimeout(() => setShowConfetti(false), 8000);
                                 
-                                // Réinitialiser le jackpot global via l'API
+                                // Réinitialiser le jackpot global via l'API NyxNode
                                 try {
-                                    const resetRes = await fetch('/api/casino/jackpot', {
-                                        method: 'PUT',
+                                    const resetRes = await fetch(CASINO_ENDPOINTS.jackpotReset, {
+                                        method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ 
                                             winner: 'Player', // Vous pouvez ajouter le nom du joueur ici
@@ -534,10 +535,10 @@ export default function CasinoSlotPage() {
                             
                             setMessage('💔 Perdu...');
                             
-                            // Augmenter le jackpot global via l'API
+                            // Augmenter le jackpot global via l'API NyxNode
                             const jackpotIncrease = Math.max(1, Math.floor(bet * 0.2));
                             try {
-                                const increaseRes = await fetch('/api/casino/jackpot', {
+                                const increaseRes = await fetch(CASINO_ENDPOINTS.jackpotIncrease, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ amount: jackpotIncrease })
