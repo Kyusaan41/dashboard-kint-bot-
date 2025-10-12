@@ -412,6 +412,15 @@ export default function MiniJeuHome() {
                             difficulty="Moyen"
                             isPopular={true}
                         />
+                         <GameCard
+                            href="/dashboard/mini-jeu/casino"
+                            icon={<Coins />}
+                            title="Casino VIP"
+                            description="Tentez votre chance à la machine à sous et gagnez gros ! Sensations fortes et adrénaline garanties."
+                            isAvailable={true}
+                            rewards="Multiplicateur de Points"
+                            difficulty="Facile"
+                        />
                         
                         <GameCard 
                             href="/dashboard/mini-jeu/1v1"
