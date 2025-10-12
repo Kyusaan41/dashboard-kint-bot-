@@ -291,6 +291,26 @@ export default function CasinoSlotPage() {
 
     const setInitialReels = () => setReels([randomReel(20), randomReel(20), randomReel(20)]);
 
+    // Fonction pour charger le jackpot depuis l'API
+    const loadJackpot = async () => {
+        try {
+            const res = await fetch(CASINO_ENDPOINTS.jackpot);
+            if (res.ok) {
+                const data = await res.json();
+                if (typeof data.amount === 'number') {
+                    setJackpot(data.amount);
+                    console.log('[JACKPOT] Chargé depuis l\'API:', data.amount);
+                }
+            } else {
+                console.warn('Impossible de récupérer le jackpot, status', res.status);
+            }
+        } catch (e) {
+            console.error('Erreur fetch jackpot', e);
+        } finally {
+            setJackpotLoading(false);
+        }
+    };
+
     // Load balance and jackpot from API on mount
     useEffect(() => {
         setInitialReels();
@@ -313,23 +333,18 @@ export default function CasinoSlotPage() {
             }
         })();
 
-        // Charger le jackpot global depuis NyxNode
-        (async () => {
-            try {
-                setJackpotLoading(true);
-                const res = await fetch(CASINO_ENDPOINTS.jackpot);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (typeof data.amount === 'number') setJackpot(data.amount);
-                } else {
-                    console.warn('Impossible de récupérer le jackpot, status', res.status);
-                }
-            } catch (e) {
-                console.error('Erreur fetch jackpot', e);
-            } finally {
-                setJackpotLoading(false);
-            }
-        })();
+        // Charger le jackpot initial
+        setJackpotLoading(true);
+        loadJackpot();
+    }, []);
+
+    // Polling automatique du jackpot toutes les 10 secondes
+    useEffect(() => {
+        const interval = setInterval(() => {
+            loadJackpot();
+        }, 10000); // 10 secondes
+
+        return () => clearInterval(interval);
     }, []);
 
     // Save biggest win to localStorage whenever it changes
