@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { CASINO_ENDPOINTS } from '@/config/api';
 
 // Slot Machine page using real currency via /api/currency/me
@@ -245,6 +246,7 @@ const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'tw
 };
 
 export default function CasinoSlotPage() {
+    const { data: session } = useSession();
     const [balance, setBalance] = useState<number>(0);
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
     const [bet, setBet] = useState<number>(10);
@@ -255,6 +257,10 @@ export default function CasinoSlotPage() {
     // Jackpot global (chargé depuis l'API)
     const [jackpot, setJackpot] = useState<number>(10000);
     const [jackpotLoading, setJackpotLoading] = useState<boolean>(true);
+    
+    // Top wins des joueurs
+    const [topWins, setTopWins] = useState<Array<{ username: string; biggestWin: number }>>([]);
+    const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
     
     const [showConfetti, setShowConfetti] = useState(false);
     const [winAnimation, setWinAnimation] = useState(false);
@@ -311,6 +317,37 @@ export default function CasinoSlotPage() {
         }
     };
 
+    // Fonction pour charger les top wins depuis l'API
+    const loadTopWins = async () => {
+        try {
+            const res = await fetch(CASINO_ENDPOINTS.topWins);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data.players) && data.players.length > 0) {
+                    setTopWins(data.players);
+                    console.log('[TOP WINS] Chargé depuis l\'API:', data.players.length, 'joueurs');
+                }
+            }
+        } catch (e) {
+            console.error('Erreur fetch top wins', e);
+        }
+    };
+
+    // Fonction pour enregistrer un gain
+    const recordWin = async (username: string, winAmount: number) => {
+        try {
+            await fetch(CASINO_ENDPOINTS.topWins, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, winAmount }),
+            });
+            // Recharger les top wins après enregistrement
+            loadTopWins();
+        } catch (e) {
+            console.error('Erreur enregistrement gain', e);
+        }
+    };
+
     // Load balance and jackpot from API on mount
     useEffect(() => {
         setInitialReels();
@@ -336,6 +373,9 @@ export default function CasinoSlotPage() {
         // Charger le jackpot initial
         setJackpotLoading(true);
         loadJackpot();
+        
+        // Charger les top wins initial
+        loadTopWins();
     }, []);
 
     // Polling automatique du jackpot toutes les 10 secondes
@@ -346,6 +386,17 @@ export default function CasinoSlotPage() {
 
         return () => clearInterval(interval);
     }, []);
+
+    // Rotation des joueurs toutes les 3 secondes
+    useEffect(() => {
+        if (topWins.length === 0) return;
+        
+        const interval = setInterval(() => {
+            setCurrentPlayerIndex((prev) => (prev + 1) % topWins.length);
+        }, 3000); // 3 secondes
+
+        return () => clearInterval(interval);
+    }, [topWins]);
 
     // Save biggest win to localStorage whenever it changes
     useEffect(() => {
@@ -492,6 +543,11 @@ export default function CasinoSlotPage() {
                             
                             if (result.amount > biggestWin) {
                                 setBiggestWin(result.amount);
+                            }
+                            
+                            // Enregistrer le gain dans l'API
+                            if (session?.user?.name) {
+                                recordWin(session.user.name, result.amount);
                             }
                             
                             if (result.isJackpot) {
@@ -1213,6 +1269,15 @@ export default function CasinoSlotPage() {
                                 {formatMoney(jackpot)} 💎
                             </motion.p>
                             <motion.p 
+                                className="text-xs text-gray-400 mt-2 font-semibold italic"
+                                animate={{
+                                    opacity: [0.6, 1, 0.6],
+                                }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            >
+                                Le jackpot est partagé et augmente pour tout le monde à chaque spin ! Qui gagnera le JACKPOT ??
+                            </motion.p>
+                            <motion.p 
                                 className="text-xs text-gray-400 mt-2 font-semibold"
                                 animate={{
                                     opacity: [0.5, 1, 0.5],
@@ -1221,6 +1286,24 @@ export default function CasinoSlotPage() {
                             >
                                 Alignez 3x 7️⃣ pour gagner !
                             </motion.p>
+                            
+                            {/* Affichage du joueur avec le plus gros gain (rotation) */}
+                            <AnimatePresence mode="wait">
+                                {topWins.length > 0 && (
+                                    <motion.div
+                                        key={currentPlayerIndex}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.5 }}
+                                        className="mt-3 pt-3 border-t border-yellow-500/20"
+                                    >
+                                        <p className="text-xs text-yellow-300 font-bold">
+                                            🏆 {topWins[currentPlayerIndex].username} › Plus gros gain : {formatMoney(topWins[currentPlayerIndex].biggestWin)} 💰
+                                        </p>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </motion.div>
 
