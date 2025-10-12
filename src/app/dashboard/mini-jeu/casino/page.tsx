@@ -251,14 +251,9 @@ export default function CasinoSlotPage() {
     const [spinning, setSpinning] = useState(false);
     const [message, setMessage] = useState<string>('Bonne chance !');
     
-    // Initialize from localStorage with lazy initialization
-    const [jackpot, setJackpot] = useState<number>(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('casino_jackpot');
-            return saved ? Number(saved) : 10000;
-        }
-        return 10000;
-    });
+    // Jackpot global (chargé depuis l'API)
+    const [jackpot, setJackpot] = useState<number>(10000);
+    const [jackpotLoading, setJackpotLoading] = useState<boolean>(true);
     
     const [showConfetti, setShowConfetti] = useState(false);
     const [winAnimation, setWinAnimation] = useState(false);
@@ -295,10 +290,11 @@ export default function CasinoSlotPage() {
 
     const setInitialReels = () => setReels([randomReel(20), randomReel(20), randomReel(20)]);
 
-    // Load balance from API on mount
+    // Load balance and jackpot from API on mount
     useEffect(() => {
         setInitialReels();
 
+        // Charger le solde
         (async () => {
             try {
                 setLoadingBalance(true);
@@ -315,14 +311,25 @@ export default function CasinoSlotPage() {
                 setLoadingBalance(false);
             }
         })();
-    }, []);
 
-    // Save jackpot to localStorage whenever it changes
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('casino_jackpot', jackpot.toString());
-        }
-    }, [jackpot]);
+        // Charger le jackpot global
+        (async () => {
+            try {
+                setJackpotLoading(true);
+                const res = await fetch('/api/casino/jackpot');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (typeof data.amount === 'number') setJackpot(data.amount);
+                } else {
+                    console.warn('Impossible de récupérer le jackpot, status', res.status);
+                }
+            } catch (e) {
+                console.error('Erreur fetch jackpot', e);
+            } finally {
+                setJackpotLoading(false);
+            }
+        })();
+    }, []);
 
     // Save biggest win to localStorage whenever it changes
     useEffect(() => {
@@ -475,13 +482,32 @@ export default function CasinoSlotPage() {
                                 setMessage(`🎉 JACKPOT! +${result.amount} Pièces 🎉`);
                                 setShowConfetti(true);
                                 setTimeout(() => setShowConfetti(false), 8000);
-                                // Reset jackpot to minimum after jackpot win
-                                setJackpot(1000);
+                                
+                                // Réinitialiser le jackpot global via l'API
+                                try {
+                                    const resetRes = await fetch('/api/casino/jackpot', {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ 
+                                            winner: 'Player', // Vous pouvez ajouter le nom du joueur ici
+                                            winAmount: result.amount 
+                                        })
+                                    });
+                                    if (resetRes.ok) {
+                                        const data = await resetRes.json();
+                                        setJackpot(data.newAmount);
+                                    } else {
+                                        setJackpot(1000); // Fallback
+                                    }
+                                } catch (e) {
+                                    console.error('Erreur reset jackpot:', e);
+                                    setJackpot(1000); // Fallback
+                                }
+                                
                                 triggerWinAnimation(result.amount);
                             } else {
                                 setMessage(`✨ Gagné +${result.amount} Pièces ✨`);
-                                // Le jackpot ne descend JAMAIS, il monte seulement
-                                // On ne fait rien ici, le jackpot reste tel quel
+                                // Le jackpot ne descend JAMAIS sur un gain normal
                                 triggerWinAnimation(result.amount);
                             }
 
@@ -507,7 +533,26 @@ export default function CasinoSlotPage() {
                             }
                             
                             setMessage('💔 Perdu...');
-                            setJackpot((j) => j + Math.max(1, Math.floor(bet * 0.2)));
+                            
+                            // Augmenter le jackpot global via l'API
+                            const jackpotIncrease = Math.max(1, Math.floor(bet * 0.2));
+                            try {
+                                const increaseRes = await fetch('/api/casino/jackpot', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ amount: jackpotIncrease })
+                                });
+                                if (increaseRes.ok) {
+                                    const data = await increaseRes.json();
+                                    setJackpot(data.newAmount);
+                                } else {
+                                    setJackpot((j) => j + jackpotIncrease); // Fallback
+                                }
+                            } catch (e) {
+                                console.error('Erreur augmentation jackpot:', e);
+                                setJackpot((j) => j + jackpotIncrease); // Fallback
+                            }
+                            
                             triggerLoseAnimation();
                         }
                     }, 300);
