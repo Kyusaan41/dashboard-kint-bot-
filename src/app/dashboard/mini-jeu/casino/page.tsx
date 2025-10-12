@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Zap, Trophy, Crown, Target, Flame, Sparkles } from 'lucide-react';
 
 // Slot Machine page using real currency via /api/currency/me
 
@@ -174,7 +175,7 @@ export default function CasinoSlotPage() {
                             setJackpot(1000);
                             triggerWinAnimation(result.amount);
                         } else {
-                            setMessage(`Gagné +${result.amount}`);
+                            setMessage(`Gagné +${result.amount} Pièces`);
                             setJackpot((j) => Math.max(1000, j - Math.floor(result.amount / 10)));
                             triggerWinAnimation(result.amount);
                         }
@@ -212,7 +213,7 @@ export default function CasinoSlotPage() {
     const formatMoney = (n: number) => n.toLocaleString('fr-FR');
 
     const reelDisplay = (reel: Reel, index: number) => (
-        <div className="relative w-28 h-28 bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl border-2 border-yellow-600/50 shadow-lg overflow-hidden">
+        <div className="relative w-28 h-28 bg-gradient-to-b from-gray-900 to-gray-950 rounded-xl border-2 border-purple-500/50 shadow-2xl overflow-hidden">
             <motion.div 
                 className="flex flex-col items-center justify-center h-full"
                 animate={spinning ? {
@@ -229,7 +230,7 @@ export default function CasinoSlotPage() {
                     <div 
                         key={`${s}-${i}`} 
                         className={`flex items-center justify-center h-14 w-full ${
-                            i === reel.length - 1 ? 'bg-yellow-500/20 border-y-2 border-yellow-400' : ''
+                            i === reel.length - 1 ? 'bg-purple-500/20 border-y-2 border-purple-400' : ''
                         }`}
                     >
                         <span className="text-3xl">{s}</span>
@@ -245,49 +246,73 @@ export default function CasinoSlotPage() {
     );
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-8 bg-gradient-to-br from-purple-900/80 via-blue-900/80 to-indigo-900/80 text-white relative overflow-hidden">
-            {/* Animated background elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-conic from-transparent via-purple-500/10 to-transparent animate-spin-slow" />
-                <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-conic from-transparent via-blue-500/10 to-transparent animate-spin-slow" style={{ animationDelay: '2s' }} />
-            </div>
-
-            <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-3 gap-8 items-start relative z-10">
-                <div className="md:col-span-2 bg-gray-900/80 backdrop-blur-lg rounded-2xl p-6 border border-gray-700 shadow-2xl">
-                    <h2 className="text-4xl font-bold mb-4 text-center bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                        Slot Machine
-                    </h2>
-
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="text-center flex-1">
-                            <p className="text-sm text-gray-400 mb-1">Solde</p>
-                            <motion.p 
-                                className="text-3xl font-bold text-green-400"
-                                key={balance}
-                                initial={{ scale: 1.2 }}
-                                animate={{ scale: 1 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {loadingBalance ? 'Chargement...' : `${formatMoney(balance)} Pièces`}
-                            </motion.p>
+        <div className="min-h-screen flex items-center justify-center p-8 bg-gray-900 text-white">
+            <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+                {/* Main Slot Machine */}
+                <div className="lg:col-span-3 bg-gray-800/50 rounded-2xl p-8 border border-purple-500/20 shadow-2xl">
+                    {/* Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center justify-between mb-8"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                                <Sparkles size={24} className="text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-purple-200 bg-clip-text text-transparent">
+                                    Slot Machine
+                                </h1>
+                                <p className="text-gray-400">Tentez votre chance et gagnez gros !</p>
+                            </div>
                         </div>
-                        <div className="text-center flex-1">
-                            <p className="text-sm text-gray-400 mb-1">Jackpot</p>
-                            <motion.p 
-                                className="text-3xl font-bold text-yellow-400"
-                                key={jackpot}
-                                initial={{ scale: 1.2 }}
-                                animate={{ scale: 1 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {formatMoney(jackpot)} Pièces
-                            </motion.p>
-                        </div>
+                    </motion.div>
+
+                    {/* Stats Row */}
+                    <div className="grid grid-cols-2 gap-6 mb-8">
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-gray-900/50 rounded-xl p-4 border border-purple-500/20"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                    <Zap size={20} className="text-green-400" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-400">Solde</p>
+                                    <p className="text-2xl font-bold text-green-400">
+                                        {loadingBalance ? '...' : `${formatMoney(balance)} Pièces`}
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-gray-900/50 rounded-xl p-4 border border-purple-500/20"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+                                    <Crown size={20} className="text-yellow-400" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-400">Jackpot</p>
+                                    <p className="text-2xl font-bold text-yellow-400">
+                                        {formatMoney(jackpot)} Pièces
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
 
                     {/* Slot Machine Reels */}
-                    <div className="relative mb-8 p-6 bg-gray-800/50 rounded-2xl border border-gray-600 shadow-inner">
-                        <div className="flex items-center justify-center gap-6 mb-4">
+                    <div className="relative mb-8 p-8 bg-gray-900/30 rounded-2xl border border-purple-500/30 shadow-inner">
+                        <div className="flex items-center justify-center gap-8 mb-6">
                             {reels.map((r, i) => (
                                 <div key={i} className="flex items-center justify-center">
                                     {reelDisplay(r, i)}
@@ -296,14 +321,15 @@ export default function CasinoSlotPage() {
                         </div>
                         
                         {/* Winning line indicators */}
-                        <div className="absolute top-1/2 left-0 right-0 h-1 bg-yellow-400/30 transform -translate-y-1/2 rounded-full" />
-                        <div className="absolute top-1/4 left-0 right-0 h-0.5 bg-yellow-400/20 transform -translate-y-1/2 rounded-full" />
-                        <div className="absolute top-3/4 left-0 right-0 h-0.5 bg-yellow-400/20 transform -translate-y-1/2 rounded-full" />
+                        <div className="absolute top-1/2 left-0 right-0 h-1 bg-purple-400/30 transform -translate-y-1/2 rounded-full" />
+                        <div className="absolute top-1/4 left-0 right-0 h-0.5 bg-purple-400/20 transform -translate-y-1/2 rounded-full" />
+                        <div className="absolute top-3/4 left-0 right-0 h-0.5 bg-purple-400/20 transform -translate-y-1/2 rounded-full" />
                     </div>
 
                     {/* Controls */}
                     <div className="flex items-center justify-center gap-6 mb-6">
-                        <div className="flex items-center gap-3 bg-gray-800/80 px-4 py-3 rounded-xl border border-gray-600">
+                        <div className="flex items-center gap-3 bg-gray-900/80 px-4 py-3 rounded-xl border border-purple-500/30">
+                            <Target size={20} className="text-purple-400" />
                             <label className="text-sm text-gray-300 font-medium">Mise</label>
                             <input
                                 type="number"
@@ -311,7 +337,7 @@ export default function CasinoSlotPage() {
                                 max={Math.max(1, balance)}
                                 value={bet}
                                 onChange={(e) => setBet(Math.max(1, Math.min(Math.max(1, balance), Number(e.target.value || 0))))}
-                                className="w-20 text-center bg-gray-700 border border-gray-600 text-white px-3 py-2 rounded-lg font-bold"
+                                className="w-24 text-center bg-gray-800 border border-purple-500/30 text-white px-3 py-2 rounded-lg font-bold"
                             />
                         </div>
 
@@ -320,21 +346,27 @@ export default function CasinoSlotPage() {
                             disabled={spinning || loadingBalance || bet > balance}
                             whileHover={{ scale: spinning ? 1 : 1.05 }}
                             whileTap={{ scale: spinning ? 1 : 0.95 }}
-                            className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg ${
+                            className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg flex items-center gap-3 ${
                                 spinning 
                                     ? 'bg-gray-600 cursor-not-allowed' 
-                                    : 'bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-300 hover:to-orange-400'
+                                    : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-400 hover:to-purple-500'
                             } ${bet > balance ? 'cursor-not-allowed opacity-50' : ''}`}
                         >
                             {spinning ? (
-                                <motion.span
-                                    animate={{ rotate: 360 }}
-                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                >
-                                    🎰
-                                </motion.span>
+                                <>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                    >
+                                        🎰
+                                    </motion.div>
+                                    <span>Rotation...</span>
+                                </>
                             ) : (
-                                'SPIN'
+                                <>
+                                    <Sparkles size={20} />
+                                    <span>JOUER</span>
+                                </>
                             )}
                         </motion.button>
                     </div>
@@ -360,7 +392,7 @@ export default function CasinoSlotPage() {
                                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
                             >
                                 <div className="text-6xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                                    +{formatMoney(lastWinAmount)} KIP!
+                                    +{formatMoney(lastWinAmount)} Pièces!
                                 </div>
                                 <motion.div
                                     className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-2xl"
@@ -391,54 +423,66 @@ export default function CasinoSlotPage() {
                 </div>
 
                 {/* Sidebar */}
-                <aside className="bg-gray-900/80 backdrop-blur-lg rounded-2xl p-6 border border-gray-700 shadow-2xl">
-                    <h3 className="text-2xl font-bold mb-4 text-yellow-400">Règles du Jeu</h3>
-                    <ul className="text-sm text-gray-300 space-y-3 mb-6">
-                        <li className="flex items-start gap-2">
-                            <span className="text-green-400 mt-1">✓</span>
-                            <span>Triple symbole = gros gain (7️⃣ = jackpot)</span>
+                <div className="bg-gray-800/50 rounded-2xl p-6 border border-purple-500/20 shadow-2xl">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                            <Trophy size={20} className="text-white" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-white">Règles du Jeu</h3>
+                            <p className="text-sm text-gray-400">Comment gagner</p>
+                        </div>
+                    </div>
+
+                    <ul className="text-sm text-gray-300 space-y-4 mb-6">
+                        <li className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <div className="w-2 h-2 rounded-full bg-green-400" />
+                            </div>
+                            <span>3 symboles identiques = Gros gain</span>
                         </li>
-                        <li className="flex items-start gap-2">
-                            <span className="text-green-400 mt-1">✓</span>
-                            <span>Deux symboles identiques = petit gain</span>
+                        <li className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <div className="w-2 h-2 rounded-full bg-green-400" />
+                            </div>
+                            <span>7️⃣ = Jackpot instantané</span>
                         </li>
-                        <li className="flex items-start gap-2">
-                            <span className="text-green-400 mt-1">✓</span>
+                        <li className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <div className="w-2 h-2 rounded-full bg-green-400" />
+                            </div>
+                            <span>2 symboles identiques = Petit gain</span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                            </div>
                             <span>Chaque perte alimente le jackpot</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                            <span className="text-yellow-400 mt-1">ℹ</span>
-                            <span>House edge: 6% approximatif</span>
                         </li>
                     </ul>
 
                     <div className="mb-6">
-                        <h4 className="text-lg font-semibold text-yellow-400 mb-3">Coefficients</h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
+                        <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <Flame size={18} className="text-purple-400" />
+                            Multiplicateurs
+                        </h4>
+                        <div className="grid gap-3">
                             {Object.entries(PAYOUTS).map(([sym, mult]) => (
                                 <motion.div 
                                     key={sym} 
-                                    className="flex justify-between items-center bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700"
-                                    whileHover={{ scale: 1.05 }}
+                                    className="flex justify-between items-center bg-gray-900/50 px-4 py-3 rounded-lg border border-purple-500/20"
+                                    whileHover={{ scale: 1.02 }}
+                                    transition={{ duration: 0.2 }}
                                 >
                                     <span className="text-xl">{sym}</span>
-                                    <span className="text-yellow-300 font-bold">x{mult}</span>
+                                    <span className="text-yellow-400 font-bold bg-yellow-400/10 px-3 py-1 rounded-lg">
+                                        x{mult}
+                                    </span>
                                 </motion.div>
                             ))}
                         </div>
                     </div>
-
-                    <div className="mt-6">
-                        <motion.button 
-                            onClick={() => { setBalance(500); setJackpot(10000); setMessage('Reset effectué'); }} 
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-full py-3 rounded-xl bg-gradient-to-r from-gray-700 to-gray-800 border border-gray-600 text-sm font-semibold"
-                        >
-                            Réinitialiser
-                        </motion.button>
-                    </div>
-                </aside>
+                </div>
             </div>
 
             {/* Confetti */}
