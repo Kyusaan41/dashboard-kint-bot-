@@ -268,7 +268,7 @@ export default function CasinoSlotPage() {
                             delay: index * 0.1
                         }}
                     >
-                        <span className="text-4xl drop-shadow-lg">{s}</span>
+                        <span className="text-4xl drop-shadow-lg leading-none flex items-center justify-center">{s}</span>
                     </motion.div>
                 ))}
             </motion.div>
@@ -461,7 +461,8 @@ export default function CasinoSlotPage() {
                                 max={Math.max(1, balance)}
                                 value={bet}
                                 onChange={(e) => setBet(Math.max(1, Math.min(Math.max(1, balance), Number(e.target.value || 0))))}
-                                className="nyx-input w-28 text-center font-bold text-lg"
+                                disabled={spinning || loadingBalance}
+                                className="nyx-input w-28 text-center font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </motion.div>
 
