@@ -1615,7 +1615,7 @@ export default function CasinoSlotPage() {
                                                 setBet(Math.max(1, balance));
                                             }
                                         }}
-                                        disabled={spinning || loadingBalance || isFreeSpinMode}
+                                        disabled={spinning || loadingBalance || isFreeSpinMode || freeSpins > 0}
                                         className="nyx-input w-32 text-center font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                 </motion.div>
