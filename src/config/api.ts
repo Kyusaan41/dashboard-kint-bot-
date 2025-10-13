@@ -11,4 +11,5 @@ export const CASINO_ENDPOINTS = {
     jackpotIncrease: '/api/casino/jackpot/increase',
     jackpotReset: '/api/casino/jackpot/reset',
     topWins: '/api/casino/top-wins',
+    stats: '/api/casino/stats',
 };

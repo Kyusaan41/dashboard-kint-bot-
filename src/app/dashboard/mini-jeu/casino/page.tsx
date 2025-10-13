@@ -627,7 +627,7 @@ export default function CasinoSlotPage() {
     // Fonction pour charger les top wins depuis l'API
     const loadTopWins = async (type: 'biggestWin' | 'winCount' | 'totalWins' = 'biggestWin') => {
         try {
-            const res = await fetch(`${CASINO_ENDPOINTS.topWins}?type=${type}`);
+            const res = await fetch(`${CASINO_ENDPOINTS.stats}?type=${type}`);
             if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data.players) && data.players.length > 0) {
@@ -643,13 +643,14 @@ export default function CasinoSlotPage() {
     // Fonction pour enregistrer un gain
     const recordWin = async (username: string, winAmount: number) => {
         try {
-            await fetch(CASINO_ENDPOINTS.topWins, {
+            // Enregistrer dans la nouvelle API stats locale
+            await fetch(CASINO_ENDPOINTS.stats, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, winAmount }),
             });
             // Recharger les top wins après enregistrement
-            loadTopWins();
+            loadTopWins(leaderboardType);
         } catch (e) {
             console.error('Erreur enregistrement gain', e);
         }
