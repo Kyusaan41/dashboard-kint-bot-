@@ -30,11 +30,11 @@ const useCasinoSounds = () => {
         // Créer la musique de fond (en boucle)
         bgMusicRef.current = new Audio('/soundFXCasino/bg_sound.mp3');
         bgMusicRef.current.loop = true;
-        bgMusicRef.current.volume = 0.15; // Volume plus bas pour la musique de fond
+        bgMusicRef.current.volume = 0.10; // Volume plus bas pour la musique de fond (10%)
 
         // Ajuster le volume de chaque son d'effet
         Object.values(soundsRef.current).forEach(audio => {
-            audio.volume = 0.4;
+            audio.volume = 0.25; // Volume modéré pour les effets (25%)
         });
 
         return () => {

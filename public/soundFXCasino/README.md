@@ -7,42 +7,23 @@ Ce dossier contient tous les effets sonores et la musique de fond pour la page C
 Placez vos fichiers audio dans ce dossier avec les noms **EXACTS** suivants :
 
 ### 🎵 Musique de fond
-- **`bg_sound.mp3`** - Musique d'ambiance du casino (joue en boucle)
-  - Volume: 15% (réglé automatiquement)
-  - Format recommandé: MP3, durée 1-3 minutes
+
 
 ### 🎮 Effets sonores du jeu
 
-1. **`spin_sound.mp3`** - Son joué quand on lance les roues
-   - Moment: Au début du spin
-   - Durée recommandée: 0.5-1 seconde
 
 2. **`reel_stop.mp3`** - Son joué à chaque arrêt de roue
    - Moment: Quand chaque roue s'arrête (3 fois par tour)
    - Durée recommandée: 0.2-0.5 seconde
 
-3. **`win_sound.mp3`** - Son de victoire pour 2 symboles alignés
-   - Moment: Gain avec 2 symboles identiques
-   - Durée recommandée: 1-2 secondes
 
-4. **`sequence3_sound.mp3`** - Son spécial pour 3 symboles alignés
-   - Moment: Gain avec 3 symboles identiques (mais pas jackpot)
-   - Durée recommandée: 2-3 secondes
-   - Style: Plus impressionnant que win_sound
 
-5. **`jackpot_sound.mp3`** - Son de JACKPOT (7️⃣ x3)
-   - Moment: Jackpot avec 3 symboles 7️⃣
-   - Durée recommandée: 3-5 secondes
-   - Style: Le plus spectaculaire !
 
-6. **`lose_sound.mp3`** - Son de défaite
-   - Moment: Quand le joueur perd
-   - Durée recommandée: 0.5-1 seconde
 
 ## 🔊 Paramètres de volume
 
-- **Musique de fond**: 15% (volume bas pour ne pas couvrir les effets)
-- **Effets sonores**: 40% (volume modéré)
+- **Musique de fond**: 10% (volume bas pour ne pas couvrir les effets)
+- **Effets sonores**: 25% (volume modéré)
 
 ## 🎨 Recommandations
 
