@@ -112,7 +112,7 @@ const useCasinoSounds = () => {
 const SYMBOLS = ['🍒', '🍇', '🍊', '🍋', '💎', '💰', '7️⃣', '🍀'];
 type Reel = string[];
 
-function randomReel(length = 20) {
+function randomReel(length = 50) {
     return Array.from({ length }, () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
 }
 
@@ -440,7 +440,7 @@ export default function CasinoSlotPage() {
     const [balance, setBalance] = useState<number>(0);
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
     const [bet, setBet] = useState<number>(10);
-    const [reels, setReels] = useState<Reel[]>([randomReel(), randomReel(), randomReel()]);
+    const [reels, setReels] = useState<Reel[]>([randomReel(50), randomReel(50), randomReel(50)]);
     const [spinning, setSpinning] = useState(false);
     const [message, setMessage] = useState<string>('Bonne chance !');
     
@@ -486,7 +486,7 @@ export default function CasinoSlotPage() {
         return () => spinTimeouts.current.forEach((t) => clearTimeout(t));
     }, []);
 
-    const setInitialReels = () => setReels([randomReel(20), randomReel(20), randomReel(20)]);
+    const setInitialReels = () => setReels([randomReel(50), randomReel(50), randomReel(50)]);
 
     // Fonction pour charger le jackpot depuis l'API
     const loadJackpot = async () => {
@@ -606,6 +606,11 @@ export default function CasinoSlotPage() {
     const computeResult = (finalSymbols: string[], currentBet: number) => {
         const [s1, s2, s3] = finalSymbols;
         
+        // DEBUG: Afficher les symboles finaux utilisés pour le calcul
+        console.log('=== CALCUL DU RÉSULTAT ===');
+        console.log('Symboles finaux:', finalSymbols);
+        console.log(`s1=${s1}, s2=${s2}, s3=${s3}`);
+        
         // 3 symboles identiques = GROS GAIN
         if (s1 === s2 && s2 === s3) {
             const multiplier = PAYOUTS[s1] || 1;
@@ -695,7 +700,7 @@ export default function CasinoSlotPage() {
 
         const makeWeightedReel = () => {
             const arr: string[] = [];
-            for (let i = 0; i < 25; i++) {
+            for (let i = 0; i < 50; i++) {
                 const r = Math.random();
                 if (r > 0.985) arr.push('7️⃣');
                 else arr.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
@@ -715,8 +720,13 @@ export default function CasinoSlotPage() {
         delays.forEach((d, idx) => {
             const t = setTimeout(async () => {
                 const reel = newReels[idx];
-                const final = reel[reel.length - 1];
+                // Prendre le symbole du milieu (index -13) car on affiche 15 symboles et le milieu visible est à l'index 2
+                const final = reel[reel.length - 13];
                 finalSymbols[idx] = final;
+                
+                // DEBUG: Afficher les 15 derniers symboles et celui qui est considéré comme gagnant
+                console.log(`Roue ${idx}: 15 derniers symboles =`, reel.slice(-15));
+                console.log(`Roue ${idx}: Symbole gagnant (index -13) =`, final);
                 
                 // Jouer le son d'arrêt de roue
                 playSound('reelStop');
@@ -731,6 +741,7 @@ export default function CasinoSlotPage() {
                 if (idx === delays.length - 1) {
                     setSpinning(false);
                     
+                    // Attendre 600ms pour que l'animation d'arrêt du dernier slot soit complète (transition: 0.5s)
                     setTimeout(async () => {
                         const result = computeResult(finalSymbols as string[], bet);
                         if (result.win) {
@@ -841,7 +852,7 @@ export default function CasinoSlotPage() {
                             
                             triggerLoseAnimation();
                         }
-                    }, 300);
+                    }, 600);
                 }
             }, d);
             spinTimeouts.current.push(t);
@@ -852,6 +863,36 @@ export default function CasinoSlotPage() {
 
     const reelDisplay = (reel: Reel, index: number) => {
         const isStopped = reelsStopped[index];
+        
+        // Afficher 15 symboles pour l'animation de défilement circulaire fluide
+        // Les 3 symboles du milieu (index 1, 2, 3) sont visibles, le symbole à l'index 2 est le résultat
+        let visibleSymbols: string[];
+        
+        if (!reel || reel.length === 0) {
+            // Si la roue est vide, générer 15 symboles aléatoires
+            console.warn(`Roue ${index} vide, génération de symboles par défaut`);
+            visibleSymbols = Array.from({ length: 15 }, () => 
+                SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]
+            );
+        } else if (reel.length < 15) {
+            // Si moins de 15 symboles, compléter avec des symboles aléatoires
+            console.warn(`Roue ${index} a seulement ${reel.length} symboles, complétion...`);
+            visibleSymbols = [...reel];
+            while (visibleSymbols.length < 15) {
+                visibleSymbols.unshift(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+            }
+        } else {
+            // Sinon, prendre les 15 derniers
+            visibleSymbols = reel.slice(-15);
+        }
+        
+        // Vérification finale de sécurité
+        if (visibleSymbols.length !== 15) {
+            console.error(`ERREUR: visibleSymbols a ${visibleSymbols.length} éléments au lieu de 15!`);
+            visibleSymbols = Array.from({ length: 15 }, (_, i) => 
+                SYMBOLS[i % SYMBOLS.length]
+            );
+        }
         
         return (
             <motion.div 
@@ -898,30 +939,31 @@ export default function CasinoSlotPage() {
                         />
                     )}
                     
-                    {/* Reel symbols */}
+                    {/* Reel symbols - Affichage de 15 symboles avec décalage pour centrer parfaitement */}
                     <motion.div 
-                        className="flex flex-col items-center justify-center h-full relative z-10"
-                        animate={spinning ? {
-                            y: [0, -320]
-                        } : {}}
-                        transition={spinning ? {
-                            duration: 0.4,
+                        className="flex flex-col relative z-10"
+                        animate={spinning && !isStopped ? {
+                            y: [-64, -832]  // Animation de -64px à -832px (768px de défilement = 12 symboles)
+                        } : {
+                            y: -64  // Position de repos : décalage de -64px pour centrer le symbole 2
+                        }}
+                        transition={spinning && !isStopped ? {
+                            duration: 0.6,
                             repeat: Infinity,
                             ease: "linear",
-                            delay: index * 0.15
-                        } : {}}
+                            repeatType: "loop"
+                        } : {
+                            duration: 0.5,
+                            ease: "easeOut"
+                        }}
                     >
-                        {reel.map((s, i) => (
-                            <motion.div 
+                        {visibleSymbols.map((s, i) => (
+                            <div 
                                 key={`${s}-${i}`} 
-                                className={`flex items-center justify-center h-16 w-full transition-all duration-300 ${
-                                    i === reel.length - 1 && !spinning 
-                                        ? 'relative' 
-                                        : ''
-                                }`}
+                                className="flex items-center justify-center h-16 w-full relative"
                             >
-                                {/* Winning symbol highlight */}
-                                {i === reel.length - 1 && !spinning && (
+                                {/* Winning symbol highlight - symbole du milieu (index 2 sur 15) */}
+                                {i === 2 && !spinning && (
                                     <>
                                         <motion.div
                                             className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/40 to-transparent"
@@ -953,9 +995,9 @@ export default function CasinoSlotPage() {
                                     </>
                                 )}
                                 
-                                <motion.span 
-                                    className="text-5xl drop-shadow-2xl leading-none flex items-center justify-center relative z-10"
-                                    animate={i === reel.length - 1 && !spinning ? {
+                                <motion.div 
+                                    className="text-5xl relative z-10 flex items-center justify-center"
+                                    animate={i === 2 && !spinning ? {
                                         scale: [1, 1.2, 1],
                                         rotate: [0, 5, -5, 0],
                                     } : {}}
@@ -964,20 +1006,20 @@ export default function CasinoSlotPage() {
                                         delay: index * 0.1
                                     }}
                                     style={{
-                                        filter: i === reel.length - 1 && !spinning 
+                                        filter: i === 2 && !spinning 
                                             ? 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.8))' 
                                             : 'none'
                                     }}
                                 >
                                     {s}
-                                </motion.span>
-                            </motion.div>
+                                </motion.div>
+                            </div>
                         ))}
                     </motion.div>
                     
-                    {/* Enhanced overlay effects */}
-                    <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none z-20" />
-                    <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-20" />
+                    {/* Enhanced overlay effects - masque le haut et le bas pour ne montrer que les 3 symboles du milieu */}
+                    <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-none z-20" />
+                    <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-20" />
                     
                     {/* Corner sparkles */}
                     {!spinning && (
