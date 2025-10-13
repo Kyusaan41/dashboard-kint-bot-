@@ -13,6 +13,7 @@ const useCasinoSounds = () => {
     const soundsRef = useRef<{ [key: string]: HTMLAudioElement }>({});
     const bgMusicRef = useRef<HTMLAudioElement | null>(null);
     const [soundsEnabled, setSoundsEnabled] = useState(true);
+    const [soundsInitialized, setSoundsInitialized] = useState(false);
 
     useEffect(() => {
         // Créer les objets Audio pour chaque son d'effet
@@ -36,11 +37,6 @@ const useCasinoSounds = () => {
             audio.volume = 0.4;
         });
 
-        // Démarrer la musique de fond si les sons sont activés
-        if (soundsEnabled && bgMusicRef.current) {
-            bgMusicRef.current.play().catch(err => console.log('Erreur lecture musique de fond:', err));
-        }
-
         return () => {
             // Nettoyer les objets Audio
             Object.values(soundsRef.current).forEach(audio => {
@@ -52,10 +48,21 @@ const useCasinoSounds = () => {
                 bgMusicRef.current.src = '';
             }
         };
-    }, [soundsEnabled]);
+    }, []);
+
+    // Initialiser les sons au premier appel (contourne la restriction autoplay)
+    const initializeSounds = () => {
+        if (!soundsInitialized && soundsEnabled && bgMusicRef.current) {
+            bgMusicRef.current.play().catch(err => console.log('Erreur lecture musique de fond:', err));
+            setSoundsInitialized(true);
+        }
+    };
 
     const playSound = (soundName: string) => {
         if (!soundsEnabled) return;
+        
+        // Initialiser les sons au premier appel
+        initializeSounds();
         
         const sound = soundsRef.current[soundName];
         if (sound) {
@@ -72,6 +79,7 @@ const useCasinoSounds = () => {
             if (bgMusicRef.current) {
                 if (newState) {
                     bgMusicRef.current.play().catch(err => console.log('Erreur lecture musique de fond:', err));
+                    setSoundsInitialized(true);
                 } else {
                     bgMusicRef.current.pause();
                 }
