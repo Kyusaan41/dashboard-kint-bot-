@@ -2,11 +2,87 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown } from 'lucide-react';
+import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown, Volume2, VolumeX } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { CASINO_ENDPOINTS } from '@/config/api';
 
 // Slot Machine page using real currency via /api/currency/me
+
+// Hook personnalisé pour gérer les sons du casino
+const useCasinoSounds = () => {
+    const soundsRef = useRef<{ [key: string]: HTMLAudioElement }>({});
+    const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+    const [soundsEnabled, setSoundsEnabled] = useState(true);
+
+    useEffect(() => {
+        // Créer les objets Audio pour chaque son d'effet
+        // Les fichiers doivent être placés dans /public/soundFXCasino/
+        soundsRef.current = {
+            spin: new Audio('/soundFXCasino/spin_sound.mp3'),              // Son quand on lance les roues
+            reelStop: new Audio('/soundFXCasino/reel_stop.mp3'),           // Son à chaque arrêt de roue
+            win: new Audio('/soundFXCasino/win_sound.mp3'),                // Son de victoire normale
+            sequence3: new Audio('/soundFXCasino/sequence3_sound.mp3'),    // Son quand on aligne 3 symboles
+            jackpot: new Audio('/soundFXCasino/jackpot_sound.mp3'),        // Son de jackpot (7️⃣ x3)
+            lose: new Audio('/soundFXCasino/lose_sound.mp3'),              // Son de défaite
+        };
+
+        // Créer la musique de fond (en boucle)
+        bgMusicRef.current = new Audio('/soundFXCasino/bg_sound.mp3');
+        bgMusicRef.current.loop = true;
+        bgMusicRef.current.volume = 0.15; // Volume plus bas pour la musique de fond
+
+        // Ajuster le volume de chaque son d'effet
+        Object.values(soundsRef.current).forEach(audio => {
+            audio.volume = 0.4;
+        });
+
+        // Démarrer la musique de fond si les sons sont activés
+        if (soundsEnabled && bgMusicRef.current) {
+            bgMusicRef.current.play().catch(err => console.log('Erreur lecture musique de fond:', err));
+        }
+
+        return () => {
+            // Nettoyer les objets Audio
+            Object.values(soundsRef.current).forEach(audio => {
+                audio.pause();
+                audio.src = '';
+            });
+            if (bgMusicRef.current) {
+                bgMusicRef.current.pause();
+                bgMusicRef.current.src = '';
+            }
+        };
+    }, [soundsEnabled]);
+
+    const playSound = (soundName: string) => {
+        if (!soundsEnabled) return;
+        
+        const sound = soundsRef.current[soundName];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(err => console.log('Erreur lecture son:', err));
+        }
+    };
+
+    const toggleSounds = () => {
+        setSoundsEnabled(prev => {
+            const newState = !prev;
+            
+            // Gérer la musique de fond
+            if (bgMusicRef.current) {
+                if (newState) {
+                    bgMusicRef.current.play().catch(err => console.log('Erreur lecture musique de fond:', err));
+                } else {
+                    bgMusicRef.current.pause();
+                }
+            }
+            
+            return newState;
+        });
+    };
+
+    return { playSound, soundsEnabled, toggleSounds };
+};
 
 const SYMBOLS = ['🍒', '🍇', '🍊', '🍋', '💎', '💰', '7️⃣', '🍀'];
 type Reel = string[];
@@ -335,6 +411,7 @@ const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'tw
 
 export default function CasinoSlotPage() {
     const { data: session } = useSession();
+    const { playSound, soundsEnabled, toggleSounds } = useCasinoSounds();
     const [balance, setBalance] = useState<number>(0);
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
     const [bet, setBet] = useState<number>(10);
@@ -566,6 +643,9 @@ export default function CasinoSlotPage() {
         setReelsStopped([false, false, false]);
         setWinningLineType(null); // Reset winning line
 
+        // Jouer le son de spin
+        playSound('spin');
+
         // Reserve funds server-side: deduct bet before spinning
         try {
             setSpinning(true);
@@ -613,6 +693,9 @@ export default function CasinoSlotPage() {
                 const final = reel[reel.length - 1];
                 finalSymbols[idx] = final;
                 
+                // Jouer le son d'arrêt de roue
+                playSound('reelStop');
+                
                 // Mark this reel as stopped
                 setReelsStopped(prev => {
                     const newStopped = [...prev];
@@ -642,6 +725,9 @@ export default function CasinoSlotPage() {
                             }
                             
                             if (result.isJackpot) {
+                                // Jouer le son de jackpot
+                                playSound('jackpot');
+                                
                                 setMessage(`🎉 JACKPOT! +${result.amount} Pièces 🎉`);
                                 setShowConfetti(true);
                                 setTimeout(() => setShowConfetti(false), 8000);
@@ -669,6 +755,15 @@ export default function CasinoSlotPage() {
                                 
                                 triggerWinAnimation(result.amount);
                             } else {
+                                // Jouer le son approprié selon le type de victoire
+                                if (result.lineType === 'three') {
+                                    // 3 symboles alignés (mais pas jackpot)
+                                    playSound('sequence3');
+                                } else {
+                                    // 2 symboles alignés
+                                    playSound('win');
+                                }
+                                
                                 setMessage(`✨ Gagné +${result.amount} Pièces ✨`);
                                 // Le jackpot ne descend JAMAIS sur un gain normal
                                 triggerWinAnimation(result.amount);
@@ -691,6 +786,9 @@ export default function CasinoSlotPage() {
                                 setBalance((b) => b + result.amount);
                             }
                         } else {
+                            // Jouer le son de défaite
+                            playSound('lose');
+                            
                             if (bet > biggestLoss) {
                                 setBiggestLoss(bet);
                             }
@@ -1005,22 +1103,43 @@ export default function CasinoSlotPage() {
                             </div>
                         </div>
                         
-                        <motion.div
-                            className="text-right"
-                            animate={loadingBalance ? { opacity: [0.5, 1, 0.5] } : {}}
-                            transition={{ duration: 1, repeat: Infinity }}
-                        >
-                            <p className="text-sm text-gray-400 font-semibold mb-1">Solde</p>
-                            <motion.p 
-                                className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent"
-                                key={balance}
-                                initial={{ scale: 1.2, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ type: "spring", stiffness: 300 }}
+                        <div className="flex items-center gap-4">
+                            <motion.div
+                                className="text-right"
+                                animate={loadingBalance ? { opacity: [0.5, 1, 0.5] } : {}}
+                                transition={{ duration: 1, repeat: Infinity }}
                             >
-                                {formatMoney(balance)} 💰
-                            </motion.p>
-                        </motion.div>
+                                <p className="text-sm text-gray-400 font-semibold mb-1">Solde</p>
+                                <motion.p 
+                                    className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent"
+                                    key={balance}
+                                    initial={{ scale: 1.2, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ type: "spring", stiffness: 300 }}
+                                >
+                                    {formatMoney(balance)} 💰
+                                </motion.p>
+                            </motion.div>
+                            
+                            {/* Sound Toggle Button */}
+                            <motion.button
+                                onClick={toggleSounds}
+                                className={`p-3 rounded-xl transition-all duration-300 ${
+                                    soundsEnabled 
+                                        ? 'bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700' 
+                                        : 'bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800'
+                                } shadow-lg`}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                                title={soundsEnabled ? "Désactiver les sons" : "Activer les sons"}
+                            >
+                                {soundsEnabled ? (
+                                    <Volume2 size={24} className="text-white" />
+                                ) : (
+                                    <VolumeX size={24} className="text-white" />
+                                )}
+                            </motion.button>
+                        </div>
                     </motion.div>
 
                     {/* Reels Container */}
