@@ -322,6 +322,115 @@ const LaughingEmojis = () => {
     );
 };
 
+// Free Spin Unlock Animation
+const FreeSpinUnlockAnimation = () => {
+    return (
+        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+            {/* Fond sombre avec effet de flash */}
+            <motion.div
+                className="absolute inset-0 bg-black/60"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.8, 0.6, 0.8, 0] }}
+                transition={{ duration: 4, ease: 'easeInOut' }}
+            />
+            
+            {/* Particules dorées qui explosent */}
+            {Array.from({ length: 50 }).map((_, i) => {
+                const angle = (i / 50) * Math.PI * 2;
+                const distance = 150 + Math.random() * 100;
+                const xOffset = Math.cos(angle) * distance;
+                const yOffset = Math.sin(angle) * distance;
+                
+                return (
+                    <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+                        style={{ left: '50%', top: '50%' }}
+                        initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
+                        animate={{
+                            x: xOffset,
+                            y: yOffset,
+                            opacity: [0, 1, 1, 0],
+                            scale: [0, 1.5, 1, 0],
+                        }}
+                        transition={{
+                            duration: 2,
+                            ease: 'easeOut',
+                            delay: 0.3 + Math.random() * 0.3,
+                        }}
+                    />
+                );
+            })}
+            
+            {/* Message principal */}
+            <motion.div
+                className="relative z-10 text-center"
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{
+                    scale: [0, 1.3, 1.1, 1],
+                    rotate: [-180, 10, -10, 0],
+                    opacity: [0, 1, 1, 1, 0],
+                }}
+                transition={{ duration: 4, ease: 'easeOut' }}
+            >
+                <div className="bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 text-white px-12 py-8 rounded-3xl border-4 border-yellow-300 shadow-2xl">
+                    <motion.div
+                        className="text-6xl font-black mb-4"
+                        animate={{
+                            scale: [1, 1.1, 1],
+                            textShadow: [
+                                '0 0 20px rgba(255,215,0,0.8)',
+                                '0 0 40px rgba(255,215,0,1)',
+                                '0 0 20px rgba(255,215,0,0.8)',
+                            ],
+                        }}
+                        transition={{
+                            duration: 1,
+                            repeat: 3,
+                            ease: 'easeInOut',
+                        }}
+                    >
+                        🎉 FREE SPINS ! 🎉
+                    </motion.div>
+                    <div className="text-3xl font-bold">
+                        3 Victoires Consécutives !
+                    </div>
+                    <div className="text-5xl font-black mt-4 text-yellow-200">
+                        +3 TOURS GRATUITS
+                    </div>
+                </div>
+            </motion.div>
+            
+            {/* Étoiles qui tournent autour */}
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+                <motion.div
+                    key={`star-${i}`}
+                    className="absolute text-6xl"
+                    style={{
+                        left: '50%',
+                        top: '50%',
+                    }}
+                    initial={{ x: 0, y: 0, opacity: 0, scale: 0, rotate: 0 }}
+                    animate={{
+                        x: Math.cos((i / 6) * Math.PI * 2) * 200,
+                        y: Math.sin((i / 6) * Math.PI * 2) * 200,
+                        opacity: [0, 1, 1, 0],
+                        scale: [0, 1.5, 1.5, 0],
+                        rotate: [0, 360],
+                    }}
+                    transition={{
+                        duration: 3,
+                        ease: 'easeOut',
+                        delay: 0.5,
+                    }}
+                >
+                    ⭐
+                </motion.div>
+            ))}
+        </div>
+    );
+};
+
 // Winning line component - connects the 3 winning symbols
 const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'two-right' }) => {
     // Calculate line position based on win type
@@ -479,6 +588,12 @@ export default function CasinoSlotPage() {
     const [winningLineType, setWinningLineType] = useState<'three' | 'two-left' | 'two-middle' | 'two-right' | null>(null);
     const { width, height } = useWindowSizeLocal();
     const spinTimeouts = useRef<any[]>([]);
+    
+    // 🎰 FREE SPINS SYSTEM
+    const [winStreak, setWinStreak] = useState(0); // Compteur de victoires consécutives
+    const [freeSpins, setFreeSpins] = useState(0); // Nombre de free spins restants
+    const [isFreeSpinMode, setIsFreeSpinMode] = useState(false); // Mode free spin actif
+    const [showFreeSpinUnlock, setShowFreeSpinUnlock] = useState(false); // Animation de déblocage
 
     const HOUSE_EDGE = 0.06;
 
@@ -676,26 +791,46 @@ export default function CasinoSlotPage() {
         // Jouer le son de spin
         playSound('spin');
 
-        // Reserve funds server-side: deduct bet before spinning
+        // 🎰 FREE SPIN: Vérifier si on utilise un free spin
+        let isUsingFreeSpin = false;
+        if (freeSpins > 0) {
+            isUsingFreeSpin = true;
+            setFreeSpins(prev => prev - 1);
+            setIsFreeSpinMode(true);
+            
+            // Si c'était le dernier free spin, désactiver le mode après ce spin
+            if (freeSpins === 1) {
+                setTimeout(() => setIsFreeSpinMode(false), 5000);
+            }
+        }
+
+        // Reserve funds server-side: deduct bet before spinning (sauf en free spin)
         try {
             setSpinning(true);
-            setMessage('🎰 Mise en cours...');
-
-            const reserve = await fetch('/api/currency/me', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: -Math.abs(bet) })
-            });
-
-            if (reserve.ok) {
-                const json = await reserve.json();
-                if (typeof json.balance === 'number') setBalance(json.balance);
+            
+            if (isUsingFreeSpin) {
+                setMessage('🎁 TOUR GRATUIT EN COURS...');
             } else {
-                setBalance((b) => b - bet);
+                setMessage('🎰 Mise en cours...');
+                
+                const reserve = await fetch('/api/currency/me', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: -Math.abs(bet) })
+                });
+
+                if (reserve.ok) {
+                    const json = await reserve.json();
+                    if (typeof json.balance === 'number') setBalance(json.balance);
+                } else {
+                    setBalance((b) => b - bet);
+                }
             }
         } catch (e) {
             console.error('Erreur réservation:', e);
-            setBalance((b) => b - bet);
+            if (!isUsingFreeSpin) {
+                setBalance((b) => b - bet);
+            }
         }
 
         const makeWeightedReel = () => {
@@ -805,6 +940,22 @@ export default function CasinoSlotPage() {
                                 triggerWinAnimation(result.amount);
                             }
 
+                            // 🎰 FREE SPIN: Incrémenter le win streak
+                            setWinStreak(prev => {
+                                const newStreak = prev + 1;
+                                
+                                // Si on atteint 3 victoires consécutives, débloquer 3 free spins
+                                if (newStreak === 3) {
+                                    setFreeSpins(prevSpins => prevSpins + 3);
+                                    setShowFreeSpinUnlock(true);
+                                    playSound('sequence3'); // Son spécial pour le déblocage
+                                    setTimeout(() => setShowFreeSpinUnlock(false), 4000);
+                                    return 0; // Reset le streak après déblocage
+                                }
+                                
+                                return newStreak;
+                            });
+
                             try {
                                 const post = await fetch('/api/currency/me', {
                                     method: 'POST',
@@ -824,6 +975,9 @@ export default function CasinoSlotPage() {
                         } else {
                             // Jouer le son de défaite
                             playSound('lose');
+                            
+                            // 🎰 FREE SPIN: Reset le win streak en cas de défaite
+                            setWinStreak(0);
                             
                             if (bet > biggestLoss) {
                                 setBiggestLoss(bet);
@@ -902,16 +1056,26 @@ export default function CasinoSlotPage() {
                 } : {}}
                 transition={{ duration: 0.3 }}
             >
-                {/* Outer glow container */}
-                <div className="absolute inset-0 bg-gradient-to-b from-purple-600/20 via-purple-500/10 to-purple-600/20 rounded-3xl blur-xl" />
+                {/* Outer glow container - Golden in Free Spin mode */}
+                <div className={`absolute inset-0 rounded-3xl blur-xl ${
+                    isFreeSpinMode 
+                        ? 'bg-gradient-to-b from-yellow-400/30 via-amber-500/20 to-yellow-400/30' 
+                        : 'bg-gradient-to-b from-purple-600/20 via-purple-500/10 to-purple-600/20'
+                }`} />
                 
-                {/* Main reel container */}
-                <div className="relative w-full h-full bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-3xl border-4 border-purple-500/40 shadow-2xl overflow-hidden">
-                    {/* Animated border glow */}
+                {/* Main reel container - Golden border in Free Spin mode */}
+                <div className={`relative w-full h-full bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 rounded-3xl border-4 shadow-2xl overflow-hidden ${
+                    isFreeSpinMode 
+                        ? 'border-yellow-400/60 shadow-yellow-500/50' 
+                        : 'border-purple-500/40'
+                }`}>
+                    {/* Animated border glow - Golden in Free Spin mode */}
                     <motion.div 
                         className="absolute inset-0 rounded-3xl"
                         style={{
-                            background: 'linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.3), transparent)',
+                            background: isFreeSpinMode 
+                                ? 'linear-gradient(45deg, transparent, rgba(234, 179, 8, 0.4), transparent)'
+                                : 'linear-gradient(45deg, transparent, rgba(139, 92, 246, 0.3), transparent)',
                         }}
                         animate={spinning ? {
                             rotate: [0, 360],
@@ -923,10 +1087,14 @@ export default function CasinoSlotPage() {
                         }}
                     />
                     
-                    {/* Spinning glow effect */}
+                    {/* Spinning glow effect - Golden in Free Spin mode */}
                     {spinning && (
                         <motion.div 
-                            className="absolute inset-0 bg-gradient-to-b from-purple-500/30 via-transparent to-purple-500/30"
+                            className={`absolute inset-0 ${
+                                isFreeSpinMode 
+                                    ? 'bg-gradient-to-b from-yellow-500/30 via-transparent to-yellow-500/30'
+                                    : 'bg-gradient-to-b from-purple-500/30 via-transparent to-purple-500/30'
+                            }`}
                             animate={{ 
                                 opacity: [0.3, 0.7, 0.3],
                                 y: [-50, 50, -50]
@@ -1085,6 +1253,11 @@ export default function CasinoSlotPage() {
                 {showLaughingEmojis && <LaughingEmojis />}
             </AnimatePresence>
             
+            {/* Free Spin Unlock Animation */}
+            <AnimatePresence>
+                {showFreeSpinUnlock && <FreeSpinUnlockAnimation />}
+            </AnimatePresence>
+            
             <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 items-start relative z-10">
                 {/* Main Slot Machine */}
                 <div className="lg:col-span-3 futuristic-card rounded-3xl p-6 md:p-8 shadow-purple relative overflow-hidden">
@@ -1171,6 +1344,44 @@ export default function CasinoSlotPage() {
                         </div>
                         
                         <div className="flex items-center gap-4">
+                            {/* 🎰 FREE SPINS & WIN STREAK DISPLAY */}
+                            <div className="flex flex-col gap-2">
+                                {/* Win Streak Counter */}
+                                <motion.div
+                                    className="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-orange-500/40"
+                                    animate={winStreak > 0 ? {
+                                        scale: [1, 1.05, 1],
+                                        borderColor: ['rgba(249, 115, 22, 0.4)', 'rgba(249, 115, 22, 0.8)', 'rgba(249, 115, 22, 0.4)'],
+                                    } : {}}
+                                    transition={{ duration: 1, repeat: Infinity }}
+                                >
+                                    <p className="text-xs text-orange-300 font-bold flex items-center gap-1">
+                                        🔥 Série: {winStreak}/3
+                                    </p>
+                                </motion.div>
+                                
+                                {/* Free Spins Counter */}
+                                {freeSpins > 0 && (
+                                    <motion.div
+                                        className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-yellow-500/40"
+                                        initial={{ scale: 0, opacity: 0 }}
+                                        animate={{
+                                            scale: 1,
+                                            opacity: 1,
+                                            borderColor: ['rgba(234, 179, 8, 0.4)', 'rgba(234, 179, 8, 0.8)', 'rgba(234, 179, 8, 0.4)'],
+                                        }}
+                                        transition={{ 
+                                            scale: { type: "spring", stiffness: 300 },
+                                            borderColor: { duration: 1, repeat: Infinity }
+                                        }}
+                                    >
+                                        <p className="text-xs text-yellow-300 font-bold flex items-center gap-1">
+                                            🎁 Free Spins: {freeSpins}
+                                        </p>
+                                    </motion.div>
+                                )}
+                            </div>
+                            
                             <motion.div
                                 className="text-right"
                                 animate={loadingBalance ? { opacity: [0.5, 1, 0.5] } : {}}
@@ -1294,6 +1505,29 @@ export default function CasinoSlotPage() {
                             
                             {/* Reels */}
                             <div className="flex justify-center items-center gap-6 mb-6 relative">
+                                {/* 🎁 FREE SPIN MODE INDICATOR */}
+                                {isFreeSpinMode && (
+                                    <motion.div
+                                        className="absolute -top-16 left-1/2 transform -translate-x-1/2 z-40"
+                                        initial={{ scale: 0, y: -20, opacity: 0 }}
+                                        animate={{
+                                            scale: [1, 1.1, 1],
+                                            y: 0,
+                                            opacity: 1,
+                                        }}
+                                        exit={{ scale: 0, y: -20, opacity: 0 }}
+                                        transition={{
+                                            scale: { duration: 1, repeat: Infinity },
+                                            y: { type: "spring", stiffness: 300 },
+                                            opacity: { duration: 0.3 }
+                                        }}
+                                    >
+                                        <div className="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 text-white px-6 py-2 rounded-full font-black text-lg shadow-2xl border-2 border-yellow-300">
+                                            🎁 MODE FREE SPIN 🎁
+                                        </div>
+                                    </motion.div>
+                                )}
+                                
                                 {reels.map((reel, idx) => (
                                     <div key={idx}>
                                         {reelDisplay(reel, idx)}
@@ -1379,7 +1613,7 @@ export default function CasinoSlotPage() {
                                                 setBet(Math.max(1, balance));
                                             }
                                         }}
-                                        disabled={spinning || loadingBalance}
+                                        disabled={spinning || loadingBalance || isFreeSpinMode}
                                         className="nyx-input w-32 text-center font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                 </motion.div>
