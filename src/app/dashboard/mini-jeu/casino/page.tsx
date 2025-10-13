@@ -154,29 +154,41 @@ const LaughingEmojis = () => {
         [] // eslint-disable-line react-hooks/exhaustive-deps
     );
     
+    // Mémoriser les propriétés aléatoires de chaque emoji pour éviter qu'ils se téléportent
+    const emojiProperties = useMemo(
+        () => Array.from({ length: emojiCount }).map(() => ({
+            left: Math.random() * 100,
+            rotation: Math.random() * 720 - 360,
+            xOffset: (Math.random() - 0.5) * 150,
+            duration: Math.random() * 2 + 2,
+            delay: Math.random() * 0.5,
+        })),
+        [] // eslint-disable-line react-hooks/exhaustive-deps
+    );
+    
     return (
         <div className="fixed inset-0 pointer-events-none z-50">
             {/* Emojis qui tombent */}
-            {Array.from({ length: emojiCount }).map((_, i) => (
+            {emojiProperties.map((props, i) => (
                 <motion.div
                     key={`emoji-${i}`}
                     className="absolute text-4xl"
                     style={{
-                        left: `${Math.random() * 100}%`,
+                        left: `${props.left}%`,
                         top: '-10%',
                     }}
                     initial={{ y: 0, opacity: 0, rotate: 0, scale: 0 }}
                     animate={{
                         y: window.innerHeight + 100,
                         opacity: [0, 1, 1, 0],
-                        rotate: Math.random() * 720 - 360,
+                        rotate: props.rotation,
                         scale: [0, 1.2, 1, 0],
-                        x: (Math.random() - 0.5) * 150,
+                        x: props.xOffset,
                     }}
                     transition={{
-                        duration: Math.random() * 2 + 2,
+                        duration: props.duration,
                         ease: 'easeIn',
-                        delay: Math.random() * 0.5,
+                        delay: props.delay,
                     }}
                 >
                     🤣
