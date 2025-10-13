@@ -478,7 +478,7 @@ export default function CasinoSlotPage() {
         // Reserve funds server-side: deduct bet before spinning
         try {
             setSpinning(true);
-            setMessage('🎰 Spinning...');
+            setMessage('🎰 Mise en cours...');
 
             const reserve = await fetch('/api/currency/me', {
                 method: 'POST',
@@ -904,7 +904,7 @@ export default function CasinoSlotPage() {
                                         repeat: Infinity,
                                     }}
                                 >
-                                    Tentez votre chance !
+                                    Prêt à défier la chance ? | Casino conçu par Kyû.
                                 </motion.p>
                             </div>
                         </div>
