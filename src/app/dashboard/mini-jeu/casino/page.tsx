@@ -558,8 +558,9 @@ export default function CasinoSlotPage() {
     const [jackpotLoading, setJackpotLoading] = useState<boolean>(true);
     
     // Top wins des joueurs
-    const [topWins, setTopWins] = useState<Array<{ username: string; biggestWin: number }>>([]);
+    const [topWins, setTopWins] = useState<Array<{ username: string; biggestWin: number; totalWins?: number; winCount?: number }>>([]);
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+    const [leaderboardType, setLeaderboardType] = useState<'biggestWin' | 'winCount' | 'totalWins'>('biggestWin');
     
     const [showConfetti, setShowConfetti] = useState(false);
     const [winAnimation, setWinAnimation] = useState(false);
@@ -624,9 +625,9 @@ export default function CasinoSlotPage() {
     };
 
     // Fonction pour charger les top wins depuis l'API
-    const loadTopWins = async () => {
+    const loadTopWins = async (type: 'biggestWin' | 'winCount' | 'totalWins' = 'biggestWin') => {
         try {
-            const res = await fetch(CASINO_ENDPOINTS.topWins);
+            const res = await fetch(`${CASINO_ENDPOINTS.topWins}?type=${type}`);
             if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data.players) && data.players.length > 0) {
@@ -1852,23 +1853,97 @@ export default function CasinoSlotPage() {
                                 Alignez 3x 7️⃣ pour gagner !
                             </motion.p>
                             
-                            {/* Affichage du joueur avec le plus gros gain (rotation) */}
-                            <AnimatePresence mode="wait">
-                                {topWins.length > 0 && (
-                                    <motion.div
-                                        key={currentPlayerIndex}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        transition={{ duration: 0.5 }}
-                                        className="mt-3 pt-3 border-t border-yellow-500/20"
-                                    >
-                                        <p className="text-xs text-yellow-300 font-bold">
-                                            🏆 {topWins[currentPlayerIndex].username} › Plus gros gain : {formatMoney(topWins[currentPlayerIndex].biggestWin)} 💰
-                                        </p>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            {/* Système d'onglets pour le classement */}
+                            <div className="mt-4 pt-4 border-t border-yellow-500/20">
+                                {/* Onglets */}
+                                <div className="flex gap-2 mb-3">
+                                    {[
+                                        { key: 'biggestWin' as const, label: 'Plus gros gain', icon: '💎' },
+                                        { key: 'winCount' as const, label: 'Nombre de victoires', icon: '🏆' },
+                                        { key: 'totalWins' as const, label: 'Gains total', icon: '💰' }
+                                    ].map((tab) => (
+                                        <motion.button
+                                            key={tab.key}
+                                            onClick={() => {
+                                                setLeaderboardType(tab.key);
+                                                loadTopWins(tab.key);
+                                            }}
+                                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                                                leaderboardType === tab.key
+                                                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/50'
+                                                    : 'bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/20'
+                                            }`}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            {tab.icon} {tab.label}
+                                        </motion.button>
+                                    ))}
+                                </div>
+                                
+                                {/* Liste du classement (Top 20) */}
+                                <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                                    <AnimatePresence mode="wait">
+                                        {topWins.length > 0 ? (
+                                            topWins.slice(0, 20).map((player, index) => {
+                                                // Déterminer la valeur à afficher selon le type de classement
+                                                let displayValue = '';
+                                                if (leaderboardType === 'biggestWin') {
+                                                    displayValue = `${formatMoney(player.biggestWin)} 💰`;
+                                                } else if (leaderboardType === 'winCount') {
+                                                    displayValue = `${player.winCount || 0} 🏆`;
+                                                } else if (leaderboardType === 'totalWins') {
+                                                    displayValue = `${formatMoney(player.totalWins || 0)} 💰`;
+                                                }
+                                                
+                                                return (
+                                                    <motion.div
+                                                        key={`${leaderboardType}-${player.username}-${index}`}
+                                                        initial={{ opacity: 0, x: -20 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        exit={{ opacity: 0, x: 20 }}
+                                                        transition={{ delay: index * 0.03 }}
+                                                        className={`flex items-center justify-between p-2 rounded-lg ${
+                                                            index === 0 ? 'bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border border-yellow-500/50' :
+                                                            index === 1 ? 'bg-gradient-to-r from-gray-300/20 to-gray-400/20 border border-gray-400/30' :
+                                                            index === 2 ? 'bg-gradient-to-r from-orange-600/20 to-orange-700/20 border border-orange-600/30' :
+                                                            'bg-yellow-500/5 border border-yellow-500/10'
+                                                        }`}
+                                                        whileHover={{ scale: 1.02, x: 5 }}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-black w-6">
+                                                                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                                                            </span>
+                                                            <span className={`text-xs font-bold ${
+                                                                index < 3 ? 'text-yellow-300' : 'text-gray-300'
+                                                            }`}>
+                                                                {player.username}
+                                                            </span>
+                                                        </div>
+                                                        <span className={`text-xs font-black ${
+                                                            index === 0 ? 'text-yellow-400' :
+                                                            index === 1 ? 'text-gray-300' :
+                                                            index === 2 ? 'text-orange-400' :
+                                                            'text-purple-300'
+                                                        }`}>
+                                                            {displayValue}
+                                                        </span>
+                                                    </motion.div>
+                                                );
+                                            })
+                                        ) : (
+                                            <motion.p
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                className="text-xs text-gray-400 text-center py-4"
+                                            >
+                                                Aucun joueur dans ce classement
+                                            </motion.p>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
                         </div>
                     </motion.div>
 

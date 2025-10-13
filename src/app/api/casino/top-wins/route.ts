@@ -3,12 +3,15 @@ import { NextResponse } from 'next/server';
 const NYXNODE_API = 'http://193.70.34.25:20007/api';
 
 /**
- * GET /api/casino/top-wins
+ * GET /api/casino/top-wins?type=biggestWin|winCount|totalWins
  * Récupère les meilleurs gains des joueurs au casino
  */
-export async function GET() {
+export async function GET(request: Request) {
     try {
-        const response = await fetch(`${NYXNODE_API}/casino/top-wins`, {
+        const { searchParams } = new URL(request.url);
+        const type = searchParams.get('type') || 'biggestWin';
+        
+        const response = await fetch(`${NYXNODE_API}/casino/top-wins?type=${type}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
