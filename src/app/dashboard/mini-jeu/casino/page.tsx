@@ -133,6 +133,79 @@ const CoinRain = ({ amount }: { amount: number }) => {
     );
 };
 
+// Laughing emojis effect when losing
+const LaughingEmojis = () => {
+    const mockingPhrases = [
+        "Souris, je garde la pièce moi perso..",
+        "Merci pour la donation ! 😂",
+        "Encore raté ! 🤣",
+        "La maison gagne toujours ! 😈",
+        "Retente ta chance... ou pas ! 😏",
+        "Tes pièces sont à moi maintenant ! 💰",
+        "Dommage, c'était pas la bonne ! 😆",
+        "Le casino te remercie ! 🎰"
+    ];
+    
+    const emojiCount = 15;
+    
+    // Choisir UNE phrase aléatoire
+    const randomPhrase = mockingPhrases[Math.floor(Math.random() * mockingPhrases.length)];
+    
+    return (
+        <div className="fixed inset-0 pointer-events-none z-50">
+            {/* Emojis qui tombent */}
+            {Array.from({ length: emojiCount }).map((_, i) => (
+                <motion.div
+                    key={`emoji-${i}`}
+                    className="absolute text-4xl"
+                    style={{
+                        left: `${Math.random() * 100}%`,
+                        top: '-10%',
+                    }}
+                    initial={{ y: 0, opacity: 0, rotate: 0, scale: 0 }}
+                    animate={{
+                        y: window.innerHeight + 100,
+                        opacity: [0, 1, 1, 0],
+                        rotate: Math.random() * 720 - 360,
+                        scale: [0, 1.2, 1, 0],
+                        x: (Math.random() - 0.5) * 150,
+                    }}
+                    transition={{
+                        duration: Math.random() * 2 + 2,
+                        ease: 'easeIn',
+                        delay: Math.random() * 0.5,
+                    }}
+                >
+                    🤣
+                </motion.div>
+            ))}
+            
+            {/* UNE SEULE phrase moqueuse aléatoire */}
+            <motion.div
+                className="absolute text-xl md:text-2xl font-bold text-red-400 bg-black/80 px-6 py-3 rounded-xl border-2 border-red-500/60 shadow-2xl"
+                style={{
+                    left: '50%',
+                    top: '40%',
+                    transform: 'translate(-50%, -50%)',
+                }}
+                initial={{ opacity: 0, scale: 0, rotate: -10 }}
+                animate={{
+                    opacity: [0, 1, 1, 1, 0],
+                    scale: [0, 1.2, 1.1, 1.1, 0.8],
+                    rotate: [-10, 5, -5, 0, 0],
+                    y: [0, -10, -20, -30, -50],
+                }}
+                transition={{
+                    duration: 3.5,
+                    ease: 'easeOut',
+                }}
+            >
+                {randomPhrase}
+            </motion.div>
+        </div>
+    );
+};
+
 // Winning line component - connects the 3 winning symbols
 const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'two-right' }) => {
     // Calculate line position based on win type
@@ -284,6 +357,7 @@ export default function CasinoSlotPage() {
     });
     
     const [showCoinRain, setShowCoinRain] = useState(false);
+    const [showLaughingEmojis, setShowLaughingEmojis] = useState(false);
     const [reelsStopped, setReelsStopped] = useState([false, false, false]);
     const [winningLineType, setWinningLineType] = useState<'three' | 'two-left' | 'two-middle' | 'two-right' | null>(null);
     const { width, height } = useWindowSizeLocal();
@@ -462,7 +536,9 @@ export default function CasinoSlotPage() {
 
     const triggerLoseAnimation = () => {
         setLoseAnimation(true);
+        setShowLaughingEmojis(true);
         setTimeout(() => setLoseAnimation(false), 2000);
+        setTimeout(() => setShowLaughingEmojis(false), 4000);
     };
 
     const handleSpin = async () => {
@@ -822,6 +898,11 @@ export default function CasinoSlotPage() {
             {/* Coin rain effect */}
             <AnimatePresence>
                 {showCoinRain && <CoinRain amount={lastWinAmount} />}
+            </AnimatePresence>
+            
+            {/* Laughing emojis effect when losing */}
+            <AnimatePresence>
+                {showLaughingEmojis && <LaughingEmojis />}
             </AnimatePresence>
             
             <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 items-start relative z-10">
