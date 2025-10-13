@@ -14,6 +14,7 @@ const useCasinoSounds = () => {
     const bgMusicRef = useRef<HTMLAudioElement | null>(null);
     const [soundsEnabled, setSoundsEnabled] = useState(true);
     const [soundsInitialized, setSoundsInitialized] = useState(false);
+    const [masterVolume, setMasterVolume] = useState(50); // Volume principal (0-100)
 
     useEffect(() => {
         // Créer les objets Audio pour chaque son d'effet
@@ -89,7 +90,23 @@ const useCasinoSounds = () => {
         });
     };
 
-    return { playSound, soundsEnabled, toggleSounds };
+    // Fonction pour changer le volume principal
+    const changeVolume = (newVolume: number) => {
+        setMasterVolume(newVolume);
+        const volumeRatio = newVolume / 100;
+        
+        // Mettre à jour le volume de la musique de fond (10% du volume principal)
+        if (bgMusicRef.current) {
+            bgMusicRef.current.volume = 0.10 * volumeRatio;
+        }
+        
+        // Mettre à jour le volume des effets sonores (25% du volume principal)
+        Object.values(soundsRef.current).forEach(audio => {
+            audio.volume = 0.25 * volumeRatio;
+        });
+    };
+
+    return { playSound, soundsEnabled, toggleSounds, masterVolume, changeVolume };
 };
 
 const SYMBOLS = ['🍒', '🍇', '🍊', '🍋', '💎', '💰', '7️⃣', '🍀'];
@@ -419,7 +436,7 @@ const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'tw
 
 export default function CasinoSlotPage() {
     const { data: session } = useSession();
-    const { playSound, soundsEnabled, toggleSounds } = useCasinoSounds();
+    const { playSound, soundsEnabled, toggleSounds, masterVolume, changeVolume } = useCasinoSounds();
     const [balance, setBalance] = useState<number>(0);
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
     const [bet, setBet] = useState<number>(10);
@@ -1129,24 +1146,73 @@ export default function CasinoSlotPage() {
                                 </motion.p>
                             </motion.div>
                             
-                            {/* Sound Toggle Button */}
-                            <motion.button
-                                onClick={toggleSounds}
-                                className={`p-3 rounded-xl transition-all duration-300 ${
-                                    soundsEnabled 
-                                        ? 'bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700' 
-                                        : 'bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800'
-                                } shadow-lg`}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                                title={soundsEnabled ? "Désactiver les sons" : "Activer les sons"}
-                            >
-                                {soundsEnabled ? (
-                                    <Volume2 size={24} className="text-white" />
-                                ) : (
-                                    <VolumeX size={24} className="text-white" />
-                                )}
-                            </motion.button>
+                            {/* Sound Control with Volume Slider */}
+                            <div className="flex items-center gap-3 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm px-4 py-2 rounded-xl border border-purple-500/30 shadow-lg">
+                                {/* Mute/Unmute Button */}
+                                <motion.button
+                                    onClick={toggleSounds}
+                                    className={`p-2 rounded-lg transition-all duration-300 ${
+                                        soundsEnabled 
+                                            ? 'bg-purple-500/20 hover:bg-purple-500/30' 
+                                            : 'bg-gray-600/20 hover:bg-gray-600/30'
+                                    }`}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    title={soundsEnabled ? "Désactiver les sons" : "Activer les sons"}
+                                >
+                                    {soundsEnabled ? (
+                                        <Volume2 size={20} className="text-purple-400" />
+                                    ) : (
+                                        <VolumeX size={20} className="text-gray-400" />
+                                    )}
+                                </motion.button>
+                                
+                                {/* Volume Slider */}
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={masterVolume}
+                                        onChange={(e) => changeVolume(Number(e.target.value))}
+                                        disabled={!soundsEnabled}
+                                        className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer
+                                            disabled:opacity-50 disabled:cursor-not-allowed
+                                            [&::-webkit-slider-thumb]:appearance-none
+                                            [&::-webkit-slider-thumb]:w-4
+                                            [&::-webkit-slider-thumb]:h-4
+                                            [&::-webkit-slider-thumb]:rounded-full
+                                            [&::-webkit-slider-thumb]:bg-gradient-to-br
+                                            [&::-webkit-slider-thumb]:from-purple-400
+                                            [&::-webkit-slider-thumb]:to-purple-600
+                                            [&::-webkit-slider-thumb]:cursor-pointer
+                                            [&::-webkit-slider-thumb]:shadow-lg
+                                            [&::-webkit-slider-thumb]:shadow-purple-500/50
+                                            [&::-webkit-slider-thumb]:transition-all
+                                            [&::-webkit-slider-thumb]:hover:scale-110
+                                            [&::-moz-range-thumb]:w-4
+                                            [&::-moz-range-thumb]:h-4
+                                            [&::-moz-range-thumb]:rounded-full
+                                            [&::-moz-range-thumb]:bg-gradient-to-br
+                                            [&::-moz-range-thumb]:from-purple-400
+                                            [&::-moz-range-thumb]:to-purple-600
+                                            [&::-moz-range-thumb]:border-0
+                                            [&::-moz-range-thumb]:cursor-pointer
+                                            [&::-moz-range-thumb]:shadow-lg
+                                            [&::-moz-range-thumb]:shadow-purple-500/50"
+                                        style={{
+                                            background: soundsEnabled 
+                                                ? `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${masterVolume}%, rgb(55, 65, 81) ${masterVolume}%, rgb(55, 65, 81) 100%)`
+                                                : 'rgb(55, 65, 81)'
+                                        }}
+                                    />
+                                    <span className={`text-xs font-medium min-w-[2rem] text-right ${
+                                        soundsEnabled ? 'text-purple-400' : 'text-gray-500'
+                                    }`}>
+                                        {masterVolume}%
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </motion.div>
 
