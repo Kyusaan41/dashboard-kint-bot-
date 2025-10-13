@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
@@ -148,8 +148,11 @@ const LaughingEmojis = () => {
     
     const emojiCount = 15;
     
-    // Choisir UNE phrase aléatoire
-    const randomPhrase = mockingPhrases[Math.floor(Math.random() * mockingPhrases.length)];
+    // Choisir UNE phrase aléatoire et la mémoriser pour éviter qu'elle change
+    const randomPhrase = useMemo(
+        () => mockingPhrases[Math.floor(Math.random() * mockingPhrases.length)],
+        [] // eslint-disable-line react-hooks/exhaustive-deps
+    );
     
     return (
         <div className="fixed inset-0 pointer-events-none z-50">
