@@ -630,24 +630,31 @@ export default function CasinoSlotPage() {
             const res = await fetch(`${CASINO_ENDPOINTS.stats}?type=${type}`);
             if (res.ok) {
                 const data = await res.json();
-                if (Array.isArray(data.players) && data.players.length > 0) {
+                if (Array.isArray(data.players)) {
                     setTopWins(data.players);
-                    console.log('[TOP WINS] Chargé depuis l\'API:', data.players.length, 'joueurs');
+                    console.log('[TOP WINS] Chargé depuis l\'API du bot:', data.players.length, 'joueurs');
+                } else {
+                    setTopWins([]);
+                    console.log('[TOP WINS] Aucun joueur trouvé');
                 }
+            } else {
+                console.warn('[TOP WINS] Erreur API, status:', res.status);
+                setTopWins([]);
             }
         } catch (e) {
-            console.error('Erreur fetch top wins', e);
+            console.error('[TOP WINS] Erreur fetch:', e);
+            setTopWins([]);
         }
     };
 
     // Fonction pour enregistrer un gain
-    const recordWin = async (username: string, winAmount: number) => {
+    const recordWin = async (username: string, winAmount: number, isJackpot: boolean = false) => {
         try {
-            // Enregistrer dans la nouvelle API stats locale
+            // Enregistrer dans l'API du bot Discord
             await fetch(CASINO_ENDPOINTS.stats, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, winAmount }),
+                body: JSON.stringify({ username, amount: winAmount, isJackpot }),
             });
             // Recharger les top wins après enregistrement
             loadTopWins(leaderboardType);
@@ -893,9 +900,9 @@ export default function CasinoSlotPage() {
                             }
                             
                             // Enregistrer le gain dans l'API
-                            if (session?.user?.name) {
-                                recordWin(session.user.name, result.amount);
-                            }
+                            const username = session?.user?.name || session?.user?.email?.split('@')[0] || 'Joueur';
+                            console.log('[CASINO] Enregistrement gain:', username, result.amount, 'Jackpot:', result.isJackpot);
+                            recordWin(username, result.amount, result.isJackpot);
                             
                             if (result.isJackpot) {
                                 // Jouer le son de jackpot
