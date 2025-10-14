@@ -262,22 +262,44 @@ export default function CrashGamePage() {
     }, []);
 
     // Générer un point de crash aléatoire (entre 1.01x et 100x)
+    // Distribution DURCIE pour éviter l'exploitation (ex: spam 1.12x)
     const generateCrashPoint = () => {
-        // Distribution: 
-        // 50% entre 1.01 et 2.00
-        // 30% entre 2.00 et 5.00
-        // 15% entre 5.00 et 10.00
-        // 5% entre 10.00 et 100.00
+        // Nouvelle distribution beaucoup plus agressive:
+        // 35% entre 1.01 et 1.20 (crash très précoce - contre le spam bas)
+        // 30% entre 1.20 et 1.80 (crash précoce)
+        // 20% entre 1.80 et 3.00 (crash moyen)
+        // 10% entre 3.00 et 8.00 (crash tardif)
+        // 4% entre 8.00 et 20.00 (gros multiplicateur)
+        // 1% entre 20.00 et 100.00 (jackpot rare)
+        
         const rand = Math.random();
         
-        if (rand < 0.5) {
-            return 1.01 + Math.random() * 0.99; // 1.01 - 2.00
-        } else if (rand < 0.8) {
-            return 2.00 + Math.random() * 3.00; // 2.00 - 5.00
+        if (rand < 0.35) {
+            // 35% de crash entre 1.01x et 1.20x
+            // Distribution encore plus agressive dans cette plage
+            const subRand = Math.random();
+            if (subRand < 0.4) {
+                // 40% de cette plage = crash entre 1.01 et 1.10
+                return 1.01 + Math.random() * 0.09;
+            } else {
+                // 60% de cette plage = crash entre 1.10 et 1.20
+                return 1.10 + Math.random() * 0.10;
+            }
+        } else if (rand < 0.65) {
+            // 30% entre 1.20 et 1.80
+            return 1.20 + Math.random() * 0.60;
+        } else if (rand < 0.85) {
+            // 20% entre 1.80 et 3.00
+            return 1.80 + Math.random() * 1.20;
         } else if (rand < 0.95) {
-            return 5.00 + Math.random() * 5.00; // 5.00 - 10.00
+            // 10% entre 3.00 et 8.00
+            return 3.00 + Math.random() * 5.00;
+        } else if (rand < 0.99) {
+            // 4% entre 8.00 et 20.00
+            return 8.00 + Math.random() * 12.00;
         } else {
-            return 10.00 + Math.random() * 90.00; // 10.00 - 100.00
+            // 1% entre 20.00 et 100.00 (jackpot très rare)
+            return 20.00 + Math.random() * 80.00;
         }
     };
 
