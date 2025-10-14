@@ -178,7 +178,7 @@ const GameCard = ({
                     {isAvailable ? (
                         <>
                             <PlayCircle className="h-5 w-5" />
-                            Entrer dans l'arène
+                            {title === "Casino VIP" ? "Entrer dans le carré VIP" : "Entrer dans l'arène"}
                         </>
                     ) : (
                         <>
@@ -413,10 +413,10 @@ export default function MiniJeuHome() {
                             isPopular={true}
                         />
                          <GameCard
-                            href="/dashboard/mini-jeu/casino"
+                            href="/dashboard/mini-jeu/casino-vip"
                             icon={<Coins />}
                             title="Casino VIP"
-                            description="Tentez votre chance à la machine à sous et gagnez gros ! Sensations fortes et adrénaline garanties."
+                            description="Accédez au carré VIP et découvrez une collection exclusive de jeux de casino de luxe. Sensations fortes garanties !"
                             isAvailable={true}
                             rewards="Multiplicateur de Points"
                             difficulty="Facile"

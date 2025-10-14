@@ -139,35 +139,6 @@ function useWindowSizeLocal() {
     return size;
 }
 
-// Floating particles component
-const FloatingParticles = ({ count = 20 }: { count?: number }) => {
-    return (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {Array.from({ length: count }).map((_, i) => (
-                <motion.div
-                    key={i}
-                    className="absolute w-1 h-1 bg-purple-400/30 rounded-full"
-                    initial={{
-                        x: Math.random() * 100 + '%',
-                        y: Math.random() * 100 + '%',
-                    }}
-                    animate={{
-                        y: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
-                        x: [Math.random() * 100 + '%', Math.random() * 100 + '%'],
-                        opacity: [0, 1, 0],
-                        scale: [0, 1.5, 0],
-                    }}
-                    transition={{
-                        duration: Math.random() * 3 + 2,
-                        repeat: Infinity,
-                        delay: Math.random() * 2,
-                    }}
-                />
-            ))}
-        </div>
-    );
-};
-
 // Confetti component
 const Confetti = () => {
     const colors = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
@@ -1243,10 +1214,7 @@ export default function CasinoSlotPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 md:p-8 text-white relative overflow-hidden">
-            {/* Animated background particles */}
-            <FloatingParticles count={30} />
-            
+        <div className="min-h-screen w-full text-white p-4 md:p-8 relative flex items-center justify-center">
             {/* Confetti effect */}
             <AnimatePresence>
                 {showConfetti && <Confetti />}
