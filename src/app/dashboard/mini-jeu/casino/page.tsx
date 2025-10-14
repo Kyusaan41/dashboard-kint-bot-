@@ -2,9 +2,10 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown, Volume2, VolumeX } from 'lucide-react';
+import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { CASINO_ENDPOINTS } from '@/config/api';
+import Link from 'next/link';
 
 // Slot Machine page using real currency via /api/currency/me
 
@@ -1214,7 +1215,7 @@ export default function CasinoSlotPage() {
     };
 
     return (
-        <div className="min-h-screen w-full text-white p-4 md:p-8 relative flex items-center justify-center">
+        <div className="min-h-screen w-full text-white p-4 md:p-8 relative overflow-hidden">
             {/* Confetti effect */}
             <AnimatePresence>
                 {showConfetti && <Confetti />}
@@ -1235,7 +1236,23 @@ export default function CasinoSlotPage() {
                 {showFreeSpinUnlock && <FreeSpinUnlockAnimation />}
             </AnimatePresence>
             
-            <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 items-start relative z-10">
+            {/* Header avec bouton retour */}
+            <div className="max-w-7xl mx-auto mb-8">
+                <div className="flex items-center justify-between">
+                    <Link href="/dashboard/mini-jeu/casino-vip">
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 rounded-lg border border-gray-700 transition-colors"
+                        >
+                            <ArrowLeft className="h-5 w-5" />
+                            Retour au Carré VIP
+                        </motion.button>
+                    </Link>
+                </div>
+            </div>
+            
+            <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 items-start relative z-10">
                 {/* Main Slot Machine */}
                 <div className="lg:col-span-3 futuristic-card rounded-3xl p-6 md:p-8 shadow-purple relative overflow-hidden">
                     {/* Animated corner elements */}
