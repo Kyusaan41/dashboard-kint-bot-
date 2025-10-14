@@ -117,15 +117,16 @@ function randomReel(length = 50) {
     return Array.from({ length }, () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
 }
 
+// Multiplicateurs de gains RÉDUITS pour rendre le jeu plus difficile
 const PAYOUTS: { [symbol: string]: number } = {
-    '7️⃣': 50,
-    '💎': 10,
-    '💰': 8,
-    '🍀': 5,
-    '🍒': 3,
-    '🍇': 3,
-    '🍊': 2,
-    '🍋': 2
+    '7️⃣': 100,  // Jackpot ultra rare, gros gain (mais quasi impossible à avoir)
+    '💎': 8,     // Réduit de 10 à 8
+    '💰': 6,     // Réduit de 8 à 6
+    '🍀': 4,     // Réduit de 5 à 4
+    '🍒': 2.5,   // Réduit de 3 à 2.5
+    '🍇': 2.5,   // Réduit de 3 à 2.5
+    '🍊': 1.8,   // Réduit de 2 à 1.8
+    '🍋': 1.5    // Réduit de 2 à 1.5
 };
 
 function useWindowSizeLocal() {
@@ -568,7 +569,8 @@ export default function CasinoSlotPage() {
     const [isFreeSpinMode, setIsFreeSpinMode] = useState(false); // Mode free spin actif
     const [showFreeSpinUnlock, setShowFreeSpinUnlock] = useState(false); // Animation de déblocage
 
-    const HOUSE_EDGE = 0.06;
+    // Avantage de la maison augmenté pour rendre le jeu plus difficile
+    const HOUSE_EDGE = 0.15; // 15% au lieu de 6%
 
     useEffect(() => {
         return () => spinTimeouts.current.forEach((t) => clearTimeout(t));
@@ -816,10 +818,45 @@ export default function CasinoSlotPage() {
 
         const makeWeightedReel = () => {
             const arr: string[] = [];
+            // Distribution pondérée DURCIE pour rendre le jackpot beaucoup plus rare
+            // Probabilités par symbole:
+            // 7️⃣ (jackpot): 0.3% (ultra rare)
+            // 💎: 8%
+            // 💰: 10%
+            // 🍀: 12%
+            // 🍒: 18%
+            // 🍇: 18%
+            // 🍊: 17%
+            // 🍋: 16.7%
+            
             for (let i = 0; i < 50; i++) {
-                const r = Math.random();
-                if (r > 0.985) arr.push('7️⃣');
-                else arr.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+                const r = Math.random() * 100; // 0-100 pour faciliter les pourcentages
+                
+                if (r < 0.3) {
+                    // 0.3% de chance d'avoir un 7️⃣ (jackpot ultra rare)
+                    arr.push('7️⃣');
+                } else if (r < 8.3) {
+                    // 8% de chance d'avoir un 💎
+                    arr.push('💎');
+                } else if (r < 18.3) {
+                    // 10% de chance d'avoir un 💰
+                    arr.push('💰');
+                } else if (r < 30.3) {
+                    // 12% de chance d'avoir un 🍀
+                    arr.push('🍀');
+                } else if (r < 48.3) {
+                    // 18% de chance d'avoir un 🍒
+                    arr.push('🍒');
+                } else if (r < 66.3) {
+                    // 18% de chance d'avoir un 🍇
+                    arr.push('🍇');
+                } else if (r < 83.3) {
+                    // 17% de chance d'avoir un 🍊
+                    arr.push('🍊');
+                } else {
+                    // 16.7% de chance d'avoir un 🍋
+                    arr.push('🍋');
+                }
             }
             return arr;
         };
