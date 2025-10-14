@@ -236,7 +236,7 @@ export default function CrashGamePage() {
     const [message, setMessage] = useState<string>('');
     
     const { playSound, stopSound, soundsEnabled, toggleSounds } = useCrashSounds();
-    const animationFrameRef = useRef<number>();
+    const animationFrameRef = useRef<number | undefined>(undefined);
 
     // Charger le solde depuis l'API currency
     useEffect(() => {
