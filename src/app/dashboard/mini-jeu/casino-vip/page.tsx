@@ -363,18 +363,6 @@ export default function CasinoVIPHome() {
                             maxWin="x50 multiplicateur"
                             isHot={true}
                         />
-                        
-                        {/* Crash Game - Available */}
-                        <VIPGameCard 
-                            href="/dashboard/mini-jeu/crash"
-                            icon={<span className="text-4xl">🚀</span>}
-                            title="Crash Game"
-                            description="Regardez le multiplicateur monter et encaissez avant le crash ! Plus vous attendez, plus vous gagnez... mais attention au crash !"
-                            isAvailable={true}
-                            minBet="10 pièces"
-                            maxWin="x100 multiplicateur"
-                            isNew={true}
-                        />
                     </div>
                 </motion.div>
 
@@ -392,7 +380,7 @@ export default function CasinoVIPHome() {
                                 Plus de Jeux à Venir
                             </h3>
                             <p className="text-gray-300 mb-6">
-                                Nous préparons d'autres jeux exclusifs pour le carré VIP. Blackjack, Poker, Crash Game et bien plus encore !
+                                Nous préparons d'autres jeux exclusifs pour le carré VIP. Blackjack, Poker, Roulette et bien plus encore !
                             </p>
                             <div className="flex items-center justify-center gap-6 text-sm text-gray-400">
                                 <div className="flex items-center gap-2">
