@@ -363,6 +363,18 @@ export default function CasinoVIPHome() {
                             maxWin="x50 multiplicateur"
                             isHot={true}
                         />
+                        
+                        {/* Rainbow Cascade - NEW */}
+                        <VIPGameCard 
+                            href="/dashboard/mini-jeu/rainbow-cascade"
+                            icon={<span className="text-4xl">🌈</span>}
+                            title="Rainbow Cascade"
+                            description="Une balle tombe à travers des obstacles et change de couleur ! Visez l'arc-en-ciel pour le jackpot x10 !"
+                            isAvailable={true}
+                            minBet="10 pièces"
+                            maxWin="x10 multiplicateur"
+                            isNew={true}
+                        />
                     </div>
                 </motion.div>
 
