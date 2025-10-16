@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { 
     Coins, Crown, Dices, Sparkles, Star, 
-    PlayCircle, Lock, Zap, TrendingUp, Flame, Diamond
+    PlayCircle, Lock, Zap, TrendingUp, Flame, Diamond, Gift
 } from 'lucide-react'
 import { NyxCard } from '@/components/ui/NyxCard'
 import { useState, useEffect } from 'react'
@@ -373,6 +373,18 @@ export default function CasinoVIPHome() {
                             isAvailable={true}
                             minBet="10 pièces"
                             maxWin="x10 multiplicateur"
+                            isNew={true}
+                        />
+                        
+                        {/* Anime Gacha - NEW */}
+                        <VIPGameCard 
+                            href="/dashboard/mini-jeu/gacha"
+                            icon={<Gift className="h-10 w-10" />}
+                            title="Anime Gacha"
+                            description="Collectionnez des cartes d'anime rares ! Système de pity à 100 tirages pour garantir une carte Mythique SS !"
+                            isAvailable={true}
+                            minBet="50 pièces"
+                            maxWin="Cartes Mythiques"
                             isNew={true}
                         />
                     </div>
