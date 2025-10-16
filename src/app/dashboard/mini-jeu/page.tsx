@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
     Swords, Users, Gamepad2, Trophy, Zap, Coins, Star, 
-    PlayCircle, Lock, Crown, Target, Sparkles, Flame, Gift
+    PlayCircle, Lock, Crown, Target, Sparkles, Flame
 } from 'lucide-react'
 import { NyxCard } from '@/components/ui/NyxCard'
 import { useState, useEffect } from 'react'
@@ -420,17 +420,6 @@ export default function MiniJeuHome() {
                             isAvailable={true}
                             rewards="Multiplicateur de Points"
                             difficulty="Facile"
-                        />
-                        
-                        <GameCard 
-                            href="/dashboard/mini-jeu/gacha"
-                            icon={<Gift />}
-                            title="Anime Gacha"
-                            description="Collectionnez des cartes d'anime légendaires ! Système de pity garanti : obtenez une carte Mythique au 100ème tirage."
-                            isAvailable={true}
-                            rewards="Cartes Rares"
-                            difficulty="Facile"
-                            isNew={true}
                         />
                         
                         <GameCard 
