@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
     Swords, Users, Gamepad2, Trophy, Zap, Coins, Star, 
-    PlayCircle, Lock, Crown, Target, Sparkles, Flame
+    PlayCircle, Lock, Crown, Target, Sparkles, Flame, Gift
 } from 'lucide-react'
 import { NyxCard } from '@/components/ui/NyxCard'
 import { useState, useEffect } from 'react'
@@ -419,6 +419,16 @@ export default function MiniJeuHome() {
                             description="Accédez au carré VIP et découvrez une collection exclusive de jeux de casino de luxe. Sensations fortes garanties !"
                             isAvailable={true}
                             rewards="Multiplicateur de Points"
+                            difficulty="Facile"
+                        />
+                        
+                        <GameCard 
+                            href="/dashboard/mini-jeu/gacha"
+                            icon={<Gift />}
+                            title="Anime Gacha"
+                            description="Collectionnez des cartes d'anime rares ! Tirez votre chance et complétez votre collection de personnages légendaires."
+                            isAvailable={true}
+                            rewards="Cartes Exclusives"
                             difficulty="Facile"
                         />
                         
