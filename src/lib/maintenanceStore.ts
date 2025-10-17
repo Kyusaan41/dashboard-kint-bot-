@@ -7,7 +7,7 @@ export interface MaintenanceRecord {
   status: 'online' | 'maintenance'
   message?: string
   reason?: string
-  estimatedTime?: string
+  estimatedTime?: number // in milliseconds
   lastUpdated: string
   updatedBy?: string
 }

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const { pageId, status, reason } = await request.json()
+    const { pageId, status, reason, estimatedTime } = await request.json()
 
     // Validate inputs
     if (!pageId || !status || !['online', 'maintenance'].includes(status)) {
@@ -29,14 +29,15 @@ export async function POST(request: NextRequest) {
       clearPageMaintenance(pageId)
       console.log(`Page ${pageId} brought back online by ${session.user.name}`)
     } else {
-      // Set maintenance status
+      // Set maintenance status with estimated time
       setPageMaintenance(pageId, {
         status,
         reason: reason || undefined,
         updatedBy: session.user.id,
-        message: 'En cours de maintenance'
+        message: 'En cours de maintenance',
+        estimatedTime: estimatedTime ? estimatedTime * 60 * 1000 : 30 * 60 * 1000 // Convert minutes to milliseconds, default 30 min
       })
-      console.log(`Page ${pageId} set to maintenance by ${session.user.name}`)
+      console.log(`Page ${pageId} set to maintenance by ${session.user.name} for ${estimatedTime || 30} minutes`)
     }
 
     return NextResponse.json({

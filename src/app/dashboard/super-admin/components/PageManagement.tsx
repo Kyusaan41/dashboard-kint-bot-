@@ -15,20 +15,22 @@ interface PageStatus {
 
 interface Props {
   pages: PageStatus[]
-  onMaintenanceToggle: (pageId: string, status: 'online' | 'maintenance') => Promise<void>
+  onMaintenanceToggle: (pageId: string, status: 'online' | 'maintenance', estimatedTime?: number) => Promise<void>
 }
 
 export function PageManagement({ pages, onMaintenanceToggle }: Props) {
   const [pageMaintenanceEdit, setPageMaintenanceEdit] = useState<string | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
+  const [maintenanceTime, setMaintenanceTime] = useState<number>(30)
 
   const handleToggle = async (pageId: string, newStatus: 'online' | 'maintenance') => {
     setLoading(pageId)
     try {
-      await onMaintenanceToggle(pageId, newStatus)
+      await onMaintenanceToggle(pageId, newStatus, newStatus === 'maintenance' ? maintenanceTime : undefined)
     } finally {
       setLoading(null)
       setPageMaintenanceEdit(null)
+      setMaintenanceTime(30)
     }
   }
 
@@ -61,30 +63,50 @@ export function PageManagement({ pages, onMaintenanceToggle }: Props) {
             </div>
 
             {pageMaintenanceEdit === page.id ? (
-              <div className="flex gap-2 items-center pt-3 border-t border-gray-700/30">
-                <button
-                  onClick={() => handleToggle(page.id, 'online')}
-                  disabled={loading === page.id}
-                  className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2"
-                >
-                  <ToggleRight className="h-4 w-4" />
-                  En Ligne
-                </button>
-                <button
-                  onClick={() => handleToggle(page.id, 'maintenance')}
-                  disabled={loading === page.id}
-                  className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2"
-                >
-                  <AlertTriangle className="h-4 w-4" />
-                  Maintenance
-                </button>
-                <button
-                  onClick={() => setPageMaintenanceEdit(null)}
-                  disabled={loading === page.id}
-                  className="p-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+              <div className="pt-3 border-t border-gray-700/30 space-y-3">
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-400 block mb-1">Temps estimé (minutes)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="1440"
+                      value={maintenanceTime}
+                      onChange={(e) => setMaintenanceTime(Math.max(1, parseInt(e.target.value) || 30))}
+                      disabled={loading === page.id}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm disabled:opacity-50"
+                      placeholder="30"
+                    />
+                  </div>
+                  <span className="text-xs text-gray-400 px-2 py-2 bg-gray-800 rounded-lg min-w-fit">
+                    {Math.floor(maintenanceTime / 60)}h {maintenanceTime % 60}m
+                  </span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <button
+                    onClick={() => handleToggle(page.id, 'online')}
+                    disabled={loading === page.id}
+                    className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ToggleRight className="h-4 w-4" />
+                    En Ligne
+                  </button>
+                  <button
+                    onClick={() => handleToggle(page.id, 'maintenance')}
+                    disabled={loading === page.id}
+                    className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    Maintenance
+                  </button>
+                  <button
+                    onClick={() => setPageMaintenanceEdit(null)}
+                    disabled={loading === page.id}
+                    className="p-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 rounded-lg"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-between pt-3 border-t border-gray-700/30">

@@ -1,6 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPageMaintenance } from '@/lib/maintenanceStore'
 
+// Helper function to format milliseconds to readable time
+function formatEstimatedTime(ms?: number): string {
+  if (!ms) return 'Environ 30 minutes'
+  
+  const minutes = Math.ceil(ms / (60 * 1000))
+  
+  if (minutes < 60) {
+    return `Environ ${minutes} minute${minutes > 1 ? 's' : ''}`
+  }
+  
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  
+  if (mins === 0) {
+    return `Environ ${hours} heure${hours > 1 ? 's' : ''}`
+  }
+  
+  return `Environ ${hours}h ${mins}m`
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -30,7 +50,7 @@ export async function GET(request: NextRequest) {
           pageId,
           message: pageStatus.message || 'En cours de maintenance',
           reason: pageStatus.reason || 'Cette page est en maintenance',
-          estimatedTime: pageStatus.estimatedTime || 'Environ 30 minutes',
+          estimatedTime: formatEstimatedTime(pageStatus.estimatedTime),
           lastUpdated: pageStatus.lastUpdated
         })
       }

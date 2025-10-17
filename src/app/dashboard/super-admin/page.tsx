@@ -125,12 +125,12 @@ export default function SuperAdminPage() {
     }
   }
 
-  const handlePageMaintenance = async (pageId: string, newStatus: 'online' | 'maintenance') => {
+  const handlePageMaintenance = async (pageId: string, newStatus: 'online' | 'maintenance', estimatedTime?: number) => {
     try {
       const res = await fetch('/api/super-admin/page-maintenance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId, status: newStatus })
+        body: JSON.stringify({ pageId, status: newStatus, estimatedTime })
       })
 
       if (!res.ok) throw new Error('Failed to update page status')
@@ -175,7 +175,7 @@ export default function SuperAdminPage() {
 
   return (
     <WithMaintenanceCheck pageId="super-admin">
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen bg-transparent text-white">
         <AnimatePresence>
         {notification.show && (
           <motion.div
