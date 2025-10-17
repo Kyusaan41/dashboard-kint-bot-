@@ -1,69 +1,98 @@
-﻿// src/utils/api.ts
+// src/utils/api.ts
 
 import { signOut } from 'next-auth/react';
 
-// Helper pour gÃ©rer les rÃ©ponses de maniÃ¨re cohÃ©rente
+// Helper pour gérer les réponses de manière cohérente
 async function handleApiResponse(response: Response) {
-    // ---- LOGIQUE DE DÃ‰CONNEXION AUTOMATIQUE ----
-    // Si le statut est 401 (Non autorisÃ©) ou 403 (Interdit),
+    // ---- LOGIQUE DE DÉCONNEXION AUTOMATIQUE ----
+    // Si le statut est 401 (Non autorisé) ou 403 (Interdit),
     // cela signifie que la session n'est plus valide.
     if (response.status === 401 || response.status === 403) {
-        console.error("Session invalide ou non autorisÃ©e. DÃ©connexion...");
-        // On utilise la fonction signOut de NextAuth pour dÃ©connecter proprement l'utilisateur
+        console.error("Session invalide ou non autorisée. Déconnexion...");
+        // On utilise la fonction signOut de NextAuth pour déconnecter proprement l'utilisateur
         // et le rediriger vers la page de connexion.
         await signOut({ callbackUrl: '/login' });
         
-        // On lÃ¨ve une erreur pour arrÃªter l'exÃ©cution du code qui a appelÃ© cette fonction.
-        throw new Error('Non autorisÃ©');
+        // On lève une erreur pour arrêter l'exécution du code qui a appelé cette fonction.
+        throw new Error('Non autorisé');
     }
     // ---- FIN DE LA LOGIQUE ----
 
 
     if (!response.ok) {
-        const errorInfo = await response.json().catch(() => ({ message: `Erreur rÃ©seau: ${response.statusText}` }));
+        const errorInfo = await response.json().catch(() => ({ message: `Erreur réseau: ${response.statusText}` }));
         throw new Error(errorInfo.message || 'Une erreur inconnue est survenue.');
     }
     
-    // Si la rÃ©ponse n'a pas de contenu (cas d'un statut 204 No Content), on retourne null.
+    // Si la réponse n'a pas de contenu (cas d'un statut 204 No Content), on retourne null.
     if (response.status === 204) {
         return null;
     }
     return response.json();
 }
 
-// --- FONCTION SSE MODIFIÃ‰E ---
+// --- FONCTION SSE AVEC MEILLEURE GESTION D'ERREUR ---
 /**
- * S'abonne au flux d'Ã©vÃ©nements SSE du serveur.
- * @param userId - L'ID de l'utilisateur qui s'abonne. Important pour que le bot sache Ã  qui parler.
- * @param onEvent - Une fonction callback qui sera appelÃ©e Ã  chaque fois qu'un Ã©vÃ©nement est reÃ§u.
- * @returns Une fonction pour se dÃ©sabonner et fermer la connexion.
+ * S'abonne au flux d'événements SSE du serveur avec reconnexion automatique.
+ * @param userId - L'ID de l'utilisateur qui s'abonne. Important pour que le bot sache à qui parler.
+ * @param onEvent - Une fonction callback qui sera appelée à chaque fois qu'un événement est reçu.
+ * @returns Une fonction pour se désabonner et fermer la connexion.
  */
 export function subscribeToItemEvents(userId: string, onEvent: (data: any) => void) {
     if (!userId) {
-        console.error("Impossible de s'abonner aux Ã©vÃ©nements SSE sans userId.");
+        console.error("Impossible de s'abonner aux événements SSE sans userId.");
         return () => {}; // Retourne une fonction vide si pas d'ID
     }
 
-    // On ajoute l'ID de l'utilisateur comme paramÃ¨tre de requÃªte.
-    const eventSource = new EventSource(`/api/events?userId=${userId}`);
+    let eventSource: EventSource | null = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
 
-    eventSource.onmessage = (event) => {
+    const connect = () => {
         try {
-            const data = JSON.parse(event.data);
-            onEvent(data);
+            // On ajoute l'ID de l'utilisateur comme paramètre de requête.
+            eventSource = new EventSource(`/api/events?userId=${userId}`);
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    onEvent(data);
+                    reconnectAttempts = 0; // Réinitialise le compteur de tentatives
+                } catch (error) {
+                    console.error("Erreur de parsing des données SSE:", event.data);
+                }
+            };
+
+            eventSource.onerror = (err) => {
+                console.warn("Erreur de connexion EventSource, tentative de reconnexion...", err);
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                
+                // Tentative de reconnexion avec backoff exponentiel
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                    setTimeout(connect, delay);
+                } else {
+                    console.error("Échec de connexion EventSource après plusieurs tentatives. Fin de la connexion.");
+                }
+            };
         } catch (error) {
-            console.error("Erreur de parsing des donnÃ©es SSE:", event.data);
+            console.error("Erreur lors de la création de l'EventSource:", error);
         }
     };
 
-    eventSource.onerror = (err) => {
-        console.error("Erreur de connexion EventSource:", err);
-        eventSource.close();
-    };
+    // Initie la connexion
+    connect();
 
     // Retourne une fonction de nettoyage pour fermer la connexion proprement
     return () => {
-        eventSource.close();
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
     };
 }
 
@@ -246,7 +275,7 @@ export async function getActiveEffects(userId: string) {
     return handleApiResponse(await fetch(`/api/effects/${userId}`));
 }
 
-// --- Fonctions pour les Ã‰vÃ©nements ---
+// --- Fonctions pour les Événements ---
 
 export async function fetchEvents() {
     return handleApiResponse(await fetch('/api/events'));
