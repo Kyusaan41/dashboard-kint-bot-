@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim())
 
@@ -8,7 +9,7 @@ let maintenanceStatus: Map<string, { status: 'online' | 'maintenance', lastUpdat
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !SUPER_ADMIN_IDS.includes(session.user.id)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !SUPER_ADMIN_IDS.includes(session.user.id)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
