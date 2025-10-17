@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { NyxCard } from '@/components/ui/NyxCard'
 import { useState, useEffect } from 'react'
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck'
 
 // Game Statistics Component
 const GameStats = ({ icon, label, value, color = "text-purple-secondary" }: {
@@ -282,9 +283,10 @@ export default function MiniJeuHome() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-background text-white relative overflow-hidden">
-            {/* Floating Particles */}
-            <div className="absolute inset-0 pointer-events-none">
+        <WithMaintenanceCheck pageId="mini-jeu">
+            <div className="min-h-screen bg-background text-white relative overflow-hidden">
+                {/* Floating Particles */}
+                <div className="absolute inset-0 pointer-events-none">
                 {[...Array(12)].map((_, i) => (
                     <FloatingParticle key={i} delay={i * 0.5} />
                 ))}
@@ -477,6 +479,7 @@ export default function MiniJeuHome() {
                     </NyxCard>
                 </motion.div>
             </div>
-        </div>
+            </div>
+        </WithMaintenanceCheck>
     );
 }

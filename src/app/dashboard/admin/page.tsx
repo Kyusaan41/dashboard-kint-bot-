@@ -7,6 +7,7 @@ import {
     getUsers, restartBot, getBotLogs, getDetailedKintLogs, fetchCurrency, 
     fetchPoints, updatePoints, updateCurrency, fetchEvents, createEvent, deleteEvent 
 } from '@/utils/api';
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import Image from 'next/image';
 import { 
     Power, Shield, Users, Terminal, Zap, Coins, Search, UserCheck, 
@@ -273,9 +274,10 @@ export default function AdminPage() {
     if (session?.user?.role !== 'admin') return null;
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
-            {/* Notification Toast */}
-            <AnimatePresence>
+        <WithMaintenanceCheck pageId="admin">
+            <div className="min-h-screen bg-gray-900 text-white">
+                {/* Notification Toast */}
+                <AnimatePresence>
                 {notification.show && (
                     <motion.div 
                         initial={{ opacity: 0, y: 100, scale: 0.3 }} 
@@ -829,6 +831,7 @@ export default function AdminPage() {
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </WithMaintenanceCheck>
     );
 }

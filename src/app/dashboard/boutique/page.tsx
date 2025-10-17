@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, FC, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 import { getShopItems, buyItem, fetchCurrency, getKshieldStatus, getInventory } from '@/utils/api';
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { 
@@ -428,9 +429,10 @@ export default function ShopPage() {
     }
 
     return (
-        <div className="space-y-8">
-            {/* Success Notification */}
-            <AnimatePresence>
+        <WithMaintenanceCheck pageId="boutique">
+            <div className="space-y-8">
+                {/* Success Notification */}
+                <AnimatePresence>
                 {showSuccess && (
                     <motion.div 
                         initial={{ opacity: 0, y: -50, scale: 0.9 }}
@@ -603,6 +605,6 @@ export default function ShopPage() {
                     />
                 </div>
             </div>
-        </div>
+        </WithMaintenanceCheck>
     );
 }

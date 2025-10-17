@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { fetchEvents } from '@/utils/api';
 import { NyxCard } from '@/components/ui/NyxCard';
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 
 // --- Types (inchangÃ©s) ---
 type Event = {
@@ -277,8 +278,9 @@ export default function EventsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-white">
-            <div className="px-8 py-6">
+        <WithMaintenanceCheck pageId="events">
+            <div className="min-h-screen bg-background text-white">
+                <div className="px-8 py-6">
                 {/* Header */}
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
@@ -469,6 +471,7 @@ export default function EventsPage() {
                     </NyxCard>
                 </motion.div>
             </div>
-        </div>
+            </div>
+        </WithMaintenanceCheck>
     );
 }

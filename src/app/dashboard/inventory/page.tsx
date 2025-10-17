@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getInventory, useItem, getServerMembers } from '@/utils/api';
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import InteractionPopup from '@/components/InteractionPopup'; // Assurez-vous que ce composant existe
 import { Gem, Loader2, CheckCircle, XCircle, Package, AlertTriangle, X, Ticket, Swords } from 'lucide-react';
 
@@ -192,8 +193,9 @@ export default function InventoryPage() {
     if (error) return <div className="text-center text-red-400 p-8 flex flex-col items-center gap-4"><AlertTriangle size={40} /><p>{error}</p></div>;
 
     return (
-        <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Package /> Mon Inventaire</h1>
+        <WithMaintenanceCheck pageId="inventory">
+            <div className="space-y-8">
+                <h1 className="text-3xl font-bold text-cyan-400 flex items-center gap-3"><Package /> Mon Inventaire</h1>
             
             <AnimatePresence>
                 {notification.show && (
@@ -231,6 +233,7 @@ export default function InventoryPage() {
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+            </div>
+        </WithMaintenanceCheck>
     );
 }

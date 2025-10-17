@@ -8,6 +8,7 @@ import {
   AlertTriangle, Database, TrendingUp, Activity, Ban, Megaphone,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck'
 import { UserManagement } from './components/UserManagement'
 import { PageManagement } from './components/PageManagement'
 import { GlobalStats } from './components/GlobalStats'
@@ -173,8 +174,9 @@ export default function SuperAdminPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <AnimatePresence>
+    <WithMaintenanceCheck pageId="super-admin">
+      <div className="min-h-screen bg-gray-900 text-white">
+        <AnimatePresence>
         {notification.show && (
           <motion.div
             initial={{ opacity: 0, y: 100, scale: 0.3 }}
@@ -414,6 +416,7 @@ export default function SuperAdminPage() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+      </div>
+    </WithMaintenanceCheck>
   )
 }
