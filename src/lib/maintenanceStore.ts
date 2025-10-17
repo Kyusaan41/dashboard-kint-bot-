@@ -15,13 +15,28 @@ export interface MaintenanceRecord {
   updatedBy?: string
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data')
-const MAINTENANCE_FILE = path.join(DATA_DIR, 'maintenance-status.json')
+// Use __dirname to get the current directory
+let DATA_DIR: string
+let MAINTENANCE_FILE: string
+
+try {
+  // Try to get the directory path
+  DATA_DIR = path.join(process.cwd(), 'data')
+  MAINTENANCE_FILE = path.join(DATA_DIR, 'maintenance-status.json')
+} catch (e) {
+  // Fallback
+  DATA_DIR = path.join(__dirname, '../../..', 'data')
+  MAINTENANCE_FILE = path.join(DATA_DIR, 'maintenance-status.json')
+}
 
 // Ensure data directory exists
 function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true })
+    }
+  } catch (error) {
+    console.error('Failed to create data directory:', error)
   }
 }
 
@@ -31,10 +46,14 @@ function loadMaintenanceStatus(): Record<string, MaintenanceRecord> {
     ensureDataDir()
     if (fs.existsSync(MAINTENANCE_FILE)) {
       const data = fs.readFileSync(MAINTENANCE_FILE, 'utf-8')
-      return JSON.parse(data)
+      const parsed = JSON.parse(data)
+      console.log('✅ Maintenance status loaded from file:', MAINTENANCE_FILE)
+      return parsed
+    } else {
+      console.log('ℹ️ No maintenance file found, starting with empty state')
     }
   } catch (error) {
-    console.error('Error loading maintenance status from file:', error)
+    console.error('❌ Error loading maintenance status from file:', MAINTENANCE_FILE, error)
   }
   return {}
 }
@@ -44,18 +63,18 @@ function saveMaintenanceStatus(status: Record<string, MaintenanceRecord>) {
   try {
     ensureDataDir()
     fs.writeFileSync(MAINTENANCE_FILE, JSON.stringify(status, null, 2), 'utf-8')
+    console.log('✅ Maintenance status saved to file:', MAINTENANCE_FILE)
   } catch (error) {
-    console.error('Error saving maintenance status to file:', error)
+    console.error('❌ Error saving maintenance status to file:', MAINTENANCE_FILE, error)
   }
 }
 
-// In-memory cache
-let maintenanceStatus = loadMaintenanceStatus()
-
+// Load from file every time to ensure we get fresh data (important for hot-reload)
 export function setPageMaintenance(
   pageId: string,
   record: Omit<MaintenanceRecord, 'lastUpdated'>
 ) {
+  const maintenanceStatus = loadMaintenanceStatus()
   maintenanceStatus[pageId] = {
     ...record,
     lastUpdated: new Date().toISOString()
@@ -64,19 +83,21 @@ export function setPageMaintenance(
 }
 
 export function getPageMaintenance(pageId: string): MaintenanceRecord | undefined {
+  const maintenanceStatus = loadMaintenanceStatus()
   return maintenanceStatus[pageId]
 }
 
 export function getAllMaintenanceStatus(): Record<string, MaintenanceRecord> {
-  return maintenanceStatus
+  return loadMaintenanceStatus()
 }
 
 export function clearPageMaintenance(pageId: string) {
+  const maintenanceStatus = loadMaintenanceStatus()
   delete maintenanceStatus[pageId]
   saveMaintenanceStatus(maintenanceStatus)
 }
 
 export function isPageInMaintenance(pageId: string): boolean {
-  const status = maintenanceStatus[pageId]
+  const status = getPageMaintenance(pageId)
   return status?.status === 'maintenance'
 }
