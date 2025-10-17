@@ -19,8 +19,15 @@ type ItemUsedEvent = {
   champName?: string;
 };
 type EventEntry = { id: string; };
+type PageType = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  adminOnly?: boolean;
+  superAdminOnly?: boolean;
+};
 
-const pages = [
+const pages: PageType[] = [
   { id: '', label: 'Dashboard', icon: Home },
   { id: 'events', label: 'Événements', icon: CalendarRange },
   { id: 'mini-jeu', label: 'Mini-Jeux', icon: GamepadIcon },
@@ -28,6 +35,7 @@ const pages = [
   { id: 'boutique', label: 'Boutique', icon: ShoppingCart },
   { id: 'membres', label: 'Profil', icon: User },
   { id: 'admin', label: 'Administration', icon: Shield, adminOnly: true },
+  { id: 'super-admin', label: 'Haute Administration', icon: Shield, superAdminOnly: true },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -87,12 +95,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(id => id.trim());
+  const superAdminIds = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim());
   const getAvatarUrl = () => {
     if (!session?.user?.id) return '/default-avatar.png';
     const defaultDiscordAvatar = `https://cdn.discordapp.com/embed/avatars/${parseInt(session.user.id.slice(-1)) % 5}.png`;
     return session.user.image ?? defaultDiscordAvatar;
   };
-  const filteredPages = pages.filter(page => !page.adminOnly || (session?.user?.id && adminIds.includes(session.user.id)));
+  const filteredPages = pages.filter(page => {
+    if (page.superAdminOnly && session?.user?.id) {
+      return superAdminIds.includes(session.user.id);
+    }
+    if (page.adminOnly && session?.user?.id) {
+      return adminIds.includes(session.user.id);
+    }
+    return !page.adminOnly && !page.superAdminOnly;
+  });
 
   if (status === 'loading') {
     return (
