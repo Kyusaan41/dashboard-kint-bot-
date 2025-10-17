@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { getXPLeaderboard, getCurrencyLeaderboard, getPointsLeaderboard } from '@/utils/api';
 import { NyxCard } from '@/components/ui/NyxCard';
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 
 // --- Types (inchangÃ©s) ---
 type LeaderboardEntry = {
@@ -411,8 +412,9 @@ export default function ClassementPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-white">
-            <div className="px-8 py-6 space-y-8">
+        <WithMaintenanceCheck pageId="classement">
+            <div className="min-h-screen bg-background text-white">
+                <div className="px-8 py-6 space-y-8">
                 {/* Header */}
                 <motion.div 
                     initial={{ opacity: 0, y: -20 }}
@@ -576,6 +578,7 @@ export default function ClassementPage() {
                     </motion.div>
                 </AnimatePresence>
             </div>
-        </div>
+            </div>
+        </WithMaintenanceCheck>
     );
 }
