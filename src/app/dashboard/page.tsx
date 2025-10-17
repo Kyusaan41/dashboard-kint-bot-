@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState, FC, ReactNode } from 'react';
 import Image from 'next/image';
 import { useHasMounted } from '@/hooks/useHasMounted';
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { getInventory, getAllAchievements, fetchGazette } from '@/utils/api';
@@ -409,6 +410,7 @@ export default function DashboardHomePage() {
     const totalAchievementsCount = Object.keys(allAchievements).length;
 
     return (
+        <WithMaintenanceCheck pageId="dashboard">
         <div className="space-y-8">
             {/* Notifications */}
             <AnimatePresence>
@@ -855,5 +857,6 @@ export default function DashboardHomePage() {
                 )}
             </AnimatePresence>
         </div>
+        </WithMaintenanceCheck>
     );
 }
