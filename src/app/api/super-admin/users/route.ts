@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     // 🔄 Récupérer les vraies données depuis l'API admin/users
     try {
-      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      const baseUrl = process.env.BOT_API_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
       const response = await fetch(`${baseUrl}/api/admin/users`, {
         headers: {
           'Cookie': request.headers.get('cookie') || '',
