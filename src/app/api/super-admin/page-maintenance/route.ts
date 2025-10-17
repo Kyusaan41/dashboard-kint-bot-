@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { setPageMaintenance, getAllMaintenanceStatus, clearPageMaintenance } from '@/lib/maintenanceStore'
 
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim())
-
-// In-memory storage for page maintenance status
-let maintenanceStatus: Map<string, { status: 'online' | 'maintenance', lastUpdated: string, updatedBy: string, reason?: string }> = new Map()
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,17 +23,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update maintenance status
-    maintenanceStatus.set(pageId, {
-      status,
-      lastUpdated: new Date().toISOString(),
-      updatedBy: session.user.id,
-      reason: reason || undefined,
-    })
-
-    // Emit event to all connected clients (you could use Socket.io or WebSocket)
-    // For now, we'll just log it
-    console.log(`Page ${pageId} set to ${status} by ${session.user.name}`)
+    // Update maintenance status in centralized store
+    if (status === 'online') {
+      // Clear maintenance status when bringing page back online
+      clearPageMaintenance(pageId)
+      console.log(`Page ${pageId} brought back online by ${session.user.name}`)
+    } else {
+      // Set maintenance status
+      setPageMaintenance(pageId, {
+        status,
+        reason: reason || undefined,
+        updatedBy: session.user.id,
+        message: 'En cours de maintenance'
+      })
+      console.log(`Page ${pageId} set to maintenance by ${session.user.name}`)
+    }
 
     return NextResponse.json({
       success: true,
@@ -60,7 +62,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const status = Object.fromEntries(maintenanceStatus)
+    const status = getAllMaintenanceStatus()
     return NextResponse.json({ status })
   } catch (error) {
     console.error('Error fetching maintenance status:', error)

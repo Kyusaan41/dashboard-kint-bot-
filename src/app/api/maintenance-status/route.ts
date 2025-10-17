@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// In-memory storage for page maintenance status
-let pageMaintenanceStatus: Map<string, { 
-  message?: string; 
-  reason?: string; 
-  estimatedTime?: string; 
-  lastUpdated: string; 
-  updatedBy?: string 
-}> = new Map()
+import { getPageMaintenance } from '@/lib/maintenanceStore'
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,13 +22,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Check page-specific maintenance
-    if (pageId && pageMaintenanceStatus.has(pageId)) {
-      const pageStatus = pageMaintenanceStatus.get(pageId)
-      return NextResponse.json({
-        maintenance: true,
-        pageId,
-        ...pageStatus
-      })
+    if (pageId) {
+      const pageStatus = getPageMaintenance(pageId)
+      if (pageStatus && pageStatus.status === 'maintenance') {
+        return NextResponse.json({
+          maintenance: true,
+          pageId,
+          message: pageStatus.message || 'En cours de maintenance',
+          reason: pageStatus.reason || 'Cette page est en maintenance',
+          estimatedTime: pageStatus.estimatedTime || 'Environ 30 minutes',
+          lastUpdated: pageStatus.lastUpdated
+        })
+      }
     }
 
     // All clear
@@ -52,37 +49,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const { pageId, message, reason, estimatedTime } = await request.json()
-
-    if (!pageId) {
-      return NextResponse.json(
-        { error: 'pageId is required' },
-        { status: 400 }
-      )
-    }
-
-    // Store page maintenance status
-    pageMaintenanceStatus.set(pageId, {
-      message,
-      reason,
-      estimatedTime,
-      lastUpdated: new Date().toISOString()
-    })
-
-    console.log(`Page ${pageId} set to maintenance`)
-
-    return NextResponse.json({
-      success: true,
-      pageId,
-      message
-    })
-  } catch (error) {
-    console.error('Error updating maintenance status:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
