@@ -55,9 +55,25 @@ export function subscribeToItemEvents(userId: string, onEvent: (data: any) => vo
 
             eventSource.onmessage = (event) => {
                 try {
-                    const data = JSON.parse(event.data);
-                    onEvent(data);
-                    reconnectAttempts = 0; // Réinitialise le compteur de tentatives
+                    // Ignore les heartbeats (commentaires)
+                    if (event.data.startsWith(':')) {
+                        return;
+                    }
+
+                    const message = JSON.parse(event.data);
+                    
+                    // Gère les différents types de messages
+                    if (message.type === 'connected') {
+                        console.log('[SSE] Connecté au serveur d\'événements:', message.userId);
+                        reconnectAttempts = 0;
+                    } else if (message.type === 'event' && message.data) {
+                        onEvent(message.data);
+                        reconnectAttempts = 0; // Réinitialise le compteur de tentatives
+                    } else if (!message.type) {
+                        // Compatibilité avec ancien format
+                        onEvent(message);
+                        reconnectAttempts = 0;
+                    }
                 } catch (error) {
                     console.error("Erreur de parsing des données SSE:", event.data);
                 }
