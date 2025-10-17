@@ -5,15 +5,21 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
   Crown, Users, Shield, FileText, Zap, Settings, Loader2, CheckCircle,
-  AlertTriangle, Database, TrendingUp, Activity,
+  AlertTriangle, Database, TrendingUp, Activity, Ban, Megaphone,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { UserManagement } from './components/UserManagement'
 import { PageManagement } from './components/PageManagement'
 import { GlobalStats } from './components/GlobalStats'
+import { AuditLogs } from './components/AuditLogs'
+import { SanctionManager } from './components/SanctionManager'
+import { BroadcastManager } from './components/BroadcastManager'
+import { PermissionManager } from './components/PermissionManager'
+import { AdvancedAnalytics } from './components/AdvancedAnalytics'
 
 type UserRole = 'user' | 'moderator' | 'administrator' | 'super_admin'
 type Tab = 'overview' | 'users' | 'pages' | 'advanced'
+type AdvancedTab = 'logs' | 'sanctions' | 'broadcast' | 'permissions' | 'analytics'
 
 interface UserWithRole {
   id: string
@@ -53,6 +59,7 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState<Notification>({ show: false, message: '', type: 'success' })
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [advancedTab, setAdvancedTab] = useState<AdvancedTab>('logs')
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setNotification({ show: true, message, type })
@@ -335,14 +342,74 @@ export default function SuperAdminPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="nyx-card p-8 rounded-2xl border border-purple-primary/20"
+              className="nyx-card p-8 rounded-2xl border border-purple-primary/20 space-y-6"
             >
-              <h3 className="text-2xl font-bold mb-6">Fonctionnalités Avancées</h3>
-              <div className="space-y-4 text-gray-300">
-                <p className="text-center py-8 text-gray-500">
-                  Les fonctionnalités avancées sont actuellement en développement.
-                </p>
+              <div>
+                <h3 className="text-2xl font-bold mb-6">Fonctionnalités Avancées</h3>
+                
+                {/* Sub-tabs for Advanced */}
+                <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-purple-primary/20">
+                  {[
+                    { id: 'logs', label: 'Audit Logs', icon: FileText },
+                    { id: 'sanctions', label: 'Sanctions', icon: Ban },
+                    { id: 'broadcast', label: 'Broadcasts', icon: Megaphone },
+                    { id: 'permissions', label: 'Permissions', icon: Shield },
+                    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+                  ].map((tab) => {
+                    const Icon = tab.icon as any
+                    const TabIcon = tab.id === 'logs' ? FileText : 
+                                   tab.id === 'sanctions' ? AlertTriangle :
+                                   tab.id === 'broadcast' ? Database :
+                                   tab.id === 'permissions' ? Shield :
+                                   TrendingUp
+                    return (
+                      <motion.button
+                        key={tab.id}
+                        onClick={() => setAdvancedTab(tab.id as AdvancedTab)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+                          advancedTab === tab.id
+                            ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg'
+                            : 'bg-gray-800/50 text-gray-400 hover:bg-gray-700/50'
+                        }`}
+                      >
+                        <TabIcon className="h-4 w-4" />
+                        {tab.label}
+                      </motion.button>
+                    )
+                  })}
+                </div>
               </div>
+
+              {/* Content */}
+              <AnimatePresence mode="wait">
+                {advancedTab === 'logs' && (
+                  <motion.div key="logs" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <AuditLogs />
+                  </motion.div>
+                )}
+                {advancedTab === 'sanctions' && (
+                  <motion.div key="sanctions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <SanctionManager />
+                  </motion.div>
+                )}
+                {advancedTab === 'broadcast' && (
+                  <motion.div key="broadcast" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <BroadcastManager />
+                  </motion.div>
+                )}
+                {advancedTab === 'permissions' && (
+                  <motion.div key="permissions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <PermissionManager />
+                  </motion.div>
+                )}
+                {advancedTab === 'analytics' && (
+                  <motion.div key="analytics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <AdvancedAnalytics />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
