@@ -1,9 +1,31 @@
 /**
- * Centralized maintenance status storage using Vercel KV
- * Works seamlessly on Vercel with automatic persistence
+ * Centralized maintenance status storage using Redis
+ * Migrated from @vercel/kv to redis client for better control and flexibility
  */
 
-import { kv } from '@vercel/kv'
+import { createClient } from 'redis'
+
+let redisClient: ReturnType<typeof createClient> | null = null
+
+async function getRedisClient() {
+  if (redisClient) {
+    return redisClient
+  }
+
+  const url = process.env.REDIS_URL
+  if (!url) {
+    throw new Error('REDIS_URL environment variable is not set')
+  }
+
+  redisClient = createClient({ url })
+  
+  redisClient.on('error', (err) => {
+    console.error('Redis Client Error:', err)
+  })
+
+  await redisClient.connect()
+  return redisClient
+}
 
 export interface MaintenanceRecord {
   status: 'online' | 'maintenance'
@@ -21,7 +43,7 @@ function getKey(pageId: string): string {
   return `${KV_PREFIX}${pageId}`
 }
 
-// Helper function to safely handle KV operations with fallback
+// Helper function to safely handle Redis operations with fallback
 async function withFallback<T>(
   operation: () => Promise<T>,
   fallbackValue: T,
@@ -30,7 +52,7 @@ async function withFallback<T>(
   try {
     return await operation()
   } catch (error) {
-    console.error(`⚠️ KV operation failed (${operationName}):`, error)
+    console.error(`⚠️ Redis operation failed (${operationName}):`, error)
     console.log(`⚠️ Using fallback for ${operationName}`)
     return fallbackValue
   }
@@ -47,7 +69,10 @@ export async function setPageMaintenance(
   }
 
   await withFallback(
-    () => kv.set(getKey(pageId), JSON.stringify(maintenanceRecord)),
+    async () => {
+      const client = await getRedisClient()
+      await client.set(getKey(pageId), JSON.stringify(maintenanceRecord))
+    },
     undefined,
     `setPageMaintenance(${pageId})`
   )
@@ -61,7 +86,8 @@ export async function getPageMaintenance(
 ): Promise<MaintenanceRecord | undefined> {
   return withFallback(
     async () => {
-      const data = await kv.get<string>(getKey(pageId))
+      const client = await getRedisClient()
+      const data = await client.get(getKey(pageId))
       return data ? JSON.parse(data) : undefined
     },
     undefined,
@@ -75,14 +101,15 @@ export async function getAllMaintenanceStatus(): Promise<
 > {
   return withFallback(
     async () => {
-      const keys = await kv.keys(`${KV_PREFIX}*`)
+      const client = await getRedisClient()
+      const keys = await client.keys(`${KV_PREFIX}*`)
       if (keys.length === 0) return {}
 
       const result: Record<string, MaintenanceRecord> = {}
 
       for (const key of keys) {
         const pageId = key.replace(KV_PREFIX, '')
-        const data = await kv.get<string>(key)
+        const data = await client.get(key)
         if (data) {
           result[pageId] = JSON.parse(data)
         }
@@ -98,7 +125,10 @@ export async function getAllMaintenanceStatus(): Promise<
 // Clear page maintenance status
 export async function clearPageMaintenance(pageId: string): Promise<void> {
   await withFallback(
-    () => kv.del(getKey(pageId)),
+    async () => {
+      const client = await getRedisClient()
+      await client.del(getKey(pageId))
+    },
     undefined,
     `clearPageMaintenance(${pageId})`
   )
