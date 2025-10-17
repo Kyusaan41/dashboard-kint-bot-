@@ -433,8 +433,8 @@ export default function ShopPage() {
             <div className="space-y-8">
                 {/* Success Notification */}
                 <AnimatePresence>
-                {showSuccess && (
-                    <motion.div 
+                    {showSuccess && (
+                        <motion.div 
                         initial={{ opacity: 0, y: -50, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -50, scale: 0.9 }}
