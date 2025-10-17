@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Check page-specific maintenance
     if (pageId) {
-      const pageStatus = getPageMaintenance(pageId)
+      const pageStatus = await getPageMaintenance(pageId)
       if (pageStatus && pageStatus.status === 'maintenance') {
         return NextResponse.json({
           maintenance: true,
@@ -68,4 +68,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

@@ -1,10 +1,9 @@
 /**
- * Centralized maintenance status storage with file persistence
- * Shared between /api/super-admin/page-maintenance and /api/maintenance-status
+ * Centralized maintenance status storage using Vercel KV
+ * Works seamlessly on Vercel with automatic persistence
  */
 
-import fs from 'fs'
-import path from 'path'
+import { kv } from '@vercel/kv'
 
 export interface MaintenanceRecord {
   status: 'online' | 'maintenance'
@@ -15,89 +14,100 @@ export interface MaintenanceRecord {
   updatedBy?: string
 }
 
-// Use __dirname to get the current directory
-let DATA_DIR: string
-let MAINTENANCE_FILE: string
+const KV_PREFIX = 'maintenance:'
 
-try {
-  // Try to get the directory path
-  DATA_DIR = path.join(process.cwd(), 'data')
-  MAINTENANCE_FILE = path.join(DATA_DIR, 'maintenance-status.json')
-} catch (e) {
-  // Fallback
-  DATA_DIR = path.join(__dirname, '../../..', 'data')
-  MAINTENANCE_FILE = path.join(DATA_DIR, 'maintenance-status.json')
+// Helper function to build KV key
+function getKey(pageId: string): string {
+  return `${KV_PREFIX}${pageId}`
 }
 
-// Ensure data directory exists
-function ensureDataDir() {
+// Helper function to safely handle KV operations with fallback
+async function withFallback<T>(
+  operation: () => Promise<T>,
+  fallbackValue: T,
+  operationName: string
+): Promise<T> {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true })
-    }
+    return await operation()
   } catch (error) {
-    console.error('Failed to create data directory:', error)
+    console.error(`⚠️ KV operation failed (${operationName}):`, error)
+    console.log(`⚠️ Using fallback for ${operationName}`)
+    return fallbackValue
   }
 }
 
-// Load maintenance status from file
-function loadMaintenanceStatus(): Record<string, MaintenanceRecord> {
-  try {
-    ensureDataDir()
-    if (fs.existsSync(MAINTENANCE_FILE)) {
-      const data = fs.readFileSync(MAINTENANCE_FILE, 'utf-8')
-      const parsed = JSON.parse(data)
-      console.log('✅ Maintenance status loaded from file:', MAINTENANCE_FILE)
-      return parsed
-    } else {
-      console.log('ℹ️ No maintenance file found, starting with empty state')
-    }
-  } catch (error) {
-    console.error('❌ Error loading maintenance status from file:', MAINTENANCE_FILE, error)
-  }
-  return {}
-}
-
-// Save maintenance status to file
-function saveMaintenanceStatus(status: Record<string, MaintenanceRecord>) {
-  try {
-    ensureDataDir()
-    fs.writeFileSync(MAINTENANCE_FILE, JSON.stringify(status, null, 2), 'utf-8')
-    console.log('✅ Maintenance status saved to file:', MAINTENANCE_FILE)
-  } catch (error) {
-    console.error('❌ Error saving maintenance status to file:', MAINTENANCE_FILE, error)
-  }
-}
-
-// Load from file every time to ensure we get fresh data (important for hot-reload)
-export function setPageMaintenance(
+// Set page maintenance status
+export async function setPageMaintenance(
   pageId: string,
   record: Omit<MaintenanceRecord, 'lastUpdated'>
-) {
-  const maintenanceStatus = loadMaintenanceStatus()
-  maintenanceStatus[pageId] = {
+): Promise<void> {
+  const maintenanceRecord: MaintenanceRecord = {
     ...record,
     lastUpdated: new Date().toISOString()
   }
-  saveMaintenanceStatus(maintenanceStatus)
+
+  await withFallback(
+    () => kv.set(getKey(pageId), JSON.stringify(maintenanceRecord)),
+    undefined,
+    `setPageMaintenance(${pageId})`
+  )
+
+  console.log(`✅ Maintenance status updated for page: ${pageId}`)
 }
 
-export function getPageMaintenance(pageId: string): MaintenanceRecord | undefined {
-  const maintenanceStatus = loadMaintenanceStatus()
-  return maintenanceStatus[pageId]
+// Get page maintenance status
+export async function getPageMaintenance(
+  pageId: string
+): Promise<MaintenanceRecord | undefined> {
+  return withFallback(
+    async () => {
+      const data = await kv.get<string>(getKey(pageId))
+      return data ? JSON.parse(data) : undefined
+    },
+    undefined,
+    `getPageMaintenance(${pageId})`
+  )
 }
 
-export function getAllMaintenanceStatus(): Record<string, MaintenanceRecord> {
-  return loadMaintenanceStatus()
+// Get all maintenance statuses
+export async function getAllMaintenanceStatus(): Promise<
+  Record<string, MaintenanceRecord>
+> {
+  return withFallback(
+    async () => {
+      const keys = await kv.keys(`${KV_PREFIX}*`)
+      if (keys.length === 0) return {}
+
+      const result: Record<string, MaintenanceRecord> = {}
+
+      for (const key of keys) {
+        const pageId = key.replace(KV_PREFIX, '')
+        const data = await kv.get<string>(key)
+        if (data) {
+          result[pageId] = JSON.parse(data)
+        }
+      }
+
+      return result
+    },
+    {},
+    'getAllMaintenanceStatus'
+  )
 }
 
-export function clearPageMaintenance(pageId: string) {
-  const maintenanceStatus = loadMaintenanceStatus()
-  delete maintenanceStatus[pageId]
-  saveMaintenanceStatus(maintenanceStatus)
+// Clear page maintenance status
+export async function clearPageMaintenance(pageId: string): Promise<void> {
+  await withFallback(
+    () => kv.del(getKey(pageId)),
+    undefined,
+    `clearPageMaintenance(${pageId})`
+  )
+
+  console.log(`✅ Maintenance status cleared for page: ${pageId}`)
 }
 
-export function isPageInMaintenance(pageId: string): boolean {
-  const status = getPageMaintenance(pageId)
+// Check if page is in maintenance
+export async function isPageInMaintenance(pageId: string): Promise<boolean> {
+  const status = await getPageMaintenance(pageId)
   return status?.status === 'maintenance'
 }

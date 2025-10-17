@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Load maintenance statuses from maintenanceStore
-    const maintenanceStatuses = getAllMaintenanceStatus()
+    const maintenanceStatuses = await getAllMaintenanceStatus()
 
     const pages = AVAILABLE_PAGES.map(page => {
       // Check if page has maintenance status

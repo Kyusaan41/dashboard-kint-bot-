@@ -26,11 +26,11 @@ export async function POST(request: NextRequest) {
     // Update maintenance status in centralized store
     if (status === 'online') {
       // Clear maintenance status when bringing page back online
-      clearPageMaintenance(pageId)
+      await clearPageMaintenance(pageId)
       console.log(`Page ${pageId} brought back online by ${session.user.name}`)
     } else {
       // Set maintenance status with estimated time
-      setPageMaintenance(pageId, {
+      await setPageMaintenance(pageId, {
         status,
         reason: reason || undefined,
         updatedBy: session.user.id,
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    const status = getAllMaintenanceStatus()
+    const status = await getAllMaintenanceStatus()
     return NextResponse.json({ status })
   } catch (error) {
     console.error('Error fetching maintenance status:', error)
