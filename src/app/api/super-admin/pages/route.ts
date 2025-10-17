@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { getPageMaintenance, getAllMaintenanceStatus } from '@/lib/maintenanceStore'
 
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim())
 
@@ -30,14 +31,6 @@ const AVAILABLE_PAGES = [
   { id: 'super-admin', name: 'Super Admin', path: '/dashboard/super-admin', status: 'online' as const },
 ]
 
-// In-memory storage for page statuses (you should use a database)
-let pageStatuses: Map<string, { status: 'online' | 'maintenance', lastChecked: string, responseTime?: number }> = new Map()
-
-// Initialize with default statuses
-AVAILABLE_PAGES.forEach(page => {
-  pageStatuses.set(page.id, { status: 'online', lastChecked: new Date().toISOString() })
-})
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -46,13 +39,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    // Load maintenance statuses from maintenanceStore
+    const maintenanceStatuses = getAllMaintenanceStatus()
+
     const pages = AVAILABLE_PAGES.map(page => {
-      const status = pageStatuses.get(page.id) || { status: 'online', lastChecked: new Date().toISOString() }
+      // Check if page has maintenance status
+      const maintenanceRecord = maintenanceStatuses[page.id]
+      const pageStatus = maintenanceRecord?.status || 'online'
+      
       return {
         id: page.id,
         name: page.name,
         path: page.path,
-        ...status,
+        status: pageStatus,
+        lastChecked: maintenanceRecord?.lastUpdated || new Date().toISOString(),
+        responseTime: undefined,
       }
     })
 
