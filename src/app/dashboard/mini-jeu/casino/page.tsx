@@ -6,6 +6,7 @@ import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, T
 import { useSession } from 'next-auth/react';
 import { CASINO_ENDPOINTS } from '@/config/api';
 import Link from 'next/link';
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 
 // Slot Machine page using real currency via /api/currency/me
 
@@ -1252,7 +1253,8 @@ export default function CasinoSlotPage() {
     };
 
     return (
-        <div className="min-h-screen w-full text-white p-4 md:p-8 relative overflow-hidden">
+        <WithMaintenanceCheck pageId="casino">
+            <div className="min-h-screen w-full text-white p-4 md:p-8 relative overflow-hidden">
             {/* Confetti effect */}
             <AnimatePresence>
                 {showConfetti && <Confetti />}
@@ -2033,6 +2035,7 @@ export default function CasinoSlotPage() {
                     </motion.div>
                 </div>
             </div>
-        </div>
+            </div>
+        </WithMaintenanceCheck>
     );
 }

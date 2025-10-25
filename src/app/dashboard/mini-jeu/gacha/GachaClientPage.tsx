@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Star, Clock, Filter, History, ShoppingCart, Info, Sparkles, Crown, Zap, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { ANIME_CARDS, getRandomCardByRarity, getCardById } from './cards';
 import { useSession } from 'next-auth/react';
 import { CardImage } from './CardImage';
-import { fetchCurrency as apiFetchCurrency, updateCurrency as apiUpdateCurrency } from '@/utils/api'; // ✨ CORRECTION: Import des bonnes fonctions
+import { fetchCurrency as apiFetchCurrency, updateCurrency as apiUpdateCurrency } from '@/utils/api';
 import { RevealedCard } from './RevealedCard';
 
 const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
@@ -15,7 +15,7 @@ const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 // --- INTERFACES ---
 
 interface PullResult {
-    card: typeof ANIME_CARDS[0]; // On suppose que ANIME_CARDS[0] a { id, name, rarity }
+    card: typeof ANIME_CARDS[0];
     isNew: boolean;
 }
 type CardRarity = 'Commun' | 'Rare' | 'Épique' | 'Légendaire' | 'Mythique';
@@ -34,14 +34,12 @@ interface FeaturedCharacter {
     anime: string;
     image: string;
     power: number;
-    pity: number; // Pity count for this specific banner
+    pity: number;
     lastRotation: Date;
 }
 
 // --- CONSTANTES DE STYLE (POUR TAILWIND) ---
 
-// Couleurs de rareté pour les bordures, textes, et lueurs (utilisé dans les modales)
-// Vous pouvez déplacer RARITY_COLORS ici si c'est plus propre que de l'importer
 const RARITY_STYLES = {
     commun: {
         border: 'border-gray-500',
@@ -145,29 +143,25 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
 
 // --- COMPOSANT PRINCIPAL DE LA PAGE GACHA ---
 
-function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
+export default function GachaClientPage() {
     const { data: session } = useSession();
     const [currency, setCurrency] = useState(0);
-    // ✨ MODIFICATION: L'état de l'animation contient maintenant la rareté la plus élevée
     const [pullAnimation, setPullAnimation] = useState<{ active: boolean; count: number; highestRarity: CardRarity | null }>({
         active: false, count: 0, highestRarity: null
     });
     const [revealedCardIndex, setRevealedCardIndex] = useState(0);
 
     const [pullResults, setPullResults] = useState<PullResult[]>([]);
-    const [showResults, setShowResults] = useState(false); // Modale des résultats de tirage
+    const [showResults, setShowResults] = useState(false);
     const [pullHistory, setPullHistory] = useState<PullHistory[]>([]);
-    const [activeTab, setActiveTab] = useState<'shop' | 'details' | 'history' | null>(null); // ✨ CORRECTION: Aucune modale par défaut
+    const [activeTab, setActiveTab] = useState<'shop' | 'details' | 'history' | null>(null);
     const [rarityFilter, setRarityFilter] = useState<'all' | 'rare' | 'epic' | 'legendary' | 'mythic'>('all');
     const [quantityFilter, setQuantityFilter] = useState<'all' | 'multiple'>('all');
     const [timeRemaining, setTimeRemaining] = useState(6 * 24 * 60 * 60 * 1000);
 
-    // Système de personnages vedettes (inchangé)
-    // ✨ MODIFICATION: Initialisation avec 3 personnages mythiques aléatoires et uniques
     const [featuredCharacters, setFeaturedCharacters] = useState<FeaturedCharacter[]>(() => {
         const mythicCards = ANIME_CARDS.filter(card => card.rarity === 'Mythique');
         
-        // Fonction pour mélanger un tableau
         const shuffleArray = (array: any[]) => {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -189,24 +183,20 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
     });
     const [currentFeatured, setCurrentFeatured] = useState(0);
 
-    // ✨ NOUVEAU: Récupération de la monnaie de l'utilisateur
     const fetchCurrency = useCallback(async () => {
         if (!session?.user?.id) return;
         try {
-            // ✨ CORRECTION: Utilisation de la fonction depuis utils/api.ts
             const data = await apiFetchCurrency(session.user.id);
             setCurrency(data.balance || 0);
         } catch (error) {
             console.error("[GACHA] Erreur de récupération de la monnaie:", error);
-            setCurrency(0); // Fallback
+            setCurrency(0);
         }
     }, [session]);
 
-    // ✨ NOUVEAU: Mise à jour de la monnaie via API
     const updateCurrency = async (amount: number) => {
         if (!session) return false;
         try {
-            // ✨ CORRECTION: Utilisation de la fonction depuis utils/api.ts
             const data = await apiUpdateCurrency(session.user.id, amount, 'Gacha');
             setCurrency(data.newBalance);
             return true;
@@ -220,7 +210,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
         fetchCurrency();
     }, [fetchCurrency]);
 
-    // ✨ MODIFICATION: Logique de rotation des bannières
     useEffect(() => {
         const timer = setInterval(() => {
             if (!featuredCharacters[currentFeatured]) return;
@@ -229,18 +218,15 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
             const rotationEndTime = new Date(featuredCharacters[currentFeatured].lastRotation).getTime() + BANNER_DURATION_MS;
             setTimeRemaining(Math.max(0, rotationEndTime - now));
 
-            // Vérifier et mettre à jour chaque bannière si elle a expiré
             let needsUpdate = false;
             const updatedFeatured = featuredCharacters.map(char => {
                 if (now >= new Date(char.lastRotation).getTime() + BANNER_DURATION_MS) {
                     needsUpdate = true;
                     const mythicCards = ANIME_CARDS.filter(c => c.rarity === 'Mythique');
                     const currentIds = featuredCharacters.map(fc => fc.id);
-                    // Exclure les cartes actuellement en vedette pour éviter les doublons
                     const availableCards = mythicCards.filter(mc => !currentIds.includes(mc.id));
                     
                     let newCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-                    // Si toutes les cartes mythiques sont déjà affichées, on en reprend une au hasard
                     if (!newCard) newCard = mythicCards[Math.floor(Math.random() * mythicCards.length)];
 
                     return {
@@ -263,7 +249,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
         return () => clearInterval(timer);
     }, [featuredCharacters, currentFeatured]);
 
-    // Fonctions (inchangées)
     const formatTime = (ms: number) => {
         const days = Math.floor(ms / (24 * 60 * 60 * 1000));
         const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
@@ -288,14 +273,12 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
         const currencyUpdated = await updateCurrency(-cost);
         if (!currencyUpdated) {
             alert("Une erreur est survenue avec votre solde. Veuillez réessayer.");
-            // Pas besoin de changer l'état ici, car il n'a pas été activé
             return;
         }
 
         const numCards = type === 'single' ? 1 : 10;
         const results: PullResult[] = [];
 
-        // Logique de tirage (inchangée)
         for (let i = 0; i < numCards; i++) {
             const featuredChar = featuredCharacters[currentFeatured];
             const pity = featuredChar.pity;
@@ -332,9 +315,8 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
             const isNew = Math.random() > 0.5;
             results.push({ card: selectedCard, isNew });
 
-            // ✨ NOUVEAU: Sauvegarde de la carte dans la collection via API
             try {
-                await fetch('http://193.70.34.25:20007/api/gacha/collection', { // Appel direct au bot
+                await fetch('http://193.70.34.25:20007/api/gacha/collection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -346,26 +328,19 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                 });
             } catch (error) {
                 console.error("[GACHA] Erreur de sauvegarde de la carte:", error);
-                // On pourrait vouloir notifier l'utilisateur ou logger ça côté serveur
             }
         }
         
-        // ✨ CORRECTION: Logique de l'animation et de l'affichage des résultats
-
-        // 1. Déterminer la rareté la plus élevée pour l'animation
         const rarityOrder: CardRarity[] = ['Commun', 'Rare', 'Épique', 'Légendaire', 'Mythique'];
         const highestRarity = results.reduce((max, current) => {
             return rarityOrder.indexOf(current.card.rarity) > rarityOrder.indexOf(max) ? current.card.rarity : max;
         }, 'Commun' as CardRarity);
 
-        // 2. Préparer les résultats et lancer l'animation
         setPullResults(results);
         setPullAnimation({ active: true, count: numCards, highestRarity });
 
-        // 3. Attendre la fin de l'animation (3 secondes)
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Durée de l'animation
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // 4. Mettre à jour l'historique, arrêter l'animation et afficher la modale de résultats
         setPullHistory(prev => [{ id: Date.now().toString(), cards: results, timestamp: new Date(), type, cost }, ...prev]);
         setPullAnimation({ active: false, count: 0, highestRarity: null });
         setShowResults(true);
@@ -407,7 +382,7 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
     const currentFeaturedChar = featuredCharacters[currentFeatured];
 
     return (
-            <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
             {/* Fond cosmique fixe */}
             <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 -z-20" />
             <motion.div
@@ -427,11 +402,9 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
             
             <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white">
 
-                {/* Top Bar (inchangé) */}
                 <div className="flex justify-between items-center mb-3 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <span className="text-white text-lg font-medium">✨ Bannières</span>
-                        {/* ✨ MODIFICATION: Bannièresse sélsectionnables */}
                         <div className="hidden md:flex items-center gap-2">
                             {featuredCharacters.map((char, index) => (
                                 <motion.div
@@ -460,7 +433,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     </div>
                 </div>
                 
-                {/* --- MODIFICATION BANNIÈRE (Retour au "Splash Art") --- */}
                 <div className="flex-1 rounded-xl relative overflow-hidden shadow-lg mb-3">
                     {/* Image de fond floutée */}
                     <img
@@ -470,7 +442,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     />
                     {/* Dégradé pour la lisibilité */}
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-                    
                     {/* Image du personnage "Splash Art" (grande, sans case, non floue) */}
                     <AnimatePresence mode="wait">
                         <motion.img
@@ -488,7 +459,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     {/* Contenu de la bannière (sur la gauche) */}
                     <div className="relative z-20 h-full p-6 md:p-8 flex flex-col justify-between">
                         <div>
-                            {/* Header (Titre, étoiles) */}
                             <div className="mb-3">
                                 <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                                     Événement Personnage
@@ -507,7 +477,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                                     </span>
                                 </div>
                             </div>
-                            {/* Probability Box */}
                             <div className="bg-black/50 backdrop-blur-sm border border-white/10 p-3 rounded-lg max-w-xs text-xs">
                                 <div className="font-bold text-yellow-400 mb-1">Probabilité augmentée !</div>
                                 <p className="text-white/80 leading-snug">
@@ -516,19 +485,17 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                                 <div
                                     className="mt-1 font-semibold text-cyan-400 cursor-pointer hover:underline"
                                     onClick={() => setActiveTab('details')}
-                                > {/* Ouvre la modale des détails */}
+                                >
                                     Voir les détails ›
                                 </div>
                             </div>
                         </div>
 
-                        {/* Time Remaining */}
                         <div className="mt-4">
                             <div className="text-xs text-white/70">Temps Restant</div>
                             <div className="text-lg font-bold text-white">{formatTime(timeRemaining)}</div>
                         </div>
 
-                        {/* Infos Pity */}
                         <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-right z-20">
                             <div className="text-xs text-white/70">Puissance</div>
                             <div className="text-lg font-semibold text-white">{currentFeaturedChar.power}</div>
@@ -537,26 +504,23 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                         </div>
                     </div>
                 </div>
-                {/* --- FIN MODIFICATION BANNIÈRE --- */}
 
-
-                {/* Bottom Section (inchangé) */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
                     <div className="flex gap-2 bg-black/30 p-1 rounded-full">
                         <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'shop' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`} // Pas de changement de logique ici
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'shop' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
                             onClick={() => setActiveTab('shop')}
                         >
                             Boutique
                         </button>
                         <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`} // Pas de changement de logique ici
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
                             onClick={() => setActiveTab('details')}
                         >
                             Détails
                         </button>
                         <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`} // Pas de changement de logique ici
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
                             onClick={() => setActiveTab('history')}
                         >
                             Historique
@@ -564,7 +528,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     </div>
 
                     <div className="flex gap-3">
-                        {/* ✨ NOUVEAU: Bouton vers la collection */}
                         <Link href="/dashboard/mini-jeu/gacha/collection">
                             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="h-full px-4 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors">
                                 <BookOpen size={20} />
@@ -603,15 +566,14 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     </div>
                 </div>
 
-                {/* Modales (inchangées) */}
                 <AnimatePresence>
-                    {(activeTab === 'shop' || activeTab === 'history') && ( // ✨ CORRECTION: Condition plus explicite
+                    {(activeTab === 'shop' || activeTab === 'history') && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                            onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
+                            onClick={() => setActiveTab(null)}
                         >
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
@@ -713,7 +675,7 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                                 
                                 <div className="text-center mt-6">
                                     <button
-                                        onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
+                                        onClick={() => setActiveTab(null)}
                                         className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
                                     >
                                         Fermer
@@ -730,7 +692,7 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                            onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
+                            onClick={() => setActiveTab(null)}
                         >
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
@@ -773,7 +735,7 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                                 </div>
                                 <div className="text-center mt-6">
                                     <button
-                                        onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
+                                        onClick={() => setActiveTab(null)}
                                         className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
                                     >
                                         Fermer
@@ -784,7 +746,6 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     )}
                 </AnimatePresence>
 
-                {/* Modale de résultats (inchangée) */}
                 <AnimatePresence>
                     {showResults && (
                         <motion.div
@@ -861,17 +822,10 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     )}
                 </AnimatePresence>
 
-                {/* Animation de "Pull" (inchangée) */}
                 <AnimatePresence>
                     {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} />}
                 </AnimatePresence>
             </div>
         </div>
     );
-}
-
-// ✨ CORRECTION: Créer un nouveau composant "wrapper" qui gère la maintenance
-export default function GachaClientPage() {
-    // Ce composant est maintenant un simple point d'entrée pour le contenu client.
-    return <GachaPageContent />;
 }
