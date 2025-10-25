@@ -146,7 +146,7 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
 
 // --- COMPOSANT PRINCIPAL DE LA PAGE GACHA ---
 
-export default function GachaPage() {
+function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
     const { data: session } = useSession();
     const [currency, setCurrency] = useState(0);
     // ✨ MODIFICATION: L'état de l'animation contient maintenant la rareté la plus élevée
@@ -408,7 +408,6 @@ export default function GachaPage() {
     const currentFeaturedChar = featuredCharacters[currentFeatured];
 
     return (
-        <WithMaintenanceCheck pageId="gacha">
             <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
             {/* Fond cosmique fixe */}
             <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 -z-20" />
@@ -868,7 +867,14 @@ export default function GachaPage() {
                     {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} />}
                 </AnimatePresence>
             </div>
-            </div>
+    );
+}
+
+// ✨ CORRECTION: Créer un nouveau composant "wrapper" qui gère la maintenance
+export default function GachaPage() {
+    return (
+        <WithMaintenanceCheck pageId="gacha">
+            <GachaPageContent />
         </WithMaintenanceCheck>
     );
 }
