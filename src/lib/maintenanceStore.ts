@@ -69,15 +69,27 @@ export async function getAllMaintenanceStatus(): Promise<Record<string, Maintena
   const statuses: Record<string, MaintenanceStatus> = {};
   await ensureRedisConnection();
   try {
-    // Utilise un itérateur pour scanner toutes les clés correspondant au pattern.
-    // C'est plus efficace que `keys` pour un grand nombre de clés.
-    for await (const key of redisClient.scanIterator({ MATCH: 'maintenance:*' }) as AsyncIterable<string>) {
-      const pageId = key.replace('maintenance:', '');
-      const statusString = await redisClient.get(key);
-      if (statusString) {
-        statuses[pageId] = JSON.parse(statusString) as MaintenanceStatus;
+    let cursor = 0;
+    do {
+      const reply = await redisClient.scan(cursor, {
+        MATCH: 'maintenance:*',
+        COUNT: 100,
+      });
+
+      cursor = reply.cursor;
+      const keys = reply.keys;
+
+      if (keys.length > 0) {
+        const values = await redisClient.mGet(keys);
+        values.forEach((value, index) => {
+          if (value) {
+            const pageId = keys[index].replace('maintenance:', '');
+            statuses[pageId] = JSON.parse(value) as MaintenanceStatus;
+          }
+        });
       }
-    }
+    } while (cursor !== 0);
+
     return statuses;
   } catch (error) {
     console.error('[Redis] Erreur lors de la récupération de tous les statuts de maintenance:', error);
