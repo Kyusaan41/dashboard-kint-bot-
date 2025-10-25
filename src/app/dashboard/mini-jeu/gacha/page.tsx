@@ -867,6 +867,7 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
                     {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} />}
                 </AnimatePresence>
             </div>
+        </div>
     );
 }
 
