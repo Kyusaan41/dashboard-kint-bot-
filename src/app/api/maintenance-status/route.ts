@@ -1,5 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getPageMaintenance } from '@/lib/maintenanceStore'
+import { NextRequest, NextResponse } from 'next/server';
+import { 
+  getPageMaintenance, 
+  setPageMaintenance,
+  MaintenanceStatus 
+} from '@/lib/maintenanceStore';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 // Helper function to format milliseconds to readable time
 function formatEstimatedTime(ms?: number): string {
@@ -66,5 +72,40 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.role !== 'admin' && session?.user?.role !== 'super_admin') {
+      return NextResponse.json({ error: 'Accès interdit. Rôle admin requis.' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { pageId, status, message, reason, estimatedTime } = body;
+
+    if (!pageId || !status) {
+      return NextResponse.json({ error: 'pageId et status sont requis' }, { status: 400 });
+    }
+
+    const newStatus: MaintenanceStatus = {
+      status,
+      message: message || (status === 'maintenance' ? 'En cours de maintenance' : 'Service en ligne'),
+      reason: reason || '',
+      estimatedTime: estimatedTime ? estimatedTime * 60 * 1000 : undefined, // Convert minutes to ms
+      lastUpdated: new Date().toISOString(),
+    };
+
+    await setPageMaintenance(pageId, newStatus);
+
+    return NextResponse.json({ success: true, pageId, status: newStatus });
+
+  } catch (error) {
+    console.error('Error setting maintenance status:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
