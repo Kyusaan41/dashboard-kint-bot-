@@ -69,14 +69,14 @@ export async function getAllMaintenanceStatus(): Promise<Record<string, Maintena
   const statuses: Record<string, MaintenanceStatus> = {};
   await ensureRedisConnection();
   try {
-    let cursor = 0;
+    let cursor = '0';
     do {
       const reply = await redisClient.scan(cursor, {
         MATCH: 'maintenance:*',
         COUNT: 100,
       });
 
-      cursor = reply.cursor;
+      cursor = String(reply.cursor);
       const keys = reply.keys;
 
       if (keys.length > 0) {
@@ -88,7 +88,7 @@ export async function getAllMaintenanceStatus(): Promise<Record<string, Maintena
           }
         });
       }
-    } while (cursor !== 0);
+    } while (cursor !== '0');
 
     return statuses;
   } catch (error) {

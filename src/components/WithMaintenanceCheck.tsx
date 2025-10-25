@@ -1,10 +1,11 @@
 'use client'
 
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, Suspense, useEffect, useState } from 'react'
 import { MaintenanceMode } from './MaintenanceMode'
 
 interface WithMaintenanceCheckProps {
-  children: ReactNode
+  // Soit un enfant direct, soit une fonction qui retourne un composant dynamique
+  children: ReactNode | (() => ReactNode);
   pageId?: string
 }
 
@@ -16,13 +17,13 @@ export function WithMaintenanceCheck({
   children, 
   pageId 
 }: WithMaintenanceCheckProps) {
-  const [isMaintenance, setIsMaintenance] = useState(false)
+  const [isMaintenance, setIsMaintenance] = useState(false);
   const [maintenanceData, setMaintenanceData] = useState({
     message: 'En cours de maintenance',
     reason: 'Le service est temporairement indisponible',
     estimatedTime: 'Environ 30 minutes'
-  })
-  const [isLoading, setIsLoading] = useState(true)
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkMaintenance = async () => {
@@ -37,7 +38,7 @@ export function WithMaintenanceCheck({
             reason: process.env.NEXT_PUBLIC_MAINTENANCE_MESSAGE || 'Le service est temporairement indisponible',
             estimatedTime: 'Environ 30 minutes'
           })
-          setIsLoading(false)
+          setIsLoading(false);
           return
         }
 
@@ -58,11 +59,11 @@ export function WithMaintenanceCheck({
       } catch (error) {
         console.error('Error checking maintenance status:', error)
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
-    checkMaintenance()
+    checkMaintenance();
     
     // Check every 30 seconds
     const interval = setInterval(checkMaintenance, 30000)
@@ -75,7 +76,7 @@ export function WithMaintenanceCheck({
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-primary/20 border-t-purple-primary"></div>
       </div>
-    )
+    );
   }
 
   if (isMaintenance) {
@@ -85,8 +86,14 @@ export function WithMaintenanceCheck({
         reason={maintenanceData.reason}
         estimatedTime={maintenanceData.estimatedTime}
       />
-    )
+    );
   }
 
-  return <>{children}</>
+  // Si `children` est une fonction, on l'exécute pour obtenir le composant dynamique.
+  // On l'entoure de Suspense pour gérer son propre état de chargement.
+  if (typeof children === 'function') {
+    return <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><div className="nyx-spinner"></div></div>}>{children()}</Suspense>;
+  }
+
+  return <>{children}</>;
 }
