@@ -8,11 +8,17 @@ const nextConfig = {
       },
     ]
   },
-  // Si vous avez d'autres configurations, ajoutez-les ici.
-  // Par exemple, si vous utilisez des images externes :
-  // images: {
-  //   domains: ['exemple.com'],
-  // },
+  // Autoriser les images provenant du CDN de Discord pour les avatars
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.discordapp.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;
