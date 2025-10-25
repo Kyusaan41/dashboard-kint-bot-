@@ -249,7 +249,8 @@ function GachaPageContent() {
             results.push({ card: selectedCard, isNew });
 
             try {
-                await fetch('http://193.70.34.25:20007/api/gacha/collection', {
+                // On utilise HTTPS pour éviter les erreurs de contenu mixte
+                await fetch('https://193.70.34.25:20007/api/gacha/collection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
