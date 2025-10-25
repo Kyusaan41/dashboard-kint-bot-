@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
         reason: reason || undefined,
         updatedBy: session.user.id,
         message: 'En cours de maintenance',
-        estimatedTime: estimatedTime ? estimatedTime * 60 * 1000 : 30 * 60 * 1000 // Convert minutes to milliseconds, default 30 min
+        estimatedTime: estimatedTime ? estimatedTime * 60 * 1000 : 30 * 60 * 1000, // Convert minutes to milliseconds, default 30 min
+        lastUpdated: new Date().toISOString()
       })
       console.log(`Page ${pageId} set to maintenance by ${session.user.name} for ${estimatedTime || 30} minutes`)
     }
