@@ -1,0 +1,58 @@
+{
+  "collections": [
+    {
+      "userId": "1206053705149841428",
+      "username": "kyusaan",
+      "collections": [
+        {
+          "anime": "Naruto",
+          "cards": [
+            {
+              "cardId": "nar_003",
+              "count": 2,
+              "obtainedAt": "2025-10-16T18:23:19.184Z"
+            }
+          ]
+        },
+        {
+          "anime": "One Piece",
+          "cards": [
+            {
+              "cardId": "op_007",
+              "count": 1,
+              "obtainedAt": "2025-10-16T18:23:24.242Z"
+            },
+            {
+              "cardId": "op_002",
+              "count": 1,
+              "obtainedAt": "2025-10-16T18:40:16.479Z"
+            }
+          ]
+        },
+        {
+          "anime": "Bleach",
+          "cards": [
+            {
+              "cardId": "ble_007",
+              "count": 1,
+              "obtainedAt": "2025-10-16T18:23:32.625Z"
+            }
+          ]
+        },
+        {
+          "anime": "Demon Slayer",
+          "cards": [
+            {
+              "cardId": "ds_007",
+              "count": 1,
+              "obtainedAt": "2025-10-16T18:23:56.269Z"
+            }
+          ]
+        }
+      ],
+      "totalCards": 6,
+      "uniqueCards": 5,
+      "lastUpdated": "2025-10-16T18:40:16.479Z"
+    }
+  ]
+}

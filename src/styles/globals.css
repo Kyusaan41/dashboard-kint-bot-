@@ -1,0 +1,39 @@
+/* src/app/globals.css */
+
+/* --- IMPORTS OBLIGATOIRES POUR TAILWIND CSS V4 --- */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+/* --- FIN DES IMPORTS TAILWIND CSS V4 --- */
+
+/* Variables CSS personnalisées */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* Media query pour le mode sombre */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+/* Styles de base pour le corps du document */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* --- SEULE L'animation 'sway' de la page d'accueil reste ici (si vous la voulez toujours globale) --- */
+@layer utilities {
+  @keyframes sway {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  .animate-sway {
+    animation: sway 3s ease-in-out infinite;
+  }
+}

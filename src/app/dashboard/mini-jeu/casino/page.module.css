@@ -1,0 +1,26 @@
+.slot {
+    height: 50px;
+    width: 50px;
+}
+
+.reels {
+    display: flex;
+    gap: 10px;
+}
+
+.reel {
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+/* If you need global styles, you can define them here or in a separate global CSS file */
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+}
