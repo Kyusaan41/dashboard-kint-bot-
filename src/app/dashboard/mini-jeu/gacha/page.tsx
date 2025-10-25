@@ -155,9 +155,9 @@ export default function GachaPage() {
     const [revealedCardIndex, setRevealedCardIndex] = useState(0);
 
     const [pullResults, setPullResults] = useState<PullResult[]>([]);
-    const [showResults, setShowResults] = useState(false);
+    const [showResults, setShowResults] = useState(false); // Modale des résultats de tirage
     const [pullHistory, setPullHistory] = useState<PullHistory[]>([]);
-    const [activeTab, setActiveTab] = useState<'shop' | 'details' | 'history'>('details');
+    const [activeTab, setActiveTab] = useState<'shop' | 'details' | 'history' | null>(null); // ✨ CORRECTION: Aucune modale par défaut
     const [rarityFilter, setRarityFilter] = useState<'all' | 'rare' | 'epic' | 'legendary' | 'mythic'>('all');
     const [quantityFilter, setQuantityFilter] = useState<'all' | 'multiple'>('all');
     const [timeRemaining, setTimeRemaining] = useState(6 * 24 * 60 * 60 * 1000);
@@ -516,7 +516,7 @@ export default function GachaPage() {
                                 <div
                                     className="mt-1 font-semibold text-cyan-400 cursor-pointer hover:underline"
                                     onClick={() => setActiveTab('details')}
-                                >
+                                > {/* Ouvre la modale des détails */}
                                     Voir les détails ›
                                 </div>
                             </div>
@@ -544,19 +544,19 @@ export default function GachaPage() {
                 <div className="flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
                     <div className="flex gap-2 bg-black/30 p-1 rounded-full">
                         <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'shop' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'shop' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`} // Pas de changement de logique ici
                             onClick={() => setActiveTab('shop')}
                         >
                             Boutique
                         </button>
                         <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`} // Pas de changement de logique ici
                             onClick={() => setActiveTab('details')}
                         >
                             Détails
                         </button>
                         <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`} // Pas de changement de logique ici
                             onClick={() => setActiveTab('history')}
                         >
                             Historique
@@ -605,13 +605,13 @@ export default function GachaPage() {
 
                 {/* Modales (inchangées) */}
                 <AnimatePresence>
-                    {activeTab !== 'details' && (
+                    {(activeTab === 'shop' || activeTab === 'history') && ( // ✨ CORRECTION: Condition plus explicite
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                            onClick={() => setActiveTab('details')}
+                            onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
                         >
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
@@ -713,7 +713,7 @@ export default function GachaPage() {
                                 
                                 <div className="text-center mt-6">
                                     <button
-                                        onClick={() => setActiveTab('details')}
+                                        onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
                                         className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
                                     >
                                         Fermer
@@ -730,7 +730,7 @@ export default function GachaPage() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                            onClick={() => setActiveTab('details')}
+                            onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
                         >
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
@@ -772,7 +772,10 @@ export default function GachaPage() {
                                     </div>
                                 </div>
                                 <div className="text-center mt-6">
-                                    <button onClick={() => setActiveTab('details')} className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all">
+                                    <button
+                                        onClick={() => setActiveTab(null)} // ✨ CORRECTION: Ferme la modale
+                                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
+                                    >
                                         Fermer
                                     </button>
                                 </div>
