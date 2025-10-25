@@ -62,8 +62,8 @@ export default function CollectionPage() {
             const fetchCollection = async () => {
                 try {
                     setLoading(true);
-                    // On utilise HTTPS pour éviter les erreurs de contenu mixte
-                    const response = await fetch(`https://193.70.34.25:20007/api/gacha/collection/${session.user.id}`);
+                    // On utilise le proxy Vercel pour éviter les erreurs SSL et de contenu mixte
+                    const response = await fetch(`/api/bot/gacha/collection/${session.user.id}`);
                     if (!response.ok) {
                         throw new Error("Impossible de charger la collection.");
                     }

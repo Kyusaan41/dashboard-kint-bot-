@@ -249,8 +249,8 @@ function GachaPageContent() {
             results.push({ card: selectedCard, isNew });
 
             try {
-                // On utilise HTTPS pour éviter les erreurs de contenu mixte
-                await fetch('https://193.70.34.25:20007/api/gacha/collection', {
+                // On utilise le proxy Vercel
+                await fetch('/api/bot/gacha/collection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
