@@ -1,4 +1,4 @@
-import redisClient from '@/lib/redis';
+import redisClient, { ensureRedisConnection } from '@/lib/redis';
 
 export interface MaintenanceStatus {
   status: 'online' | 'maintenance';
@@ -17,7 +17,7 @@ const getPageKey = (pageId: string): string => `maintenance:${pageId}`;
  * @returns Le statut de maintenance ou null si non trouvé.
  */
 export async function getPageMaintenance(pageId: string): Promise<MaintenanceStatus | null> {
-  if (!redisClient.isOpen) await redisClient.connect();
+  await ensureRedisConnection();
   try {
     const statusString = await redisClient.get(getPageKey(pageId));
     if (!statusString) {
@@ -37,7 +37,7 @@ export async function getPageMaintenance(pageId: string): Promise<MaintenanceSta
  * @param status Le nouveau statut de maintenance.
  */
 export async function setPageMaintenance(pageId: string, status: MaintenanceStatus): Promise<void> {
-  if (!redisClient.isOpen) await redisClient.connect();
+  await ensureRedisConnection();
   try {
     // Le TTL (Time To Live) est de 24 heures (en secondes).
     // Cela évite que des statuts de maintenance "oubliés" restent indéfiniment.
@@ -53,7 +53,7 @@ export async function setPageMaintenance(pageId: string, status: MaintenanceStat
  * @param pageId L'identifiant de la page.
  */
 export async function clearPageMaintenance(pageId: string): Promise<void> {
-  if (!redisClient.isOpen) await redisClient.connect();
+  await ensureRedisConnection();
   try {
     await redisClient.del(getPageKey(pageId));
   } catch (error) {
@@ -67,7 +67,7 @@ export async function clearPageMaintenance(pageId: string): Promise<void> {
  */
 export async function getAllMaintenanceStatus(): Promise<Record<string, MaintenanceStatus>> {
   const statuses: Record<string, MaintenanceStatus> = {};
-  if (!redisClient.isOpen) await redisClient.connect();
+  await ensureRedisConnection();
   try {
     // Utilise un itérateur pour scanner toutes les clés correspondant au pattern.
     // C'est plus efficace que `keys` pour un grand nombre de clés.
