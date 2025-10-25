@@ -1,6 +1,5 @@
 "use client";
 
-import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Star, Clock, Filter, History, ShoppingCart, Info, Sparkles, Crown, Zap, X, BookOpen } from 'lucide-react';
@@ -872,10 +871,7 @@ function GachaPageContent() { // ✨ CORRECTION: Renommer le composant principal
 }
 
 // ✨ CORRECTION: Créer un nouveau composant "wrapper" qui gère la maintenance
-export default function GachaClientPage() { // Renommé pour plus de clarté
-    return (
-        <WithMaintenanceCheck pageId="gacha">
-            <GachaPageContent />
-        </WithMaintenanceCheck>
-    );
+export default function GachaClientPage() {
+    // Ce composant est maintenant un simple point d'entrée pour le contenu client.
+    return <GachaPageContent />;
 }
