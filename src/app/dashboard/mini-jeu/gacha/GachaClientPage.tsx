@@ -250,16 +250,16 @@ function GachaPageContent() {
 
             try {
                 // On utilise le proxy Vercel
-                await fetch('/api/bot/gacha/collection', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: session.user.id,
-                        username: session.user.name,
-                        cardId: selectedCard.id,
-                        anime: selectedCard.anime,
-                    }),
-                });
+                await fetch('/api/gacha/collection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: session.user.id,
+                    username: session.user.name,
+                    cardId: selectedCard.id,
+                    anime: selectedCard.anime,
+                }),
+            });
             } catch (error) {
                 console.error("[GACHA] Erreur de sauvegarde de la carte:", error);
             }
