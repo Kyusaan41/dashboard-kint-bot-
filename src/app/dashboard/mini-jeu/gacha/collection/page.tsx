@@ -62,7 +62,8 @@ export default function CollectionPage() {
             const fetchCollection = async () => {
                 try {
                     setLoading(true);
-                    const response = await fetch('/api/gacha/collection');
+                                            // ✨ CORRECTION: On appelle l'API du bot avec l'ID de l'utilisateur
+                    const response = await fetch(`http://193.70.34.25:20007/api/gacha/collection/${session.user.id}`);
                     if (!response.ok) {
                         throw new Error("Impossible de charger la collection.");
                     }
