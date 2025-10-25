@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Star, Clock, Filter, History, ShoppingCart, Info, Sparkles, Crown, Zap, X, BookOpen } from 'lucide-react';
+import { Star, Filter, History, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { ANIME_CARDS, getRandomCardByRarity, getCardById } from './cards';
+import { getRandomCardByRarity, getCardById } from './cards';
 import { useSession } from 'next-auth/react';
-import { CardImage } from './CardImage';
 import { fetchCurrency as apiFetchCurrency, updateCurrency as apiUpdateCurrency } from '@/utils/api';
-import { RevealedCard } from './RevealedCard';
+import { RevealedCard } from './RevealedCard'; 
+import { GachaProvider, useGacha, FeaturedCharacter } from './GachaContext';
 
 const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 
 // --- INTERFACES ---
 
 interface PullResult {
-    card: typeof ANIME_CARDS[0];
+    card: import('./cards').AnimeCard;
     isNew: boolean;
 }
 type CardRarity = 'Commun' | 'Rare' | 'Épique' | 'Légendaire' | 'Mythique';
@@ -26,16 +26,6 @@ interface PullHistory {
     timestamp: Date;
     type: 'single' | 'multi';
     cost: number;
-}
-
-interface FeaturedCharacter {
-    id: string;
-    name: string;
-    anime: string;
-    image: string;
-    power: number;
-    pity: number;
-    lastRotation: Date;
 }
 
 // --- CONSTANTES DE STYLE (POUR TAILWIND) ---
@@ -141,9 +131,8 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
     );
 };
 
-// --- COMPOSANT PRINCIPAL DE LA PAGE GACHA ---
-
-export default function GachaClientPage() {
+// --- COMPOSANT DE LA PAGE GACHA (LOGIQUE) ---
+function GachaPageContent() {
     const { data: session } = useSession();
     const [currency, setCurrency] = useState(0);
     const [pullAnimation, setPullAnimation] = useState<{ active: boolean; count: number; highestRarity: CardRarity | null }>({
@@ -157,31 +146,14 @@ export default function GachaClientPage() {
     const [activeTab, setActiveTab] = useState<'shop' | 'details' | 'history' | null>(null);
     const [rarityFilter, setRarityFilter] = useState<'all' | 'rare' | 'epic' | 'legendary' | 'mythic'>('all');
     const [quantityFilter, setQuantityFilter] = useState<'all' | 'multiple'>('all');
-    const [timeRemaining, setTimeRemaining] = useState(6 * 24 * 60 * 60 * 1000);
-
-    const [featuredCharacters, setFeaturedCharacters] = useState<FeaturedCharacter[]>(() => {
-        const mythicCards = ANIME_CARDS.filter(card => card.rarity === 'Mythique');
-        
-        const shuffleArray = (array: any[]) => {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        };
-
-        const shuffledMythics = shuffleArray([...mythicCards]);
-        return shuffledMythics.slice(0, 3).map(card => ({
-            id: card.id,
-            name: card.name,
-            anime: card.anime,
-            image: card.image,
-            power: card.power,
-            pity: 0,
-            lastRotation: new Date()
-        }));
-    });
-    const [currentFeatured, setCurrentFeatured] = useState(0);
+    
+    const {
+        featuredCharacters,
+        setFeaturedCharacters,
+        currentFeatured,
+        setCurrentFeatured,
+        timeRemaining
+    } = useGacha();
 
     const fetchCurrency = useCallback(async () => {
         if (!session?.user?.id) return;
@@ -209,45 +181,6 @@ export default function GachaClientPage() {
     useEffect(() => {
         fetchCurrency();
     }, [fetchCurrency]);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            if (!featuredCharacters[currentFeatured]) return;
-
-            const now = Date.now();
-            const rotationEndTime = new Date(featuredCharacters[currentFeatured].lastRotation).getTime() + BANNER_DURATION_MS;
-            setTimeRemaining(Math.max(0, rotationEndTime - now));
-
-            let needsUpdate = false;
-            const updatedFeatured = featuredCharacters.map(char => {
-                if (now >= new Date(char.lastRotation).getTime() + BANNER_DURATION_MS) {
-                    needsUpdate = true;
-                    const mythicCards = ANIME_CARDS.filter(c => c.rarity === 'Mythique');
-                    const currentIds = featuredCharacters.map(fc => fc.id);
-                    const availableCards = mythicCards.filter(mc => !currentIds.includes(mc.id));
-                    
-                    let newCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-                    if (!newCard) newCard = mythicCards[Math.floor(Math.random() * mythicCards.length)];
-
-                    return {
-                        id: newCard.id,
-                        name: newCard.name,
-                        anime: newCard.anime,
-                        image: newCard.image,
-                        power: newCard.power,
-                        pity: 0,
-                        lastRotation: new Date()
-                    };
-                }
-                return char;
-            });
-
-            if (needsUpdate) {
-                setFeaturedCharacters(updatedFeatured);
-            }
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [featuredCharacters, currentFeatured]);
 
     const formatTime = (ms: number) => {
         const days = Math.floor(ms / (24 * 60 * 60 * 1000));
@@ -285,14 +218,14 @@ export default function GachaClientPage() {
             const isGuaranteedPull = pity + (numCards - i) >= 100;
 
             let selectedRarity: CardRarity;
-            let selectedCard: typeof ANIME_CARDS[0];
+            let selectedCard: import('./cards').AnimeCard;
             if (isGuaranteedPull) {
                 selectedCard = getCardById(featuredChar.id) || getRandomCardByRarity('Légendaire');
-                setFeaturedCharacters(prev => prev.map((char, index) =>
+                setFeaturedCharacters((prev: FeaturedCharacter[]) => prev.map((char: FeaturedCharacter, index: number) =>
                     index === currentFeatured ? { ...char, pity: 0 } : char
                 ));
             } else {
-                const random = Math.random();
+                const random = Math.random(); // TODO: Use a more robust random number generator
                 if (random < 0.004) selectedRarity = 'Mythique';
                 else if (random < 0.034) selectedRarity = 'Légendaire';
                 else if (random < 0.184) selectedRarity = 'Épique';
@@ -302,11 +235,11 @@ export default function GachaClientPage() {
                 selectedCard = getRandomCardByRarity(selectedRarity);
 
                 if (selectedCard.id !== featuredChar.id) {
-                    setFeaturedCharacters(prev => prev.map((char, index) =>
+                    setFeaturedCharacters((prev: FeaturedCharacter[]) => prev.map((char: FeaturedCharacter, index: number) =>
                         index === currentFeatured ? { ...char, pity: char.pity + 1 } : char
                     ));
                 } else {
-                    setFeaturedCharacters(prev => prev.map((char, index) =>
+                    setFeaturedCharacters((prev: FeaturedCharacter[]) => prev.map((char: FeaturedCharacter, index: number) =>
                         index === currentFeatured ? { ...char, pity: 0 } : char
                     ));
                 }
@@ -379,7 +312,11 @@ export default function GachaClientPage() {
         ));
     };
 
-    const currentFeaturedChar = featuredCharacters[currentFeatured];
+    const currentFeaturedChar = featuredCharacters[currentFeatured]; // Get current featured character
+
+    if (!currentFeaturedChar) {
+        return <div className="flex h-screen w-full items-center justify-center"><div className="nyx-spinner"></div></div>;
+    }
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
@@ -827,5 +764,15 @@ export default function GachaClientPage() {
                 </AnimatePresence>
             </div>
         </div>
+    );
+}
+
+// --- COMPOSANT PRINCIPAL (Wrapper avec Provider) ---
+
+export default function GachaClientPage() {
+    return (
+        <GachaProvider>
+            <GachaPageContent />
+        </GachaProvider>
     );
 }
