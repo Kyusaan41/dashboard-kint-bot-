@@ -1,24 +1,11 @@
-import dynamic from 'next/dynamic';
-import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
-
-// ✨ CORRECTION DÉFINITIVE: Utiliser le chargement dynamique pour le composant client.
-// ssr: false garantit qu'il ne sera jamais rendu côté serveur,
-// ce qui empêche toute interférence avec la vérification de maintenance.
-const GachaClientPage = dynamic(() => import('./GachaClientPage'), {
-  ssr: false,
-  // Optionnel: afficher un loader pendant que le composant client charge
-  loading: () => <div className="flex h-screen w-full items-center justify-center"><div className="nyx-spinner"></div></div>,
-});
+import GachaLoader from './GachaLoader';
 
 /**
  * C'est un Composant Serveur.
- * Il enveloppe la page client du Gacha avec le vérificateur de maintenance.
- * La vérification a lieu AVANT même que le composant client ne soit chargé.
+ * Son seul rôle est de rendre le composant Loader, qui est un composant client
+ * et qui gère la logique de maintenance et de chargement dynamique.
  */
 export default function GachaPage() {
-  return (
-    <WithMaintenanceCheck pageId="gacha">
-      <GachaClientPage />
-    </WithMaintenanceCheck>
-  );
+  // On délègue toute la logique au composant client GachaLoader.
+  return <GachaLoader />;
 }
