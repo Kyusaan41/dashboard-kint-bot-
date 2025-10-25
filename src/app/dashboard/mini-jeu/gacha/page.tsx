@@ -1,12 +1,13 @@
 "use client";
 
 import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Star, Clock, Filter, History, ShoppingCart, Info, Sparkles, Crown, Zap, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { ANIME_CARDS, getRandomCardByRarity, getCardById } from './cards';
 import { useSession } from 'next-auth/react';
+import { useHasMounted } from '@/hooks/useHasMounted';
 import { CardImage } from './CardImage';
 import { fetchCurrency as apiFetchCurrency, updateCurrency as apiUpdateCurrency } from '@/utils/api';
 import { RevealedCard } from './RevealedCard';
@@ -141,10 +142,7 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
  * Ce fichier est maintenant un simple composant client, comme la page principale du dashboard.
  * Il utilise directement le wrapper WithMaintenanceCheck.
  */
-export default function GachaPage() {
-    const { data: session } = useSession();
-    const [currency, setCurrency] = useState(0);
-    const [pullAnimation, setPullAnimation] = useState<{ active: boolean; count: number; highestRarity: CardRarity | null }>({
+function GachaPageContent() {    const { data: session } = useSession();    const [currency, setCurrency] = useState(0);    const [pullAnimation, setPullAnimation] = useState<{ active: boolean; count: number; highestRarity: CardRarity | null }>({
         active: false, count: 0, highestRarity: null
     });
     const [revealedCardIndex, setRevealedCardIndex] = useState(0);
@@ -377,8 +375,7 @@ export default function GachaPage() {
     const currentFeaturedChar = featuredCharacters[currentFeatured];
 
     return (
-        <WithMaintenanceCheck pageId="gacha">
-            <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 -z-20" />
                 <motion.div
                     className="absolute inset-0 -z-10"
