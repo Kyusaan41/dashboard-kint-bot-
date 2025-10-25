@@ -1,5 +1,6 @@
 "use client";
 
+import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Star, Clock, Filter, History, ShoppingCart, Info, Sparkles, Crown, Zap, X, BookOpen } from 'lucide-react';
@@ -407,7 +408,8 @@ export default function GachaPage() {
     const currentFeaturedChar = featuredCharacters[currentFeatured];
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
+        <WithMaintenanceCheck pageId="gacha">
+            <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
             {/* Fond cosmique fixe */}
             <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 -z-20" />
             <motion.div
@@ -866,6 +868,7 @@ export default function GachaPage() {
                     {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} />}
                 </AnimatePresence>
             </div>
-        </div>
+            </div>
+        </WithMaintenanceCheck>
     );
 }
