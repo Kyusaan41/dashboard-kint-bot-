@@ -250,7 +250,7 @@ function GachaPageContent() {
 
             try {
                 // On utilise le proxy Vercel
-                await fetch('/api/bot/gacha/collection', {
+                await fetch('/api/gacha/collection', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
