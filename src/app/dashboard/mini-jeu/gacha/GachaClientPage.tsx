@@ -132,26 +132,6 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
     );
 };
 
-// ✨ NOUVEAU: Composant pour une barre de probabilité animée
-const ProbabilityBar = ({ label, percentage, colorClass }: { label: string, percentage: number, colorClass: string }) => (
-    <div className="flex justify-between items-center text-sm">
-        <span className="text-gray-300 w-1/3">{label}</span>
-        <div className="w-2/3 bg-black/20 rounded-full h-4 overflow-hidden">
-            <motion.div
-                className={`h-full rounded-full ${colorClass}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${percentage}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-            >
-                <span className="absolute right-2 text-white text-xs font-bold mix-blend-difference">
-                    {percentage.toFixed(1)}%
-                </span>
-            </motion.div>
-        </div>
-    </div>
-);
-
-
 // --- COMPOSANT DE LA PAGE GACHA (LOGIQUE) ---
 function GachaPageContent() {
     const { data: session } = useSession();
@@ -681,11 +661,11 @@ function GachaPageContent() {
                                         <div className="bg-white/5 rounded-xl p-6 border border-white/10">
                                             <h4 className="text-lg font-semibold text-white mb-4">Tirage Simple (1x)</h4>
                                             <div className="space-y-3">
-                                                <ProbabilityBar label="☆☆☆☆☆ Mythique" percentage={2.0} colorClass="bg-yellow-500" />
-                                                <ProbabilityBar label="☆☆☆☆ Légendaire" percentage={5.0} colorClass="bg-purple-500" />
-                                                <ProbabilityBar label="☆☆☆ Épique" percentage={15.0} colorClass="bg-blue-500" />
-                                                <ProbabilityBar label="☆☆ Rare" percentage={25.0} colorClass="bg-green-500" />
-                                                <ProbabilityBar label="☆ Commun" percentage={53.0} colorClass="bg-gray-500" />
+                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆☆☆☆ Mythique</span><span className="text-yellow-400 font-semibold">0.4%</span></div>
+                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆☆☆ Légendaire</span><span className="text-purple-400 font-semibold">3.0%</span></div>
+                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆☆ Épique</span><span className="text-blue-400 font-semibold">15.0%</span></div>
+                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆ Rare</span><span className="text-green-400 font-semibold">25.0%</span></div>
+                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆ Commun</span><span className="text-gray-400 font-semibold">56.6%</span></div>
                                             </div>
                                         </div>
                                         <div className="bg-white/5 rounded-xl p-6 border border-white/10">
