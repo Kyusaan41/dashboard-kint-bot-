@@ -241,7 +241,7 @@ function GachaPageContent() {
             return;
         }
 
-        const cost = type === 'single' ? 50 : 500;
+        const cost = type === 'single' ? 1000 : 10000;
         if (currency < cost) {
             alert('Pas assez de monnaie !');
             return;
@@ -534,14 +534,14 @@ function GachaPageContent() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => performPull('single')}
-                                disabled={pullAnimation.active || currency < 50}
+                                disabled={pullAnimation.active || currency < 1000}
                             className="bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="px-5 py-2.5 flex flex-col items-center">
                                 <span>Souhait x1</span>
                                 <div className="flex items-center gap-1 text-xs text-yellow-300">
                                     <span className="text-yellow-400">✦</span>
-                                    <span>50</span>
+                                    <span>1000</span>
                                 </div>
                             </div>
                         </motion.button>
