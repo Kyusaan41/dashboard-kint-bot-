@@ -71,7 +71,7 @@ const getRarityStyle = (rarity: string) => {
 
 // --- COMPOSANT D'ANIMATION DE SOUHAIT ---
 
-const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity: CardRarity | null }) => {
+const WishAnimation = ({ count, highestRarity, currency }: { count: number, highestRarity: CardRarity | null, currency: number }) => {
     const rarityStyle = getRarityStyle(highestRarity || 'Commun');
     const isHighRarity = highestRarity === 'Légendaire' || highestRarity === 'Mythique';
 
@@ -88,6 +88,14 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
             exit={{ opacity: 0, transition: { delay: 1.5 } }} // Délai avant de disparaître
             className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
         >
+            {/* Affichage de la monnaie en haut à droite */}
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+                <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full text-sm">
+                    <span className="text-yellow-400">✦</span>
+                    <span>{currency}</span>
+                </div>
+            </div>
+
             {/* Fond étoilé animé */}
             {Array.from({ length: 100 }).map((_, i) => (
                 <motion.div
@@ -820,7 +828,7 @@ function GachaPageContent() {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                    {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} />}
+                    {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} currency={currency} />}
                 </AnimatePresence>
             </div>
         </div>
