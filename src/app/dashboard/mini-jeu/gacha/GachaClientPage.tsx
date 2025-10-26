@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Filter, History, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { getRandomCardByRarity, getCardById } from './cards';
+import { getRandomCardByRarity, getCardById, getCardsByRarity, AnimeCard } from './cards';
 import { useSession } from 'next-auth/react';
 import { fetchCurrency as apiFetchCurrency, updateCurrency as apiUpdateCurrency } from '@/utils/api';
 import { RevealedCard } from './RevealedCard'; 
@@ -247,7 +247,7 @@ function GachaPageContent() {
                     if (Math.random() < 0.5) { // 50% de chance d'avoir le personnage de la bannière
                         selectedCard = getCardById(featuredCharacters[currentFeatured].id)!;
                     } else { // 50% de chance d'avoir un autre Mythique
-                        const allMythics = getCardsByRarity('Mythique');
+                        const allMythics: AnimeCard[] = getCardsByRarity('Mythique');
                         const offBannerMythics = allMythics.filter(c => c.id !== featuredCharacters[currentFeatured].id);
                         selectedCard = offBannerMythics[Math.floor(Math.random() * offBannerMythics.length)];
                     }
