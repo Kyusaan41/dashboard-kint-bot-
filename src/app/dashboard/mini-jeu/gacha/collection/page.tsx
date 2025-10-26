@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, Loader, BookOpen, Star, Layers, Hash, Filter, ChevronDown } from 'lucide-react';
 import { CardImage } from '../CardImage';
-import { AnimeCard } from '../cards';
+import { AnimeCard, ANIME_CARDS } from '../cards';
 import { API_ENDPOINTS } from '@/lib/api-config';
 
 // --- TYPES ---
@@ -122,6 +122,33 @@ export default function CollectionPage() {
             }).filter(ac => ac.cards.length > 0); // Ne pas afficher les animes sans cartes après filtrage
     }, [collection, rarityFilter, sortOrder]);
 
+    // ✨ NOUVEAU: Calcul dynamique des animes complétés
+    const { completedAnimes, totalAnimes } = useMemo(() => {
+        if (!collection) return { completedAnimes: 0, totalAnimes: 0 };
+
+        // 1. Grouper toutes les cartes existantes par anime
+        const allCardsByAnime = ANIME_CARDS.reduce((acc, card) => {
+            acc[card.anime] = (acc[card.anime] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const totalAnimes = Object.keys(allCardsByAnime).length;
+
+        // 2. Compter combien d'animes sont complétés par l'utilisateur
+        let completedCount = 0;
+        for (const animeCollection of collection.collections) {
+            const totalCardsForThisAnime = allCardsByAnime[animeCollection.anime];
+            if (totalCardsForThisAnime && animeCollection.cards.length === totalCardsForThisAnime) {
+                completedCount++;
+            }
+        }
+
+        return {
+            completedAnimes: completedCount,
+            totalAnimes: totalAnimes
+        };
+    }, [collection]);
+
     if (loading) {
         return (
             <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white p-4">
@@ -143,7 +170,7 @@ export default function CollectionPage() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 to-indigo-900 text-white p-4 sm:p-6 lg:p-8">
+        <div className="min-h-screen w-full bg-transparent text-white p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-3xl sm:text-4xl font-bold flex items-center gap-3">
@@ -160,7 +187,7 @@ export default function CollectionPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                     <StatCard icon={<Hash size={24} />} label="Cartes Uniques" value={collection?.uniqueCards || 0} />
                     <StatCard icon={<Layers size={24} />} label="Total (avec doublons)" value={collection?.totalCards || 0} />
-                    <StatCard icon={<Star size={24} />} label="Animes Complétés" value={"0 / 9"} />
+                    <StatCard icon={<Star size={24} />} label="Animes Complétés" value={`${completedAnimes} / ${totalAnimes}`} />
                 </div>
 
                 {/* ✨ NOUVEAU: Barre de filtres et de tri */}
