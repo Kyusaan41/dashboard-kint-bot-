@@ -15,12 +15,13 @@ export interface AnimeCard {
 }
 
 // Probabilités de drop (total = 85% car 15% = rien)
+// ✨ MISE À JOUR: Taux de Mythique à 2% et ajustement des autres taux.
 export const RARITY_RATES = {
-    'Commun': 0.40,      // 40% (47% des cartes)
-    'Rare': 0.25,        // 25% (29% des cartes)
-    'Épique': 0.15,      // 15% (18% des cartes)
-    'Légendaire': 0.05,  // 5%  (6% des cartes)
-    'Mythique': 0.01,    // 1% (sauf pity à 100 tirages)
+    'Commun': 0.53,      // 53%
+    'Rare': 0.25,        // 25%
+    'Épique': 0.15,      // 15%
+    'Légendaire': 0.05,  // 5%
+    'Mythique': 0.02,    // 2% (chance de base, hors pity)
 };
 
 // Couleurs associées aux raretés

@@ -214,35 +214,51 @@ function GachaPageContent() {
         const results: PullResult[] = [];
 
         for (let i = 0; i < numCards; i++) {
-            const featuredChar = featuredCharacters[currentFeatured];
-            const pity = featuredChar.pity;
-            const isGuaranteedPull = pity + (numCards - i) >= 100;
+            const currentPity = featuredCharacters[currentFeatured].pity + 1; // Pity pour ce tirage
+            const isPityPull = currentPity >= 100;
 
-            let selectedRarity: CardRarity;
             let selectedCard: import('./cards').AnimeCard;
-            if (isGuaranteedPull) {
-                selectedCard = getCardById(featuredChar.id) || getRandomCardByRarity('Légendaire');
-                setFeaturedCharacters((prev: FeaturedCharacter[]) => prev.map((char: FeaturedCharacter, index: number) =>
-                    index === currentFeatured ? { ...char, pity: 0 } : char
-                ));
+
+            // 1. Tirage garanti par la Pity
+            if (isPityPull) {
+                selectedCard = getCardById(featuredCharacters[currentFeatured].id)!;
+                // Reset pity
+                setFeaturedCharacters(prev => prev.map((char, index) =>
+                    index === currentFeatured ? { ...char, pity: 0 } : char));
             } else {
-                const random = Math.random(); // TODO: Use a more robust random number generator
-                if (random < 0.004) selectedRarity = 'Mythique';
-                else if (random < 0.034) selectedRarity = 'Légendaire';
-                else if (random < 0.184) selectedRarity = 'Épique';
-                else if (random < 0.434) selectedRarity = 'Rare';
-                else selectedRarity = 'Commun';
+                // 2. Tirage normal
+                const random = Math.random();
+                let selectedRarity: CardRarity;
 
-                selectedCard = getRandomCardByRarity(selectedRarity);
-
-                if (selectedCard.id !== featuredChar.id) {
-                    setFeaturedCharacters((prev: FeaturedCharacter[]) => prev.map((char: FeaturedCharacter, index: number) =>
-                        index === currentFeatured ? { ...char, pity: char.pity + 1 } : char
-                    ));
+                if (random < 0.02) { // 2% de chance pour un Mythique
+                    selectedRarity = 'Mythique';
+                } else if (random < 0.07) { // 5% pour un Légendaire (0.02 + 0.05)
+                    selectedRarity = 'Légendaire';
+                } else if (random < 0.22) { // 15% pour un Épique (0.07 + 0.15)
+                    selectedRarity = 'Épique';
+                } else if (random < 0.47) { // 25% pour un Rare (0.22 + 0.25)
+                    selectedRarity = 'Rare';
                 } else {
-                    setFeaturedCharacters((prev: FeaturedCharacter[]) => prev.map((char: FeaturedCharacter, index: number) =>
-                        index === currentFeatured ? { ...char, pity: 0 } : char
-                    ));
+                    selectedRarity = 'Commun';
+                }
+
+                // Si on obtient un Mythique, on fait le 50/50
+                if (selectedRarity === 'Mythique') {
+                    if (Math.random() < 0.5) { // 50% de chance d'avoir le personnage de la bannière
+                        selectedCard = getCardById(featuredCharacters[currentFeatured].id)!;
+                    } else { // 50% de chance d'avoir un autre Mythique
+                        const allMythics = getCardsByRarity('Mythique');
+                        const offBannerMythics = allMythics.filter(c => c.id !== featuredCharacters[currentFeatured].id);
+                        selectedCard = offBannerMythics[Math.floor(Math.random() * offBannerMythics.length)];
+                    }
+                    // Reset pity car on a eu un 5★
+                    setFeaturedCharacters(prev => prev.map((char, index) =>
+                        index === currentFeatured ? { ...char, pity: 0 } : char));
+                } else {
+                    // On a pas eu de 5★, on prend une carte de la rareté tirée et on augmente la pity
+                    selectedCard = getRandomCardByRarity(selectedRarity);
+                    setFeaturedCharacters(prev => prev.map((char, index) =>
+                        index === currentFeatured ? { ...char, pity: currentPity } : char));
                 }
             }
 
@@ -250,7 +266,6 @@ function GachaPageContent() {
             results.push({ card: selectedCard, isNew });
 
             try {
-                // On utilise le proxy Next.js pour éviter les problèmes de CORS
                 await fetch('/api/gacha/collection', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
