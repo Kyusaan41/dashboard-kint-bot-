@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, Loader, BookOpen, Star, Layers, Hash, Filter, ChevronDown } from 'lucide-react';
 import { CardImage } from '../CardImage';
-import { AnimeCard, ANIME_CARDS } from '../cards';
+import { AnimeCard, ANIME_CARDS, getCardById } from '../cards';
 import { API_ENDPOINTS } from '@/lib/api-config';
 
 // --- TYPES ---
@@ -70,7 +70,19 @@ export default function CollectionPage() {
                     }
                     const data = await response.json();
                     if (data.success) {
-                        setCollection(data.data);
+                        // ✨ CORRECTION: On enrichit les données reçues avec les infos locales
+                        const localData = data.data;
+                        localData.collections.forEach((animeCollection: AnimeCollection) => {
+                            animeCollection.cards.forEach((collectedCard: CollectedCard) => {
+                                const localCardInfo = getCardById(collectedCard.cardId);
+                                if (localCardInfo) {
+                                    // On remplace les infos de la carte par celles du fichier local
+                                    // pour garantir la cohérence (surtout pour les images).
+                                    collectedCard.cardInfo = localCardInfo;
+                                }
+                            });
+                        });
+                        setCollection(localData);
                     } else {
                         throw new Error(data.error || "Une erreur est survenue.");
                     }
