@@ -114,7 +114,7 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
                 className="absolute"
                 initial={{ x: '-100vw', y: '-50vh', opacity: 0 }}
                 animate={{ x: '100vw', y: '50vh', opacity: [0, 1, 1, 0] }}
-                transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9], delay: 0.2 }}
+                transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
             >
                 <div className={`w-48 h-1.5 ${cometColor} rounded-full blur-[1px]`} />
                 <div className={`absolute top-0 left-0 w-48 h-1.5 ${cometColor} rounded-full blur-md opacity-70`} />
