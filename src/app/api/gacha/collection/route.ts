@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
     });
     
     if (!backendResponse.ok) {
-      throw new Error(`Backend error: ${backendResponse.status}`);
+      return NextResponse.json(
+        { success: false, error: 'Backend unavailable' },
+        { status: 502 }
+      );
     }
     
     const data = await backendResponse.json();
@@ -21,7 +24,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('API route error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to add card to collection' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

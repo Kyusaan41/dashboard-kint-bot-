@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const backendResponse = await fetch(`http://193.70.34.25:20007/api/gacha/collection/${params.userId}`);
+    const params = await context.params;
+    const { userId } = params;
+    
+    const backendResponse = await fetch(`http://193.70.34.25:20007/api/gacha/collection/${userId}`);
     
     if (!backendResponse.ok) {
       throw new Error(`Backend error: ${backendResponse.status}`);
