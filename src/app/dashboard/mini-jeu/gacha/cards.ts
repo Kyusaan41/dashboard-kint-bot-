@@ -873,9 +873,6 @@ export const ANIME_CARDS: AnimeCard[] = [
         description: 'La transformation ultime de Gon',
         power: 100
     },
-];
-
-const chainsawManCards: AnimeCard[] = [
     // ===== CHAINSAW MAN =====
     // Commun
     {
