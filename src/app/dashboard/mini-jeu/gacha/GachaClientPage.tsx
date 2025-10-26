@@ -549,14 +549,14 @@ function GachaPageContent() {
                             whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => performPull('multi')}
-                            disabled={pullAnimation.active || currency < 500}
+                            disabled={pullAnimation.active || currency < 10000}
                             className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 text-black font-bold rounded-full shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="px-8 py-2.5 flex flex-col items-center">
                                 <span>Souhait x10</span>
                                 <div className="flex items-center gap-1 text-xs text-black/70">
                                     <span className="text-yellow-700">✦</span>
-                                    <span>500</span>
+                                    <span>10000</span>
                                 </div>
                             </div>
                         </motion.button>
