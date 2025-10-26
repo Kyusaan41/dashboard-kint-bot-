@@ -250,8 +250,8 @@ function GachaPageContent() {
             results.push({ card: selectedCard, isNew });
 
             try {
-                // On utilise le proxy Vercel
-                await fetch(API_ENDPOINTS.GACHA_ADD_CARD, {
+                // On utilise le proxy Next.js pour éviter les problèmes de CORS
+                await fetch('/api/gacha/collection', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
