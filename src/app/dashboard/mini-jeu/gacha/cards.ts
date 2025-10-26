@@ -875,6 +875,105 @@ export const ANIME_CARDS: AnimeCard[] = [
     },
 ];
 
+const chainsawManCards: AnimeCard[] = [
+    // ===== CHAINSAW MAN =====
+    // Commun
+    {
+        id: 'csm_001',
+        name: 'Denji',
+        anime: 'Chainsaw Man',
+        rarity: 'Commun',
+        image: '/gacha/cards/csm_001.jpg',
+        malId: 165265,
+        description: 'Un jeune homme fusionné avec son chien-démon, Pochita.',
+        power: 45
+    },
+    {
+        id: 'csm_002',
+        name: 'Pochita',
+        anime: 'Chainsaw Man',
+        rarity: 'Commun',
+        image: '/gacha/cards/csm_002.jpg',
+        malId: 165266,
+        description: 'Le démon-tronçonneuse au grand cœur, meilleur ami de Denji.',
+        power: 38
+    },
+    // Rare
+    {
+        id: 'csm_003',
+        name: 'Aki Hayakawa',
+        anime: 'Chainsaw Man',
+        rarity: 'Rare',
+        image: '/gacha/cards/csm_003.jpg',
+        malId: 165268,
+        description: 'Un Devil Hunter sérieux qui a des contrats avec plusieurs démons.',
+        power: 62
+    },
+    {
+        id: 'csm_004',
+        name: 'Power',
+        anime: 'Chainsaw Man',
+        rarity: 'Rare',
+        image: '/gacha/cards/csm_004.jpg',
+        malId: 165267,
+        description: 'La Démon-Sang, aussi puissante que chaotique et menteuse.',
+        power: 60
+    },
+    // Épique
+    {
+        id: 'csm_005',
+        name: 'Makima',
+        anime: 'Chainsaw Man',
+        rarity: 'Épique',
+        image: '/gacha/cards/csm_005.jpg',
+        malId: 165269,
+        description: 'Une Devil Hunter de haut rang, chef de l\'escouade spéciale de Denji.',
+        power: 82
+    },
+    {
+        id: 'csm_006',
+        name: 'Kishibe',
+        anime: 'Chainsaw Man',
+        rarity: 'Épique',
+        image: '/gacha/cards/csm_006.jpg',
+        malId: 172815,
+        description: 'Le plus puissant Devil Hunter, capitaine de l\'escouade spéciale de Tokyo.',
+        power: 79
+    },
+    // Légendaire
+    {
+        id: 'csm_007',
+        name: 'Chainsaw Man',
+        anime: 'Chainsaw Man',
+        rarity: 'Légendaire',
+        image: '/gacha/cards/csm_007.jpg',
+        malId: 165265,
+        description: 'La forme démoniaque de Denji, le "Héros de l\'Enfer" craint par les démons.',
+        power: 92
+    },
+    {
+        id: 'csm_008',
+        name: 'Gun Devil',
+        anime: 'Chainsaw Man',
+        rarity: 'Légendaire',
+        image: '/gacha/cards/csm_008.jpg',
+        malId: 201377,
+        description: 'Un démon incroyablement puissant qui incarne la peur des armes à feu.',
+        power: 95
+    },
+    // Mythique
+    {
+        id: 'csm_009',
+        name: 'Darkness Devil',
+        anime: 'Chainsaw Man',
+        rarity: 'Mythique',
+        image: '/gacha/cards/csm_009.png',
+        malId: 201378,
+        description: 'Un démon primordial qui n\'a jamais connu la mort, incarnant la peur des ténèbres.',
+        power: 100
+    },
+];
+
 // Fonction pour obtenir toutes les cartes d'une rareté donnée
 export function getCardsByRarity(rarity: CardRarity): AnimeCard[] {
     return ANIME_CARDS.filter(card => card.rarity === rarity);
