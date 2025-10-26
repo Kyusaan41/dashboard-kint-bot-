@@ -73,60 +73,103 @@ const getRarityStyle = (rarity: string) => {
 
 const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity: CardRarity | null }) => {
     const rarityStyle = getRarityStyle(highestRarity || 'Commun');
+    const isHighRarity = highestRarity === 'Légendaire' || highestRarity === 'Mythique';
+
+    const cometColor = 
+        highestRarity === 'Mythique' ? 'bg-yellow-400' :
+        highestRarity === 'Légendaire' ? 'bg-purple-400' :
+        highestRarity === 'Épique' ? 'bg-blue-400' :
+        'bg-white';
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { delay: 0.5 } }}
-            className="fixed inset-0 bg-black/90 backdrop-blur-xl z-50 flex items-center justify-center overflow-hidden"
+            exit={{ opacity: 0, transition: { delay: 1.5 } }} // Délai avant de disparaître
+            className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
         >
-            {/* Particules qui convergent */}
-            {Array.from({ length: count * 5 }).map((_, i) => (
+            {/* Fond étoilé animé */}
+            {Array.from({ length: 100 }).map((_, i) => (
                 <motion.div
                     key={i}
-                    className={`absolute w-1 h-1 rounded-full ${rarityStyle.bg}`}
+                    className="absolute rounded-full bg-white/50"
                     style={{
-                        top: '50%',
-                        left: '50%',
-                        boxShadow: `0 0 8px 1px ${rarityStyle.shadow.replace('shadow-', 'rgba(').replace('/50', ', 0.8)')}`
+                        width: Math.random() * 2 + 0.5,
+                        height: Math.random() * 2 + 0.5,
+                        top: `${Math.random() * 100}%`,
+                        left: `${Math.random() * 100}%`,
                     }}
-                    initial={{ 
-                        x: (Math.random() - 0.5) * 1000, 
-                        y: (Math.random() - 0.5) * 1000,
-                        opacity: 0
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: [0, 1, 0] }}
+                    transition={{
+                        duration: Math.random() * 3 + 2,
+                        repeat: Infinity,
+                        delay: Math.random() * 4,
                     }}
-                    animate={{ x: 0, y: 0, opacity: 1 }}
-                    transition={{ duration: 1.5, delay: i * 0.02, ease: 'circIn' }}
                 />
             ))}
 
-            {/* Cercle de runes */}
+            {/* Étoile filante */}
             <motion.div
-                className="absolute w-64 h-64"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                className="absolute"
+                initial={{ x: '-100vw', y: '-50vh', opacity: 0 }}
+                animate={{ x: '100vw', y: '50vh', opacity: [0, 1, 1, 0] }}
+                transition={{ duration: 1.2, ease: [0.6, 0.01, -0.05, 0.9], delay: 0.2 }}
             >
-                <svg viewBox="0 0 100 100" className="w-full h-full opacity-50">
-                    <path d="M50 2 a 48 48 0 1 1 0 96 a 48 48 0 1 1 0 -96" stroke="currentColor" strokeWidth="0.5" fill="none" className={rarityStyle.text} />
-                    <text x="50" y="53" textAnchor="middle" fontSize="10" fill="currentColor" className={rarityStyle.text}>룬</text>
+                <div className={`w-48 h-1.5 ${cometColor} rounded-full blur-[1px]`} />
+                <div className={`absolute top-0 left-0 w-48 h-1.5 ${cometColor} rounded-full blur-md opacity-70`} />
+            </motion.div>
+
+            {/* Onde de choc à l'impact */}
+            <motion.div
+                className={`absolute w-1 h-1 rounded-full border-4 ${rarityStyle.border}`}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: [0, 1, 300], opacity: [0, 1, 0] }}
+                transition={{ duration: 0.7, ease: 'easeOut', delay: 1.5 }}
+            />
+            
+            {/* Formation de la porte */}
+            <motion.div
+                className="absolute"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.8, duration: 0.5 }}
+            >
+                {/* Lueur extérieure */}
+                <motion.div
+                    className={`absolute -inset-8 w-80 h-80 rounded-full ${rarityStyle.bg} blur-2xl`}
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
+                />
+                {/* Porte elle-même */}
+                <svg width="256" height="256" viewBox="0 0 256 256" className="relative">
+                    <defs>
+                        <radialGradient id="gateGradient" cx="50%" cy="50%" r="50%">
+                            <stop offset="60%" stopColor="rgba(10, 5, 20, 0)" />
+                            <stop offset="85%" stopColor={isHighRarity ? 'rgba(255, 220, 120, 0.5)' : 'rgba(190, 150, 255, 0.5)'} />
+                            <stop offset="100%" stopColor={isHighRarity ? 'rgba(255, 255, 255, 1)' : 'rgba(220, 200, 255, 1)'} />
+                        </radialGradient>
+                    </defs>
+                    <motion.circle
+                        cx="128"
+                        cy="128"
+                        r="120"
+                        stroke="url(#gateGradient)"
+                        strokeWidth="8"
+                        fill="none"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ duration: 1, delay: 2.0, ease: 'easeInOut' }}
+                    />
                 </svg>
             </motion.div>
 
-            {/* Explosion de lumière */}
-            <motion.div
-                className={`absolute w-96 h-96 rounded-full ${rarityStyle.bg}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 1, 0], scale: [0, 3] }}
-                transition={{ duration: 0.5, delay: 2.5, ease: 'easeOut' }}
-            />
-            
-            {/* Flash blanc */}
+            {/* Flash final */}
             <motion.div
                 className="absolute inset-0 bg-white"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2.9, duration: 0.1 }}
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{ delay: 3.8, duration: 0.4, times: [0, 0.1, 1] }}
             />
         </motion.div>
     );
@@ -289,7 +332,7 @@ function GachaPageContent() {
         setPullResults(results);
         setPullAnimation({ active: true, count: numCards, highestRarity });
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 4200));
 
         setPullHistory(prev => [{ id: Date.now().toString(), cards: results, timestamp: new Date(), type, cost }, ...prev]);
         setPullAnimation({ active: false, count: 0, highestRarity: null });
