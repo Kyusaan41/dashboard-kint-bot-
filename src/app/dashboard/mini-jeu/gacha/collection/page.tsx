@@ -47,6 +47,15 @@ const StatCard = ({ icon, label, value }: { icon: React.ReactNode, label: string
     </div>
 );
 
+// ✨ NOUVEAU: Fonction pour générer les étoiles de rareté
+const getRarityStars = (rarity: string) => {
+    const rarityToStarCount: { [key: string]: number } = { 'Commun': 1, 'Rare': 2, 'Épique': 3, 'Légendaire': 4, 'Mythique': 5 };
+    const count = rarityToStarCount[rarity] || 0;
+    return Array(count).fill(0).map((_, i) => (
+        <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+    ));
+};
+
 export default function CollectionPage() {
     const { data: session } = useSession();
     const [collection, setCollection] = useState<UserCollection | null>(null);
@@ -263,7 +272,9 @@ export default function CollectionPage() {
                                             </div>
                                             <div className="p-2 bg-black/40 backdrop-blur-sm">
                                                 <p className="font-bold text-sm truncate text-white">{cardInfo.name}</p>
-                                                <p className="text-xs text-gray-300">{cardInfo.rarity}</p>
+                                                <div className="flex justify-center items-center gap-1 mt-1">
+                                                    {getRarityStars(cardInfo.rarity)}
+                                                </div>
                                             </div>
                                             {count > 1 && (
                                                 <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-slate-800">
