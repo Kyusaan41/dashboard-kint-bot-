@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ArrowLeft, Loader, BookOpen, Star, Layers, Hash, Filter, ChevronDown } from 'lucide-react';
 import { CardImage } from '../CardImage';
 import { AnimeCard } from '../cards';
+import { API_ENDPOINTS } from '@/lib/api-config';
 
 // --- TYPES ---
 interface CollectedCard {

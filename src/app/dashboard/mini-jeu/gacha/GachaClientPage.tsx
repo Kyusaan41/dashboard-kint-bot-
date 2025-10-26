@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react';
 import { fetchCurrency as apiFetchCurrency, updateCurrency as apiUpdateCurrency } from '@/utils/api';
 import { RevealedCard } from './RevealedCard'; 
 import { GachaProvider, useGacha, FeaturedCharacter } from './GachaContext';
+import { API_ENDPOINTS } from '@/lib/api-config';
 
 const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 
@@ -250,7 +251,7 @@ function GachaPageContent() {
 
             try {
                 // On utilise le proxy Vercel
-                await fetch('/api/gacha/collection', {
+                await fetch(API_ENDPOINTS.GACHA_ADD_CARD, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

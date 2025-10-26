@@ -314,3 +314,4 @@ export async function deleteEvent(eventId: string) {
 export async function fetchGazette() {
     return handleApiResponse(await fetch('/api/gazette'));
 }
+
