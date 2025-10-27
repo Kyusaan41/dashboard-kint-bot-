@@ -417,22 +417,6 @@ function GachaPageContent() {
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Fond cosmique fixe */}
-            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 -z-20" />
-            <motion.div
-                className="absolute inset-0 -z-10"
-                style={{
-                    backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(129, 140, 248, 0.1) 0%, transparent 30%), radial-gradient(circle at 80% 70%, rgba(192, 132, 252, 0.1) 0%, transparent 30%)',
-                }}
-                animate={{
-                    backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'],
-                }}
-                transition={{
-                    duration: 30,
-                    repeat: Infinity,
-                    ease: "linear"
-                }}
-            />
             {/* Effet de particules/énergie subtil */}
             <motion.div
                 className="absolute inset-0 z-0"
