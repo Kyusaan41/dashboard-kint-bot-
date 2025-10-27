@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ANIME_CARDS } from './cards';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { ANIME_CARDS, CardRarity } from './cards';
 
 const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 
@@ -12,7 +12,8 @@ export interface FeaturedCharacter {
     image: string;
     power: number;
     pity: number;
-    lastRotation: number; // Utiliser un timestamp pour la sérialisation
+    lastRotation: number;
+    rarity: CardRarity; // Add rarity here
 }
 
 interface GachaContextType {
@@ -36,14 +37,15 @@ const shuffleArray = (array: any[]) => {
 const generateInitialFeatured = (): FeaturedCharacter[] => {
     const mythicCards = ANIME_CARDS.filter(card => card.rarity === 'Mythique');
     const shuffledMythics = shuffleArray([...mythicCards]);
-    return shuffledMythics.slice(0, 3).map(card => ({
+    return shuffledMythics.slice(0, 3).map((card, index) => ({ // Use index for unique key if needed, but card.id is better
         id: card.id,
         name: card.name,
         anime: card.anime,
         image: card.image,
         power: card.power,
         pity: 0,
-        lastRotation: Date.now()
+        lastRotation: Date.now(),
+        rarity: card.rarity // Assign rarity
     }));
 };
 
@@ -54,11 +56,11 @@ export const GachaProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         const storedState = localStorage.getItem('gachaBannerState');
-        if (storedState) {
+        if (storedState) { // Check if storedState exists and is valid JSON
             const { characters, current } = JSON.parse(storedState);
             setFeaturedCharacters(characters);
             setCurrentFeatured(current);
-        } else {
+        } else { // If no stored state, generate initial featured characters
             setFeaturedCharacters(generateInitialFeatured());
         }
     }, []);
@@ -67,7 +69,7 @@ export const GachaProvider = ({ children }: { children: ReactNode }) => {
         if (featuredCharacters.length > 0) {
             localStorage.setItem('gachaBannerState', JSON.stringify({ characters: featuredCharacters, current: currentFeatured }));
 
-            const timer = setInterval(() => {
+            const timer = setInterval(() => { // Update time remaining every second
                 const now = Date.now();
                 const rotationEndTime = featuredCharacters[currentFeatured].lastRotation + BANNER_DURATION_MS;
                 setTimeRemaining(Math.max(0, rotationEndTime - now));

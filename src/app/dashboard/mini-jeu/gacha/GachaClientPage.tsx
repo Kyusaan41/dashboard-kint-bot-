@@ -69,6 +69,17 @@ const getRarityStyle = (rarity: string) => {
     return RARITY_STYLES[key] || RARITY_STYLES.commun;
 };
 
+// --- FONCTION POUR OBTENIR LA COULEUR DE LUEUR EN FONCTION DE LA RARETÉ ---
+const getGlowColor = (rarity: CardRarity | null) => {
+    switch (rarity) {
+        case 'Mythique': return 'rgba(255, 220, 120, 0.7)'; // Yellowish
+        case 'Légendaire': return 'rgba(190, 150, 255, 0.7)'; // Purplish
+        case 'Épique': return 'rgba(100, 150, 255, 0.7)'; // Bluish
+        case 'Rare': return 'rgba(100, 255, 150, 0.7)'; // Greenish
+        default: return 'transparent'; // Commun or null
+    }
+};
+
 // --- COMPOSANT D'ANIMATION DE SOUHAIT (WishAnimation) ---
 
 const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity: CardRarity | null }) => {
@@ -422,6 +433,21 @@ function GachaPageContent() {
                     ease: "linear"
                 }}
             />
+            {/* Effet de particules/énergie subtil */}
+            <motion.div
+                className="absolute inset-0 z-0"
+                style={{
+                    backgroundImage: `radial-gradient(circle at 20% 80%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%)`,
+                    backgroundSize: '200% 200%',
+                }}
+                animate={{
+                    backgroundPosition: ['0% 0%', '100% 100%'],
+                }}
+                transition={{
+                    duration: 40,
+                    repeat: Infinity,
+                }}
+            />
             
             <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white z-50">
 
@@ -458,20 +484,44 @@ function GachaPageContent() {
                 
                 <div className="flex-1 rounded-xl relative overflow-hidden shadow-lg mb-3">
                     {/* Image de fond floutée */}
-                    <img
+                    <motion.img
                         src={currentFeaturedChar.image}
                         alt="Banner Background"
                         className="absolute inset-0 w-full h-full object-cover filter blur-sm scale-110 opacity-30"
+                        initial={{ scale: 1.1, rotate: 0 }}
+                        animate={{ scale: 1.15, rotate: 0.5 }}
+                        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
                     />
                     {/* Dégradé pour la lisibilité */}
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-                    {/* Image du personnage "Splash Art" (grande, sans case, non floue) */}
+
+                    {/* Glow dynamique derrière le personnage */}
+                    <AnimatePresence mode="wait">
+                        {currentFeaturedChar.rarity && currentFeaturedChar.rarity !== 'Commun' && (
+                            <motion.div
+                                key={`glow-${currentFeaturedChar.id}`}
+                                className="absolute top-1/2 -translate-y-1/2 z-0 rounded-full blur-xl"
+                                style={{
+                                    right: currentFeaturedChar.rarity === 'Mythique' ? '-10px' : '20px',
+                                    height: currentFeaturedChar.rarity === 'Mythique' ? '130%' : '110%',
+                                    width: currentFeaturedChar.rarity === 'Mythique' ? '400px' : '300px',
+                                    backgroundColor: getGlowColor(currentFeaturedChar.rarity),
+                                }}
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 0.5 }}
+                                exit={{ scale: 0.8, opacity: 0 }}
+                                transition={{ duration: 0.5, ease: "easeOut" }}
+                            />
+                        )}
+                    </AnimatePresence>
+
+                    {/* Image du personnage "Splash Art" */}
                     <AnimatePresence mode="wait">
                         <motion.img
                             key={currentFeaturedChar.id}
                             src={currentFeaturedChar.image}
                             alt={currentFeaturedChar.name}
-                                className="absolute right-[-50px] md:right-0 top-1/2 -translate-y-1/2 h-[110%] md:h-[120%] w-auto z-10 object-contain object-right"
+                            className="absolute right-[-50px] md:right-0 top-1/2 -translate-y-1/2 h-[110%] md:h-[120%] w-auto z-10 object-contain object-right"
                             initial={{ opacity: 0, x: 100 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -100 }}

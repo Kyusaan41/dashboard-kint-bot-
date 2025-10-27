@@ -63,8 +63,12 @@ export async function POST(request: NextRequest, context: any) {
             throw new Error(data.error || 'Erreur du bot API lors de la mise à jour.');
         }
 
-        // Renvoyer la réponse finale du bot
-        return NextResponse.json(data);
+                // ✅ Retour standardisé
+        return NextResponse.json({
+            success: true,
+            message: 'Solde mis à jour avec succès',
+            newBalance,
+        });
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
