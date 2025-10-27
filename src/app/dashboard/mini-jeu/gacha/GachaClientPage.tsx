@@ -16,7 +16,7 @@ const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 // --- INTERFACES ---
 
 interface PullResult {
-    card: import('./cards').AnimeCard;
+    card: import('./cards').AnimeCard; // Exported for potential future use or consistency
     isNew: boolean;
 }
 type CardRarity = 'Commun' | 'Rare' | 'Épique' | 'Légendaire' | 'Mythique';
@@ -69,7 +69,7 @@ const getRarityStyle = (rarity: string) => {
     return RARITY_STYLES[key] || RARITY_STYLES.commun;
 };
 
-// --- COMPOSANT D'ANIMATION DE SOUHAIT ---
+// --- COMPOSANT D'ANIMATION DE SOUHAIT (WishAnimation) ---
 
 const WishAnimation = ({ count, highestRarity, currency }: { count: number, highestRarity: CardRarity | null, currency: number }) => {
     const rarityStyle = getRarityStyle(highestRarity || 'Commun');
@@ -183,12 +183,31 @@ const WishAnimation = ({ count, highestRarity, currency }: { count: number, high
     );
 };
 
+// --- FONCTION POUR LE SUSPENSE DE LA PITY ---
+
+const getPityStatus = (pity: number): { text: string; className: string } => {
+    if (pity >= 90) {
+        return { text: "Le destin est imminent !", className: "text-red-400 animate-pulse" };
+    }
+    if (pity >= 75) {
+        return { text: "Une aura dorée se forme...", className: "text-yellow-400" };
+    }
+    if (pity >= 50) {
+        return { text: "L'étoile scintille intensément", className: "text-purple-400" };
+    }
+    if (pity >= 25) {
+        return { text: "Une lueur se dessine", className: "text-blue-400" };
+    }
+    return { text: "Une faible étincelle", className: "text-cyan-400" };
+};
+
+
 // --- COMPOSANT DE LA PAGE GACHA (LOGIQUE) ---
 function GachaPageContent() {
     const { data: session } = useSession();
-    const [currency, setCurrency] = useState(0);
-    const [pullAnimation, setPullAnimation] = useState<{ active: boolean; count: number; highestRarity: CardRarity | null }>({
-        active: false, count: 0, highestRarity: null
+    const [currency, setCurrency] = useState<number>(0); // Explicitly type to number
+    const [pullAnimation, setPullAnimation] = useState<{ active: boolean; count: number; highestRarity: CardRarity | null; currentBalance: number }>({ // Add currentBalance
+        active: false, count: 0, highestRarity: null, currentBalance: 0
     });
     const [revealedCardIndex, setRevealedCardIndex] = useState(0);
 
@@ -218,12 +237,12 @@ function GachaPageContent() {
         }
     }, [session]);
 
-    const updateCurrency = async (amount: number) => {
-        if (!session) return false;
+    const updateCurrency = async (amount: number): Promise<number | false> => { // Return new balance
+        if (!session) return false; // Should not happen if session check is before
         try {
             const data = await apiUpdateCurrency(session.user.id, amount, 'Gacha');
             setCurrency(data.newBalance);
-            return true;
+            return data.newBalance; // Return the new balance
         } catch (error) {
             console.error("[GACHA] Erreur de mise à jour de la monnaie:", error);
             return false;
@@ -249,14 +268,14 @@ function GachaPageContent() {
             return;
         }
 
-        const cost = type === 'single' ? 1000 : 10000;
-        if (currency < cost) {
+        const cost = type === 'single' ? 1000 : 10000; // Define cost before checking balance
+        if (currency < cost) { // Use current state currency for check
             alert('Pas assez de monnaie !');
             return;
         }
 
-        const currencyUpdated = await updateCurrency(-cost);
-        if (!currencyUpdated) {
+        const newBalance = await updateCurrency(-cost);
+        if (newBalance === false) {
             alert("Une erreur est survenue avec votre solde. Veuillez réessayer.");
             return;
         }
@@ -337,13 +356,13 @@ function GachaPageContent() {
             return rarityOrder.indexOf(current.card.rarity) > rarityOrder.indexOf(max) ? current.card.rarity : max;
         }, 'Commun' as CardRarity);
 
+        // The currency state should already be updated by the await updateCurrency call
         setPullResults(results);
-        setPullAnimation({ active: true, count: numCards, highestRarity });
+        setPullAnimation({ active: true, count: numCards, highestRarity, currentBalance: newBalance as number }); // Pass the actual new balance
 
         await new Promise(resolve => setTimeout(resolve, 4200));
-
         setPullHistory(prev => [{ id: Date.now().toString(), cards: results, timestamp: new Date(), type, cost }, ...prev]);
-        setPullAnimation({ active: false, count: 0, highestRarity: null });
+        setPullAnimation({ active: false, count: 0, highestRarity: null, currentBalance: newBalance as number });
         setShowResults(true);
     };
 
@@ -381,6 +400,8 @@ function GachaPageContent() {
     };
 
     const currentFeaturedChar = featuredCharacters[currentFeatured]; // Get current featured character
+
+    const pityStatus = currentFeaturedChar ? getPityStatus(currentFeaturedChar.pity) : { text: '', className: '' };
 
     if (!currentFeaturedChar) {
         return <div className="flex h-screen w-full items-center justify-center"><div className="nyx-spinner"></div></div>;
@@ -504,8 +525,8 @@ function GachaPageContent() {
                         <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-right z-20">
                             <div className="text-xs text-white/70">Puissance</div>
                             <div className="text-lg font-semibold text-white">{currentFeaturedChar.power}</div>
-                            <div className="text-xs text-white/70 mt-2">Pity Actuelle</div>
-                            <div className="text-lg font-semibold text-cyan-400">{currentFeaturedChar.pity} / 100</div>
+                            <div className="text-xs text-white/70 mt-2">Progression du Vœu</div>
+                            <div className={`text-lg font-semibold ${pityStatus.className}`}>{pityStatus.text}</div>
                         </div>
                     </div>
                 </div>
@@ -828,7 +849,7 @@ function GachaPageContent() {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                    {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} currency={currency} />}
+                    {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} currency={pullAnimation.currentBalance} />}
                 </AnimatePresence>
             </div>
         </div>
