@@ -229,12 +229,17 @@ function GachaPageContent() {
         }
     }, [session]);
 
-    const updateCurrency = async (amount: number): Promise<number | false> => { // Return new balance
-        if (!session) return false; // Should not happen if session check is before
+    const updateCurrency = async (amount: number): Promise<number | false> => {
+        if (!session) return false;
         try {
             const data = await apiUpdateCurrency(session.user.id, amount, 'Gacha');
-            setCurrency(data.newBalance);
-            return data.newBalance; // Return the new balance
+            const newBal =
+                data.newBalance ??
+                data.balance ??
+                data.currency ??
+                0; // Sécurité multi-format
+            setCurrency(newBal);
+            return newBal;
         } catch (error) {
             console.error("[GACHA] Erreur de mise à jour de la monnaie:", error);
             return false;
