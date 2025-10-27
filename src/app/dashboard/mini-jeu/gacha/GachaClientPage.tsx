@@ -417,21 +417,6 @@ function GachaPageContent() {
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Effet de particules/énergie subtil */}
-            <motion.div
-                className="absolute inset-0 z-0"
-                style={{
-                    backgroundImage: `radial-gradient(circle at 20% 80%, rgba(255,255,255,0.05) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%)`,
-                    backgroundSize: '200% 200%',
-                }}
-                animate={{
-                    backgroundPosition: ['0% 0%', '100% 100%'],
-                }}
-                transition={{
-                    duration: 40,
-                    repeat: Infinity,
-                }}
-            />
             
             <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white z-50">
 
