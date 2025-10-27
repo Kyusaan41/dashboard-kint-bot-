@@ -71,7 +71,7 @@ const getRarityStyle = (rarity: string) => {
 
 // --- COMPOSANT D'ANIMATION DE SOUHAIT (WishAnimation) ---
 
-const WishAnimation = ({ count, highestRarity, currency }: { count: number, highestRarity: CardRarity | null, currency: number }) => {
+const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity: CardRarity | null }) => {
     const rarityStyle = getRarityStyle(highestRarity || 'Commun');
     const isHighRarity = highestRarity === 'Légendaire' || highestRarity === 'Mythique';
 
@@ -86,16 +86,8 @@ const WishAnimation = ({ count, highestRarity, currency }: { count: number, high
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { delay: 1.5 } }} // Délai avant de disparaître
-            className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
+            className="fixed inset-0 bg-black z-40 flex items-center justify-center overflow-hidden" // z-index réduit
         >
-            {/* Affichage de la monnaie en haut à droite (z-index élevé pour être au-dessus de tout) */}
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
-                <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full text-sm">
-                    <span className="text-yellow-400">✦</span>
-                    <span>{currency}</span>
-                </div>
-            </div>
-
             {/* Fond étoilé animé */}
             {Array.from({ length: 100 }).map((_, i) => (
                 <motion.div
@@ -426,7 +418,7 @@ function GachaPageContent() {
                 }}
             />
             
-            <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white">
+            <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white z-50">
 
                 <div className="flex justify-between items-center mb-3 flex-shrink-0">
                     <div className="flex items-center gap-3">
@@ -849,7 +841,7 @@ function GachaPageContent() {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                    {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} currency={pullAnimation.currentBalance} />}
+                    {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} />}
                 </AnimatePresence>
             </div>
         </div>
