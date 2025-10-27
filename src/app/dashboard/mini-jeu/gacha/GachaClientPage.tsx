@@ -88,7 +88,7 @@ const WishAnimation = ({ count, highestRarity, currency }: { count: number, high
             exit={{ opacity: 0, transition: { delay: 1.5 } }} // Délai avant de disparaître
             className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
         >
-            {/* Affichage de la monnaie en haut à droite */}
+            {/* Affichage de la monnaie en haut à droite (z-index élevé pour être au-dessus de tout) */}
             <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full text-sm">
                     <span className="text-yellow-400">✦</span>
@@ -175,7 +175,7 @@ const WishAnimation = ({ count, highestRarity, currency }: { count: number, high
             {/* Flash final */}
             <motion.div
                 className="absolute inset-0 bg-white"
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 0, zIndex: -1 }}
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ delay: 3.8, duration: 0.4, times: [0, 0.1, 1] }}
             />
