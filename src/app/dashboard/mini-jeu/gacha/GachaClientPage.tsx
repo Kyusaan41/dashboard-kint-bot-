@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Filter, History, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { getRandomCardByRarity, getCardById, getCardsByRarity, AnimeCard } from './cards';
-import { useSession } from 'next-auth/react';
-import { fetchCurrency as apiFetchCurrency, updateCurrency as apiUpdateCurrency } from '@/utils/api';
+import { useSession } from 'next-auth/react'; 
+import { fetchCurrency as apiFetchCurrency, updateCurrency } from '@/utils/api';
 import { RevealedCard } from './RevealedCard'; 
 import { GachaProvider, useGacha, FeaturedCharacter } from './GachaContext';
-import { API_ENDPOINTS } from '@/lib/api-config';
+import { API_ENDPOINTS } from '@/lib/api-config.js';
 
 const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 
@@ -23,7 +23,7 @@ type CardRarity = 'Commun' | 'Rare' | 'Épique' | 'Légendaire' | 'Mythique';
 
 interface PullHistory {
     id: string;
-    cards: PullResult[];
+    cards: PullResult[]; 
     timestamp: Date;
     type: 'single' | 'multi';
     cost: number;
@@ -97,7 +97,7 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { delay: 1.5 } }} // Délai avant de disparaître
-            className="fixed inset-0 bg-black z-40 flex items-center justify-center overflow-hidden" // z-index réduit
+            className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
         >
             {/* Fond étoilé animé */}
             {Array.from({ length: 100 }).map((_, i) => (
@@ -186,6 +186,40 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
     );
 };
 
+// --- NOUVEAU COMPOSANT TOAST DE SUCCÈS D'ACHAT ---
+const PurchaseSuccessToast = ({ amount, onComplete }: { amount: number; onComplete: () => void }) => {
+    useEffect(() => {
+        const timer = setTimeout(onComplete, 3000); // Disparaît après 3 secondes
+        return () => clearTimeout(timer);
+    }, [onComplete]);
+
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9, transition: { duration: 0.2 } }}
+            className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 p-4 bg-gradient-to-r from-green-600/90 to-teal-600/90 backdrop-blur-lg border border-green-400 rounded-xl shadow-2xl shadow-green-500/20 overflow-hidden"
+        >
+            <img 
+                src={amount > 1 ? "/gacha/icons/wish-pack.png" : "/gacha/icons/wish.png"} 
+                alt="Vœux achetés" 
+                className="w-12 h-12 flex-shrink-0"
+            />
+            <p className="text-lg font-semibold text-white">
+                +{amount} Vœu{amount > 1 ? 'x' : ''} ajouté{amount > 1 ? 's' : ''} !
+            </p>
+            {/* Barre de progression pour la durée d'affichage */}
+            <motion.div
+                className="absolute bottom-0 left-0 h-1 bg-white/50"
+                initial={{ width: '100%' }}
+                animate={{ width: '0%' }}
+                transition={{ duration: 3, ease: 'linear' }}
+            />
+        </motion.div>
+    );
+};
+
 // --- FONCTION POUR LE SUSPENSE DE LA PITY ---
 
 const getPityStatus = (pity: number): { text: string; className: string } => {
@@ -209,10 +243,12 @@ const getPityStatus = (pity: number): { text: string; className: string } => {
 function GachaPageContent() {
     const { data: session } = useSession();
     const [currency, setCurrency] = useState<number>(0); // Explicitly type to number
+    const [wishes, setWishes] = useState<number>(0); // Ajout du state pour les vœux
     const [pullAnimation, setPullAnimation] = useState<{ active: boolean; count: number; highestRarity: CardRarity | null; currentBalance: number }>({ // Add currentBalance
         active: false, count: 0, highestRarity: null, currentBalance: 0
     });
-    const [revealedCardIndex, setRevealedCardIndex] = useState(0);
+    const [purchaseSuccess, setPurchaseSuccess] = useState<{ show: boolean; amount: number }>({ show: false, amount: 0 });
+    const [revealedCardIndex, setRevealedCardIndex] = useState(0); 
 
     const [pullResults, setPullResults] = useState<PullResult[]>([]);
     const [showResults, setShowResults] = useState(false);
@@ -240,26 +276,25 @@ function GachaPageContent() {
         }
     }, [session]);
 
-    const updateCurrency = async (amount: number): Promise<number | false> => {
-        if (!session) return false;
+    const fetchWishes = useCallback(async () => {
+        if (!session?.user?.id) return;
         try {
-            const data = await apiUpdateCurrency(session.user.id, amount, 'Gacha');
-            const newBal =
-                data.newBalance ??
-                data.balance ??
-                data.currency ??
-                0; // Sécurité multi-format
-            setCurrency(newBal);
-            return newBal;
+            const response = await fetch(API_ENDPOINTS.gachaWishes(session.user.id));
+            if (!response.ok) {
+                throw new Error('Failed to fetch wishes');
+            }
+            const data = await response.json();
+            setWishes(data.wishes || 0);
         } catch (error) {
-            console.error("[GACHA] Erreur de mise à jour de la monnaie:", error);
-            return false;
+            console.error("[GACHA] Erreur de récupération des vœux:", error);
+            setWishes(0);
         }
-    };
+    }, [session]);
 
     useEffect(() => {
         fetchCurrency();
-    }, [fetchCurrency]);
+        fetchWishes();
+    }, [fetchCurrency, fetchWishes]);
 
     const formatTime = (ms: number) => {
         const days = Math.floor(ms / (24 * 60 * 60 * 1000));
@@ -269,6 +304,48 @@ function GachaPageContent() {
         return `${days}j ${hours}h ${minutes}m ${seconds}s`;
     };
 
+    // --- NOUVELLE FONCTION POUR ACHETER DES VŒUX ---
+    const buyWishes = async (pack: 'single' | 'multi') => {
+        if (!session) return;
+
+        const coinCost = pack === 'single' ? 500 : 4500;
+        const wishesAmount = pack === 'single' ? 1 : 10;
+
+        if (currency < coinCost) {
+            alert('Pas assez de pièces !');
+            return;
+        }
+
+        try {
+            // Étape 1 : Déduire les pièces en utilisant la fonction centralisée et fiable
+            await updateCurrency(session.user.id, -coinCost, 'Achat de Vœux Gacha');
+
+            // Étape 2 : Ajouter les vœux via l'API du bot
+            const buyResponse = await fetch(API_ENDPOINTS.gachaBuyWishes, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: session.user.id, amount: wishesAmount }),
+            });
+
+            if (!buyResponse.ok) {
+                const errorData = await buyResponse.json();
+                // Si l'ajout de vœux échoue, on essaie de rembourser les pièces
+                await updateCurrency(session.user.id, coinCost, 'Remboursement achat Gacha échoué');
+                throw new Error(errorData.error || 'Échec de l\'ajout des vœux');
+            }
+
+            const buyData = await buyResponse.json();
+            setWishes(buyData.newWishes); // Met à jour le solde de vœux
+            await fetchCurrency(); // Met à jour le solde de pièces
+
+            // On déclenche l'animation de succès au lieu de l'alerte
+            setPurchaseSuccess({ show: true, amount: wishesAmount });
+        } catch (error: any) {
+            console.error("[GACHA] Erreur lors de l'achat de vœux:", error);
+            alert(`Erreur: ${error.message}`);
+        }
+    };
+
     const performPull = async (type: 'single' | 'multi') => {
         if (pullAnimation.active) return;
         if (!session) {
@@ -276,102 +353,50 @@ function GachaPageContent() {
             return;
         }
 
-        const cost = type === 'single' ? 1000 : 10000; // Define cost before checking balance
-        if (currency < cost) { // Use current state currency for check
-            alert('Pas assez de monnaie !');
+        const cost = type === 'single' ? 1 : 10;
+        if (wishes < cost) {
+            alert('Pas assez de vœux !');
             return;
         }
 
-        const newBalance = await updateCurrency(-cost);
-        if (newBalance === false) {
-            alert("Une erreur est survenue avec votre solde. Veuillez réessayer.");
-            return;
-        }
-
-        const numCards = type === 'single' ? 1 : 10;
-        const results: PullResult[] = [];
-
-        for (let i = 0; i < numCards; i++) {
-            const currentPity = featuredCharacters[currentFeatured].pity + 1; // Pity pour ce tirage
-            const isPityPull = currentPity >= 100;
-
-            let selectedCard: import('./cards').AnimeCard;
-
-            // 1. Tirage garanti par la Pity
-            if (isPityPull) {
-                selectedCard = getCardById(featuredCharacters[currentFeatured].id)!;
-                // Reset pity
-                setFeaturedCharacters(prev => prev.map((char, index) =>
-                    index === currentFeatured ? { ...char, pity: 0 } : char));
-            } else {
-                // 2. Tirage normal
-                const random = Math.random();
-                let selectedRarity: CardRarity;
-
-                if (random < 0.02) { // 2% de chance pour un Mythique
-                    selectedRarity = 'Mythique';
-                } else if (random < 0.07) { // 5% pour un Légendaire (0.02 + 0.05)
-                    selectedRarity = 'Légendaire';
-                } else if (random < 0.22) { // 15% pour un Épique (0.07 + 0.15)
-                    selectedRarity = 'Épique';
-                } else if (random < 0.47) { // 25% pour un Rare (0.22 + 0.25)
-                    selectedRarity = 'Rare';
-                } else {
-                    selectedRarity = 'Commun';
-                }
-
-                // Si on obtient un Mythique, on fait le 50/50
-                if (selectedRarity === 'Mythique') {
-                    if (Math.random() < 0.5) { // 50% de chance d'avoir le personnage de la bannière
-                        selectedCard = getCardById(featuredCharacters[currentFeatured].id)!;
-                    } else { // 50% de chance d'avoir un autre Mythique
-                        const allMythics: AnimeCard[] = getCardsByRarity('Mythique');
-                        const offBannerMythics = allMythics.filter(c => c.id !== featuredCharacters[currentFeatured].id);
-                        selectedCard = offBannerMythics[Math.floor(Math.random() * offBannerMythics.length)];
-                    }
-                    // Reset pity car on a eu un 5★
-                    setFeaturedCharacters(prev => prev.map((char, index) =>
-                        index === currentFeatured ? { ...char, pity: 0 } : char));
-                } else {
-                    // On a pas eu de 5★, on prend une carte de la rareté tirée et on augmente la pity
-                    selectedCard = getRandomCardByRarity(selectedRarity);
-                    setFeaturedCharacters(prev => prev.map((char, index) =>
-                        index === currentFeatured ? { ...char, pity: currentPity } : char));
-                }
-            }
-
-            const isNew = Math.random() > 0.5;
-            results.push({ card: selectedCard, isNew });
-
-            try {
-                await fetch('/api/gacha/collection', {
+        // Dépenser les vœux via l'API
+        try {
+            const spendResponse = await fetch(API_ENDPOINTS.gachaSpendWishes, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: session.user.id,
-                    username: session.user.name,
-                    cardId: selectedCard.id,
-                    anime: selectedCard.anime,
-                }),
+                body: JSON.stringify({ userId: session.user.id, amount: cost }),
             });
-            } catch (error) {
-                console.error("[GACHA] Erreur de sauvegarde de la carte:", error);
+
+            if (!spendResponse.ok) {
+                const errorData = await spendResponse.json();
+                throw new Error(errorData.error || 'Échec de la dépense des vœux');
             }
-        }
+
+            const pullData = await spendResponse.json();
+            setWishes(pullData.newWishes); // Met à jour le solde de vœux après le tirage
+
+        const results: PullResult[] = [];
+            // La logique de tirage est maintenant côté bot, on utilise les résultats qu'il renvoie.
+            for (const pulledCard of pullData.pulledCards) {
+                results.push({ card: pulledCard, isNew: pulledCard.isNew });
+            }
         
         const rarityOrder: CardRarity[] = ['Commun', 'Rare', 'Épique', 'Légendaire', 'Mythique'];
         const highestRarity = results.reduce((max, current) => {
             return rarityOrder.indexOf(current.card.rarity) > rarityOrder.indexOf(max) ? current.card.rarity : max;
         }, 'Commun' as CardRarity);
 
-        // The currency state should already be updated by the await updateCurrency call
         setPullResults(results);
-        setPullAnimation({ active: true, count: numCards, highestRarity, currentBalance: newBalance as number }); // Pass the actual new balance
+            setPullAnimation({ active: true, count: cost, highestRarity, currentBalance: wishes - cost });
 
         await new Promise(resolve => setTimeout(resolve, 4200));
-        setPullHistory(prev => [{ id: Date.now().toString(), cards: results, timestamp: new Date(), type, cost }, ...prev]);
-        setPullAnimation({ active: false, count: 0, highestRarity: null, currentBalance: newBalance as number });
+            setPullHistory(prev => [{ id: Date.now().toString(), cards: results, timestamp: new Date(), type, cost }, ...prev]);
+            setPullAnimation({ active: false, count: 0, highestRarity: null, currentBalance: wishes - cost });
         setShowResults(true);
+        } catch (error: any) {
+            console.error("[GACHA] Erreur lors du tirage:", error);
+            alert(`Erreur: ${error.message}`);
+        }
     };
 
     const closeResults = () => {
@@ -418,6 +443,13 @@ function GachaPageContent() {
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
             
+            {/* Conteneur pour l'animation de succès d'achat */}
+            <AnimatePresence>
+                {purchaseSuccess.show && (
+                    <PurchaseSuccessToast amount={purchaseSuccess.amount} onComplete={() => setPurchaseSuccess({ show: false, amount: 0 })} />
+                )}
+            </AnimatePresence>
+
             <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white z-50">
 
                 <div className="flex justify-between items-center mb-3 flex-shrink-0">
@@ -442,6 +474,14 @@ function GachaPageContent() {
                         <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full text-sm">
                             <span className="text-yellow-400">✦</span>
                             <span>{currency}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full text-sm">
+                            <img 
+                                src="/gacha/icons/wish.png" 
+                                alt="Vœux" 
+                                className="w-4 h-4"
+                            />
+                            <span className="font-semibold">{wishes}</span>
                         </div>
                         <Link href="/dashboard/mini-jeu">
                             <button className="bg-black/40 w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors">
@@ -579,14 +619,18 @@ function GachaPageContent() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => performPull('single')}
-                                disabled={pullAnimation.active || currency < 1000}
+                                disabled={pullAnimation.active || wishes < 1}
                             className="bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="px-5 py-2.5 flex flex-col items-center">
                                 <span>Souhait x1</span>
                                 <div className="flex items-center gap-1 text-xs text-yellow-300">
-                                    <span className="text-yellow-400">✦</span>
-                                    <span>1000</span>
+                                    <img 
+                                        src="/gacha/icons/wish.png" 
+                                        alt="Vœu" 
+                                        className="w-4 h-4"
+                                    />
+                                    <span className="font-semibold">1</span>
                                 </div>
                             </div>
                         </motion.button>
@@ -594,14 +638,18 @@ function GachaPageContent() {
                             whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => performPull('multi')}
-                            disabled={pullAnimation.active || currency < 10000}
+                            disabled={pullAnimation.active || wishes < 10}
                             className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 text-black font-bold rounded-full shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="px-8 py-2.5 flex flex-col items-center">
                                 <span>Souhait x10</span>
                                 <div className="flex items-center gap-1 text-xs text-black/70">
-                                    <span className="text-yellow-700">✦</span>
-                                    <span>10000</span>
+                                    <img 
+                                        src="/gacha/icons/wish.png" 
+                                        alt="Vœu" 
+                                        className="w-4 h-4"
+                                    />
+                                    <span className="font-semibold">10</span>
                                 </div>
                             </div>
                         </motion.button>
@@ -609,7 +657,7 @@ function GachaPageContent() {
                 </div>
 
                 <AnimatePresence>
-                    {(activeTab === 'shop' || activeTab === 'history') && (
+                    {(activeTab === 'shop' || activeTab === 'history' || activeTab === 'details') && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -624,6 +672,43 @@ function GachaPageContent() {
                                 className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 md:p-8 border border-white/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
                                 onClick={(e) => e.stopPropagation()}
                             >
+                                {activeTab === 'shop' && (
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white mb-6 text-center">Boutique de Vœux</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                                            {/* Carte pour 1 Vœu */}
+                                            <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700 text-center flex flex-col transition-all hover:border-blue-500 hover:bg-slate-800">
+                                                <img src="/gacha/icons/wish.png" alt="Vœu" className="w-20 h-20 mx-auto mb-4"/>
+                                                <h4 className="text-lg font-semibold text-white mb-2">1 Vœu</h4>
+                                                <p className="text-gray-400 mb-4 flex-grow">Pour un tirage unique.</p>
+                                                <button 
+                                                    onClick={() => buyWishes('single')}
+                                                    disabled={currency < 500}
+                                                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold text-white shadow-lg hover:shadow-cyan-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Acheter pour 500 ✦
+                                                </button>
+                                            </div>
+                                            {/* Carte pour 10 Vœux avec encadrement promo */}
+                                            <div className="relative bg-gradient-to-b from-yellow-900/30 to-slate-800/50 rounded-xl p-6 border-2 border-yellow-500 text-center flex flex-col shadow-lg shadow-yellow-500/10">
+                                                <div className="absolute top-0 right-0 bg-yellow-500 text-black font-bold text-xs uppercase px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">
+                                                    Promo
+                                                </div>
+                                                <h4 className="text-lg font-semibold text-white mb-2">10 Vœux</h4>
+                                                <img src="/gacha/icons/wish-pack.png" alt="Pack de Vœux" className="w-24 h-24 mx-auto mb-4"/>
+                                                <p className="text-yellow-300/80 mb-4 flex-grow">Le meilleur rapport qualité-prix pour vos tirages !</p>
+                                                <button 
+                                                    onClick={() => buyWishes('multi')}
+                                                    disabled={currency < 4500}
+                                                    className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Acheter pour 4500 ✦
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {activeTab === 'history' && (
                                     <div>
                                         <div className="flex flex-wrap gap-4 mb-6 justify-center">
@@ -707,74 +792,6 @@ function GachaPageContent() {
                                     </div>
                                 )}
 
-                                {activeTab === 'shop' && (
-                                    <div className="text-center py-12">
-                                        <div className="text-6xl mb-4">🛒</div>
-                                        <h3 className="text-2xl font-bold text-white mb-2">Boutique Bientôt Disponible</h3>
-                                        <p className="text-gray-400">Monnaie premium et objets exclusifs seront disponibles ici.</p>
-                                    </div>
-                                )}
-                                
-                                <div className="text-center mt-6">
-                                    <button
-                                        onClick={() => setActiveTab(null)}
-                                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
-                                    >
-                                        Fermer
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-                <AnimatePresence>
-                    {activeTab === 'details' && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                            onClick={() => setActiveTab(null)}
-                        >
-                            <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.8, opacity: 0 }}
-                                className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 md:p-8 border border-white/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <div>
-                                    <h3 className="text-2xl font-bold text-white mb-6 text-center">Probabilités de Tirage</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                                            <h4 className="text-lg font-semibold text-white mb-4">Tirage Simple (1x)</h4>
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆☆☆☆ Mythique</span><span className="text-yellow-400 font-semibold">0.4%</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆☆☆ Légendaire</span><span className="text-purple-400 font-semibold">3.0%</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆☆ Épique</span><span className="text-blue-400 font-semibold">15.0%</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆☆ Rare</span><span className="text-green-400 font-semibold">25.0%</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">☆ Commun</span><span className="text-gray-400 font-semibold">56.6%</span></div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                                            <h4 className="text-lg font-semibold text-white mb-4">Tirage Multiple (10x)</h4>
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">Au moins 1 ☆☆☆☆☆</span><span className="text-yellow-400 font-semibold">4.0%</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">Au moins 1 ☆☆☆☆</span><span className="text-purple-400 font-semibold">30.0%</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">Au moins 1 ☆☆☆</span><span className="text-blue-400 font-semibold">85.0%</span></div>
-                                                <div className="flex justify-between items-center"><span className="text-gray-300">Garantie ☆☆☆☆☆ à 100 pity</span><span className="text-red-400 font-semibold">100%</span></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="mt-8 bg-gradient-to-r from-yellow-600/20 to-purple-600/20 rounded-xl p-6 border border-yellow-500/30">
-                                        <h4 className="text-lg font-semibold text-yellow-400 mb-3">Système de Pity</h4>
-                                        <p className="text-gray-300 text-sm leading-relaxed">
-                                            Le système de pity garantit l'obtention du personnage vedette après un certain nombre de tirages.
-                                            Actuellement, {currentFeaturedChar.name} a un pity de {currentFeaturedChar.pity} / 100.
-                                            À 100 de pity, le prochain tirage garantira l'obtention du personnage vedette.
-                                        </p>
-                                    </div>
-                                </div>
                                 <div className="text-center mt-6">
                                     <button
                                         onClick={() => setActiveTab(null)}
