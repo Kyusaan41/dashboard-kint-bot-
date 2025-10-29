@@ -1,5 +1,12 @@
 # 📚 Index de la Documentation - Mode Maintenance
 
+## 🃏 Documentation Gacha
+
+- **GACHA-COLLECTION-API.md** - API pour la collection de cartes.
+- **GACHA-MARKETPLACE-API.md** ✨ NOUVEAU - API pour l'hôtel des ventes.
+
+---
+
 ## 🎯 Où Commencer?
 
 ### 👨‍💻 Je suis développeur

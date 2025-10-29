@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Toaster, toast } from 'sonner';
 import { Star, Filter, History, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { getRandomCardByRarity, getCardById, getCardsByRarity, AnimeCard } from './cards';
@@ -80,144 +81,123 @@ const getGlowColor = (rarity: CardRarity | null) => {
     }
 };
 
+// --- NOUVEAU: COULEURS POUR LE FLASH FINAL ---
+const RARITY_FLASH_COLORS = {
+    'Commun': 'bg-white',
+    'Rare': 'bg-green-400',
+    'Épique': 'bg-blue-400',
+    'Légendaire': 'bg-purple-400',
+    'Mythique': 'bg-yellow-400',
+};
+
 // --- COMPOSANT D'ANIMATION DE SOUHAIT (WishAnimation) ---
 
 const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity: CardRarity | null }) => {
-    const rarityStyle = getRarityStyle(highestRarity || 'Commun');
-    const isHighRarity = highestRarity === 'Légendaire' || highestRarity === 'Mythique';
+	const rarityStyle = getRarityStyle(highestRarity || 'Commun');
+	const isHighRarity = highestRarity === 'Légendaire' || highestRarity === 'Mythique';
+	const isMultiPull = count > 1;
 
-    const cometColor = 
-        highestRarity === 'Mythique' ? 'bg-yellow-400' :
-        highestRarity === 'Légendaire' ? 'bg-purple-400' :
-        highestRarity === 'Épique' ? 'bg-blue-400' :
-        'bg-white';
+	const cometColor = isMultiPull
+		? 'bg-gradient-to-r from-red-500 via-yellow-400 to-cyan-400'
+		: highestRarity === 'Mythique' ? 'bg-yellow-400'
+		: highestRarity === 'Légendaire' ? 'bg-purple-400'
+		: highestRarity === 'Épique' ? 'bg-blue-400'
+		: 'bg-white';
 
-    return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { delay: 1.5 } }} // Délai avant de disparaître
-            className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
-        >
-            {/* Fond étoilé animé */}
-            {Array.from({ length: 100 }).map((_, i) => (
-                <motion.div
-                    key={i}
-                    className="absolute rounded-full bg-white/50"
-                    style={{
-                        width: Math.random() * 2 + 0.5,
-                        height: Math.random() * 2 + 0.5,
-                        top: `${Math.random() * 100}%`,
-                        left: `${Math.random() * 100}%`,
-                    }}
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: [0, 1, 0] }}
-                    transition={{
-                        duration: Math.random() * 3 + 2,
-                        repeat: Infinity,
-                        delay: Math.random() * 4,
-                    }}
-                />
-            ))}
+	return (
+		<motion.div
+			exit={{ opacity: 0, transition: { delay: 1.5 } }}
+			className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
+			variants={{
+				hidden: { opacity: 0 },
+				visible: { opacity: 1 },
+				shake: { x: [0, -5, 5, -5, 5, 0], y: [0, 2, -2, 2, -2, 0], transition: { duration: 0.2, delay: 3.6 } },
+			}}
+			initial="hidden"
+			animate={["visible", "shake"]}
+		>
+			{/* Fond étoilé */}
+			{Array.from({ length: 100 }).map((_, i) => (
+				<motion.div
+					key={i}
+					className="absolute rounded-full bg-white/50"
+					style={{
+						width: Math.random() * 2 + 0.5,
+						height: Math.random() * 2 + 0.5,
+						top: `${Math.random() * 100}%`,
+						left: `${Math.random() * 100}%`,
+					}}
+					initial={{ opacity: 0, scale: 0.5 }}
+					animate={{ opacity: [0, 1, 0] }}
+					transition={{ duration: Math.random() * 3 + 2, repeat: Infinity, delay: Math.random() * 4 }}
+				/>
+			))}
 
-            {/* Étoile filante */}
-            <motion.div
-                className="absolute"
-                initial={{ x: '-100vw', y: '-50vh', opacity: 0 }}
-                animate={{ x: '100vw', y: '50vh', opacity: [0, 1, 1, 0] }}
-                transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
-            >
-                <div className={`w-48 h-1.5 ${cometColor} rounded-full blur-[1px]`} />
-                <div className={`absolute top-0 left-0 w-48 h-1.5 ${cometColor} rounded-full blur-md opacity-70`} />
-            </motion.div>
+			{/* Étoile filante principale */}
+			<motion.div
+				className="absolute"
+				initial={{ x: '-100vw', y: '-50vh', opacity: 0 }}
+				animate={{ x: '100vw', y: '50vh', opacity: [0, 1, 1, 0] }}
+				transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
+			>
+				<div className={`w-48 h-1.5 ${cometColor} rounded-full blur-[1px]`} />
+				<div className={`absolute top-0 left-0 w-48 h-1.5 ${cometColor} rounded-full blur-md opacity-70`} />
+			</motion.div>
 
-            {/* Onde de choc à l'impact */}
-            <motion.div
-                className={`absolute w-1 h-1 rounded-full border-4 ${rarityStyle.border}`}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: [0, 1, 300], opacity: [0, 1, 0] }}
-                transition={{ duration: 0.7, ease: 'easeOut', delay: 1.5 }}
-            />
-            
-            {/* Formation de la porte */}
-            <motion.div
-                className="absolute"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.8, duration: 0.5 }}
-            >
-                {/* Lueur extérieure */}
-                <motion.div
-                    className={`absolute -inset-8 w-80 h-80 rounded-full ${rarityStyle.bg} blur-2xl`}
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
-                />
-                {/* Porte elle-même */}
-                <svg width="256" height="256" viewBox="0 0 256 256" className="relative">
-                    <defs>
-                        <radialGradient id="gateGradient" cx="50%" cy="50%" r="50%">
-                            <stop offset="60%" stopColor="rgba(10, 5, 20, 0)" />
-                            <stop offset="85%" stopColor={isHighRarity ? 'rgba(255, 220, 120, 0.5)' : 'rgba(190, 150, 255, 0.5)'} />
-                            <stop offset="100%" stopColor={isHighRarity ? 'rgba(255, 255, 255, 1)' : 'rgba(220, 200, 255, 1)'} />
-                        </radialGradient>
-                    </defs>
-                    <motion.circle
-                        cx="128"
-                        cy="128"
-                        r="120"
-                        stroke="url(#gateGradient)"
-                        strokeWidth="8"
-                        fill="none"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{ duration: 1, delay: 2.0, ease: 'easeInOut' }}
-                    />
-                </svg>
-            </motion.div>
+			{/* Onde de choc */}
+			<motion.div
+				className={`absolute w-1 h-1 rounded-full border-4 ${rarityStyle.border}`}
+				initial={{ scale: 0, opacity: 0 }}
+				animate={{ scale: [0, 1, 300], opacity: [0, 1, 0] }}
+				transition={{ duration: 0.7, ease: 'easeOut', delay: 1.5 }}
+			/>
+			
+			{/* Formation de la porte */}
+			<motion.div
+				className="absolute"
+				initial={{ opacity: 0, scale: 0 }}
+				animate={{ opacity: 1, scale: 1 }}
+				transition={{ delay: 1.8, duration: 0.5 }}
+			>
+				<motion.div
+					className={`absolute -inset-8 w-80 h-80 rounded-full ${rarityStyle.bg} blur-2xl`}
+					animate={{ rotate: 360 }}
+					transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
+				/>
+				<svg width="256" height="256" viewBox="0 0 256 256" className="relative">
+					<defs>
+						<radialGradient id="gateGradient" cx="50%" cy="50%" r="50%">
+							<stop offset="60%" stopColor="rgba(10, 5, 20, 0)" />
+							<stop offset="85%" stopColor={isHighRarity ? 'rgba(255, 220, 120, 0.5)' : 'rgba(190, 150, 255, 0.5)'} />
+							<stop offset="100%" stopColor={isHighRarity ? 'rgba(255, 255, 255, 1)' : 'rgba(220, 200, 255, 1)'} />
+						</radialGradient>
+					</defs>
+					<motion.circle
+						cx="128" cy="128" r="120"
+						stroke="url(#gateGradient)" strokeWidth="8" fill="none"
+						initial={{ pathLength: 0, opacity: 0 }}
+						animate={{ pathLength: 1, opacity: 1 }}
+						transition={{ duration: 1, delay: 2.0, ease: 'easeInOut' }}
+					/>
+					<motion.circle
+						cx="128" cy="128" r="120"
+						fill="none" stroke={isHighRarity ? 'rgba(255, 220, 120, 0.7)' : 'rgba(190, 150, 255, 0.7)'} strokeWidth="2"
+						initial={{ scale: 1, opacity: 0 }}
+						animate={{ scale: [1, 1.05, 1], opacity: [0, 0.8, 0] }}
+						transition={{ duration: 1, repeat: Infinity, delay: 3.0, repeatType: "mirror" }}
+					/>
+				</svg>
+			</motion.div>
 
-            {/* Flash final */}
-            <motion.div
-                className="absolute inset-0 bg-white"
-                initial={{ opacity: 0, zIndex: -1 }}
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ delay: 3.8, duration: 0.4, times: [0, 0.1, 1] }}
-            />
-        </motion.div>
-    );
-};
-
-// --- NOUVEAU COMPOSANT TOAST DE SUCCÈS D'ACHAT ---
-const PurchaseSuccessToast = ({ amount, onComplete }: { amount: number; onComplete: () => void }) => {
-    useEffect(() => {
-        const timer = setTimeout(onComplete, 3000); // Disparaît après 3 secondes
-        return () => clearTimeout(timer);
-    }, [onComplete]);
-
-    return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, y: -50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.9, transition: { duration: 0.2 } }}
-            className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 p-4 bg-gradient-to-r from-green-600/90 to-teal-600/90 backdrop-blur-lg border border-green-400 rounded-xl shadow-2xl shadow-green-500/20 overflow-hidden"
-        >
-            <img 
-                src={amount > 1 ? "/gacha/icons/wish-pack.png" : "/gacha/icons/wish.png"} 
-                alt="Vœux achetés" 
-                className="w-12 h-12 flex-shrink-0"
-            />
-            <p className="text-lg font-semibold text-white">
-                +{amount} Vœu{amount > 1 ? 'x' : ''} ajouté{amount > 1 ? 's' : ''} !
-            </p>
-            {/* Barre de progression pour la durée d'affichage */}
-            <motion.div
-                className="absolute bottom-0 left-0 h-1 bg-white/50"
-                initial={{ width: '100%' }}
-                animate={{ width: '0%' }}
-                transition={{ duration: 3, ease: 'linear' }}
-            />
-        </motion.div>
-    );
+			{/* Flash final */}
+			<motion.div
+				className={`absolute inset-0 ${RARITY_FLASH_COLORS[highestRarity || 'Commun']}`}
+				initial={{ opacity: 0, zIndex: -1 }}
+				animate={{ opacity: [0, 1, 0] }}
+				transition={{ delay: 3.8, duration: 0.4, times: [0, 0.1, 1] }}
+			/>
+		</motion.div>
+	);
 };
 
 // --- FONCTION POUR LE SUSPENSE DE LA PITY ---
@@ -339,7 +319,20 @@ function GachaPageContent() {
             await fetchCurrency(); // Met à jour le solde de pièces
 
             // On déclenche l'animation de succès au lieu de l'alerte
-            setPurchaseSuccess({ show: true, amount: wishesAmount });
+            // ✨ CORRECTION: On utilise toast.custom pour créer la notification directement ici
+            toast.custom(() => (
+                <div className="flex items-center gap-3 p-4 bg-slate-800 border border-green-500 rounded-xl shadow-lg">
+                    <img 
+                        src={wishesAmount > 1 ? "/gacha/icons/wish-pack.png" : "/gacha/icons/wish.png"} 
+                        alt="Vœux achetés" 
+                        className="w-10 h-10 flex-shrink-0"
+                    />
+                    <p className="text-md font-semibold text-white">
+                        +{wishesAmount} Vœu{wishesAmount > 1 ? 'x' : ''} ajouté{wishesAmount > 1 ? 's' : ''} !
+                    </p>
+                </div>
+            ), { duration: 3000 });
+
         } catch (error: any) {
             console.error("[GACHA] Erreur lors de l'achat de vœux:", error);
             alert(`Erreur: ${error.message}`);
@@ -361,7 +354,7 @@ function GachaPageContent() {
 
         // Dépenser les vœux via l'API
         try {
-            const spendResponse = await fetch(API_ENDPOINTS.gachaSpendWishes, {
+            const spendResponse = await fetch(API_ENDPOINTS.gachaSpendWishes(session.user.id), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: session.user.id, amount: cost }),
@@ -378,7 +371,23 @@ function GachaPageContent() {
         const results: PullResult[] = [];
             // La logique de tirage est maintenant côté bot, on utilise les résultats qu'il renvoie.
             for (const pulledCard of pullData.pulledCards) {
-                results.push({ card: pulledCard, isNew: pulledCard.isNew });
+                results.push({ card: pulledCard, isNew: pulledCard.isNew }); // isNew est maintenant géré par le bot
+
+                // ✨ CORRECTION : On sauvegarde chaque carte obtenue dans la collection
+                try {
+                    await fetch(API_ENDPOINTS.GACHA_ADD_CARD, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: session.user.id,
+                            username: session.user.name,
+                            cardId: pulledCard.id,
+                            anime: pulledCard.anime,
+                        }),
+                    });
+                } catch (error) {
+                    console.error("[GACHA] Erreur de sauvegarde de la carte:", pulledCard.name, error);
+                }
             }
         
         const rarityOrder: CardRarity[] = ['Commun', 'Rare', 'Épique', 'Légendaire', 'Mythique'];
@@ -442,14 +451,10 @@ function GachaPageContent() {
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
-            
-            {/* Conteneur pour l'animation de succès d'achat */}
-            <AnimatePresence>
-                {purchaseSuccess.show && (
-                    <PurchaseSuccessToast amount={purchaseSuccess.amount} onComplete={() => setPurchaseSuccess({ show: false, amount: 0 })} />
-                )}
-            </AnimatePresence>
+            {/* ✨ CORRECTION: Ajout du composant Toaster pour que les notifications s'affichent */}
+            <Toaster richColors position="top-center" />
 
+            
             <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white z-50">
 
                 <div className="flex justify-between items-center mb-3 flex-shrink-0">
@@ -830,7 +835,7 @@ function GachaPageContent() {
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.8 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="w-auto h-full max-h-full max-w-[320px]"
+                                                className="w-auto h-full max-h-full max-w-lg"
                                             >
                                                 <RevealedCard
                                                     card={pullResults[revealedCardIndex].card}

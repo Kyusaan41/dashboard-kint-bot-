@@ -1,4 +1,4 @@
-﻿// Fichier : src/app/api/events/route.ts
+﻿﻿// Fichier : src/app/api/events/route.ts
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
@@ -54,17 +54,23 @@ export async function GET(request: Request) {
 
                     // Garde la connexion ouverte avec des heartbeats
                     let heartbeatCount = 0;
+                    let isClosed = false; // ✨ AJOUT: Flag pour suivre l'état de la connexion
+
                     const heartbeatInterval = setInterval(() => {
-                        try {
-                            controller.enqueue(encoder.encode(`: heartbeat ${heartbeatCount++}\n\n`));
-                        } catch (error) {
-                            console.error('[SSE] Erreur lors du heartbeat:', error);
-                            clearInterval(heartbeatInterval);
+                        // ✨ CORRECTION: On vérifie si la connexion n'est pas déjà fermée
+                        if (!isClosed) {
+                            try {
+                                controller.enqueue(encoder.encode(`: heartbeat ${heartbeatCount++}\n\n`));
+                            } catch (error) {
+                                console.error('[SSE] Erreur lors du heartbeat (connexion probablement fermée):', error);
+                                clearInterval(heartbeatInterval);
+                            }
                         }
                     }, 30000); // Toutes les 30 secondes
 
                     // Gère la fermeture de la connexion
                     const handleClose = () => {
+                        isClosed = true; // ✨ AJOUT: On met le flag à jour
                         clearInterval(heartbeatInterval);
                         controller.close();
                         console.log(`[SSE] Connexion fermée pour l'utilisateur: ${userId}`);

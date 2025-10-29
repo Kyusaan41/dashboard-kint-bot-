@@ -7,7 +7,7 @@ import FeedbackWidget from '@/components/FeedbackWidget';
 import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
-import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User } from 'lucide-react';
+import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
@@ -33,6 +33,7 @@ const pages: PageType[] = [
   { id: 'mini-jeu', label: 'Mini-Jeux', icon: GamepadIcon },
   { id: 'classement', label: 'Classements', icon: BarChart2 },
   { id: 'boutique', label: 'Boutique', icon: ShoppingCart },
+  { id: 'market', label: 'Marché', icon: Store },
   { id: 'membres', label: 'Profil', icon: User },
   { id: 'admin', label: 'Administration', icon: Shield, adminOnly: true },
   { id: 'super-admin', label: 'Haute Administration', icon: Shield, superAdminOnly: true },

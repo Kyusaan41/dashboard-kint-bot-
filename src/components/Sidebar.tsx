@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, ShoppingCart, BarChart2, Shield, Settings, Gem } from 'lucide-react';
+import { Home, User, ShoppingCart, BarChart2, Shield, Settings, Gem, Store } from 'lucide-react';
+
 
 const navLinks = [
     { name: 'Accueil', href: '/dashboard', icon: Home },
     { name: 'Inventaire', href: '/dashboard/inventory', icon: ShoppingCart },
     { name: 'Classement', href: '/dashboard/classement', icon: BarChart2 },
     { name: 'Magasin', href: '/dashboard/shop', icon: Gem },
+    { name: 'Marché', href: '/dashboard/market', icon: Store },
     { name: 'ParamÃ¨tres', href: '/dashboard/settings', icon: Settings },
     { name: 'Admin', href: '/dashboard/admin', icon: Shield, adminOnly: true },
 ];
