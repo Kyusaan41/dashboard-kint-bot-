@@ -1,17 +1,17 @@
 // c:\Users\Kyusa\Documents\dashboard-kint-bot-clean\src\app\api\gacha\wishes\[userId]\route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-
-// L'adresse de votre bot
-const BOT_BASE_URL = 'http://193.70.34.25:20007/api';
+import { NYXNODE_API_URL } from '@/config/api';
 
 // Cette fonction est appelée quand une requête GET est faite à /api/gacha/wishes/[quelquechose]
 export async function GET(
-  request: NextRequest,
-  context: { params: { userId: string } }
+  // ✨ CORRECTION: La signature de la fonction est mise à jour pour correspondre à ce que Next.js attend.
+  // Le premier argument est la requête, le second est le contexte avec les paramètres.
+  request: Request, 
+  { params }: { params: { userId: string } }
 ) {
   // 1. ✨ CORRECTION: On attend que les paramètres soient disponibles
-  const { userId } = context.params;
+  const { userId } = params;
 
   if (!userId) {
     return NextResponse.json({ error: 'User ID manquant' }, { status: 400 });
@@ -19,7 +19,7 @@ export async function GET(
 
   try {
     // 2. On transmet la demande au bot en utilisant cet ID
-    const res = await fetch(`${BOT_BASE_URL}/gacha/wishes/${userId}`);
+    const res = await fetch(`${NYXNODE_API_URL}/api/gacha/wishes/${userId}`);
     
     // 3. On récupère la réponse du bot
     const data = await res.json();
@@ -34,13 +34,13 @@ export async function GET(
 
 // ✨ AJOUT: Cette fonction est appelée quand une requête POST est faite (pour dépenser des vœux)
 export async function POST(
-  request: NextRequest,
-  context: { params: { userId: string } }
+  request: Request,
+  { params }: { params: { userId: string } }
 ) {
   try {
     const body = await request.json(); // On récupère le corps de la requête
     // On fait suivre la requête de dépense de vœux au bot.
-    const res = await fetch(`${BOT_BASE_URL}/gacha/wishes/spend`, {
+    const res = await fetch(`${NYXNODE_API_URL}/api/gacha/wishes/spend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
