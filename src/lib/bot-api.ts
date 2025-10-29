@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const BOT_API_URL = process.env.BOT_API_URL || 'http://localhost:3001/api';
+export const BOT_API_URL = process.env.BOT_API_URL || 'http://193.70.34.25:20007/api';
 
 /**
  * Relaye une requête vers l'API du bot et retourne la réponse.

@@ -1,5 +1,5 @@
 export const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://votre-domaine.com' 
+  ? 'http://193.70.34.25:20007' 
   : '';
  
 export const API_ENDPOINTS = {
