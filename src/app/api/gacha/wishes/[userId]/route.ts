@@ -1,18 +1,10 @@
-// c:\Users\Kyusa\Documents\dashboard-kint-bot-clean\src\app\api\gacha\wishes\[userId]\route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 
-// Adresse de votre bot
 const BOT_BASE_URL = 'http://193.70.34.25:20007/api';
 
-// =======================
-// GET : récupérer les vœux d'un utilisateur
-// =======================
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Record<string, string> }
-) {
-  const { userId } = params;
+// GET : récupérer les vœux
+export async function GET(req: NextRequest, ctx: any) {
+  const { userId } = ctx.params;
 
   if (!userId) {
     return NextResponse.json({ error: 'User ID manquant' }, { status: 400 });
@@ -27,15 +19,12 @@ export async function GET(
   }
 }
 
-// =======================
 // POST : dépenser des vœux
-// =======================
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Record<string, string> }
-) {
+export async function POST(req: NextRequest, ctx: any) {
+  const { userId } = ctx.params; // optionnel, si ton bot en a besoin
+
   try {
-    const body = await request.json();
+    const body = await req.json();
 
     const res = await fetch(`${BOT_BASE_URL}/gacha/wishes/spend`, {
       method: 'POST',
@@ -46,6 +35,9 @@ export async function POST(
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
-    return NextResponse.json({ error: 'Erreur serveur lors de la dépense de vœux' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erreur serveur lors de la dépense de vœux' },
+      { status: 500 }
+    );
   }
 }
