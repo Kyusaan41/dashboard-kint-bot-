@@ -3,15 +3,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { NYXNODE_API_URL } from '@/config/api';
 
+// L'adresse de votre bot
+//const BOT_BASE_URL = 'http://193.70.34.25:20007/api';
+
 // Cette fonction est appelée quand une requête GET est faite à /api/gacha/wishes/[quelquechose]
 export async function GET(
-  // ✨ CORRECTION: La signature de la fonction est mise à jour pour correspondre à ce que Next.js attend.
-  // Le premier argument est la requête, le second est le contexte avec les paramètres.
-  request: Request, 
-  { params }: { params: { userId: string } }
+  request: Request,
+  context: { params: { userId: string } }
 ) {
   // 1. ✨ CORRECTION: On attend que les paramètres soient disponibles
-  const { userId } = params;
+  const { userId } = context.params;
 
   if (!userId) {
     return NextResponse.json({ error: 'User ID manquant' }, { status: 400 });
@@ -35,7 +36,7 @@ export async function GET(
 // ✨ AJOUT: Cette fonction est appelée quand une requête POST est faite (pour dépenser des vœux)
 export async function POST(
   request: Request,
-  { params }: { params: { userId: string } }
+  context: { params: { userId: string } }
 ) {
   try {
     const body = await request.json(); // On récupère le corps de la requête
