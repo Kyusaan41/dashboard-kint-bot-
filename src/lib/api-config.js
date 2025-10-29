@@ -3,7 +3,7 @@ export const API_BASE_URL = process.env.NODE_ENV === 'production'
   : '';
  
 export const API_ENDPOINTS = {
-  GACHA_COLLECTION: (userId) => `${API_BASE_URL}/api/gacha/collection/${userId}`,
+  GACHA_COLLECTION: (userId) => `/api/gacha/collection/${userId}`, // ✨ CORRECTION: Pointe vers la route proxy du dashboard
   GACHA_ADD_CARD: `${API_BASE_URL}/api/gacha/collection`,
   // --- Nouveaux endpoints pour les Vœux ---
   gachaWishes: (userId) => `/api/gacha/wishes/${userId}`, // Pour récupérer le solde
