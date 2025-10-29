@@ -543,9 +543,16 @@ export default function CollectionPage() {
                         <div className="space-y-10">
                             {filteredAndSortedCollections.map((animeCollection) => (
                                 <div key={animeCollection.anime}>
-                                    <h2 className="text-2xl font-semibold border-b-2 border-purple-500/50 pb-2 mb-6">
-                                        {animeCollection.anime}
-                                    </h2>
+                                    <div className="flex items-center gap-4 border-b-2 border-purple-500/50 pb-2 mb-6">
+                                        <h2 className="text-2xl font-semibold">
+                                            {animeCollection.anime}
+                                        </h2>
+                                        {animeCollection.cards.length === ANIME_CARDS.filter(c => c.anime === animeCollection.anime).length && (
+                                            <span className="px-3 py-1 text-xs font-bold text-black bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-md shadow-yellow-500/20">
+                                                Collection Complète
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                         {animeCollection.cards.map(({ cardId, count, cardInfo }) => (
                                             cardInfo && (
