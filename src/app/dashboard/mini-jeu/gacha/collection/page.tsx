@@ -543,10 +543,13 @@ export default function CollectionPage() {
                         <div className="space-y-10">
                             {filteredAndSortedCollections.map((animeCollection) => (
                                 <div key={animeCollection.anime}>
-                                    <div className="flex items-center gap-4 border-b-2 border-purple-500/50 pb-2 mb-6">
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b-2 border-purple-500/50 pb-2 mb-6">
                                         <h2 className="text-2xl font-semibold">
                                             {animeCollection.anime}
                                         </h2>
+                                        <span className="text-sm font-medium text-gray-400">
+                                            ({animeCollection.cards.length}/{ANIME_CARDS.filter(c => c.anime === animeCollection.anime).length})
+                                        </span>
                                         {animeCollection.cards.length === ANIME_CARDS.filter(c => c.anime === animeCollection.anime).length && (
                                             <span className="px-3 py-1 text-xs font-bold text-black bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-md shadow-yellow-500/20">
                                                 Collection Complète
