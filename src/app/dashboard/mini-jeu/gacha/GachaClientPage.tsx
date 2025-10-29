@@ -816,47 +816,46 @@ function GachaPageContent() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                            className="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center p-4"
                             onClick={closeResults}
                         >
+                            {/* Fond étoilé pour l'ambiance */}
+                            <div className="absolute inset-0 z-0 overflow-hidden">
+                                <motion.div 
+                                    className="absolute inset-[-20%] bg-[url('/gacha/cosmic-bg.jpg')] bg-cover bg-center opacity-30"
+                                    animate={{ scale: [1, 1.05, 1], rotate: [0, -1, 0] }}
+                                    transition={{ duration: 40, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+                                />
+                            </div>
+
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.8, opacity: 0 }}
-                                className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 md:p-8 border border-white/20 max-w-5xl w-full max-h-[90vh] flex flex-col"
+                                className="relative w-full h-full flex flex-col items-center justify-center"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <div className="flex-1 flex items-center justify-center min-h-0">
-                                    <AnimatePresence mode="wait">
-                                        {pullResults[revealedCardIndex] && (
-                                            <motion.div
-                                                key={revealedCardIndex}
-                                                initial={{ opacity: 0, scale: 0.8 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                exit={{ opacity: 0, scale: 0.8 }}
-                                                transition={{ duration: 0.3 }}
-                                                className="w-auto h-full max-h-full max-w-lg"
-                                            >
-                                                <RevealedCard
-                                                    card={pullResults[revealedCardIndex].card}
-                                                    isNew={pullResults[revealedCardIndex].isNew}
-                                                    rarityStyles={getRarityStyle(pullResults[revealedCardIndex].card.rarity)}
-                                                    rarityStars={getRarityStars(pullResults[revealedCardIndex].card.rarity) as React.ReactNode[]}
-                                                    isHighRarity={['Légendaire', 'Mythique'].includes(pullResults[revealedCardIndex].card.rarity)}
-                                                    delay={0}
-                                                />
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
+                                <AnimatePresence mode="wait">
+                                    {pullResults[revealedCardIndex] && (
+                                        <RevealedCard
+                                            key={revealedCardIndex}
+                                            card={pullResults[revealedCardIndex].card}
+                                            isNew={pullResults[revealedCardIndex].isNew}
+                                            rarityStyles={getRarityStyle(pullResults[revealedCardIndex].card.rarity)}
+                                            rarityStars={getRarityStars(pullResults[revealedCardIndex].card.rarity) as React.ReactNode[]}
+                                            isHighRarity={['Légendaire', 'Mythique'].includes(pullResults[revealedCardIndex].card.rarity)}
+                                            onAnimationComplete={() => { /* La logique est maintenant dans RevealedCard */ }}
+                                        />
+                                    )}
+                                </AnimatePresence>
 
-                                <div className="text-center mt-6 flex-shrink-0">
+                                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20">
                                     {revealedCardIndex < pullResults.length - 1 ? (
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                             onClick={() => setRevealedCardIndex(prev => prev + 1)}
-                                            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold text-white shadow-lg hover:shadow-cyan-500/30 transition-all"
+                                            className="px-10 py-3 bg-blue-600/80 backdrop-blur-sm border border-blue-400 rounded-full font-bold text-white shadow-lg hover:bg-blue-500 transition-all"
                                         >
                                             Suivant ({revealedCardIndex + 1}/{pullResults.length})
                                         </motion.button>
@@ -865,18 +864,16 @@ function GachaPageContent() {
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                             onClick={closeResults}
-                                            className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
+                                            className="px-10 py-3 bg-purple-600/80 backdrop-blur-sm border border-purple-400 rounded-full font-bold text-white shadow-lg hover:bg-purple-500 transition-all"
                                         >
                                             Terminer
                                         </motion.button>
                                     )}
-                                </div>
-                                <div className="text-center mt-2 text-xs text-gray-500 flex-shrink-0">
                                     <motion.button
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => setRevealedCardIndex(pullResults.length - 1)}
-                                        className="hover:underline"
+                                        className="text-xs text-white/50 hover:text-white hover:underline transition-colors"
                                     >
                                         Passer
                                     </motion.button>
