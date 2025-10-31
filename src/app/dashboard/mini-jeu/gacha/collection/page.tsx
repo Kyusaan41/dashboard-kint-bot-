@@ -31,11 +31,11 @@ interface UserCollection {
 }
 
 const RARITY_STYLES: { [key: string]: string } = {
-    'Commun': 'border-gray-500 bg-gray-800/50 shadow-gray-500/10',
-    'Rare': 'border-green-500 bg-green-800/50 shadow-green-500/30',
-    'Épique': 'border-blue-500 bg-blue-800/50 shadow-blue-500/40',
-    'Légendaire': 'border-purple-500 bg-purple-800/50 shadow-purple-500/50',
-    'Mythique': 'border-yellow-500 bg-yellow-800/50 shadow-yellow-500/60',
+    'Commun': 'border-gray-500 bg-gray-800/50 shadow-gray-500/10', // Gris
+    'Rare': 'border-blue-500 bg-blue-800/50 shadow-blue-500/30', // Bleu
+    'Épique': 'border-purple-500 bg-purple-800/50 shadow-purple-500/40', // Violet
+    'Légendaire': 'border-orange-500 bg-orange-800/50 shadow-orange-500/50', // Orange
+    'Mythique': 'border-red-500 bg-red-800/50 shadow-red-500/60', // Rouge
 };
 
 const StatCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: number | string }) => (
@@ -124,24 +124,24 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
                     {/* Option 1: Vente à la banque */}
                     <button
                         onClick={() => onSell(card.cardId)}
-                        className="w-full text-left p-4 bg-green-600/20 border border-green-500 rounded-lg flex items-center gap-4 hover:bg-green-600/40 transition-all"
+                        className="w-full text-left p-4 bg-green-600/20 border border-green-500 rounded-lg flex items-center gap-4 hover:bg-green-600/40 transition-all group"
                     >
-                        <Coins className="w-8 h-8 text-green-400 flex-shrink-0" />
+                        <Coins className="w-8 h-8 text-green-400 flex-shrink-0 transition-transform group-hover:scale-110" />
                         <div>
                             <p className="font-bold text-white">Vente Instantanée</p>
-                            <p className="text-sm text-green-300/80">Recevez immédiatement {sellPrice} pièces.</p>
+                            <p className="text-sm text-green-300/80">Recevez immédiatement <span className="font-bold">{sellPrice}</span> pièces.</p>
                         </div>
                     </button>
 
                     {/* Option 2: Maison des ventes */}
                     <button
                         onClick={onAuction}
-                        className="w-full text-left p-4 bg-purple-600/20 border border-purple-500 rounded-lg flex items-center gap-4 hover:bg-purple-600/40 transition-all"
+                        className="w-full text-left p-4 bg-purple-600/20 border border-purple-500 rounded-lg flex items-center gap-4 hover:bg-purple-600/40 transition-all group"
                     >
-                        <Layers className="w-8 h-8 text-purple-400 flex-shrink-0" />
+                        <Layers className="w-8 h-8 text-purple-400 flex-shrink-0 transition-transform group-hover:scale-110" />
                         <div>
                             <p className="font-bold text-white">Mettre aux Enchères</p>
-                            <p className="text-sm text-purple-300/80">Vendez votre carte à d'autres joueurs.</p>
+                            <p className="text-sm text-purple-300/80">Vendez votre carte à d'autres joueurs pour un meilleur prix.</p>
                         </div>
                     </button>
                 </div>
@@ -566,8 +566,12 @@ export default function CollectionPage() {
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.3, ease: "easeOut" }}
-                                                whileHover={{ y: -5, scale: 1.03, boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
-                                            > 
+                                                whileHover={{ 
+                                                    y: -8, 
+                                                    scale: 1.05, 
+                                                    boxShadow: `0 0 25px -5px ${RARITY_STYLES[cardInfo.rarity]?.split(' ')[2].replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}`,
+                                                    transition: { duration: 0.2, ease: "circOut" }
+                                                }}> 
                                                 <div className="flex-grow relative overflow-hidden">
                                                     <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
                                                 </div>
@@ -614,8 +618,12 @@ export default function CollectionPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, ease: "easeOut" }}
-                                    whileHover={{ y: -5, scale: 1.03, boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
-                                > 
+                                    whileHover={{ 
+                                        y: -8, 
+                                        scale: 1.05, 
+                                        boxShadow: `0 0 25px -5px ${RARITY_STYLES[cardInfo.rarity]?.split(' ')[2].replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}`,
+                                        transition: { duration: 0.2, ease: "circOut" }
+                                    }}> 
                                     <div className="flex-grow relative overflow-hidden">
                                         <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
                                     </div>

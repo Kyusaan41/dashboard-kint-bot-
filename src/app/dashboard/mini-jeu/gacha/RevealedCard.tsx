@@ -32,36 +32,60 @@ export function RevealedCard({ card, isNew, rarityStyles, rarityStars, isHighRar
         };
     }, [onAnimationComplete]);
 
+    const [isFlipped, setIsFlipped] = useState(false);
+
+    useEffect(() => {
+        const flipTimer = setTimeout(() => setIsFlipped(true), 500);
+        return () => clearTimeout(flipTimer);
+    }, []);
+
     const cardVariants = {
         initial: { opacity: 0, y: 100, scale: 0.7 },
         enter: { 
             opacity: 1, 
             y: 0, 
             scale: 1,
-            transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }
+            transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }
         },
         exit: { 
             opacity: 0, 
             y: -100, 
             scale: 0.8,
-            transition: { duration: 0.4, ease: [0.45, 0, 0.55, 1] as const }
+            transition: { duration: 0.3, ease: [0.45, 0, 0.55, 1] as const }
         }
     };
 
     return (
         <motion.div
-            className="w-full max-w-xs md:max-w-sm h-auto"
+            key={card.id}
+            className="w-full max-w-xs md:max-w-sm h-auto cursor-pointer"
             variants={cardVariants}
             initial="initial"
             animate="enter"
             exit="exit"
+            onClick={() => !isFlipped && setIsFlipped(true)}
         >
-            <div className="w-full aspect-[5/7] perspective-1000">
-                <div
-                    className="relative w-full h-full"
+            <div className="w-full aspect-[5/7] [perspective:1000px]">
+                <motion.div
+                    className="relative w-full h-full [transform-style:preserve-3d] transition-transform duration-500"
+                    animate={{ rotateY: isFlipped ? 360 : 180 }}
+                    transition={{ duration: 0.5, ease: 'circOut' }}
                 >
+                    {/* Dos de la carte */}
+                    <div className="absolute w-full h-full [backface-visibility:hidden] bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl border-4 border-purple-500/50 flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 bg-[url('/gacha/card-back-pattern.svg')] opacity-10"></div>
+                        <motion.img 
+                            src="/gacha/icons/wish.png" 
+                            alt="Card Back" 
+                            className="w-24 h-24"
+                            initial={{ scale: 0.8, opacity: 0.5 }}
+                            animate={{ scale: [1, 1.05, 1], opacity: [0.7, 1, 0.7] }}
+                            transition={{ duration: 2, repeat: Infinity, repeatType: 'mirror' }}
+                        />
+                    </div>
+
                     {/* Face de la carte (Personnage) */}
-                    <div className={`absolute w-full h-full bg-gray-900 rounded-xl border-4 overflow-hidden ${rarityStyles.border}`}>
+                    <div className={`absolute w-full h-full [backface-visibility:hidden] bg-gray-900 rounded-xl border-4 overflow-hidden ${rarityStyles.border}`}>
                         {isHighRarity && (
                             <>
                                 <motion.div 
@@ -90,15 +114,15 @@ export function RevealedCard({ card, isNew, rarityStyles, rarityStars, isHighRar
 
                         {isNew && (
                             <motion.div
-                                className="absolute top-2 right-2 px-3 py-1 bg-green-600/90 border border-green-400 rounded-full text-sm text-white font-semibold z-20"
+                                className="absolute top-2 right-2 px-3 py-1 bg-green-600/90 border border-green-400 rounded-full text-sm text-white font-semibold z-20 shadow-lg"
                                 initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 15, delay: 1 } }}
+                                animate={{ scale: isFlipped ? 1 : 0, opacity: isFlipped ? 1 : 0, transition: { type: 'spring', stiffness: 300, damping: 15, delay: 0.5 } }}
                             >
                                 NOUVEAU
                             </motion.div>
                         )}
                     </div>
-                </div>
+                </motion.div>
             </div>
         </motion.div>
     );

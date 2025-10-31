@@ -277,9 +277,9 @@ export const ANIME_CARDS: AnimeCard[] = [
         power: 98,
         quote: "Réveille-toi et affronte la réalité ! Rien ne se passe comme prévu dans ce monde misérable."
     },
-    { id: 'nar_020', name: 'Kaguya Otsutsuki', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_020.jpg', malId: 75635, description: 'La Progenitrice du Chakra, une menace divine.', power: 100 },
-    { id: 'nar_021', name: 'Naruto (Six Paths)', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_021.jpg', malId: 17, description: 'Le Sauveur du Monde, héritier du Sage des Six Chemins.', power: 99 },
-    { id: 'nar_025', name: 'Guy (Eight Gates)', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_025.jpg', malId: 308, description: 'L\'ouverture de la huitième porte, une puissance qui surpasse les Kage.', power: 99 },
+    { id: 'nar_020', name: 'Kaguya Otsutsuki', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_020.png', malId: 75635, description: 'La Progenitrice du Chakra, une menace divine.', power: 100 },
+    { id: 'nar_021', name: 'Naruto (Six Paths)', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_021.png', malId: 17, description: 'Le Sauveur du Monde, héritier du Sage des Six Chemins.', power: 99 },
+    { id: 'nar_025', name: 'Guy (Eight Gates)', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_025.png', malId: 308, description: 'L\'ouverture de la huitième porte, une puissance qui surpasse les Kage.', power: 99 },
 
     // ===== ONE PIECE =====
     // Commun
@@ -1369,7 +1369,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'sds_010', name: 'Zeldris', anime: 'The Seven Deadly Sins', rarity: 'Légendaire', image: '/gacha/cards/sds_010.jpg', malId: 139127, description: 'Le Commandement de la Piété, frère de Meliodas.', power: 92 },
     { id: 'sds_011', name: 'Estarossa', anime: 'The Seven Deadly Sins', rarity: 'Légendaire', image: '/gacha/cards/sds_011.jpg', malId: 139128, description: 'Le Commandement de la Charité, qui se révélera être Mael.', power: 93 },
     { id: 'sds_012', name: 'Demon King', anime: 'The Seven Deadly Sins', rarity: 'Légendaire', image: '/gacha/cards/sds_012.jpg', malId: 139129, description: 'Le souverain du Clan des Démons, père de Meliodas.', power: 97 },
-    { id: 'sds_013', name: 'Meliodas (Assault Mode)', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_013.jpg', malId: 42091, description: 'La forme originelle de Meliodas, dénuée d\'émotions.', power: 98 },
+    { id: 'sds_013', name: 'Meliodas (Assault Mode)', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_013.png', malId: 42091, description: 'La forme originelle de Meliodas, dénuée d\'émotions.', power: 98 },
     { id: 'sds_014', name: 'Escanor (The One)', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_014.jpg', malId: 42107, description: 'Au zénith, l\'incarnation de la puissance pendant une minute.', power: 99 },
     { id: 'sds_015', name: 'Chaos', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_015.jpg', malId: 201384, description: 'L\'entité primordiale qui a créé le monde, les dieux et les démons.', power: 100 },
 

@@ -674,34 +674,36 @@ function GachaPageContent() {
                                 {activeTab === 'shop' && (
                                     <div>
                                         <h3 className="text-2xl font-bold text-white mb-6 text-center">Boutique de Vœux</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                                             {/* Carte pour 1 Vœu */}
-                                            <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700 text-center flex flex-col transition-all hover:border-blue-500 hover:bg-slate-800">
+                                            <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700 text-center flex flex-col justify-between transition-all hover:border-blue-500 hover:bg-slate-800">
                                                 <img src="/gacha/icons/wish.png" alt="Vœu" className="w-20 h-20 mx-auto mb-4"/>
                                                 <h4 className="text-lg font-semibold text-white mb-2">1 Vœu</h4>
                                                 <p className="text-gray-400 mb-4 flex-grow">Pour un tirage unique.</p>
                                                 <button 
                                                     onClick={() => buyWishes('single')}
                                                     disabled={isBuying || currency < 500}
-                                                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold text-white shadow-lg hover:shadow-cyan-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="w-full px-6 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg hover:bg-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                                 >
-                                                    Acheter pour 500 ✦
+                                                    500 <span className="text-yellow-300">✦</span>
                                                 </button>
                                             </div>
                                             {/* Carte pour 10 Vœux avec encadrement promo */}
-                                            <div className="relative bg-gradient-to-b from-yellow-900/30 to-slate-800/50 rounded-xl p-6 border-2 border-yellow-500 text-center flex flex-col shadow-lg shadow-yellow-500/10">
-                                                <div className="absolute top-0 right-0 bg-yellow-500 text-black font-bold text-xs uppercase px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">
-                                                    Promo
+                                            <div className="relative bg-gradient-to-br from-purple-900/30 via-slate-800/50 to-slate-800/50 rounded-xl p-6 border-2 border-purple-500 text-center flex flex-col justify-between shadow-lg shadow-purple-500/10">
+                                                <div className="absolute top-0 right-0 bg-purple-500 text-white font-bold text-xs uppercase px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">
+                                                    -10%
                                                 </div>
-                                                <h4 className="text-lg font-semibold text-white mb-2">10 Vœux</h4>
-                                                <img src="/gacha/icons/wish-pack.png" alt="Pack de Vœux" className="w-24 h-24 mx-auto mb-4"/>
-                                                <p className="text-yellow-300/80 mb-4 flex-grow">Le meilleur rapport qualité-prix pour vos tirages !</p>
+                                                <div>
+                                                    <img src="/gacha/icons/wish-pack.png" alt="Pack de Vœux" className="w-24 h-24 mx-auto mb-4"/>
+                                                    <h4 className="text-xl font-bold text-white mb-2">10 Vœux</h4>
+                                                    <p className="text-purple-300/80 mb-4 flex-grow">Le meilleur rapport qualité-prix pour vos tirages !</p>
+                                                </div>
                                                 <button 
                                                     onClick={() => buyWishes('multi')}
                                                     disabled={isBuying || currency < 4500}
-                                                    className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                                 >
-                                                    Acheter pour 4500 ✦
+                                                    4500 <span className="text-yellow-300">✦</span>
                                                 </button>
                                             </div>
                                         </div>
