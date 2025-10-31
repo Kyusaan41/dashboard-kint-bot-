@@ -237,6 +237,7 @@ function GachaPageContent() {
     const [rarityFilter, setRarityFilter] = useState<'all' | 'rare' | 'epic' | 'legendary' | 'mythic'>('all');
     const [isPulling, setIsPulling] = useState(false); // ✨ ÉTAT DE VERROUILLAGE
     const [quantityFilter, setQuantityFilter] = useState<'all' | 'multiple'>('all');
+    const [isBuying, setIsBuying] = useState(false); // État de verrouillage pour l'achat
     
     const {
         featuredCharacters,
@@ -297,6 +298,9 @@ function GachaPageContent() {
             return;
         }
 
+        if (isBuying) return; // Empêche le spam
+        setIsBuying(true); // Verrouille le bouton
+
         try {
             // Étape 1 : Déduire les pièces en utilisant la fonction centralisée et fiable
             await updateCurrency(session.user.id, -coinCost, 'Achat de Vœux Gacha');
@@ -337,6 +341,8 @@ function GachaPageContent() {
         } catch (error: any) {
             console.error("[GACHA] Erreur lors de l'achat de vœux:", error);
             alert(`Erreur: ${error.message}`);
+        } finally {
+            setIsBuying(false); // Déverrouille le bouton
         }
     };
 
@@ -675,7 +681,7 @@ function GachaPageContent() {
                                                 <p className="text-gray-400 mb-4 flex-grow">Pour un tirage unique.</p>
                                                 <button 
                                                     onClick={() => buyWishes('single')}
-                                                    disabled={currency < 500}
+                                                    disabled={isBuying || currency < 500}
                                                     className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold text-white shadow-lg hover:shadow-cyan-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     Acheter pour 500 ✦
@@ -691,7 +697,7 @@ function GachaPageContent() {
                                                 <p className="text-yellow-300/80 mb-4 flex-grow">Le meilleur rapport qualité-prix pour vos tirages !</p>
                                                 <button 
                                                     onClick={() => buyWishes('multi')}
-                                                    disabled={currency < 4500}
+                                                    disabled={isBuying || currency < 4500}
                                                     className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     Acheter pour 4500 ✦
