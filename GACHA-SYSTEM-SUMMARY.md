@@ -21,7 +21,7 @@
 - ✅ **Dragon Ball Z** : 9 cartes (Goku, Vegeta, Gohan, Piccolo, Trunks, Majin Buu, Cell, Goku SSJ, Beerus)
 - ✅ **Bleach** : 9 cartes (Ichigo, Rukia, Orihime, Renji, Byakuya, Kenpachi, Toshiro, Aizen, Yhwach)
 - ✅ **Hunter x Hunter** : 9 cartes (Gon, Killua, Kurapika, Leorio, Hisoka, Chrollo, Netero, Meruem, Adult Gon)
-- ✅ **Total** : 63 cartes disponibles (27 nouvelles + 36 existantes)
+- ✅ **Total** : 581 cartes disponibles (311 nouvelles + 270 existantes)
 
 ### 5. **IDs MyAnimeList Vérifiés**
 - ✅ Tous les IDs ont été vérifiés via recherche web

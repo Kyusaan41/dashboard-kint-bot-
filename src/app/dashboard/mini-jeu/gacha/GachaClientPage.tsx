@@ -235,6 +235,7 @@ function GachaPageContent() {
     const [pullHistory, setPullHistory] = useState<PullHistory[]>([]);
     const [activeTab, setActiveTab] = useState<'shop' | 'details' | 'history' | null>(null);
     const [rarityFilter, setRarityFilter] = useState<'all' | 'rare' | 'epic' | 'legendary' | 'mythic'>('all');
+    const [isPulling, setIsPulling] = useState(false); // ✨ ÉTAT DE VERROUILLAGE
     const [quantityFilter, setQuantityFilter] = useState<'all' | 'multiple'>('all');
     
     const {
@@ -340,7 +341,7 @@ function GachaPageContent() {
     };
 
     const performPull = async (type: 'single' | 'multi') => {
-        if (pullAnimation.active) return;
+        if (isPulling) return; // ✨ Si un tirage est déjà en cours, on ne fait rien.
         if (!session) {
             alert("Veuillez vous connecter pour jouer.");
             return;
@@ -351,6 +352,8 @@ function GachaPageContent() {
             alert('Pas assez de vœux !');
             return;
         }
+
+        setIsPulling(true); // ✨ On verrouille le bouton
 
         // Dépenser les vœux via l'API
         try {
@@ -368,27 +371,8 @@ function GachaPageContent() {
             const pullData = await spendResponse.json();
             setWishes(pullData.newWishes); // Met à jour le solde de vœux après le tirage
 
-        const results: PullResult[] = [];
+            const results: PullResult[] = pullData.pulledCards.map((card: any) => ({ card, isNew: card.isNew }));
             // La logique de tirage est maintenant côté bot, on utilise les résultats qu'il renvoie.
-            for (const pulledCard of pullData.pulledCards) {
-                results.push({ card: pulledCard, isNew: pulledCard.isNew }); // isNew est maintenant géré par le bot
-
-                // ✨ CORRECTION : On sauvegarde chaque carte obtenue dans la collection
-                try {
-                    await fetch(API_ENDPOINTS.GACHA_ADD_CARD, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: session.user.id,
-                            username: session.user.name,
-                            cardId: pulledCard.id,
-                            anime: pulledCard.anime,
-                        }),
-                    });
-                } catch (error) {
-                    console.error("[GACHA] Erreur de sauvegarde de la carte:", pulledCard.name, error);
-                }
-            }
         
         const rarityOrder: CardRarity[] = ['Commun', 'Rare', 'Épique', 'Légendaire', 'Mythique'];
         const highestRarity = results.reduce((max, current) => {
@@ -405,6 +389,9 @@ function GachaPageContent() {
         } catch (error: any) {
             console.error("[GACHA] Erreur lors du tirage:", error);
             alert(`Erreur: ${error.message}`);
+        } finally {
+            // ✨ On déverrouille le bouton une fois que tout est terminé
+            setIsPulling(false);
         }
     };
 
@@ -624,7 +611,7 @@ function GachaPageContent() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => performPull('single')}
-                                disabled={pullAnimation.active || wishes < 1}
+                                disabled={isPulling || wishes < 1}
                             className="bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="px-5 py-2.5 flex flex-col items-center">
@@ -643,7 +630,7 @@ function GachaPageContent() {
                             whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => performPull('multi')}
-                            disabled={pullAnimation.active || wishes < 10}
+                            disabled={isPulling || wishes < 10}
                             className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 text-black font-bold rounded-full shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="px-8 py-2.5 flex flex-col items-center">
