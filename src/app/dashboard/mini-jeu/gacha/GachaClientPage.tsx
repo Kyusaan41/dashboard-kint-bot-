@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
 import { Star, Filter, History, X, BookOpen } from 'lucide-react';
 import Link from 'next/link';
@@ -495,9 +495,8 @@ function GachaPageContent() {
                         src={currentFeaturedChar.image}
                         alt="Banner Background"
                         className="absolute inset-0 w-full h-full object-cover filter blur-sm scale-110 opacity-30"
-                        initial={{ scale: 1.1, rotate: 0 }}
-                        animate={{ scale: 1.15, rotate: 0.5 }}
-                        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+                        animate={{ scale: [1.1, 1.15, 1.1], rotate: [0, 0.5, 0] }}
+                        transition={{ duration: 20, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
                     />
                     {/* Dégradé pour la lisibilité */}
                     <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
@@ -509,13 +508,13 @@ function GachaPageContent() {
                                 key={`glow-${currentFeaturedChar.id}`}
                                 className="absolute top-1/2 -translate-y-1/2 z-0 rounded-full blur-xl"
                                 style={{
-                                    right: currentFeaturedChar.rarity === 'Mythique' ? '-10px' : '20px',
+                                    right: currentFeaturedChar.rarity === 'Mythique' ? '-20px' : '10px',
                                     height: currentFeaturedChar.rarity === 'Mythique' ? '130%' : '110%',
                                     width: currentFeaturedChar.rarity === 'Mythique' ? '400px' : '300px',
                                     backgroundColor: getGlowColor(currentFeaturedChar.rarity),
                                 }}
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 0.5 }}
+                                initial={{ scale: 0.9, opacity: 0.4 }}
+                                animate={{ scale: [0.9, 1, 0.9], opacity: [0.4, 0.6, 0.4] }}
                                 exit={{ scale: 0.8, opacity: 0 }}
                                 transition={{ duration: 0.5, ease: "easeOut" }}
                             />
@@ -528,12 +527,14 @@ function GachaPageContent() {
                             key={currentFeaturedChar.id}
                             src={currentFeaturedChar.image}
                             alt={currentFeaturedChar.name}
-                            className="absolute right-[-50px] md:right-0 top-1/2 -translate-y-1/2 h-[110%] md:h-[120%] w-auto z-10 object-contain object-right"
+                            className="absolute right-[-80px] md:right-[-40px] bottom-0 h-[105%] md:h-[115%] w-auto object-contain z-10"
                             initial={{ opacity: 0, x: 100 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -100 }}
                             transition={{ duration: 0.5, ease: "easeOut" }}
-                        />
+                        >
+                            {/* L'animation de respiration est maintenant gérée par la div parente si nécessaire, ou peut être ajoutée ici */}
+                        </motion.img>
                     </AnimatePresence>
 
                     {/* Contenu de la bannière (sur la gauche) */}
@@ -575,7 +576,7 @@ function GachaPageContent() {
                             <div className="text-xs text-white/70">Temps Restant</div>
                             <div className="text-lg font-bold text-white">{formatTime(timeRemaining)}</div>
                         </div>
-
+                        
                         <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-right z-20">
                             <div className="text-xs text-white/70">Puissance</div>
                             <div className="text-lg font-semibold text-white">{currentFeaturedChar.power}</div>

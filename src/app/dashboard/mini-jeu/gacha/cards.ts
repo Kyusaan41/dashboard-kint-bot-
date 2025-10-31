@@ -12,6 +12,7 @@ export interface AnimeCard {
     malId: number; // 
     description: string;
     power: number; // Niveau de puissance (1-100) osef mais pour le trackID
+    quote?: string; // ✨ NOUVEAU: Citation iconique du personnage
 }
 
 // Probabilités de drop (total = 85% car 15% = rien)
@@ -161,7 +162,8 @@ export const ANIME_CARDS: AnimeCard[] = [
         image: '/gacha/cards/ds_009.png',
         malId: 174159,
         description: 'Le plus puissant pourfendeur, créateur de la Danse du Dieu du Feu',
-        power: 100
+        power: 100,
+        quote: "Ceux qui naissent avec un don supérieur aux autres ont le devoir de l'utiliser pour le bien du monde."
     },
 
     
@@ -272,7 +274,8 @@ export const ANIME_CARDS: AnimeCard[] = [
         image: '/gacha/cards/nar_009.png',
         malId: 11,
         description: 'Légende vivante, cofondateur de Konoha',
-        power: 98
+        power: 98,
+        quote: "Réveille-toi et affronte la réalité ! Rien ne se passe comme prévu dans ce monde misérable."
     },
     { id: 'nar_020', name: 'Kaguya Otsutsuki', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_020.jpg', malId: 75635, description: 'La Progenitrice du Chakra, une menace divine.', power: 100 },
     { id: 'nar_021', name: 'Naruto (Six Paths)', anime: 'Naruto', rarity: 'Mythique', image: '/gacha/cards/nar_021.jpg', malId: 17, description: 'Le Sauveur du Monde, héritier du Sage des Six Chemins.', power: 99 },
@@ -387,7 +390,8 @@ export const ANIME_CARDS: AnimeCard[] = [
         image: '/gacha/cards/op_009.png',
         malId: 40459,
         description: 'Le Roi des Pirates, légende absolue',
-        power: 99
+        power: 99,
+        quote: "Mon trésor ? Je vous le laisse si vous voulez. Trouvez-le ! Je l'ai laissé quelque part dans ce monde !"
     },
     { id: 'op_021', name: 'Luffy (Gear 5)', anime: 'One Piece', rarity: 'Mythique', image: '/gacha/cards/op_021.jpg', malId: 40, description: 'L\'éveil du Hito Hito no Mi, modèle: Nika. Le guerrier de la libération.', power: 100 },
 
