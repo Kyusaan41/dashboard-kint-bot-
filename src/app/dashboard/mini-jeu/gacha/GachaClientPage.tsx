@@ -207,6 +207,43 @@ const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity:
 	);
 };
 
+// --- ✨ NOUVEAU: CERCLE DE PROGRESSION POUR LA PITY ---
+const PityProgressCircle = ({ pity, maxPity }: { pity: number; maxPity: number }) => {
+    const radius = 30;
+    const circumference = 2 * Math.PI * radius;
+    const progress = pity / maxPity;
+    const strokeDashoffset = circumference * (1 - progress);
+
+    const pityStatus = getPityStatus(pity);
+
+    return (
+        <div className="flex flex-col items-center gap-2">
+            <div className="relative w-20 h-20">
+                <svg className="w-full h-full" viewBox="0 0 80 80">
+                    <circle
+                        cx="40" cy="40" r={radius}
+                        className="stroke-current text-white/10"
+                        strokeWidth="8" fill="none"
+                    />
+                    <motion.circle
+                        cx="40" cy="40" r={radius}
+                        className={`stroke-current ${pityStatus.className}`}
+                        strokeWidth="8" fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        initial={{ strokeDashoffset: circumference }}
+                        animate={{ strokeDashoffset }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        transform="rotate(-90 40 40)"
+                    />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">{pity}</div>
+            </div>
+            <div className={`text-xs font-semibold ${pityStatus.className}`}>{pityStatus.text}</div>
+        </div>
+    );
+};
+
 // --- FONCTION POUR LE SUSPENSE DE LA PITY ---
 
 const getPityStatus = (pity: number): { text: string; className: string } => {
@@ -597,15 +634,13 @@ function GachaPageContent() {
                             <div className="text-xs text-white/70">Temps Restant</div>
                             <div className="text-lg font-bold text-white">{formatTime(timeRemaining)}</div>
                         </div>
-                        
                         <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-right z-20">
                             <div className="text-xs text-white/70">Puissance</div>
                             <div className="text-lg font-semibold text-white">{currentFeaturedChar.power}</div>
                             <div className="text-xs text-white/70 mt-2">Progression du Vœu</div>
                             <div className={`text-lg font-semibold ${pityStatus.className}`}>{pityStatus.text}</div>
                         </div>
-                    </div>
-                </div>
+                    </div></div>
 
                 <div className="flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
                     <div className="flex gap-2 bg-black/30 p-1 rounded-full">
