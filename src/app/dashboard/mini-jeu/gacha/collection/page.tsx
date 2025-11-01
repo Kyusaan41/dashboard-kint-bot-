@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, AnimateSharedLayout } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, Loader, BookOpen, Star, Layers, Hash, Filter, ChevronDown, Coins, Tag } from 'lucide-react';
 import { toast } from 'sonner';
@@ -216,6 +216,10 @@ export default function CollectionPage() {
     const [collection, setCollection] = useState<UserCollection | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // ✨ NOUVEAU: États pour la recherche d'utilisateur
+    const [viewedUserId, setViewedUserId] = useState<string | null>(null);
+    const [searchInput, setSearchInput] = useState('');
 
     // ✨ NOUVEAU: État pour la notification de vente
     const [sellNotification, setSellNotification] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
@@ -233,12 +237,12 @@ export default function CollectionPage() {
     const [groupByAnime, setGroupByAnime] = useState(true); // ✨ NOUVEAU: État pour le regroupement
 
     // ✨ CORRECTION: On définit fetchCollection ici avec useCallback
-    const fetchCollection = useCallback(async () => {
-        if (!session?.user?.id) return;
+    const fetchCollection = useCallback(async (userIdToFetch: string) => {
+        if (!userIdToFetch) return;
 
         try {
             setLoading(true);
-            const response = await fetch(API_ENDPOINTS.GACHA_COLLECTION(session.user.id));
+            const response = await fetch(API_ENDPOINTS.GACHA_COLLECTION(userIdToFetch));
             if (!response.ok) {
                 throw new Error("Impossible de charger la collection.");
             }
@@ -255,80 +259,16 @@ export default function CollectionPage() {
                 });
                 setCollection(localData);
             } else {
-                throw new Error(data.error || "Une erreur est survenue.");
+                setCollection(null); // Réinitialiser la collection en cas d'erreur ou d'utilisateur non trouvé
+                throw new Error(data.error || "Utilisateur non trouvé ou collection vide.");
             }
         } catch (err: any) {
             setError(err.message);
+            setCollection(null);
         } finally {
             setLoading(false);
         }
-    }, [session]); // On ajoute session comme dépendance
-
-    // ✨ NOUVEAU: Logique de vente
-    const handleSellCard = async (cardId: string) => {
-        if (!session?.user?.id) return;
-
-        toast.promise(
-            fetch(API_ENDPOINTS.gachaSellCard, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: session.user.id, cardId }),
-            }).then(async (res) => {
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.message || "Une erreur est survenue lors de la vente.");
-                }
-                return res.json();
-            }),
-            {
-                loading: 'Vente en cours...',
-                success: (data) => {
-                    setSellModalInfo({ show: false, card: null }); // Fermer la modale
-                    fetchCollection(); // Recharger la collection
-                    return data.message || "Carte vendue avec succès !";
-                },
-                error: (err) => err.message || "La vente a échoué.",
-            }
-        );
-    };
-
-    // ✨ NOUVEAU: Logique pour mettre une carte aux enchères
-    const handleListCardForAuction = async (cardId: string, price: number) => {
-        if (!session?.user?.id) return;
-
-        toast.promise(
-            fetch(API_ENDPOINTS.marketplaceSell, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: session.user.id,
-                    username: session.user.name,
-                    cardId,
-                    price,
-                }),
-            }).then(async (res) => {
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.message || "Une erreur est survenue.");
-                }
-                return res.json();
-            }),
-            {
-                loading: 'Mise en vente de votre carte...',
-                success: (data) => {
-                    setAuctionModalInfo({ show: false, card: null }); // Fermer la modale d'enchères
-                    fetchCollection(); // Recharger la collection
-                    return data.message || "Votre carte est maintenant sur le marché !";
-                },
-                error: (err) => err.message || "La mise en vente a échoué.",
-            }
-        );
-    };
-
-    useEffect(() => {
-        // On appelle simplement la fonction fetchCollection qui est maintenant dans le scope du composant
-        fetchCollection();
-    }, [fetchCollection]); // On utilise la fonction elle-même comme dépendance
+    }, []);
 
     // ✨ NOUVEAU: Logique de filtrage et de tri avec useMemo pour la performance
     const filteredAndSortedCollections = useMemo(() => {
@@ -418,6 +358,87 @@ export default function CollectionPage() {
         };
     }, [collection]);
 
+    // ✨ NOUVEAU: Gérer la recherche
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchInput.trim()) {
+            setViewedUserId(searchInput.trim());
+        }
+    };
+
+    // ✨ NOUVEAU: Logique de vente
+    const handleSellCard = async (cardId: string) => {
+        if (!session?.user?.id) return;
+
+        toast.promise(
+            fetch(API_ENDPOINTS.gachaSellCard, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: session.user.id, cardId }),
+            }).then(async (res) => {
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.message || "Une erreur est survenue lors de la vente.");
+                }
+                return res.json();
+            }),
+            {
+                loading: 'Vente en cours...',
+                success: (data) => {
+                    setSellModalInfo({ show: false, card: null }); // Fermer la modale
+                    if (viewedUserId) fetchCollection(viewedUserId); // Recharger la collection
+                    return data.message || "Carte vendue avec succès !";
+                },
+                error: (err) => err.message || "La vente a échoué.",
+            }
+        );
+    };
+
+    // ✨ NOUVEAU: Logique pour mettre une carte aux enchères
+    const handleListCardForAuction = async (cardId: string, price: number) => {
+        if (!session?.user?.id) return;
+
+        toast.promise(
+            fetch(API_ENDPOINTS.marketplaceSell, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: session.user.id,
+                    username: session.user.name,
+                    cardId,
+                    price,
+                }),
+            }).then(async (res) => {
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.message || "Une erreur est survenue.");
+                }
+                return res.json();
+            }),
+            {
+                loading: 'Mise en vente de votre carte...',
+                success: (data) => {
+                    setAuctionModalInfo({ show: false, card: null }); // Fermer la modale d'enchères
+                    if (viewedUserId) fetchCollection(viewedUserId); // Recharger la collection
+                    return data.message || "Votre carte est maintenant sur le marché !";
+                },
+                error: (err) => err.message || "La mise en vente a échoué.",
+            }
+        );
+    };
+
+    useEffect(() => {
+        if (session?.user?.id && !viewedUserId) {
+            setViewedUserId(session.user.id);
+        }
+    }, [session, viewedUserId]);
+
+    useEffect(() => {
+        if (viewedUserId) {
+            fetchCollection(viewedUserId);
+        }
+    }, [viewedUserId, fetchCollection]);
+
     if (loading) {
         return (
             <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white p-4">
@@ -427,9 +448,9 @@ export default function CollectionPage() {
         );
     }
 
-    if (error) {
+    if (error && !collection) {
         return (
-            <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white p-4">
+            <div className="min-h-screen w-full flex flex-col items-center justify-center bg-transparent text-white p-4">
                 <p className="text-lg text-red-400">{error}</p>
                 <Link href="/dashboard/mini-jeu/gacha" className="mt-4 px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
                     Retour au Gacha
@@ -469,15 +490,39 @@ export default function CollectionPage() {
 
             <div className="max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-3xl sm:text-4xl font-bold flex items-center gap-3">
-                        <BookOpen className="w-8 h-8 text-purple-400" />
-                        Ma Collection
-                    </h1>
+                    <div>
+                        <h1 className="text-3xl sm:text-4xl font-bold flex items-center gap-3">
+                            <BookOpen className="w-8 h-8 text-purple-400" />
+                            {viewedUserId === session?.user?.id ? 'Ma Collection' : `Collection de ${collection?.username || '...'}`}
+                        </h1>
+                        {viewedUserId !== session?.user?.id && (
+                            <button onClick={() => setViewedUserId(session?.user?.id || null)} className="text-sm text-purple-400 hover:underline mt-1">
+                                Voir ma collection
+                            </button>
+                        )}
+                    </div>
                     <Link href="/dashboard/mini-jeu/gacha" className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
                         <ArrowLeft size={16} />
                         Retour
                     </Link>
                 </div>
+
+                {/* ✨ NOUVEAU: Barre de recherche d'utilisateur */}
+                <div className="mb-8">
+                    <form onSubmit={handleSearch} className="flex gap-2">
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            placeholder="Entrez l'ID Discord d'un utilisateur..."
+                            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                        <button type="submit" className="px-6 py-2 bg-purple-600 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                            Chercher
+                        </button>
+                    </form>
+                </div>
+
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -580,13 +625,15 @@ export default function CollectionPage() {
                                                     <div className="flex justify-center items-center gap-1 mt-1">
                                                         {getRarityStars(cardInfo.rarity)}
                                                     </div>
-                                                    <button 
-                                                        onClick={() => setSellModalInfo({ show: true, card: { cardId, count, cardInfo } })}
-                                                        className="absolute bottom-2 right-2 w-7 h-7 bg-red-600/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        title="Vendre cette carte"
-                                                    >
-                                                        <Coins size={14} />
-                                                    </button>
+                                                    {viewedUserId === session?.user?.id && count > 1 && (
+                                                        <button 
+                                                            onClick={() => setSellModalInfo({ show: true, card: { cardId, count, cardInfo } })}
+                                                            className="absolute bottom-2 right-2 w-7 h-7 bg-red-600/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            title="Vendre cette carte"
+                                                        >
+                                                            <Coins size={14} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 {count > 1 && (
                                                     <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-slate-800">
@@ -632,13 +679,15 @@ export default function CollectionPage() {
                                         <div className="flex justify-center items-center gap-1 mt-1">
                                             {getRarityStars(cardInfo.rarity)}
                                         </div>
-                                        <button 
-                                            onClick={() => setSellModalInfo({ show: true, card: { cardId, count, cardInfo } })}
-                                            className="absolute bottom-2 right-2 w-7 h-7 bg-red-600/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                            title="Vendre cette carte"
-                                        >
-                                            <Coins size={14} />
-                                        </button>
+                                        {viewedUserId === session?.user?.id && count > 1 && (
+                                            <button 
+                                                onClick={() => setSellModalInfo({ show: true, card: { cardId, count, cardInfo } })}
+                                                className="absolute bottom-2 right-2 w-7 h-7 bg-red-600/80 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Vendre cette carte"
+                                            >
+                                                <Coins size={14} />
+                                            </button>
+                                        )}
                                             </div>
                                     {count > 1 && (
                                         <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-slate-800">
@@ -664,7 +713,7 @@ export default function CollectionPage() {
                             Faire un vœu
                         </Link>
                                             </div>
-                )}
+                )} 
             </div>
         </div>
     );
