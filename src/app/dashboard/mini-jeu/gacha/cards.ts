@@ -1,6 +1,16 @@
 // Collection de cartes d'anime pour le système Gacha
 // Raretés : Commun, Rare, Épique, Légendaire, Mythique (SS)
 
+/**
+ * Retourne l'URL de l'image pour une carte donnée.
+ * Le composant qui utilise cette URL se chargera de tester les extensions .png, .jpg, et .jpeg.
+ * @param basePath - Le chemin de base de l'image sans extension (ex: '/gacha/cards/ble_001').
+ * @returns L'URL de l'image avec l'extension .png par défaut.
+ */
+export function getCardImageUrl(basePath: string): string {
+    return `${basePath}.png`; // On utilise .png par défaut, le reste sera géré côté client.
+}
+
 export type CardRarity = 'Commun' | 'Rare' | 'Épique' | 'Légendaire' | 'Mythique';
 
 export interface AnimeCard {
@@ -797,7 +807,7 @@ export const ANIME_CARDS: AnimeCard[] = [
         name: 'Ichigo Kurosaki',
         anime: 'Bleach',
         rarity: 'Commun',
-        image: '/gacha/cards/ble_001.jpg',
+        image: '/gacha/cards/ble_001', // Extension retirée
         malId: 5,
         description: 'Le Shinigami remplaçant',
         power: 46

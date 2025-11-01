@@ -37,3 +37,12 @@ body {
     animation: sway 3s ease-in-out infinite;
   }
 }
+  /* ✨ NOUVEAU: Animation pour l'effet holographique des cartes Gacha */
+  @keyframes holographicShine {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 100% 50%;
+    }
+  }

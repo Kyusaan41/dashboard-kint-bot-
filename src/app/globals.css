@@ -188,3 +188,64 @@ input[type="date"], input[type="time"] {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #fbbf24 0%, #fb923c 100%);
 }
+
+/* --- Nouvel effet holographique pour les cartes Mythiques --- */
+.holographic-effect {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  overflow: hidden; /* Important pour contenir le reflet */
+}
+
+.holographic-effect::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: conic-gradient(from 180deg at 50% 50%, rgba(255,0,255,0.4) 0deg, rgba(0,255,255,0.4) 72deg, rgba(255,255,0,0.4) 144deg, rgba(255,0,255,0.4) 360deg);
+  animation: holo-shine 6s linear infinite;
+  mix-blend-mode: color-dodge;
+  opacity: 0.6;
+}
+
+@keyframes holo-shine {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Nouvel effet pour la BORDURE holographique --- */
+.holographic-border {
+  position: relative;
+}
+
+.holographic-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px; /* Contrôle l'épaisseur de la bordure */
+  border-radius: 0.8rem; /* Doit correspondre au `rounded-xl` de la carte */
+  background: conic-gradient(from var(--angle), #ff00ff, #00ffff, #ffff00, #ff00ff);
+  z-index: -1; /* Place la bordure derrière la carte */
+  animation: holo-border-spin 4s linear infinite;
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes holo-border-spin {
+  to { --angle: 360deg; }
+}
+
+/* ✨ NOUVEAU: Animation de lueur pour la bordure holographique */
+@keyframes holo-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px -5px rgba(239, 68, 68, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 35px 5px rgba(239, 68, 68, 0.9);
+  }
+}

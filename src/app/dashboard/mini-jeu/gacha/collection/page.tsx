@@ -34,8 +34,8 @@ const RARITY_STYLES: { [key: string]: string } = {
     'Commun': 'border-gray-500 bg-gray-800/50 shadow-gray-500/10', // Gris
     'Rare': 'border-blue-500 bg-blue-800/50 shadow-blue-500/30', // Bleu
     'Épique': 'border-purple-500 bg-purple-800/50 shadow-purple-500/40', // Violet
-    'Légendaire': 'border-orange-500 bg-orange-800/50 shadow-orange-500/50', // Orange
-    'Mythique': 'border-red-500 bg-red-800/50 shadow-red-500/60', // Rouge
+    'Légendaire': 'border-orange-500 bg-orange-800/50 shadow-orange-500/50', // Orange 
+    'Mythique': 'bg-red-800/50 shadow-red-500/60', // Rouge - bordure gérée par la classe holographic-border
 };
 
 const StatCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: number | string }) => (
@@ -542,7 +542,10 @@ export default function CollectionPage() {
                                 onClick={() => setRarityFilter(rarity)}
                                 className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
                                     rarityFilter.toLowerCase() === rarity.toLowerCase()
-                                        ? `text-black ${rarity === 'all' ? 'bg-white' : `bg-gradient-to-r ${Object.values(RARITY_STYLES[rarity] || {})[0] || 'from-gray-400 to-gray-600'}`}`
+                                        ? `text-black ${rarity === 'all' 
+                                            ? 'bg-white' 
+                                            : `bg-gradient-to-r from-${(RARITY_STYLES[rarity]?.split(' ')[0] || '').replace('border-', '')} to-${(RARITY_STYLES[rarity]?.split(' ')[0] || '').replace('border-', '').replace('-500', '-400')}`
+                                        }`
                                         : 'bg-black/30 text-white/70 hover:bg-white/20'
                                 }`}
                             >
@@ -607,26 +610,22 @@ export default function CollectionPage() {
                                             <motion.div
                                                 key={cardId}
                                                 layout
-                                                className={`group relative rounded-xl border-2 overflow-hidden flex flex-col h-64 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}
+                                                className={`group relative rounded-xl overflow-hidden flex flex-col h-64 ${cardInfo.rarity === 'Mythique' ? `holographic-border ${RARITY_STYLES[cardInfo.rarity]}` : `border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}`}
+                                                style={cardInfo.rarity === 'Mythique' ? { animation: 'holo-glow 2s ease-in-out infinite' } : {}}
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.3, ease: "easeOut" }}
                                                 whileHover={{ 
                                                     y: -8, 
                                                     scale: 1.05, 
-                                                    boxShadow: `0 0 25px -5px ${RARITY_STYLES[cardInfo.rarity]?.split(' ')[2].replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}`,
+                                                    boxShadow: cardInfo.rarity !== 'Mythique' ? `0 0 25px -5px ${RARITY_STYLES[cardInfo.rarity]?.split(' ')[2]?.replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}` : undefined,
                                                     transition: { duration: 0.2, ease: "circOut" }
                                                 }}> 
                                                 <div className="flex-grow relative overflow-hidden">
-                                                    {cardInfo.rarity === 'Mythique' && (
-                                                        <div className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
-                                                             style={{
-                                                                 background: 'linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.4) 50%, transparent 75%)',
-                                                                 backgroundSize: '200% 100%',
-                                                                 animation: 'holographicShine 3s infinite linear'
-                                                             }}></div>
-                                                    )}
                                                     <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
+                                                    {cardInfo.rarity === 'Mythique' && (
+                                                        <div className="holographic-effect"></div>
+                                                    )}
                                                 </div>
                                                 <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
                                                     <p className="font-bold text-sm truncate text-white">{cardInfo.name}</p>
@@ -669,26 +668,22 @@ export default function CollectionPage() {
                                 <motion.div
                                     key={cardId}
                                     layout
-                                    className={`group relative rounded-xl border-2 overflow-hidden flex flex-col h-64 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}
+                                    className={`group relative rounded-xl overflow-hidden flex flex-col h-64 ${cardInfo.rarity === 'Mythique' ? `holographic-border ${RARITY_STYLES[cardInfo.rarity]}` : `border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}`}
+                                    style={cardInfo.rarity === 'Mythique' ? { animation: 'holo-glow 2s ease-in-out infinite' } : {}}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, ease: "easeOut" }}
                                     whileHover={{ 
-                                        y: -8, 
+                                        y: -8,
                                         scale: 1.05, 
-                                        boxShadow: `0 0 25px -5px ${RARITY_STYLES[cardInfo.rarity]?.split(' ')[2].replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}`,
+                                        boxShadow: cardInfo.rarity !== 'Mythique' ? `0 0 25px -5px ${RARITY_STYLES[cardInfo.rarity]?.split(' ')[2]?.replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}` : undefined,
                                         transition: { duration: 0.2, ease: "circOut" }
                                     }}> 
                                     <div className="flex-grow relative overflow-hidden">
-                                        {cardInfo.rarity === 'Mythique' && (
-                                            <div className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
-                                                 style={{
-                                                     background: 'linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.4) 50%, transparent 75%)',
-                                                     backgroundSize: '200% 100%',
-                                                     animation: 'holographicShine 3s infinite linear'
-                                                 }}></div>
-                                        )}
                                         <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
+                                        {cardInfo.rarity === 'Mythique' && (
+                                            <div className="holographic-effect"></div>
+                                        )}
                                     </div>
                                     <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
                                         <p className="font-bold text-sm truncate text-white">{cardInfo.name}</p>
