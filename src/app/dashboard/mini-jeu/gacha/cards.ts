@@ -1324,9 +1324,9 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'cg_011', name: 'Lelouch (Emperor)', anime: 'Code Geass', rarity: 'Mythique', image: '/gacha/cards/cg_011.jpg', malId: 417, description: 'Le 99ème Empereur de Britannia, le tyran qui unifiera le monde.', power: 98 },
 
     // ===== NO GAME NO LIFE =====
-    { id: 'ngnl_001', name: 'Sora', anime: 'No Game No Life', rarity: 'Commun', image: '/gacha/cards/ngnl_001.jpg', malId: 64017, description: 'Le stratège génial et manipulateur du duo "Blank".', power: 48 },
+    { id: 'ngnl_001', name: 'Sora', anime: 'No Game No Life', rarity: 'Commun', image: '/gacha/cards/ngnl_001.png', malId: 64017, description: 'Le stratège génial et manipulateur du duo "Blank".', power: 48 },
     { id: 'ngnl_002', name: 'Shiro', anime: 'No Game No Life', rarity: 'Commun', image: '/gacha/cards/ngnl_002.jpg', malId: 64019, description: 'La génie du calcul et de la logique, imbattable aux échecs.', power: 48 },
-    { id: 'ngnl_003', name: 'Stephanie Dola', anime: 'No Game No Life', rarity: 'Commun', image: '/gacha/cards/ngnl_003.jpg', malId: 64021, description: 'La princesse d\'Elkia, souvent la victime des jeux de "Blank".', power: 30 },
+    { id: 'ngnl_003', name: 'Stephanie Dola', anime: 'No Game No Life', rarity: 'Commun', image: '/gacha/cards/ngnl_003.png', malId: 64021, description: 'La princesse d\'Elkia, souvent la victime des jeux de "Blank".', power: 30 },
     { id: 'ngnl_004', name: 'Jibril', anime: 'No Game No Life', rarity: 'Rare', image: '/gacha/cards/ngnl_004.jpg', malId: 64023, description: 'Une Flügel, une race angélique avide de connaissances.', power: 70 },
     { id: 'ngnl_005', name: 'Kurami Zell', anime: 'No Game No Life', rarity: 'Rare', image: '/gacha/cards/ngnl_005.jpg', malId: 87025, description: 'Une humaine qui a tenté de prendre le trône d\'Elkia.', power: 55 },
     { id: 'ngnl_006', name: 'Fiel Nirvalen', anime: 'No Game No Life', rarity: 'Rare', image: '/gacha/cards/ngnl_006.jpg', malId: 87027, description: 'Une elfe qui aide Kurami, experte en magie.', power: 60 },
