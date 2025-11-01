@@ -30,6 +30,13 @@ interface PullHistory {
     cost: number;
 }
 
+// ✨ NOUVEAU: Structure de données pour la Pity côté serveur
+interface UserPityState {
+    pityCounter: number;
+    guaranteedFeatured: boolean;
+}
+
+
 // --- CONSTANTES DE STYLE (POUR TAILWIND) ---
 
 const RARITY_STYLES = {
@@ -366,7 +373,11 @@ function GachaPageContent() {
             const spendResponse = await fetch(API_ENDPOINTS.gachaSpendWishes(session.user.id), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: session.user.id, amount: cost }),
+                body: JSON.stringify({ 
+                    userId: session.user.id, 
+                    amount: cost,
+                    bannerId: currentFeaturedChar.id // ✨ On envoie l'ID de la bannière actuelle
+                }),
             });
 
             if (!spendResponse.ok) {
