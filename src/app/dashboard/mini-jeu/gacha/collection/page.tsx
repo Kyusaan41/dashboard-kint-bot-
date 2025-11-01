@@ -610,7 +610,7 @@ export default function CollectionPage() {
                                             <motion.div
                                                 key={cardId}
                                                 layout
-                                                className={`group relative rounded-xl overflow-hidden flex flex-col h-64 ${cardInfo.rarity === 'Mythique' ? `holographic-border ${RARITY_STYLES[cardInfo.rarity]}` : `border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}`}
+                                                className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}
                                                 style={cardInfo.rarity === 'Mythique' ? { animation: 'holo-glow 2s ease-in-out infinite' } : {}}
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -668,7 +668,7 @@ export default function CollectionPage() {
                                 <motion.div
                                     key={cardId}
                                     layout
-                                    className={`group relative rounded-xl overflow-hidden flex flex-col h-64 ${cardInfo.rarity === 'Mythique' ? `holographic-border ${RARITY_STYLES[cardInfo.rarity]}` : `border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}`}
+                                    className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}
                                     style={cardInfo.rarity === 'Mythique' ? { animation: 'holo-glow 2s ease-in-out infinite' } : {}}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}

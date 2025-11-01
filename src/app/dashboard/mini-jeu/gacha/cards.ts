@@ -62,7 +62,7 @@ export const RARITY_COLORS = {
         text: 'text-yellow-300'
     },
     'Mythique': {
-        bg: 'from-red-600 via-pink-600 to-purple-600',
+        bg: 'from-red-600 to-red-800',
         border: 'border-pink-500',
         glow: 'shadow-pink-500/80',
         text: 'text-pink-300'
