@@ -710,6 +710,49 @@ function GachaPageContent() {
                                     </div>
                                 )}
 
+                                {activeTab === 'details' && (
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white mb-6 text-center">Détails des Vœux</h3>
+                                        <div className="space-y-6 text-gray-300">
+                                            <div>
+                                                <h4 className="text-lg font-semibold text-purple-300 mb-2">Taux d'obtention de base</h4>
+                                                <p className="text-sm mb-3">Chaque vœu a une probabilité de base d'obtenir une carte des raretés suivantes :</p>
+                                                <ul className="space-y-2 text-sm list-disc list-inside bg-white/5 p-4 rounded-lg border border-white/10">
+                                                    <li><span className="font-bold text-yellow-400">Mythique (5★) :</span> 0.6%</li>
+                                                    <li><span className="font-bold text-purple-400">Légendaire (4★) :</span> 5.1%</li>
+                                                    <li><span className="font-bold text-blue-400">Épique (3★) :</span> 20%</li>
+                                                    <li><span className="font-bold text-green-400">Rare (2★) :</span> Le reste</li>
+                                                    <li><span className="font-bold text-gray-400">Commun (1★) :</span> Le reste</li>
+                                                </ul>
+                                            </div>
+
+                                            <div>
+                                                <h4 className="text-lg font-semibold text-purple-300 mb-2">Système de Pity (Garantie)</h4>
+                                                <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10">
+                                                    <p>
+                                                        <span className="font-bold text-yellow-400">Pour les cartes 5★ :</span> Une carte de rareté 5★ est garantie au moins une fois tous les <span className="font-bold">90 vœux</span>. Si vous n'obtenez pas de 5★ en 89 vœux, le 90ème sera obligatoirement un 5★.
+                                                    </p>
+                                                    <p>
+                                                        <span className="font-bold text-purple-400">Pour les cartes 4★ :</span> Une carte de rareté 4★ ou supérieure est garantie au moins une fois tous les <span className="font-bold">10 vœux</span>.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h4 className="text-lg font-semibold text-purple-300 mb-2">Bannière d'Événement</h4>
+                                                <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10">
+                                                    <p>
+                                                        Lorsque vous obtenez une carte 5★ sur cette bannière, il y a <span className="font-bold">50% de chance</span> que ce soit le personnage mis en vedette (<span className="font-semibold text-white">{currentFeaturedChar.name}</span>).
+                                                    </p>
+                                                    <p>
+                                                        Si la première carte 5★ que vous obtenez n'est pas le personnage en vedette, la <span className="font-bold text-yellow-400">prochaine carte 5★</span> que vous obtiendrez sera <span className="font-bold">garantie</span> d'être ce personnage.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {activeTab === 'history' && (
                                     <div>
                                         <div className="flex flex-wrap gap-4 mb-6 justify-center">
