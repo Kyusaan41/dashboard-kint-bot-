@@ -377,6 +377,16 @@ function GachaPageContent() {
             const pullData = await spendResponse.json();
             setWishes(pullData.newWishes); // Met à jour le solde de vœux après le tirage
 
+            // ✨ CORRECTION CRITIQUE: Mettre à jour l'état de la pity après le tirage
+            // Le backend renvoie maintenant l'état de la pity mis à jour.
+            if (pullData.updatedPity) {
+                setFeaturedCharacters(prev => prev.map(char => 
+                    char.id === pullData.updatedPity.bannerId 
+                        ? { ...char, pity: pullData.updatedPity.pity } 
+                        : char
+                ));
+            }
+
             const results: PullResult[] = pullData.pulledCards.map((card: any) => ({ card, isNew: card.isNew }));
             // La logique de tirage est maintenant côté bot, on utilise les résultats qu'il renvoie.
         
