@@ -429,8 +429,8 @@ function GachaPageContent() {
             // Le backend renvoie maintenant l'état de la pity mis à jour.
             if (pullData.updatedPity) {
                 setFeaturedCharacters(prev => prev.map(char => 
-                    char.id === pullData.updatedPity.bannerId 
-                        ? { ...char, pity: pullData.updatedPity.pity } 
+                    char.id === pullData.updatedPity.bannerId
+                        ? { ...char, pity: pullData.updatedPity.pity5 } // ✨ CORRECTION: Utiliser pity5 pour le cercle 5★
                         : char
                 ));
             }
@@ -637,8 +637,7 @@ function GachaPageContent() {
                         <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm border border-white/10 p-3 rounded-lg text-right z-20">
                             <div className="text-xs text-white/70">Puissance</div>
                             <div className="text-lg font-semibold text-white">{currentFeaturedChar.power}</div>
-                            <div className="text-xs text-white/70 mt-2">Progression du Vœu</div>
-                            <div className={`text-lg font-semibold ${pityStatus.className}`}>{pityStatus.text}</div>
+                            <PityProgressCircle pity={currentFeaturedChar.pity} maxPity={90} />
                         </div>
                     </div></div>
 
