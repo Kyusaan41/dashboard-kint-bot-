@@ -618,6 +618,14 @@ export default function CollectionPage() {
                                                     transition: { duration: 0.2, ease: "circOut" }
                                                 }}> 
                                                 <div className="flex-grow relative overflow-hidden">
+                                                    {cardInfo.rarity === 'Mythique' && (
+                                                        <div className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                                                             style={{
+                                                                 background: 'linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.4) 50%, transparent 75%)',
+                                                                 backgroundSize: '200% 100%',
+                                                                 animation: 'holographicShine 3s infinite linear'
+                                                             }}></div>
+                                                    )}
                                                     <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
                                                 </div>
                                                 <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
@@ -672,6 +680,14 @@ export default function CollectionPage() {
                                         transition: { duration: 0.2, ease: "circOut" }
                                     }}> 
                                     <div className="flex-grow relative overflow-hidden">
+                                        {cardInfo.rarity === 'Mythique' && (
+                                            <div className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                                                 style={{
+                                                     background: 'linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.4) 50%, transparent 75%)',
+                                                     backgroundSize: '200% 100%',
+                                                     animation: 'holographicShine 3s infinite linear'
+                                                 }}></div>
+                                        )}
                                         <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
                                     </div>
                                     <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
