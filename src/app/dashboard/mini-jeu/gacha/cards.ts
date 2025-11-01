@@ -152,7 +152,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'ds_018', name: 'Gyutaro', anime: 'Demon Slayer', rarity: 'Légendaire', image: '/gacha/cards/ds_018.jpg', malId: 174157, description: 'Sixième Lune Supérieure, partageant son corps avec sa sœur.', power: 88 },
     { id: 'ds_019', name: 'Daki', anime: 'Demon Slayer', rarity: 'Légendaire', image: '/gacha/cards/ds_019.jpg', malId: 174158, description: 'Sixième Lune Supérieure, manipulant des obi mortels.', power: 87 },
     { id: 'ds_020', name: 'Kokushibo', anime: 'Demon Slayer', rarity: 'Légendaire', image: '/gacha/cards/ds_020.jpg', malId: 151152, description: 'Première Lune Supérieure, ancien pourfendeur de démons.', power: 96 },
-    { id: 'ds_021', name: 'Tanjiro (Sun Breathing)', anime: 'Demon Slayer', rarity: 'Mythique', image: '/gacha/cards/ds_021.jpg', malId: 146156, description: 'La maîtrise de la Respiration du Soleil, l\'héritage de Yoriichi.', power: 98 },
+    { id: 'ds_021', name: 'Tanjiro (Sun Breathing)', anime: 'Demon Slayer', rarity: 'Mythique', image: '/gacha/cards/ds_021.png', malId: 146156, description: 'La maîtrise de la Respiration du Soleil, l\'héritage de Yoriichi.', power: 98 },
     // Mythique
     {
         id: 'ds_009',
@@ -393,7 +393,7 @@ export const ANIME_CARDS: AnimeCard[] = [
         power: 99,
         quote: "Mon trésor ? Je vous le laisse si vous voulez. Trouvez-le ! Je l'ai laissé quelque part dans ce monde !"
     },
-    { id: 'op_021', name: 'Luffy (Gear 5)', anime: 'One Piece', rarity: 'Mythique', image: '/gacha/cards/op_021.jpg', malId: 40, description: 'L\'éveil du Hito Hito no Mi, modèle: Nika. Le guerrier de la libération.', power: 100 },
+    { id: 'op_021', name: 'Luffy (Gear 5)', anime: 'One Piece', rarity: 'Mythique', image: '/gacha/cards/op_021.png', malId: 40, description: 'L\'éveil du Hito Hito no Mi, modèle: Nika. Le guerrier de la libération.', power: 100 },
 
     // ===== ATTACK ON TITAN =====
     // Commun
@@ -486,8 +486,8 @@ export const ANIME_CARDS: AnimeCard[] = [
         description: 'La première titan, origine de tous les titans',
         power: 97
     },
-    { id: 'aot_019', name: 'Eren (Founding Titan)', anime: 'Attack on Titan', rarity: 'Mythique', image: '/gacha/cards/aot_019.jpg', malId: 40882, description: 'Le pouvoir de commander tous les Titans et de remodeler le monde.', power: 100 },
-    { id: 'aot_020', name: 'Levi (Prime)', anime: 'Attack on Titan', rarity: 'Mythique', image: '/gacha/cards/aot_020.jpg', malId: 45627, description: 'Le Caporal-Chef dans toute sa splendeur, un tourbillon d\'acier.', power: 98 },
+    { id: 'aot_019', name: 'Eren (Founding Titan)', anime: 'Attack on Titan', rarity: 'Mythique', image: '/gacha/cards/aot_019.png', malId: 40882, description: 'Le pouvoir de commander tous les Titans et de remodeler le monde.', power: 100 },
+    { id: 'aot_020', name: 'Levi (Prime)', anime: 'Attack on Titan', rarity: 'Mythique', image: '/gacha/cards/aot_020.png', malId: 45627, description: 'Le Caporal-Chef dans toute sa splendeur, un tourbillon d\'acier.', power: 98 },
 
     // ===== MY HERO ACADEMIA =====
     // Commun
@@ -578,9 +578,9 @@ export const ANIME_CARDS: AnimeCard[] = [
         description: 'Le seigneur des ténèbres, voleur d\'alters',
         power: 96
     },
-    { id: 'mha_019', name: 'Deku (Vigilante)', anime: 'My Hero Academia', rarity: 'Mythique', image: '/gacha/cards/mha_019.jpg', malId: 117909, description: 'Agissant seul, portant le poids du One For All.', power: 97 },
-    { id: 'mha_020', name: 'Shigaraki (Post-Awakening)', anime: 'My Hero Academia', rarity: 'Mythique', image: '/gacha/cards/mha_020.jpg', malId: 117921, description: 'Le symbole de la peur, une calamité ambulante.', power: 99 },
-    { id: 'mha_021', name: 'Star and Stripe', anime: 'My Hero Academia', rarity: 'Mythique', image: '/gacha/cards/mha_021.jpg', malId: 196362, description: 'L\'héroïne numéro 1 des États-Unis, au pouvoir absolu.', power: 98 },
+    { id: 'mha_019', name: 'Deku (Vigilante)', anime: 'My Hero Academia', rarity: 'Mythique', image: '/gacha/cards/mha_019.png', malId: 117909, description: 'Agissant seul, portant le poids du One For All.', power: 97 },
+    { id: 'mha_020', name: 'Shigaraki (Post-Awakening)', anime: 'My Hero Academia', rarity: 'Mythique', image: '/gacha/cards/mha_020.png', malId: 117921, description: 'Le symbole de la peur, une calamité ambulante.', power: 99 },
+    { id: 'mha_021', name: 'Star and Stripe', anime: 'My Hero Academia', rarity: 'Mythique', image: '/gacha/cards/mha_021.png', malId: 196362, description: 'L\'héroïne numéro 1 des États-Unis, au pouvoir absolu.', power: 98 },
 
     // ===== JUJUTSU KAISEN =====
     // Commun
@@ -673,9 +673,9 @@ export const ANIME_CARDS: AnimeCard[] = [
         description: 'Le roi des fléaux, terreur millénaire',
         power: 100
     },
-    { id: 'jjk_018', name: 'Kenjaku', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_018.jpg', malId: 164472, description: 'Le cerveau millénaire, orchestrant le chaos.', power: 96 },
-    { id: 'jjk_019', name: 'Gojo (Unlimited Void)', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_019.jpg', malId: 164471, description: 'L\'expansion de domaine qui submerge les sens de tout.', power: 99 },
-    { id: 'jjk_020', name: 'Sukuna (Heian Era)', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_020.jpg', malId: 164478, description: 'La forme originelle du Roi des Fléaux, une véritable calamité.', power: 100 },
+    { id: 'jjk_018', name: 'Kenjaku', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_018.png', malId: 164472, description: 'Le cerveau millénaire, orchestrant le chaos.', power: 96 },
+    { id: 'jjk_019', name: 'Gojo (Unlimited Void)', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_019.png', malId: 164471, description: 'L\'expansion de domaine qui submerge les sens de tout.', power: 99 },
+    { id: 'jjk_020', name: 'Sukuna (Heian Era)', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_020.png', malId: 164478, description: 'La forme originelle du Roi des Fléaux, une véritable calamité.', power: 100 },
 
     // ===== DRAGON BALL Z =====
     // Commun
@@ -786,9 +786,9 @@ export const ANIME_CARDS: AnimeCard[] = [
         description: 'Le Dieu de la Destruction',
         power: 99
     },
-    { id: 'dbz_020', name: 'Broly (DBS)', anime: 'Dragon Ball Z', rarity: 'Mythique', image: '/gacha/cards/dbz_020.jpg', malId: 2153, description: 'Le Super Saiyan Légendaire, une force de la nature.', power: 98 },
-    { id: 'dbz_021', name: 'Whis', anime: 'Dragon Ball Z', rarity: 'Mythique', image: '/gacha/cards/dbz_021.jpg', malId: 83733, description: 'L\'ange et maître de Beerus, d\'une puissance insondable.', power: 100 },
-    { id: 'dbz_022', name: 'Goku (Ultra Instinct)', anime: 'Dragon Ball Z', rarity: 'Mythique', image: '/gacha/cards/dbz_022.jpg', malId: 246, description: 'L\'état des dieux, une maîtrise parfaite du corps.', power: 100 },
+    { id: 'dbz_020', name: 'Broly (DBS)', anime: 'Dragon Ball Z', rarity: 'Mythique', image: '/gacha/cards/dbz_020.png', malId: 2153, description: 'Le Super Saiyan Légendaire, une force de la nature.', power: 98 },
+    { id: 'dbz_021', name: 'Whis', anime: 'Dragon Ball Z', rarity: 'Mythique', image: '/gacha/cards/dbz_021.png', malId: 83733, description: 'L\'ange et maître de Beerus, d\'une puissance insondable.', power: 100 },
+    { id: 'dbz_022', name: 'Goku (Ultra Instinct)', anime: 'Dragon Ball Z', rarity: 'Mythique', image: '/gacha/cards/dbz_022.png', malId: 246, description: 'L\'état des dieux, une maîtrise parfaite du corps.', power: 100 },
 
     // ===== BLEACH =====
     // Commun
@@ -900,8 +900,8 @@ export const ANIME_CARDS: AnimeCard[] = [
         description: 'Le père de tous les Quincy',
         power: 98
     },
-    { id: 'ble_020', name: 'Ichigo (Mugetsu)', anime: 'Bleach', rarity: 'Mythique', image: '/gacha/cards/ble_020.jpg', malId: 5, description: 'L\'Ultime Getsuga Tensho, un pouvoir au coût immense.', power: 100 },
-    { id: 'ble_021', name: 'Ichibe Hyosube', anime: 'Bleach', rarity: 'Mythique', image: '/gacha/cards/ble_021.jpg', malId: 75045, description: 'Chef de la Division Zéro, celui qui a nommé toutes choses.', power: 99 },
+    { id: 'ble_020', name: 'Ichigo (Mugetsu)', anime: 'Bleach', rarity: 'Mythique', image: '/gacha/cards/ble_020.png', malId: 5, description: 'L\'Ultime Getsuga Tensho, un pouvoir au coût immense.', power: 100 },
+    { id: 'ble_021', name: 'Ichibe Hyosube', anime: 'Bleach', rarity: 'Mythique', image: '/gacha/cards/ble_021.png', malId: 75045, description: 'Chef de la Division Zéro, celui qui a nommé toutes choses.', power: 99 },
 
     // ===== HUNTER X HUNTER =====
     // Commun
@@ -1014,7 +1014,7 @@ export const ANIME_CARDS: AnimeCard[] = [
         power: 100
     },
     
-    { id: 'hxh_021', name: 'Alluka Zoldyck', anime: 'Hunter x Hunter', rarity: 'Mythique', image: '/gacha/cards/hxh_021.jpg', malId: 47285, description: 'Possédée par Nanika, une entité capable d\'exaucer n\'importe quel vœu.', power: 99 },
+    { id: 'hxh_021', name: 'Alluka Zoldyck', anime: 'Hunter x Hunter', rarity: 'Mythique', image: '/gacha/cards/hxh_021.png', malId: 47285, description: 'Possédée par Nanika, une entité capable d\'exaucer n\'importe quel vœu.', power: 99 },
 
     // ===== CHAINSAW MAN =====
     // Commun
@@ -1116,7 +1116,7 @@ export const ANIME_CARDS: AnimeCard[] = [
         description: 'Un démon primordial qui n\'a jamais connu la mort, incarnant la peur des ténèbres.',
         power: 100
     },
-    { id: 'csm_014', name: 'Pochita (Hero of Hell)', anime: 'Chainsaw Man', rarity: 'Mythique', image: '/gacha/cards/csm_014.jpg', malId: 165266, description: 'La véritable forme du Démon-Tronçonneuse, craint par tous les démons.', power: 100 },
+    { id: 'csm_014', name: 'Pochita (Hero of Hell)', anime: 'Chainsaw Man', rarity: 'Mythique', image: '/gacha/cards/csm_014.png', malId: 165266, description: 'La véritable forme du Démon-Tronçonneuse, craint par tous les démons.', power: 100 },
     
     // ===== SPY X FAMILY =====
     { id: 'spy_001', name: 'Loid Forger', anime: 'Spy x Family', rarity: 'Commun', image: '/gacha/cards/spy_001.jpg', malId: 166328, description: 'L\'espion de génie connu sous le nom de "Twilight".', power: 48 },
@@ -1128,7 +1128,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'spy_006', name: 'Yuri Briar', anime: 'Spy x Family', rarity: 'Épique', image: '/gacha/cards/spy_006.jpg', malId: 166332, description: 'Le frère de Yor, un agent zélé de la police secrète.', power: 65 },
     { id: 'spy_007', name: 'Franky Franklin', anime: 'Spy x Family', rarity: 'Épique', image: '/gacha/cards/spy_007.jpg', malId: 166333, description: 'L\'informateur de Loid, un atout précieux.', power: 55 },
     { id: 'spy_008', name: 'Twilight', anime: 'Spy x Family', rarity: 'Légendaire', image: '/gacha/cards/spy_008.jpg', malId: 166328, description: 'Le maître de l\'espionnage dans sa forme la plus pure.', power: 85 },
-    { id: 'spy_009', name: 'Thorn Princess', anime: 'Spy x Family', rarity: 'Mythique', image: '/gacha/cards/spy_009.jpg', malId: 166330, description: 'Yor dans son rôle de tueuse, une danse mortelle.', power: 90 },
+    { id: 'spy_009', name: 'Thorn Princess', anime: 'Spy x Family', rarity: 'Mythique', image: '/gacha/cards/spy_009.png', malId: 166330, description: 'Yor dans son rôle de tueuse, une danse mortelle.', power: 90 },
     { id: 'spy_010', name: 'Sylvia Sherwood (Handler)', anime: 'Spy x Family', rarity: 'Épique', image: '/gacha/cards/spy_010.jpg', malId: 166334, description: 'La supérieure de Loid à WISE.', power: 70 },
     { id: 'spy_011', name: 'Becky Blackbell', anime: 'Spy x Family', rarity: 'Commun', image: '/gacha/cards/spy_011.jpg', malId: 166335, description: 'La meilleure amie d\'Anya à l\'école Eden.', power: 25 },
     { id: 'spy_012', name: 'Donovan Desmond', anime: 'Spy x Family', rarity: 'Légendaire', image: '/gacha/cards/spy_012.jpg', malId: 166336, description: 'La cible principale de l\'Opération Strix, un homme politique insaisissable.', power: 80 },
@@ -1144,7 +1144,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'tr_006', name: 'Tetta Kisaki', anime: 'Tokyo Revengers', rarity: 'Légendaire', image: '/gacha/cards/tr_006.jpg', malId: 138247, description: 'Le cerveau manipulateur derrière les tragédies.', power: 85 },
     { id: 'tr_007', name: 'Shuji Hanma', anime: 'Tokyo Revengers', rarity: 'Légendaire', image: '/gacha/cards/tr_007.jpg', malId: 138248, description: 'Le "Shinigami", toujours en quête de sensations fortes.', power: 82 },
     { id: 'tr_008', name: 'Izana Kurokawa', anime: 'Tokyo Revengers', rarity: 'Légendaire', image: '/gacha/cards/tr_008.jpg', malId: 164936, description: 'Le chef de Tenjiku, doté de "sens invincibles".', power: 88 },
-    { id: 'tr_009', name: 'Mikey (Dark Impulses)', anime: 'Tokyo Revengers', rarity: 'Mythique', image: '/gacha/cards/tr_009.jpg', malId: 138243, description: 'Lorsque les ténèbres consument le cœur de Mikey.', power: 98 },
+    { id: 'tr_009', name: 'Mikey (Dark Impulses)', anime: 'Tokyo Revengers', rarity: 'Mythique', image: '/gacha/cards/tr_009.png', malId: 138243, description: 'Lorsque les ténèbres consument le cœur de Mikey.', power: 98 },
     { id: 'tr_012', name: 'Hajime Kokonoi', anime: 'Tokyo Revengers', rarity: 'Rare', image: '/gacha/cards/tr_012.jpg', malId: 164937, description: 'Le génie financier, capable de lever des fonds impressionnants.', power: 58 },
     { id: 'tr_013', name: 'Seishu Inui', anime: 'Tokyo Revengers', rarity: 'Rare', image: '/gacha/cards/tr_013.jpg', malId: 164938, description: 'Ancien membre des Black Dragons, loyal à Kokonoi.', power: 60 },
 
@@ -1163,8 +1163,8 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'fma_009', name: 'Envy', anime: 'Fullmetal Alchemist: Brotherhood', rarity: 'Légendaire', image: '/gacha/cards/fma_009.jpg', malId: 29, description: 'L\'homonculus de l\'envie, capable de changer d\'apparence.', power: 84 },
     { id: 'fma_010', name: 'Van Hohenheim', anime: 'Fullmetal Alchemist: Brotherhood', rarity: 'Légendaire', image: '/gacha/cards/fma_010.jpg', malId: 1667, description: 'Le père des frères Elric, une pierre philosophale vivante.', power: 92 },
     { id: 'fma_015', name: 'Pride', anime: 'Fullmetal Alchemist: Brotherhood', rarity: 'Légendaire', image: '/gacha/cards/fma_015.jpg', malId: 1669, description: 'Le premier homonculus, l\'incarnation de l\'orgueil.', power: 90 },
-    { id: 'fma_011', name: 'Father', anime: 'Fullmetal Alchemist: Brotherhood', rarity: 'Mythique', image: '/gacha/cards/fma_011.jpg', malId: 1666, description: 'Le créateur des homonculus, cherchant à devenir un dieu.', power: 99 },
-    { id: 'fma_012', name: 'Truth', anime: 'Fullmetal Alchemist: Brotherhood', rarity: 'Mythique', image: '/gacha/cards/fma_012.jpg', malId: 201380, description: 'L\'entité cosmique qui incarne l\'univers, le monde, tout.', power: 100 },
+    { id: 'fma_011', name: 'Father', anime: 'Fullmetal Alchemist: Brotherhood', rarity: 'Mythique', image: '/gacha/cards/fma_011.png', malId: 1666, description: 'Le créateur des homonculus, cherchant à devenir un dieu.', power: 99 },
+    { id: 'fma_012', name: 'Truth', anime: 'Fullmetal Alchemist: Brotherhood', rarity: 'Mythique', image: '/gacha/cards/fma_012.png', malId: 201380, description: 'L\'entité cosmique qui incarne l\'univers, le monde, tout.', power: 100 },
 
     // ===== DEATH NOTE =====
     { id: 'dn_001', name: 'Light Yagami', anime: 'Death Note', rarity: 'Commun', image: '/gacha/cards/dn_001.jpg', malId: 8, description: 'L\'étudiant brillant qui devient le "dieu du nouveau monde".', power: 50 },
@@ -1178,7 +1178,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'dn_008', name: 'Teru Mikami', anime: 'Death Note', rarity: 'Légendaire', image: '/gacha/cards/dn_008.jpg', malId: 14, description: 'Le procureur fanatique choisi par Kira.', power: 80 },
     { id: 'dn_010', name: 'Soichiro Yagami', anime: 'Death Note', rarity: 'Rare', image: '/gacha/cards/dn_010.jpg', malId: 15, description: 'Le chef de la cellule d\'enquête japonaise et père de Light.', power: 55 },
     { id: 'dn_012', name: 'Watari (Quillsh Wammy)', anime: 'Death Note', rarity: 'Épique', image: '/gacha/cards/dn_012.jpg', malId: 17, description: 'L\'assistant de L et fondateur de l\'orphelinat pour surdoués.', power: 70 },
-    { id: 'dn_009', name: 'Kira', anime: 'Death Note', rarity: 'Mythique', image: '/gacha/cards/dn_009.jpg', malId: 8, description: 'Le symbole de la justice autoproclamée, un concept qui a changé le monde.', power: 95 },
+    { id: 'dn_009', name: 'Kira', anime: 'Death Note', rarity: 'Mythique', image: '/gacha/cards/dn_009.png', malId: 8, description: 'Le symbole de la justice autoproclamée, un concept qui a changé le monde.', power: 95 },
 
 
     // ===== CYBERPUNK: EDGERUNNERS =====
@@ -1191,7 +1191,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'cpe_005', name: 'Kiwi', anime: 'Cyberpunk: Edgerunners', rarity: 'Épique', image: '/gacha/cards/cpe_005.jpg', malId: 210398, description: 'Une netrunner stoïque et expérimentée.', power: 72 },
     { id: 'cpe_006', name: 'Faraday', anime: 'Cyberpunk: Edgerunners', rarity: 'Légendaire', image: '/gacha/cards/cpe_006.jpg', malId: 210399, description: 'Un fixer impitoyable qui manipule les edgerunners.', power: 85 },
     { id: 'cpe_007', name: 'David (Sandevistan)', anime: 'Cyberpunk: Edgerunners', rarity: 'Légendaire', image: '/gacha/cards/cpe_007.jpg', malId: 210393, description: 'Poussant le Sandevistan à ses limites, un éclair dans Night City.', power: 92 },
-    { id: 'cpe_008', name: 'Adam Smasher', anime: 'Cyberpunk: Edgerunners', rarity: 'Mythique', image: '/gacha/cards/cpe_008.jpg', malId: 210400, description: 'La légende de Night City, plus machine qu\'homme.', power: 98 },
+    { id: 'cpe_008', name: 'Adam Smasher', anime: 'Cyberpunk: Edgerunners', rarity: 'Mythique', image: '/gacha/cards/cpe_008.png', malId: 210400, description: 'La légende de Night City, plus machine qu\'homme.', power: 98 },
     { id: 'cpe_009', name: 'Dorio', anime: 'Cyberpunk: Edgerunners', rarity: 'Rare', image: '/gacha/cards/cpe_009.jpg', malId: 210396, description: 'La partenaire de Maine, une femme forte et expérimentée.', power: 60 },
 
     // ===== STEINS;GATE =====
@@ -1222,7 +1222,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'vs_008', name: 'Thorfinn (Slave)', anime: 'Vinland Saga', rarity: 'Rare', image: '/gacha/cards/vs_008.jpg', malId: 2468, description: 'Un homme brisé cherchant un sens à sa vie.', power: 50 },
     { id: 'vs_013', name: 'Snake', anime: 'Vinland Saga', rarity: 'Rare', image: '/gacha/cards/vs_013.jpg', malId: 2478, description: 'Le chef des gardes de la ferme de Ketil, un épéiste talentueux.', power: 64 },
     { id: 'vs_009', name: 'Canute (King)', anime: 'Vinland Saga', rarity: 'Légendaire', image: '/gacha/cards/vs_009.jpg', malId: 2471, description: 'Le prince devenu un roi impitoyable et visionnaire.', power: 90 },
-    { id: 'vs_010', name: 'Hild', anime: 'Vinland Saga', rarity: 'Mythique', image: '/gacha/cards/vs_010.jpg', malId: 2475, description: 'L\'ingénieure qui cherche à se venger de Thorfinn.', power: 88 },
+    { id: 'vs_010', name: 'Hild', anime: 'Vinland Saga', rarity: 'Mythique', image: '/gacha/cards/vs_010.png', malId: 2475, description: 'L\'ingénieure qui cherche à se venger de Thorfinn.', power: 88 },
 
     // ===== SWORD ART ONLINE =====
     { id: 'sao_001', name: 'Kirito', anime: 'Sword Art Online', rarity: 'Commun', image: '/gacha/cards/sao_001.jpg', malId: 36765, description: 'Le "Beater" solo qui a survécu à l\'Aincrad.', power: 48 },
@@ -1241,9 +1241,9 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'sao_012', name: 'Heathcliff', anime: 'Sword Art Online', rarity: 'Légendaire', image: '/gacha/cards/sao_012.jpg', malId: 40830, description: 'Le chef des Chevaliers du Sang, détenteur du bouclier ultime.', power: 90 },
     { id: 'sao_018', name: 'Bercouli Synthesis One', anime: 'Sword Art Online', rarity: 'Légendaire', image: '/gacha/cards/sao_018.jpg', malId: 143239, description: 'Le premier Chevalier de l\'Intégrité et le plus puissant.', power: 91 },
     { id: 'sao_019', name: 'Gabriel Miller (Subtilizer)', anime: 'Sword Art Online', rarity: 'Légendaire', image: '/gacha/cards/sao_019.jpg', malId: 143240, description: 'L\'antagoniste principal de l\'arc Alicization, obsédé par les âmes.', power: 93 },
-    { id: 'sao_013', name: 'Administrator (Quinella)', anime: 'Sword Art Online', rarity: 'Mythique', image: '/gacha/cards/sao_013.jpg', malId: 143236, description: 'La souveraine absolue de l\'Église Axiom dans l\'Underworld.', power: 96 },
-    { id: 'sao_014', name: 'Kirito (Star-King)', anime: 'Sword Art Online', rarity: 'Mythique', image: '/gacha/cards/sao_014.jpg', malId: 36765, description: 'Le souverain de l\'Underworld après 200 ans passés dans le simulateur.', power: 99 },
-    { id: 'sao_015', name: 'Kayaba Akihiko', anime: 'Sword Art Online', rarity: 'Mythique', image: '/gacha/cards/sao_015.jpg', malId: 40830, description: 'Le créateur de Sword Art Online, le maître du jeu mortel.', power: 100 },
+    { id: 'sao_013', name: 'Administrator (Quinella)', anime: 'Sword Art Online', rarity: 'Mythique', image: '/gacha/cards/sao_013.png', malId: 143236, description: 'La souveraine absolue de l\'Église Axiom dans l\'Underworld.', power: 96 },
+    { id: 'sao_014', name: 'Kirito (Star-King)', anime: 'Sword Art Online', rarity: 'Mythique', image: '/gacha/cards/sao_014.png', malId: 36765, description: 'Le souverain de l\'Underworld après 200 ans passés dans le simulateur.', power: 99 },
+    { id: 'sao_015', name: 'Kayaba Akihiko', anime: 'Sword Art Online', rarity: 'Mythique', image: '/gacha/cards/sao_015.png', malId: 40830, description: 'Le créateur de Sword Art Online, le maître du jeu mortel.', power: 100 },
 
     // ===== FAIRY TAIL =====
     { id: 'ft_001', name: 'Natsu Dragneel', anime: 'Fairy Tail', rarity: 'Commun', image: '/gacha/cards/ft_001.jpg', malId: 6707, description: 'Le Chasseur de Dragon de Feu de Fairy Tail.', power: 48 },
@@ -1262,9 +1262,9 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'ft_012', name: 'Acnologia', anime: 'Fairy Tail', rarity: 'Légendaire', image: '/gacha/cards/ft_012.jpg', malId: 49293, description: 'Le Roi des Dragons, l\'incarnation de la destruction.', power: 98 },
     { id: 'ft_013', name: 'Mavis Vermillion', anime: 'Fairy Tail', rarity: 'Légendaire', image: '/gacha/cards/ft_013.jpg', malId: 49292, description: 'La première maître de Fairy Tail, le "Tacticien des Fées".', power: 92 },
     { id: 'ft_018', name: 'Gildarts Clive', anime: 'Fairy Tail', rarity: 'Légendaire', image: '/gacha/cards/ft_018.jpg', malId: 6718, description: 'Le mage le plus puissant de Fairy Tail.', power: 94 },
-    { id: 'ft_014', name: 'Natsu (Dragon Force)', anime: 'Fairy Tail', rarity: 'Mythique', image: '/gacha/cards/ft_014.jpg', malId: 6707, description: 'La forme ultime d\'un Chasseur de Dragon, une puissance dévastatrice.', power: 97 },
-    { id: 'ft_015', name: 'Igneel', anime: 'Fairy Tail', rarity: 'Mythique', image: '/gacha/cards/ft_015.jpg', malId: 49294, description: 'Le Roi des Dragons de Feu, père adoptif de Natsu.', power: 99 },
-    { id: 'ft_019', name: 'Natsu (E.N.D.)', anime: 'Fairy Tail', rarity: 'Mythique', image: '/gacha/cards/ft_019.jpg', malId: 6707, description: 'Etherious Natsu Dragneel, le plus puissant démon de Zeref.', power: 100 },
+    { id: 'ft_014', name: 'Natsu (Dragon Force)', anime: 'Fairy Tail', rarity: 'Mythique', image: '/gacha/cards/ft_014.png', malId: 6707, description: 'La forme ultime d\'un Chasseur de Dragon, une puissance dévastatrice.', power: 97 },
+    { id: 'ft_015', name: 'Igneel', anime: 'Fairy Tail', rarity: 'Mythique', image: '/gacha/cards/ft_015.png', malId: 49294, description: 'Le Roi des Dragons de Feu, père adoptif de Natsu.', power: 99 },
+    { id: 'ft_019', name: 'Natsu (E.N.D.)', anime: 'Fairy Tail', rarity: 'Mythique', image: '/gacha/cards/ft_019.png', malId: 6707, description: 'Etherious Natsu Dragneel, le plus puissant démon de Zeref.', power: 100 },
 
     // ===== RE:ZERO =====
     { id: 'rz_001', name: 'Subaru Natsuki', anime: 'Re:Zero', rarity: 'Commun', image: '/gacha/cards/rz_001.jpg', malId: 118861, description: 'Le jeune homme transporté dans un autre monde, capable de revenir de la mort.', power: 25 },
@@ -1282,9 +1282,9 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'rz_009', name: 'Petelgeuse Romanee-Conti', anime: 'Re:Zero', rarity: 'Légendaire', image: '/gacha/cards/rz_009.jpg', malId: 118867, description: 'L\'Archevêque du Péché de la Paresse, complètement dément.', power: 88 },
     { id: 'rz_010', name: 'Reinhard van Astrea', anime: 'Re:Zero', rarity: 'Légendaire', image: '/gacha/cards/rz_010.jpg', malId: 118868, description: 'Le "Maître Épéiste", l\'humain le plus fort du monde.', power: 98 },
     { id: 'rz_011', name: 'Echidna', anime: 'Re:Zero', rarity: 'Légendaire', image: '/gacha/cards/rz_011.jpg', malId: 172816, description: 'La Sorcière de l\'Avarice, avide de connaissances.', power: 94 },
-    { id: 'rz_012', name: 'Satella', anime: 'Re:Zero', rarity: 'Mythique', image: '/gacha/cards/rz_012.jpg', malId: 118869, description: 'La Sorcière de l\'Envie, l\'entité qui a donné à Subaru sa capacité.', power: 100 },
-    { id: 'rz_013', name: 'Regulus Corneas', anime: 'Re:Zero', rarity: 'Mythique', image: '/gacha/cards/rz_013.jpg', malId: 139126, description: 'L\'Archevêque du Péché de l\'Avarice, l\'être le plus "satisfait" du monde.', power: 97 },
-    { id: 'rz_014', name: 'Pandora', anime: 'Re:Zero', rarity: 'Mythique', image: '/gacha/cards/rz_014.jpg', malId: 201381, description: 'La Sorcière de la Vanité, capable de réécrire la réalité.', power: 99 },
+    { id: 'rz_012', name: 'Satella', anime: 'Re:Zero', rarity: 'Mythique', image: '/gacha/cards/rz_012.png', malId: 118869, description: 'La Sorcière de l\'Envie, l\'entité qui a donné à Subaru sa capacité.', power: 100 },
+    { id: 'rz_013', name: 'Regulus Corneas', anime: 'Re:Zero', rarity: 'Mythique', image: '/gacha/cards/rz_013.png', malId: 139126, description: 'L\'Archevêque du Péché de l\'Avarice, l\'être le plus "satisfait" du monde.', power: 97 },
+    { id: 'rz_014', name: 'Pandora', anime: 'Re:Zero', rarity: 'Mythique', image: '/gacha/cards/rz_014.png', malId: 201381, description: 'La Sorcière de la Vanité, capable de réécrire la réalité.', power: 99 },
 
     // ===== OVERLORD =====
     { id: 'ovl_001', name: 'Ainz Ooal Gown', anime: 'Overlord', rarity: 'Épique', image: '/gacha/cards/ovl_001.jpg', malId: 88631, description: 'Le maître de la guilde, souverain du Grand Tombeau de Nazarick.', power: 88 },
@@ -1302,9 +1302,9 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'ovl_009', name: 'Narberal Gamma', anime: 'Overlord', rarity: 'Rare', image: '/gacha/cards/ovl_009.jpg', malId: 88647, description: 'Membre des Pléiades, une magicienne de combat.', power: 65 },
     { id: 'ovl_010', name: 'Pandora\'s Actor', anime: 'Overlord', rarity: 'Légendaire', image: '/gacha/cards/ovl_010.jpg', malId: 88649, description: 'Le doppelgänger créé par Ainz, gardien du trésor.', power: 90 },
     { id: 'ovl_011', name: 'Zesshi Zetsumei', anime: 'Overlord', rarity: 'Légendaire', image: '/gacha/cards/ovl_011.jpg', malId: 143237, description: 'La carte maîtresse de la Théocratie Slane, une sang-mêlé surpuissante.', power: 94 },
-    { id: 'ovl_012', name: 'Rubedo', anime: 'Overlord', rarity: 'Mythique', image: '/gacha/cards/ovl_012.jpg', malId: 201382, description: 'L\'entité la plus puissante de Nazarick, gardienne du 8ème étage.', power: 100 },
-    { id: 'ovl_013', name: 'Touch Me', anime: 'Overlord', rarity: 'Mythique', image: '/gacha/cards/ovl_013.jpg', malId: 143238, description: 'L\'un des fondateurs d\'Ainz Ooal Gown, un champion du monde.', power: 98 },
-    { id: 'ovl_014', name: 'Ainz (The Goal of All Life is Death)', anime: 'Overlord', rarity: 'Mythique', image: '/gacha/cards/ovl_014.jpg', malId: 88631, description: 'Utilisant sa compétence la plus redoutable, qui garantit la mort.', power: 99 },
+    { id: 'ovl_012', name: 'Rubedo', anime: 'Overlord', rarity: 'Mythique', image: '/gacha/cards/ovl_012.png', malId: 201382, description: 'L\'entité la plus puissante de Nazarick, gardienne du 8ème étage.', power: 100 },
+    { id: 'ovl_013', name: 'Touch Me', anime: 'Overlord', rarity: 'Mythique', image: '/gacha/cards/ovl_013.png', malId: 143238, description: 'L\'un des fondateurs d\'Ainz Ooal Gown, un champion du monde.', power: 98 },
+    { id: 'ovl_014', name: 'Ainz (The Goal of All Life is Death)', anime: 'Overlord', rarity: 'Mythique', image: '/gacha/cards/ovl_014.png', malId: 88631, description: 'Utilisant sa compétence la plus redoutable, qui garantit la mort.', power: 99 },
 
     // ===== CODE GEASS =====
     { id: 'cg_001', name: 'Lelouch vi Britannia', anime: 'Code Geass', rarity: 'Commun', image: '/gacha/cards/cg_001.jpg', malId: 417, description: 'Le prince exilé qui obtient le pouvoir du Geass.', power: 50 },
@@ -1321,7 +1321,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'cg_009', name: 'Marianne vi Britannia', anime: 'Code Geass', rarity: 'Légendaire', image: '/gacha/cards/cg_009.jpg', malId: 425, description: 'La mère de Lelouch, une pilote légendaire.', power: 88 },
     { id: 'cg_010', name: 'Zero', anime: 'Code Geass', rarity: 'Légendaire', image: '/gacha/cards/cg_010.jpg', malId: 417, description: 'Le symbole de la rébellion, le leader masqué de l\'Ordre des Chevaliers Noirs.', power: 94 },
     { id: 'cg_016', name: 'V.V.', anime: 'Code Geass', rarity: 'Légendaire', image: '/gacha/cards/cg_016.jpg', malId: 429, description: 'Le frère jumeau de Charles, un autre immortel.', power: 87 },
-    { id: 'cg_011', name: 'Lelouch (Emperor)', anime: 'Code Geass', rarity: 'Mythique', image: '/gacha/cards/cg_011.jpg', malId: 417, description: 'Le 99ème Empereur de Britannia, le tyran qui unifiera le monde.', power: 98 },
+    { id: 'cg_011', name: 'Lelouch (Emperor)', anime: 'Code Geass', rarity: 'Mythique', image: '/gacha/cards/cg_011.png', malId: 417, description: 'Le 99ème Empereur de Britannia, le tyran qui unifiera le monde.', power: 98 },
 
     // ===== NO GAME NO LIFE =====
     { id: 'ngnl_001', name: 'Sora', anime: 'No Game No Life', rarity: 'Commun', image: '/gacha/cards/ngnl_001.png', malId: 64017, description: 'Le stratège génial et manipulateur du duo "Blank".', power: 48 },
@@ -1350,7 +1350,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'kono_012', name: 'Sylvia', anime: 'Konosuba', rarity: 'Épique', image: '/gacha/cards/kono_012.jpg', malId: 164940, description: 'Une chimère et générale du Roi Démon.', power: 76 },
     { id: 'kono_013', name: 'Hans', anime: 'Konosuba', rarity: 'Épique', image: '/gacha/cards/kono_013.jpg', malId: 164941, description: 'Un général du Roi Démon, un slime empoisonné.', power: 74 },
     { id: 'kono_008', name: 'Vanir', anime: 'Konosuba', rarity: 'Légendaire', image: '/gacha/cards/kono_008.jpg', malId: 118873, description: 'Un duc de l\'enfer, l\'un des généraux les plus puissants.', power: 88 },
-    { id: 'kono_010', name: 'Explosion Magic', anime: 'Konosuba', rarity: 'Mythique', image: '/gacha/cards/kono_010.jpg', malId: 88657, description: 'Le sort ultime, l\'art suprême. Le seul et unique chemin.', power: 95 },
+    { id: 'kono_010', name: 'Explosion Magic', anime: 'Konosuba', rarity: 'Mythique', image: '/gacha/cards/kono_010.png', malId: 88657, description: 'Le sort ultime, l\'art suprême. Le seul et unique chemin.', power: 95 },
 
     // ===== THE SEVEN DEADLY SINS =====
     { id: 'sds_001', name: 'Meliodas', anime: 'The Seven Deadly Sins', rarity: 'Commun', image: '/gacha/cards/sds_001.jpg', malId: 42091, description: 'Le Dragon de la Colère, capitaine des Seven Deadly Sins.', power: 49 },
@@ -1370,8 +1370,8 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'sds_011', name: 'Estarossa', anime: 'The Seven Deadly Sins', rarity: 'Légendaire', image: '/gacha/cards/sds_011.jpg', malId: 139128, description: 'Le Commandement de la Charité, qui se révélera être Mael.', power: 93 },
     { id: 'sds_012', name: 'Demon King', anime: 'The Seven Deadly Sins', rarity: 'Légendaire', image: '/gacha/cards/sds_012.jpg', malId: 139129, description: 'Le souverain du Clan des Démons, père de Meliodas.', power: 97 },
     { id: 'sds_013', name: 'Meliodas (Assault Mode)', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_013.png', malId: 42091, description: 'La forme originelle de Meliodas, dénuée d\'émotions.', power: 98 },
-    { id: 'sds_014', name: 'Escanor (The One)', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_014.jpg', malId: 42107, description: 'Au zénith, l\'incarnation de la puissance pendant une minute.', power: 99 },
-    { id: 'sds_015', name: 'Chaos', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_015.jpg', malId: 201384, description: 'L\'entité primordiale qui a créé le monde, les dieux et les démons.', power: 100 },
+    { id: 'sds_014', name: 'Escanor (The One)', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_014.png', malId: 42107, description: 'Au zénith, l\'incarnation de la puissance pendant une minute.', power: 99 },
+    { id: 'sds_015', name: 'Chaos', anime: 'The Seven Deadly Sins', rarity: 'Mythique', image: '/gacha/cards/sds_015.png', malId: 201384, description: 'L\'entité primordiale qui a créé le monde, les dieux et les démons.', power: 100 },
 
     // ===== BLACK CLOVER =====
     { id: 'bc_001', name: 'Asta', anime: 'Black Clover', rarity: 'Commun', image: '/gacha/cards/bc_001.jpg', malId: 122643, description: 'Le garçon né sans magie, détenteur d\'un grimoire à cinq feuilles.', power: 47 },
@@ -1389,8 +1389,8 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'bc_011', name: 'Asta (Black Asta)', anime: 'Black Clover', rarity: 'Légendaire', image: '/gacha/cards/bc_011.jpg', malId: 122643, description: 'Quand Asta emprunte le pouvoir de son démon, Liebe.', power: 90 },
     { id: 'bc_017', name: 'William Vangeance', anime: 'Black Clover', rarity: 'Légendaire', image: '/gacha/cards/bc_017.jpg', malId: 139135, description: 'Capitaine de l\'Aube d\'Or, le plus proche de devenir Empereur-Mage.', power: 91 },
     { id: 'bc_018', name: 'Dante Zogratis', anime: 'Black Clover', rarity: 'Légendaire', image: '/gacha/cards/bc_018.jpg', malId: 201395, description: 'Membre de la Triade Sombre, hôte de Lucifero.', power: 93 },
-    { id: 'bc_012', name: 'Liebe', anime: 'Black Clover', rarity: 'Mythique', image: '/gacha/cards/bc_012.jpg', malId: 201386, description: 'Le démon de l\'anti-magie qui réside dans le grimoire d\'Asta.', power: 96 },
-    { id: 'bc_014', name: 'Lucius Zogratis', anime: 'Black Clover', rarity: 'Mythique', image: '/gacha/cards/bc_014.jpg', malId: 201388, description: 'Le plus âgé des frères Zogratis, l\'hôte de l\'âme de Julius.', power: 100 },
+    { id: 'bc_012', name: 'Liebe', anime: 'Black Clover', rarity: 'Mythique', image: '/gacha/cards/bc_012.png', malId: 201386, description: 'Le démon de l\'anti-magie qui réside dans le grimoire d\'Asta.', power: 96 },
+    { id: 'bc_014', name: 'Lucius Zogratis', anime: 'Black Clover', rarity: 'Mythique', image: '/gacha/cards/bc_014.png', malId: 201388, description: 'Le plus âgé des frères Zogratis, l\'hôte de l\'âme de Julius.', power: 100 },
 
     // ===== FIRE FORCE =====
     { id: 'ff_001', name: 'Shinra Kusakabe', anime: 'Fire Force', rarity: 'Commun', image: '/gacha/cards/ff_001.jpg', malId: 149918, description: 'Le "Démon" aux pieds enflammés, pompier de 3ème génération.', power: 47 },
