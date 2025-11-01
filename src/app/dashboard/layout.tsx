@@ -34,7 +34,6 @@ const pages: PageType[] = [
   { id: 'classement', label: 'Classements', icon: BarChart2 },
   { id: 'boutique', label: 'Boutique', icon: ShoppingCart },
   { id: 'market', label: 'Marché', icon: Store },
-  { id: 'membres', label: 'Profil', icon: User },
   { id: 'admin', label: 'Administration', icon: Shield, adminOnly: true },
   { id: 'super-admin', label: 'Haute Administration', icon: Shield, superAdminOnly: true },
 ];
