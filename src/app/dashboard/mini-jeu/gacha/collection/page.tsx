@@ -211,6 +211,19 @@ const AuctionModal = ({ card, onClose, onConfirm }: { card: CollectedCard, onClo
     );
 };
 
+const MythicAuraStyle = () => (
+    <style jsx global>{`
+        @keyframes mythic-aura-pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px 0px rgba(239, 68, 68, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 35px 8px rgba(239, 68, 68, 0.6);
+            }
+        }
+    `}</style>
+);
+
 export default function CollectionPage() {
     const { data: session } = useSession();
     const [collection, setCollection] = useState<UserCollection | null>(null);
@@ -461,6 +474,9 @@ export default function CollectionPage() {
 
     return (
         <div className="min-h-screen w-full bg-transparent text-white p-4 sm:p-6 lg:p-8">
+            {/* Style pour l'aura des cartes Mythiques */}
+            <MythicAuraStyle />
+
             {/* ✨ NOUVEAU: Conteneur pour la notification de vente */}
             <AnimatePresence>
                 {sellNotification.show && (
@@ -610,8 +626,8 @@ export default function CollectionPage() {
                                             <motion.div
                                                 key={cardId}
                                                 layout
-                                                className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}
-                                                style={cardInfo.rarity === 'Mythique' ? { animation: 'holo-glow 2s ease-in-out infinite' } : {}}
+                                                className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']} ${cardInfo.rarity === 'Mythique' ? 'holographic-border' : ''}`}
+                                                style={cardInfo.rarity === 'Mythique' ? { animation: 'mythic-aura-pulse 4s ease-in-out infinite' } : {}}
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.3, ease: "easeOut" }}
@@ -623,9 +639,6 @@ export default function CollectionPage() {
                                                 }}> 
                                                 <div className="flex-grow relative overflow-hidden">
                                                     <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
-                                                    {cardInfo.rarity === 'Mythique' && (
-                                                        <div className="holographic-effect"></div>
-                                                    )}
                                                 </div>
                                                 <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
                                                     <p className="font-bold text-sm truncate text-white">{cardInfo.name}</p>
@@ -668,8 +681,8 @@ export default function CollectionPage() {
                                 <motion.div
                                     key={cardId}
                                     layout
-                                    className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']}`}
-                                    style={cardInfo.rarity === 'Mythique' ? { animation: 'holo-glow 2s ease-in-out infinite' } : {}}
+                                    className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[cardInfo.rarity] || RARITY_STYLES['Commun']} ${cardInfo.rarity === 'Mythique' ? 'holographic-border' : ''}`}
+                                    style={cardInfo.rarity === 'Mythique' ? { animation: 'mythic-aura-pulse 4s ease-in-out infinite' } : {}}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.3, ease: "easeOut" }}
@@ -681,9 +694,6 @@ export default function CollectionPage() {
                                     }}> 
                                     <div className="flex-grow relative overflow-hidden">
                                         <CardImage card={cardInfo} className="absolute inset-0 w-full h-full object-cover" />
-                                        {cardInfo.rarity === 'Mythique' && (
-                                            <div className="holographic-effect"></div>
-                                        )}
                                     </div>
                                     <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
                                         <p className="font-bold text-sm truncate text-white">{cardInfo.name}</p>
