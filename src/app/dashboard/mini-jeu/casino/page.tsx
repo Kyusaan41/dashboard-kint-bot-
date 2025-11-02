@@ -122,12 +122,12 @@ function randomReel(length = 50) {
 const PAYOUTS: { [symbol: string]: number } = {
     '7️⃣': 100,  // Jackpot ultra rare, gros gain (mais quasi impossible à avoir)
     '💎': 8,     // Réduit de 10 à 8
-    '💰': 6,     // Réduit de 8 à 6
-    '🍀': 4,     // Réduit de 5 à 4
-    '🍒': 2.5,   // Réduit de 3 à 2.5
-    '🍇': 2.5,   // Réduit de 3 à 2.5
-    '🍊': 1.8,   // Réduit de 2 à 1.8
-    '🍋': 1.5    // Réduit de 2 à 1.5
+    '💰': 7,     // Augmenté de 6 à 7
+    '🍀': 5,     // Augmenté de 4 à 5
+    '🍒': 3,   // Augmenté de 2.5 à 3
+    '🍇': 3,   // Augmenté de 2.5 à 3
+    '🍊': 2,   // Augmenté de 1.8 à 2
+    '🍋': 2    // Augmenté de 1.5 à 2
 };
 
 function useWindowSizeLocal() {
@@ -571,7 +571,7 @@ export default function CasinoSlotPage() {
     const [showFreeSpinUnlock, setShowFreeSpinUnlock] = useState(false); // Animation de déblocage
 
     // Avantage de la maison augmenté pour rendre le jeu plus difficile
-    const HOUSE_EDGE = 0.15; // 15% au lieu de 6%
+    const HOUSE_EDGE = 0.10; // 10% au lieu de 15%, pour rendre le jeu un peu plus rentable
 
     useEffect(() => {
         return () => spinTimeouts.current.forEach((t) => clearTimeout(t));
@@ -737,9 +737,9 @@ export default function CasinoSlotPage() {
             else if (s2 === s3) lineType = 'two-middle';
             else if (s1 === s3) lineType = 'two-right';
             
-            // On garantit au minimum la mise (remboursement)
+            // On garantit au minimum 120% de la mise pour que ça soit rentable
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
-            const finalAmount = Math.max(currentBet, baseAmount);
+            const finalAmount = Math.max(Math.floor(currentBet * 1.2), baseAmount);
             return { win: true, amount: finalAmount, isJackpot: false, lineType };
         }
 
