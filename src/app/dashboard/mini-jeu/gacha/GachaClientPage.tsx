@@ -580,20 +580,37 @@ function GachaPageContent() {
                     </AnimatePresence>
 
                     {/* Image du personnage "Splash Art" */}
-                    <AnimatePresence mode="wait">
-                        <motion.img
-                            key={currentFeaturedChar.id}
-                            src={currentFeaturedChar.image}
-                            alt={currentFeaturedChar.name}
-                            className="absolute right-[-80px] md:right-[-40px] bottom-0 h-[105%] md:h-[115%] w-auto object-contain z-10"
-                            initial={{ opacity: 0, x: 100 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -100 }}
-                            transition={{ duration: 0.5, ease: "easeOut" }}
-                        >
-                            {/* L'animation de respiration est maintenant gérée par la div parente si nécessaire, ou peut être ajoutée ici */}
-                        </motion.img>
-                    </AnimatePresence>
+                    {/* Image du personnage "Splash Art" avec fusion + masque doux */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={`char-container-${currentFeaturedChar.id}`}
+                    className="absolute right-[-70px] md:right-[-40px] bottom-0 h-[115%] md:h-[100%] z-10 flex items-end"
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                >
+                    {/* Glow subtil autour du personnage */}
+                    <motion.div
+                        className="absolute inset-0 blur-3xl rounded-full opacity-50"
+                        style={{
+                            background: getGlowColor(currentFeaturedChar.rarity),
+                            filter: 'blur(60px)',
+                        }}
+                        animate={{ opacity: [0.4, 0.6, 0.4], scale: [0.95, 1.05, 0.95] }}
+                        transition={{ duration: 4, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+                    />
+
+                    {/* Image du personnage */}
+                    <motion.img
+                        src={currentFeaturedChar.image}
+                        alt={currentFeaturedChar.name}
+                        className="relative h-full w-auto object-contain mix-blend-screen mask-fade"
+                        draggable={false}
+                    />
+                </motion.div>
+            </AnimatePresence>
+
 
                     {/* Contenu de la bannière (sur la gauche) */}
                     <div className="relative z-20 h-full p-6 md:p-8 flex flex-col justify-between">
