@@ -669,7 +669,7 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'jjk_015', name: 'Yuta Okkotsu', anime: 'Jujutsu Kaisen', rarity: 'Légendaire', image: '/gacha/cards/jjk_015.jpg', malId: 164477, description: 'Exorciste de classe S au potentiel immense, lié à Rika.', power: 91 },
     { id: 'jjk_016', name: 'Jogo', anime: 'Jujutsu Kaisen', rarity: 'Légendaire', image: '/gacha/cards/jjk_016.jpg', malId: 171811, description: 'Fléau de classe S, maître du feu volcanique.', power: 87 },
     { id: 'jjk_017', name: 'Hanami', anime: 'Jujutsu Kaisen', rarity: 'Légendaire', image: '/gacha/cards/jjk_017.jpg', malId: 171812, description: 'Fléau de classe S, incarnant la peur de la nature.', power: 86 },
-    { id: 'jjk_021', name: 'Maki Zenin (Awakened)', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_021.jpg', malId: 164479, description: 'Libérée de ses chaînes, une combattante au niveau de Toji.', power: 90 },
+    { id: 'jjk_021', name: 'Maki Zenin (Awakened)', anime: 'Jujutsu Kaisen', rarity: 'Mythique', image: '/gacha/cards/jjk_021.png', malId: 164479, description: 'Libérée de ses chaînes, une combattante au niveau de Toji.', power: 90 },
     { id: 'jjk_024', name: 'Hajime Kashimo', anime: 'Jujutsu Kaisen', rarity: 'Légendaire', image: '/gacha/cards/jjk_024.jpg', malId: 201390, description: 'Exorciste de l\'ère Edo réincarné, maître de l\'électricité.', power: 90 },
     { id: 'jjk_025', name: 'Hiromi Higuruma', anime: 'Jujutsu Kaisen', rarity: 'Légendaire', image: '/gacha/cards/jjk_025.jpg', malId: 201391, description: 'Avocat devenu exorciste, son domaine est un tribunal.', power: 89 },
     // Mythique
