@@ -584,11 +584,11 @@ function GachaPageContent() {
             <AnimatePresence mode="wait">
                 <motion.div
                     key={`char-container-${currentFeaturedChar.id}`}
-                    className="absolute right-[-70px] md:right-[-40px] bottom-0 h-[115%] md:h-[100%] z-10 flex items-end"
+                    className="absolute right-[-50px] md:right-[-20px] bottom-0 h-full md:h-[105%] z-10 flex items-end"
                     initial={{ opacity: 0, x: 100 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -100 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
                 >
                     {/* Glow subtil autour du personnage */}
                     <motion.div
@@ -605,7 +605,7 @@ function GachaPageContent() {
                     <motion.img
                         src={currentFeaturedChar.image}
                         alt={currentFeaturedChar.name}
-                        className="relative h-full w-auto object-contain mix-blend-screen mask-fade"
+                        className="relative h-full w-auto object-cover mix-blend-screen mask-fade"
                         draggable={false}
                     />
                 </motion.div>
