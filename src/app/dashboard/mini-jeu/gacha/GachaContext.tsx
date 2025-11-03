@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { ANIME_CARDS, CardRarity } from './cards';
+import seedrandom from 'seedrandom';
 
 const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 
@@ -26,25 +27,26 @@ interface GachaContextType {
 
 const GachaContext = createContext<GachaContextType | undefined>(undefined);
 
-const shuffleArray = (array: any[]) => {
+const shuffleArray = (array: any[], seed: string) => {
+    const rng = seedrandom(seed);
     for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(rng() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
 };
 
-const generateInitialFeatured = (): FeaturedCharacter[] => {
+const generateFeaturedCharacters = (rotationSeed: string, rotationStartTime: number): FeaturedCharacter[] => {
     const mythicCards = ANIME_CARDS.filter(card => card.rarity === 'Mythique');
-    const shuffledMythics = shuffleArray([...mythicCards]);
-    return shuffledMythics.slice(0, 3).map((card, index) => ({ // Use index for unique key if needed, but card.id is better
+    const shuffledMythics = shuffleArray([...mythicCards], rotationSeed);
+    return shuffledMythics.slice(0, 3).map(card => ({
         id: card.id,
         name: card.name,
         anime: card.anime,
         image: card.image,
         power: card.power,
         pity: 0,
-        lastRotation: Date.now(),
+        lastRotation: rotationStartTime,
         rarity: card.rarity // Assign rarity
     }));
 };
@@ -55,21 +57,33 @@ export const GachaProvider = ({ children }: { children: ReactNode }) => {
     const [timeRemaining, setTimeRemaining] = useState(0);
 
     useEffect(() => {
+        const now = Date.now();
+        const rotationIndex = Math.floor(now / BANNER_DURATION_MS);
+        const rotationSeed = `gacha-banner-${rotationIndex}`;
+        const rotationStartTime = rotationIndex * BANNER_DURATION_MS;
+
         const storedState = localStorage.getItem('gachaBannerState');
-        if (storedState) { // Check if storedState exists and is valid JSON
-            const { characters, current } = JSON.parse(storedState);
-            setFeaturedCharacters(characters);
-            setCurrentFeatured(current);
-        } else { // If no stored state, generate initial featured characters
-            setFeaturedCharacters(generateInitialFeatured());
+        let loadedCharacters: FeaturedCharacter[] | null = null;
+
+        if (storedState) {
+            try {
+                const { characters, seed } = JSON.parse(storedState);
+                if (seed === rotationSeed) {
+                    loadedCharacters = characters;
+                }
+            } catch (e) {
+                console.error("Failed to parse gacha banner state from localStorage", e);
+            }
         }
-    }, []);
+
+        const characters = loadedCharacters || generateFeaturedCharacters(rotationSeed, rotationStartTime);
+        setFeaturedCharacters(characters);
+        localStorage.setItem('gachaBannerState', JSON.stringify({ characters, seed: rotationSeed }));
+    }, []); // S'exécute une seule fois au montage
 
     useEffect(() => {
         if (featuredCharacters.length > 0) {
-            localStorage.setItem('gachaBannerState', JSON.stringify({ characters: featuredCharacters, current: currentFeatured }));
-
-            const timer = setInterval(() => { // Update time remaining every second
+            const timer = setInterval(() => {
                 const now = Date.now();
                 const rotationEndTime = featuredCharacters[currentFeatured].lastRotation + BANNER_DURATION_MS;
                 setTimeRemaining(Math.max(0, rotationEndTime - now));
