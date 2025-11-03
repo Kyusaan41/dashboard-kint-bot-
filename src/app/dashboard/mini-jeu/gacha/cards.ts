@@ -807,7 +807,7 @@ export const ANIME_CARDS: AnimeCard[] = [
         name: 'Ichigo Kurosaki',
         anime: 'Bleach',
         rarity: 'Commun',
-        image: '/gacha/cards/ble_001', // Extension retirée
+        image: '/gacha/cards/ble_001.jpg', // Extension remis
         malId: 5,
         description: 'Le Shinigami remplaçant',
         power: 46
