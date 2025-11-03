@@ -584,7 +584,7 @@ function GachaPageContent() {
             <AnimatePresence mode="wait">
                 <motion.div
                     key={`char-container-${currentFeaturedChar.id}`}
-                    className="absolute right-[-50px] md:right-[-20px] bottom-0 h-full md:h-[105%] z-10 flex items-end"
+                    className="absolute right-0 md:right-[20px] bottom-0 h-full md:h-[105%] z-10 flex items-end"
                     initial={{ opacity: 0, x: 100 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -100 }}
