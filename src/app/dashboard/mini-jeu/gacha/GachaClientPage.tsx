@@ -317,32 +317,33 @@ function GachaPageContent() {
         }
     }, [session]);
 
-    // ✨ CORRECTION: Récupération de l'état de la pity au chargement, une fois la session disponible.
-    useEffect(() => {
-        const fetchPityState = async () => {
-            if (!session?.user?.id) return;
-    
-            try {
-                const response = await fetch(API_ENDPOINTS.gachaPityState(session.user.id));
-                if (!response.ok) {
-                    throw new Error('Failed to fetch pity state');
-                }
-                const pityData = await response.json();
-    
-                // Mettre à jour la pity pour chaque personnage vedette
-                setFeaturedCharacters(prevChars =>
-                    prevChars.map(char => ({
-                        ...char,
-                        pity: pityData[char.id]?.pity5 || 0, // Utilise la pity du serveur, ou 0 par défaut
-                    }))
-                );
-            } catch (error) {
-                console.error("[GACHA] Erreur de récupération de l'état de la pity:", error);
+    // ✨ NOUVEAU: Fonction pour récupérer l'état de la pity depuis le serveur au chargement
+    const fetchPityState = useCallback(async () => {
+        if (!session?.user?.id || featuredCharacters.length === 0) return;
+
+        try {
+            const response = await fetch(API_ENDPOINTS.gachaPityState(session.user.id));
+            if (!response.ok) {
+                throw new Error('Failed to fetch pity state');
             }
-        };
-    
-        fetchPityState();
-    }, [session, setFeaturedCharacters]); // S'exécute quand la session change
+            const pityData = await response.json();
+
+            // Mettre à jour la pity pour chaque personnage vedette
+            setFeaturedCharacters(prevChars =>
+                prevChars.map(char => ({
+                    ...char,
+                    pity: pityData[char.id]?.pity5 || 0, // Utilise la pity du serveur, ou 0 par défaut
+                }))
+            );
+        } catch (error) {
+            console.error("[GACHA] Erreur de récupération de l'état de la pity:", error);
+        }
+    }, [session, featuredCharacters.length, setFeaturedCharacters]);
+
+    useEffect(() => {
+        fetchCurrency();
+        fetchWishes();
+    }, [fetchCurrency, fetchWishes]);
 
     const formatTime = (ms: number) => {
         const days = Math.floor(ms / (24 * 60 * 60 * 1000));
@@ -351,6 +352,11 @@ function GachaPageContent() {
         const seconds = Math.floor((ms % (60 * 1000)) / 1000);
         return `${days}j ${hours}h ${minutes}m ${seconds}s`;
     };
+
+    // ✨ NOUVEAU: Exécuter la récupération de la pity quand les personnages sont chargés
+    useEffect(() => {
+        fetchPityState();
+    }, [fetchPityState]);
 
     // --- NOUVELLE FONCTION POUR ACHETER DES VŒUX ---
     const buyWishes = async (pack: 'single' | 'multi') => {
