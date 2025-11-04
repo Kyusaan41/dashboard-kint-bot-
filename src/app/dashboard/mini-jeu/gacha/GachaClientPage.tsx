@@ -310,12 +310,23 @@ function GachaPageContent() {
                 throw new Error('Failed to fetch wishes');
             }
             const data = await response.json();
+            // Mettre à jour le nombre de vœux
             setWishes(data.wishes || 0);
+
+            // ✨ CORRECTION: Mettre à jour l'état de la pity depuis les données reçues
+            if (data.pity) {
+                setFeaturedCharacters(prevChars =>
+                    prevChars.map(char => ({
+                        ...char,
+                        pity: data.pity[char.id]?.pity5 || 0,
+                    }))
+                );
+            }
         } catch (error) {
             console.error("[GACHA] Erreur de récupération des vœux:", error);
             setWishes(0);
         }
-    }, [session]);
+    }, [session, setFeaturedCharacters]);
 
     useEffect(() => {
         fetchCurrency();
