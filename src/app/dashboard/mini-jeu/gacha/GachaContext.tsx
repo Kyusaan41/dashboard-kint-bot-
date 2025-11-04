@@ -45,7 +45,7 @@ const generateFeaturedCharacters = (rotationSeed: string, rotationStartTime: num
         anime: card.anime,
         image: card.image,
         power: card.power,
-        pity: 0,
+        pity: 0, // Initialisé à 0, sera mis à jour depuis le serveur
         lastRotation: rotationStartTime,
         rarity: card.rarity // Assign rarity
     }));

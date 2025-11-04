@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   gachaBuyWishes: `/api/gacha/wishes/buy`,           // Pour acheter des vœux
   gachaSpendWishes: (userId) => `/api/gacha/wishes/${userId}`, // Utilise la route dynamique
   gachaSellCard: `/api/gacha/collection/sell`,       // ✨ CORRECTION: Pointe vers la bonne route proxy
+  gachaPityState: (userId) => `/api/gacha/pity/${userId}`, // ✨ NOUVEAU: Pour récupérer l'état de la pity
   // --- Nouveaux endpoints pour le Marché ---
   marketplaceListings: `/api/gacha/marketplace`,
   marketplaceBuy: `/api/gacha/marketplace/buy`, // Cette route devra être créée dans le dashboard
