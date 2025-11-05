@@ -124,10 +124,10 @@ const PAYOUTS: { [symbol: string]: number } = {
     '💎': 12,     // Réduit de 10 à 8
     '💰': 10,     // Augmenté de 6 à 7
     '🍀': 8,     // Augmenté de 4 à 5
-    '🍒': 6,   // Augmenté de 2.5 à 3
-    '🍇': 5.5,   // Augmenté de 2.5 à 3
+    '🍒': 7,   // Augmenté de 2.5 à 3
+    '🍇': 6,   // Augmenté de 2.5 à 3
     '🍊': 5,   // Augmenté de 1.8 à 2
-    '🍋': 4.5    // Augmenté de 1.5 à 2
+    '🍋': 4    // Augmenté de 1.5 à 2
 };
 
 function useWindowSizeLocal() {
