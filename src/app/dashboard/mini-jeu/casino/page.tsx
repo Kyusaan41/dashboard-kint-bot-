@@ -818,41 +818,39 @@ export default function CasinoSlotPage() {
         }
 
         const makeWeightedReel = () => {
-            const arr: string[] = [];
-            // Distribution pondérée DURCIE pour rendre le jackpot beaucoup plus rare
-            // Probabilités par symbole:
-            // 7️⃣ (jackpot): 0.3% (ultra rare)
-            // 💎: 8%
-            // 💰: 10%
-            // 🍀: 12%
-            // 🍒: 18%
-            // 🍇: 18%
-            // 🍊: 17%
-            // 🍋: 16.7%
-            
-            for (let i = 0; i < 50; i++) {
-                const r = Math.random() * 1000; // 0-1000 pour des pourcentages plus précis
-                
-                if (r < 3) { // 0.3% de chance
-                    arr.push('7️⃣');
-                } else if (r < 83) { // 8% de chance
-                    arr.push('💎');
-                } else if (r < 183) { // 10% de chance
-                    arr.push('💰');
-                } else if (r < 303) { // 12% de chance
-                    arr.push('🍀');
-                } else if (r < 483) { // 18% de chance
-                    arr.push('🍒');
-                } else if (r < 663) { // 18% de chance
-                    arr.push('🍇');
-                } else if (r < 833) { // 17% de chance
-                    arr.push('🍊');
-                } else {
-                    // ~16.7% de chance
-                    arr.push('🍋');
-                }
+            const reel: string[] = [];
+            const reelLength = 50;
+            const finalSymbolIndex = reelLength - 13; // L'index du symbole qui s'arrête sur la ligne
+
+            // D'abord, on remplit la roue avec des symboles aléatoires pour l'animation
+            for (let i = 0; i < reelLength; i++) {
+                reel.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
             }
-            return arr;
+
+            // Ensuite, on choisit le symbole final (celui qui compte) en fonction des probabilités
+            const r = Math.random() * 1000; // 0-1000 pour des pourcentages plus précis
+            let finalSymbol = '🍋'; // Symbole par défaut
+            
+            if (r < 3) { // 0.3% de chance
+                finalSymbol = '7️⃣';
+            } else if (r < 83) { // 8% de chance
+                finalSymbol = '💎';
+            } else if (r < 183) { // 10% de chance
+                finalSymbol = '💰';
+            } else if (r < 303) { // 12% de chance
+                finalSymbol = '🍀';
+            } else if (r < 483) { // 18% de chance
+                finalSymbol = '🍒';
+            } else if (r < 663) { // 18% de chance
+                finalSymbol = '🍇';
+            } else if (r < 833) { // 17% de chance
+                finalSymbol = '🍊';
+            }
+
+            // On place le symbole final à la bonne position dans la roue
+            reel[finalSymbolIndex] = finalSymbol;
+            
+            return reel;
         };
 
         const newReels = [makeWeightedReel(), makeWeightedReel(), makeWeightedReel()];
