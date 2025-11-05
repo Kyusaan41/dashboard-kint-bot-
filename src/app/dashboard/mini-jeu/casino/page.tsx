@@ -831,31 +831,24 @@ export default function CasinoSlotPage() {
             // 🍋: 16.7%
             
             for (let i = 0; i < 50; i++) {
-                const r = Math.random() * 100; // 0-100 pour faciliter les pourcentages
+                const r = Math.random() * 1000; // 0-1000 pour des pourcentages plus précis
                 
-                if (r < 0.3) {
-                    // 0.3% de chance d'avoir un 7️⃣ (jackpot ultra rare)
+                if (r < 3) { // 0.3% de chance
                     arr.push('7️⃣');
-                } else if (r < 8.3) {
-                    // 8% de chance d'avoir un 💎
+                } else if (r < 83) { // 8% de chance
                     arr.push('💎');
-                } else if (r < 18.3) {
-                    // 10% de chance d'avoir un 💰
+                } else if (r < 183) { // 10% de chance
                     arr.push('💰');
-                } else if (r < 30.3) {
-                    // 12% de chance d'avoir un 🍀
+                } else if (r < 303) { // 12% de chance
                     arr.push('🍀');
-                } else if (r < 48.3) {
-                    // 18% de chance d'avoir un 🍒
+                } else if (r < 483) { // 18% de chance
                     arr.push('🍒');
-                } else if (r < 66.3) {
-                    // 18% de chance d'avoir un 🍇
+                } else if (r < 663) { // 18% de chance
                     arr.push('🍇');
-                } else if (r < 83.3) {
-                    // 17% de chance d'avoir un 🍊
+                } else if (r < 833) { // 17% de chance
                     arr.push('🍊');
                 } else {
-                    // 16.7% de chance d'avoir un 🍋
+                    // ~16.7% de chance
                     arr.push('🍋');
                 }
             }
