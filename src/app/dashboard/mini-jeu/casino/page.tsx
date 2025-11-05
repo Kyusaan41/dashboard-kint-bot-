@@ -302,73 +302,145 @@ const LaughingEmojis = () => {
 
 // 🔥 Effet de "vraies" flammes stylisées pour le Devil Mode
 const CssFlameEffect = () => {
-    const particleCount = 30; // Augmenté pour plus de densité
+    const particleCount = 40;
     const { width, height } = useWindowSizeLocal();
 
-    // Composant pour une seule particule de flamme
-    const FlameParticle = () => {
-        const x = useMemo(() => Math.random() * width, [width]);
-        const duration = useMemo(() => Math.random() * 4 + 3, []); // Durée de vie de 3 à 7s
-        const delay = useMemo(() => Math.random() * 5, []);
+    // Un seul groupe de particules, généré une fois et réutilisé
+    const particleGroup = useMemo(() => {
+        return Array.from({ length: particleCount }).map((_, i) => (
+            <FlameParticle key={i} width={width} height={height} />
+        ));
+    }, [width, height]);
 
-        return (
+    return (
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+            {/* Conteneur 1 */}
             <motion.div
-                className="absolute bottom-[-100px] will-change-transform" // Démarrer en dehors de l'écran
-                style={{
-                    left: x,
-                    // Applique un filtre pour fusionner les couches de flammes
-                    filter: 'blur(10px) contrast(20)',
-                }}
-                initial={{ y: 0 }}
-                animate={{
-                    y: -(height + 100), // Monte jusqu'en haut et au-delà
-                }}
+                className="absolute top-0 left-0 w-full"
+                style={{ height: `${height}px` }}
+                animate={{ y: [height, -height] }} // Monte de tout en bas à tout en haut
                 transition={{
-                    duration,
-                    delay,
+                    duration: 25,
                     repeat: Infinity,
-                    repeatType: 'loop',
                     ease: 'linear',
                 }}
             >
-                {/* Structure multi-couches pour une flamme */}
-                <motion.div className="relative" style={{ width: 60, height: 60 }}
-                    animate={{
-                        x: [0, 20, -20, 10, -10, 0],
-                        scale: [1, 1.2, 0.9, 1.1, 1],
-                        opacity: [0.7, 0.9, 0.8, 1, 0.7]
-                    }}
-                    transition={{ duration: duration / 2, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
-                >
-                    {/* Lueur extérieure (rouge) */}
-                    <motion.div
-                        className="absolute inset-0 bg-red-500 rounded-full"
-                        animate={{ scale: [1, 1.2, 0.8, 1.1, 1], x: [0, 5, -5, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                    />
-                    {/* Corps de la flamme (orange) */}
-                    <motion.div
-                        className="absolute inset-0 bg-orange-500 rounded-full"
-                        style={{ transform: `scale(0.8)` }}
-                        animate={{ scale: [0.8, 0.9, 0.7, 0.85, 0.8], y: [0, -10, 5, 0] }}
-                        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-                    />
-                    {/* Cœur de la flamme (jaune/blanc) */}
-                    <motion.div
-                        className="absolute inset-0 bg-yellow-300 rounded-full"
-                        style={{ transform: `scale(0.4)` }}
-                        animate={{ scale: [0.4, 0.5, 0.3, 0.45, 0.4] }}
-                        transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
-                    />
-                </motion.div>
+                {particleGroup}
             </motion.div>
-        );
-    };
+            {/* Conteneur 2 (la copie, pour une boucle parfaite) */}
+            <motion.div
+                className="absolute top-0 left-0 w-full"
+                style={{ height: `${height}px` }}
+                animate={{ y: [height * 2, 0] }} // Suit le premier conteneur
+                transition={{
+                    duration: 25,
+                    repeat: Infinity,
+                    ease: 'linear',
+                }}
+            >
+                {particleGroup}
+            </motion.div>
+        </div>
+    );
+};
+
+const FlameParticle = ({ width, height }: { width: number, height: number }) => {
+    const size = useMemo(() => Math.random() * 40 + 20, []);
+    const x = useMemo(() => Math.random() * width, [width]);
+    const y = useMemo(() => Math.random() * height, [height]);
+    const danceDuration = useMemo(() => Math.random() * 2 + 2, []);
 
     return (
-        <div className="fixed inset-0 pointer-events-none z-0">
-            {Array.from({ length: particleCount }).map((_, i) => <FlameParticle key={i} />)}
+        <motion.div
+            className="absolute will-change-transform"
+            style={{ left: x, top: y, width: size, height: size, filter: 'blur(8px) contrast(15)' }}
+            animate={{ x: [0, (Math.random() - 0.5) * 30, 0], scale: [1, 1.2, 0.9, 1] }}
+            transition={{ duration: danceDuration, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
+        >
+            <div className="relative w-full h-full">
+                <motion.div className="absolute inset-0 bg-red-500 rounded-full" />
+                <motion.div className="absolute inset-0 bg-orange-400 rounded-full" style={{ transform: 'scale(0.7)' }} />
+                <motion.div className="absolute inset-0 bg-yellow-300 rounded-full" style={{ transform: 'scale(0.4)' }} />
+            </div>
+        </motion.div>
+    );
+};
+
+// ⛧ Sceau démoniaque pour le fond du Devil Mode
+const DemonicSigil = () => {
+    return (
+        <motion.div 
+            className="fixed inset-0 flex items-center justify-center pointer-events-none z-0"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 1.5 }}
+        >
+            <motion.svg
+                width="600"
+                height="600"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-red-800/50"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
+            >
+                <motion.path
+                    d="M12 2.5L14.39 9.52H21.81L15.71 13.98L18.1 21.5L12 17.04L5.9 21.5L8.29 13.98L2.19 9.52H9.61L12 2.5Z"
+                    stroke="currentColor"
+                    strokeWidth="0.3"
+                    animate={{
+                        opacity: [0.4, 0.8, 0.4],
+                        filter: ['drop-shadow(0 0 5px currentColor)', 'drop-shadow(0 0 15px currentColor)', 'drop-shadow(0 0 5px currentColor)'],
+                    }}
+                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="0.1" />
+            </motion.svg>
+        </motion.div>
+    );
+};
+
+// ✨ NOUVEAU: Rayons lumineux pour le Devil Mode
+const DevilGodRays = () => {
+    const rayCount = 8;
+    return (
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+            {Array.from({ length: rayCount }).map((_, i) => (
+                <motion.div
+                    key={`ray-${i}`}
+                    className="absolute top-1/2 left-1/2 w-[200%] h-8 bg-gradient-to-r from-red-900/0 via-red-600/20 to-red-900/0"
+                    style={{
+                        transformOrigin: 'center left',
+                        y: '-50%',
+                    }}
+                    initial={{ rotate: (i / rayCount) * 360, opacity: 0 }}
+                    animate={{
+                        rotate: (i / rayCount) * 360 + 45,
+                        opacity: [0, 1, 0.8, 0],
+                    }}
+                    transition={{
+                        duration: 15 + Math.random() * 10,
+                        repeat: Infinity,
+                        delay: i * 2,
+                        ease: 'easeInOut',
+                    }}
+                />
+            ))}
         </div>
+    );
+};
+
+// 😈 Effets visuels supplémentaires pour le Devil Mode
+const DevilModeOverlay = () => {
+    return (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 pointer-events-none z-10">
+            {/* Vignette pulsante */}
+            <div className="absolute inset-0 shadow-[inset_0_0_150px_50px_rgba(0,0,0,0.9)] devil-vignette-pulse" />
+            {/* Scanlines animées */}
+            <div className="absolute inset-0 bg-[url('/textures/scanlines.png')] bg-repeat opacity-20 devil-scanlines" />
+        </motion.div>
     );
 };
 
@@ -442,9 +514,7 @@ const FreeSpinUnlockAnimation = () => {
                     >
                         🎉 FREE SPINS ! 🎉
                     </motion.div>
-                    <div className="text-3xl font-bold">
-                        5 Victoires Consécutives !
-                    </div>
+                    <div className="text-3xl font-bold">4 Victoires Consécutives !</div>
                     <div className="text-5xl font-black mt-4 text-yellow-200">
                         +3 TOURS GRATUITS
                     </div>
@@ -1072,8 +1142,8 @@ export default function CasinoSlotPage() {
                             setWinStreak(prev => {
                                 const newStreak = prev + 1;
                                 
-                                // Si on atteint 5 victoires consécutives, débloquer 3 free spins
-                                if (newStreak === 5) {
+                                // Si on atteint 4 victoires consécutives, débloquer 3 free spins
+                                if (newStreak === 4) {
                                     setFreeSpins(prevSpins => prevSpins + 3);
                                     setShowFreeSpinUnlock(true);
                                     playSound('sequence3'); // Son spécial pour le déblocage
@@ -1388,11 +1458,14 @@ export default function CasinoSlotPage() {
             <AnimatePresence>
                 {isDevilMode && (
                     <>
-                        <CssFlameEffect />
-                        <motion.div 
-                            className="fixed inset-0 bg-[url('/textures/hell-texture.png')] bg-repeat opacity-10 z-0"
-                            initial={{ opacity: 0 }} animate={{ opacity: 0.1 }} exit={{ opacity: 0 }}
-                            transition={{ duration: 1 }} />
+                        {/* Effets de fond (flammes, vortex) */}
+                        <div className="fixed inset-0 z-0 devil-bg-vortex" />
+                        <DevilGodRays />
+                        <DemonicSigil />
+                        <CssFlameEffect /> 
+
+                        {/* Effets de premier plan (vignette, scanlines) */}
+                        <DevilModeOverlay />
                     </>
                 )}
             </AnimatePresence>
@@ -1416,15 +1489,27 @@ export default function CasinoSlotPage() {
             <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8 items-start relative z-10">
                 {/* Main Slot Machine */}
                 <motion.div 
-                    className={`lg:col-span-3 futuristic-card rounded-3xl p-6 md:p-8 ${isDevilMode ? 'shadow-red' : 'shadow-purple'} relative overflow-hidden transition-shadow duration-500`}
+                    // Effet d'aberration chromatique en Devil Mode
+                    className={`lg:col-span-3 futuristic-card rounded-3xl p-6 md:p-8 ${isDevilMode ? 'devil-chromatic-aberration' : ''} relative overflow-hidden`}
                     animate={isDevilMode ? {
+                        x: spinning ? [0, -1, 1, -2, 2, -1, 1, 0] : 0,
+                        y: spinning ? [0, 1, -1, 2, -2, 1, -1, 0] : 0,
+                        rotate: spinning ? [0, 0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0] : 0,
                         boxShadow: [
                             "0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)",
                             "0 0 60px rgba(239, 68, 68, 0.6), 0 0 90px rgba(239, 68, 68, 0.3)",
                             "0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)",
                         ]
-                    } : { boxShadow: "0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.15)" }}
-                    transition={{ duration: 2, repeat: isDevilMode ? Infinity : 0 }}
+                    } : { 
+                        x: 0, y: 0, rotate: 0,
+                        boxShadow: "0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.15)" 
+                    }}
+                    transition={{
+                        x: { duration: 0.4, repeat: Infinity },
+                        y: { duration: 0.4, repeat: Infinity },
+                        rotate: { duration: 0.4, repeat: Infinity },
+                        boxShadow: { duration: 3, repeat: isDevilMode ? Infinity : 0, ease: 'easeInOut' }
+                    }}
                 >
                     {/* Animated corner elements */}
                     <motion.div 
@@ -1536,7 +1621,7 @@ export default function CasinoSlotPage() {
                                     transition={{ duration: 1, repeat: Infinity }}
                                 >
                                     <p className="text-xs text-orange-300 font-bold flex items-center gap-1">
-                                        🔥 Série: {winStreak}/5
+                                        🔥 Série: {winStreak}/4
                                     </p>
                                 </motion.div>
                                 
@@ -1585,16 +1670,18 @@ export default function CasinoSlotPage() {
                                 <motion.button
                                     onClick={toggleSounds}
                                     className={`p-2 rounded-lg transition-all duration-300 ${
-                                        soundsEnabled 
+                                        isDevilMode
+                                            ? (soundsEnabled ? 'bg-red-500/20 hover:bg-red-500/30' : 'bg-gray-600/20 hover:bg-gray-600/30')
+                                            : (soundsEnabled
                                             ? 'bg-purple-500/20 hover:bg-purple-500/30' 
-                                            : 'bg-gray-600/20 hover:bg-gray-600/30'
+                                            : 'bg-gray-600/20 hover:bg-gray-600/30')
                                     }`}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
                                     title={soundsEnabled ? "Désactiver les sons" : "Activer les sons"}
                                 >
                                     {soundsEnabled ? (
-                                        <Volume2 size={20} className="text-purple-400" />
+                                        <Volume2 size={20} className={isDevilMode ? 'text-red-400' : 'text-purple-400'} />
                                     ) : (
                                         <VolumeX size={20} className="text-gray-400" />
                                     )}
@@ -1614,21 +1701,18 @@ export default function CasinoSlotPage() {
                                             [&::-webkit-slider-thumb]:appearance-none
                                             [&::-webkit-slider-thumb]:w-4
                                             [&::-webkit-slider-thumb]:h-4
-                                            [&::-webkit-slider-thumb]:rounded-full
-                                            [&::-webkit-slider-thumb]:bg-gradient-to-br
-                                            [&::-webkit-slider-thumb]:from-purple-400
-                                            [&::-webkit-slider-thumb]:to-purple-600
-                                            [&::-webkit-slider-thumb]:cursor-pointer
-                                            [&::-webkit-slider-thumb]:shadow-lg
-                                            [&::-webkit-slider-thumb]:shadow-purple-500/50
-                                            [&::-webkit-slider-thumb]:transition-all
-                                            [&::-webkit-slider-thumb]:hover:scale-110
+                                            ${isDevilMode 
+                                                ? '[&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-red-400 [&::-webkit-slider-thumb]:to-red-600 [&::-webkit-slider-thumb]:shadow-red-500/50' 
+                                                : '[&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-purple-400 [&::-webkit-slider-thumb]:to-purple-600 [&::-webkit-slider-thumb]:shadow-purple-500/50'
+                                            }
+                                            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110
                                             [&::-moz-range-thumb]:w-4
                                             [&::-moz-range-thumb]:h-4
                                             [&::-moz-range-thumb]:rounded-full
-                                            [&::-moz-range-thumb]:bg-gradient-to-br
-                                            [&::-moz-range-thumb]:from-purple-400
-                                            [&::-moz-range-thumb]:to-purple-600
+                                            ${isDevilMode
+                                                ? '[&::-moz-range-thumb]:bg-gradient-to-br [&::-moz-range-thumb]:from-red-400 [&::-moz-range-thumb]:to-red-600'
+                                                : '[&::-moz-range-thumb]:bg-gradient-to-br [&::-moz-range-thumb]:from-purple-400 [&::-moz-range-thumb]:to-purple-600'
+                                            }
                                             [&::-moz-range-thumb]:border-0
                                             [&::-moz-range-thumb]:cursor-pointer
                                             [&::-moz-range-thumb]:shadow-lg
@@ -1636,11 +1720,11 @@ export default function CasinoSlotPage() {
                                         style={{
                                             background: soundsEnabled 
                                                 ? `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${masterVolume}%, rgb(55, 65, 81) ${masterVolume}%, rgb(55, 65, 81) 100%)`
-                                                : 'rgb(55, 65, 81)'
+                                                : 'rgb(55, 65, 81)',
                                         }}
                                     />
                                     <span className={`text-xs font-medium min-w-[2rem] text-right ${
-                                        soundsEnabled ? 'text-purple-400' : 'text-gray-500'
+                                        soundsEnabled ? (isDevilMode ? 'text-red-400' : 'text-purple-400') : 'text-gray-500'
                                     }`}>
                                         {masterVolume}%
                                     </span>
@@ -2002,15 +2086,15 @@ export default function CasinoSlotPage() {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3, duration: 0.5 }}
-                        className="futuristic-card rounded-2xl p-6 shadow-purple relative overflow-hidden"
-                        whileHover={{ scale: 1.03 }}
+                        className={`futuristic-card rounded-2xl p-6 ${isDevilMode ? 'shadow-red hover:border-red-500/50' : 'shadow-purple hover:border-purple-500/50'} relative overflow-hidden transition-all duration-300`}
+                        whileHover={{ scale: 1.02, boxShadow: isDevilMode ? '0 0 30px rgba(239, 68, 68, 0.4)' : '0 0 30px rgba(139, 92, 246, 0.3)' }}
                     >
                         <motion.div
-                            className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-orange-500/10"
+                            className={`absolute inset-0 ${isDevilMode ? 'bg-gradient-to-br from-red-500/10 to-orange-600/10' : 'bg-gradient-to-br from-yellow-500/10 to-orange-500/10'}`}
                             animate={{
                                 opacity: [0.3, 0.6, 0.3],
                             }}
-                            transition={{ duration: 2, repeat: Infinity }}
+                            transition={{ duration: 3, repeat: Infinity }}
                         />
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-4">
@@ -2086,7 +2170,7 @@ export default function CasinoSlotPage() {
                                 </div>
                                 
                                 {/* Liste du classement (Top 20) */}
-                                <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                                <div className={`max-h-[300px] overflow-y-auto space-y-2 pr-2 ${isDevilMode ? 'custom-scrollbar-devil' : 'custom-scrollbar'}`}>
                                     <AnimatePresence mode="wait">
                                         {topWins.length > 0 ? (
                                             topWins.slice(0, 20).map((player, index) => {
@@ -2156,7 +2240,7 @@ export default function CasinoSlotPage() {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 }}
-                        className={`futuristic-card rounded-2xl p-6 ${isDevilMode ? 'shadow-red' : 'shadow-purple'} transition-shadow duration-500`}
+                        className={`futuristic-card rounded-2xl p-6 ${isDevilMode ? 'shadow-red hover:border-red-500/50' : 'shadow-purple hover:border-purple-500/50'} transition-shadow duration-500`}
                     >
                         <div className="flex items-center gap-3 mb-4">
                             <motion.div

@@ -189,6 +189,25 @@ input[type="date"], input[type="time"] {
   background: linear-gradient(180deg, #fbbf24 0%, #fb923c 100%);
 }
 
+/* Custom scrollbar for Devil Mode */
+.custom-scrollbar-devil::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar-devil::-webkit-scrollbar-track {
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar-devil::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ef4444 0%, #f97316 100%);
+  border-radius: 4px;
+}
+
+.custom-scrollbar-devil::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f87171 0%, #fb923c 100%);
+}
+
 /* --- Nouvel effet holographique pour les cartes Mythiques --- */
 .holographic-effect {
   position: absolute;
