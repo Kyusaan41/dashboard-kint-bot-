@@ -729,7 +729,7 @@ export default function CasinoSlotPage() {
         // 2 symboles identiques = PETIT GAIN
         if (s1 === s2 || s2 === s3 || s1 === s3) {
             const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
-            const multiplier = PAYOUTS[sym] ? Math.max(1, Math.floor(PAYOUTS[sym] / 4)) : 1;
+            const multiplier = PAYOUTS[sym] ? Math.max(1, Math.floor(PAYOUTS[sym] / 2)) : 1;
             
             // Déterminer le type de ligne selon les symboles qui matchent
             let lineType: 'two-left' | 'two-middle' | 'two-right' = 'two-left';
