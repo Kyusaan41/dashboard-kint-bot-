@@ -121,13 +121,13 @@ function randomReel(length = 50) {
 // Multiplicateurs de gains RÉDUITS pour rendre le jeu plus difficile
 const PAYOUTS: { [symbol: string]: number } = {
     '7️⃣': 100,  // Jackpot ultra rare, gros gain (mais quasi impossible à avoir)
-    '💎': 10,     // Réduit de 10 à 8
-    '💰': 8,     // Augmenté de 6 à 7
-    '🍀': 6,     // Augmenté de 4 à 5
-    '🍒': 4.5,   // Augmenté de 2.5 à 3
-    '🍇': 3,   // Augmenté de 2.5 à 3
-    '🍊': 2.5,   // Augmenté de 1.8 à 2
-    '🍋': 2    // Augmenté de 1.5 à 2
+    '💎': 12,     // Réduit de 10 à 8
+    '💰': 10,     // Augmenté de 6 à 7
+    '🍀': 8,     // Augmenté de 4 à 5
+    '🍒': 6,   // Augmenté de 2.5 à 3
+    '🍇': 5.5,   // Augmenté de 2.5 à 3
+    '🍊': 5,   // Augmenté de 1.8 à 2
+    '🍋': 4.5    // Augmenté de 1.5 à 2
 };
 
 function useWindowSizeLocal() {
