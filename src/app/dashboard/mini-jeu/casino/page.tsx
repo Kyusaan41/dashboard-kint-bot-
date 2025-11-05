@@ -300,52 +300,74 @@ const LaughingEmojis = () => {
     );
 };
 
-// 🔥 Effet de vraies flammes animées en CSS pour le Devil Mode
+// 🔥 Effet de "vraies" flammes stylisées pour le Devil Mode
 const CssFlameEffect = () => {
-    const particleCount = 25;
+    const particleCount = 30; // Augmenté pour plus de densité
     const { width, height } = useWindowSizeLocal();
 
-    // Propriétés pour une seule flamme
-    const FlameParticle = ({ i }: { i: number }) => {
+    // Composant pour une seule particule de flamme
+    const FlameParticle = () => {
         const x = useMemo(() => Math.random() * width, [width]);
-        const duration = useMemo(() => Math.random() * 5 + 4, []); // Durée de vie de 4 à 9s
-        const delay = useMemo(() => Math.random() * 6, []);
-        const size = useMemo(() => Math.random() * 60 + 30, []); // Taille de 30px à 90px
+        const duration = useMemo(() => Math.random() * 4 + 3, []); // Durée de vie de 3 à 7s
+        const delay = useMemo(() => Math.random() * 5, []);
 
         return (
             <motion.div
-                className="absolute bottom-0"
+                className="absolute bottom-[-100px] will-change-transform" // Démarrer en dehors de l'écran
                 style={{
                     left: x,
-                    width: size,
-                    height: size,
-                    // Forme de la flamme
-                    borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-                    // Lueur interne et externe
-                    background: 'radial-gradient(ellipse at center, rgba(255, 200, 0, 0.4) 0%, rgba(255, 100, 0, 0.2) 40%, transparent 70%)',
-                    boxShadow: `0 0 ${size/2}px ${size/4}px rgba(255,165,0,0.4), 0 0 ${size}px ${size/3}px rgba(239,68,68,0.3)`,
-                    filter: `blur(${size/10}px)`,
+                    // Applique un filtre pour fusionner les couches de flammes
+                    filter: 'blur(10px) contrast(20)',
                 }}
-                initial={{ y: 50, opacity: 0, scale: 0.5 }}
+                initial={{ y: 0 }}
                 animate={{
-                    y: [0, -height * (Math.random() * 0.3 + 0.7)], // Monte jusqu'à 70-100% de l'écran
-                    opacity: [0, 0.8, 0.9, 0.5, 0],
-                    scale: [0.5, 1, Math.random() * 0.5 + 0.8, 0.3],
-                    x: [0, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 40, 0], // Mouvement latéral
+                    y: -(height + 100), // Monte jusqu'en haut et au-delà
                 }}
                 transition={{
                     duration,
                     delay,
                     repeat: Infinity,
+                    repeatType: 'loop',
                     ease: 'linear',
                 }}
-            />
+            >
+                {/* Structure multi-couches pour une flamme */}
+                <motion.div className="relative" style={{ width: 60, height: 60 }}
+                    animate={{
+                        x: [0, 20, -20, 10, -10, 0],
+                        scale: [1, 1.2, 0.9, 1.1, 1],
+                        opacity: [0.7, 0.9, 0.8, 1, 0.7]
+                    }}
+                    transition={{ duration: duration / 2, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
+                >
+                    {/* Lueur extérieure (rouge) */}
+                    <motion.div
+                        className="absolute inset-0 bg-red-500 rounded-full"
+                        animate={{ scale: [1, 1.2, 0.8, 1.1, 1], x: [0, 5, -5, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    {/* Corps de la flamme (orange) */}
+                    <motion.div
+                        className="absolute inset-0 bg-orange-500 rounded-full"
+                        style={{ transform: `scale(0.8)` }}
+                        animate={{ scale: [0.8, 0.9, 0.7, 0.85, 0.8], y: [0, -10, 5, 0] }}
+                        transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    {/* Cœur de la flamme (jaune/blanc) */}
+                    <motion.div
+                        className="absolute inset-0 bg-yellow-300 rounded-full"
+                        style={{ transform: `scale(0.4)` }}
+                        animate={{ scale: [0.4, 0.5, 0.3, 0.45, 0.4] }}
+                        transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                </motion.div>
+            </motion.div>
         );
     };
 
     return (
         <div className="fixed inset-0 pointer-events-none z-0">
-            {Array.from({ length: particleCount }).map((_, i) => <FlameParticle key={i} i={i} />)}
+            {Array.from({ length: particleCount }).map((_, i) => <FlameParticle key={i} />)}
         </div>
     );
 };
@@ -421,7 +443,7 @@ const FreeSpinUnlockAnimation = () => {
                         🎉 FREE SPINS ! 🎉
                     </motion.div>
                     <div className="text-3xl font-bold">
-                        3 Victoires Consécutives !
+                        5 Victoires Consécutives !
                     </div>
                     <div className="text-5xl font-black mt-4 text-yellow-200">
                         +3 TOURS GRATUITS
@@ -1050,8 +1072,8 @@ export default function CasinoSlotPage() {
                             setWinStreak(prev => {
                                 const newStreak = prev + 1;
                                 
-                                // Si on atteint 3 victoires consécutives, débloquer 3 free spins
-                                if (newStreak === 3) {
+                                // Si on atteint 5 victoires consécutives, débloquer 3 free spins
+                                if (newStreak === 5) {
                                     setFreeSpins(prevSpins => prevSpins + 3);
                                     setShowFreeSpinUnlock(true);
                                     playSound('sequence3'); // Son spécial pour le déblocage
@@ -1398,11 +1420,11 @@ export default function CasinoSlotPage() {
                     animate={isDevilMode ? {
                         boxShadow: [
                             "0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)",
-                            "0 0 50px rgba(239, 68, 68, 0.6), 0 0 80px rgba(239, 68, 68, 0.3)",
+                            "0 0 60px rgba(239, 68, 68, 0.6), 0 0 90px rgba(239, 68, 68, 0.3)",
                             "0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)",
                         ]
-                    } : {}}
-                    transition={isDevilMode ? { duration: 2, repeat: Infinity } : {}}
+                    } : { boxShadow: "0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.15)" }}
+                    transition={{ duration: 2, repeat: isDevilMode ? Infinity : 0 }}
                 >
                     {/* Animated corner elements */}
                     <motion.div 
@@ -1514,7 +1536,7 @@ export default function CasinoSlotPage() {
                                     transition={{ duration: 1, repeat: Infinity }}
                                 >
                                     <p className="text-xs text-orange-300 font-bold flex items-center gap-1">
-                                        🔥 Série: {winStreak}/3
+                                        🔥 Série: {winStreak}/5
                                     </p>
                                 </motion.div>
                                 
