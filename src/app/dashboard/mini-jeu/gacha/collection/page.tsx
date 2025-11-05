@@ -90,7 +90,7 @@ const SellSuccessToast = ({ message, onComplete }: { message: string; onComplete
 const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCard, onSell: (cardId: string) => void, onAuction: () => void, onClose: () => void }) => {
     if (!card?.cardInfo) return null;
 
-    const sellPrices: { [key: string]: number } = { 'Commun': 80, 'Rare': 250, 'Épique': 550, 'Légendaire': 1500, 'Mythique': 3100 };
+    const sellPrices: { [key: string]: number } = { 'Commun': 250, 'Rare': 500, 'Épique': 1000, 'Légendaire': 3000, 'Mythique': 8000 };
     const sellPrice = sellPrices[card.cardInfo.rarity] || 20;
 
     return (
