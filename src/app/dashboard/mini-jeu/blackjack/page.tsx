@@ -416,7 +416,7 @@ const BlackjackPage = () => {
         {/* Rules */}
         <div className="text-center mt-6 text-xs text-gray-500">
           <p>Règles : Le but est de battre le croupier sans dépasser 21. L'As vaut 1 ou 11. Les figures valent 10.</p>
-          <p>Le croupier tire jusqu'à 17. Blackjack (21 avec 2 cartes) paie 3:2. Les autres victoires paient 1:1.</p>
+          <p>Le croupier tire jusqu'à 17. Un Blackjack rapporte 2.5x la mise. Une victoire normale rapporte 2x la mise.</p>
         </div>
       </div>
     </div>
