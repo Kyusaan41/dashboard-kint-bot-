@@ -375,6 +375,20 @@ export default function CasinoVIPHome() {
                             maxWin="x10 multiplicateur"
                             isNew={true}
                         />
+
+                        {/* Blackjack - NEW */}
+                        <VIPGameCard
+                            href="/dashboard/mini-jeu/blackjack"
+                            icon={<Dices />}
+                            title="Blackjack"
+                            description="Le classique du casino. Affrontez le croupier, visez 21 et montrez votre maîtrise de la stratégie."
+                            isAvailable={true}
+                            minBet="100 pièces"
+                            maxWin="x2.5 (Blackjack)"
+                            isNew={true}
+                        />
+
+
                     </div>
                 </motion.div>
 
