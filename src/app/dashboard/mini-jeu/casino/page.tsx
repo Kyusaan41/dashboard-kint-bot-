@@ -1042,23 +1042,14 @@ export default function CasinoSlotPage() {
                 else { finalSymbol = '🔥'; } // 47.9% (augmenté de 26.9%)
             } else {
                 // ⚠️ Probabilités ENCORE PLUS DIFFICILES (séquences de perte augmentées)
-                if (r < 2) { // 0.2% de chance
-                    finalSymbol = '7️⃣';
-                } else if (r < 32) { // 3% de chance (réduit de 4%)
-                    finalSymbol = '💎';
-                } else if (r < 62) { // 3% de chance (réduit de 5%)
-                    finalSymbol = '💰';
-                } else if (r < 102) { // 4% de chance (réduit de 6%)
-                    finalSymbol = '🍀';
-                } else if (r < 222) { // 12% de chance (réduit de 15%)
-                    finalSymbol = '🍒';
-                } else if (r < 342) { // 12% de chance (réduit de 15%)
-                    finalSymbol = '🍇';
-                } else if (r < 462) { // 12% de chance (réduit de 15%)
-                    finalSymbol = '🍊';
-                } else { // 53.8% de chance (augmenté de 39.8%)
-                    finalSymbol = '🍋'; // BEAUCOUP plus de citrons = plus de pertes
-                }
+                    if (r < 2) { finalSymbol = '7️⃣'; } // 0.2%
+                else if (r < 22) { finalSymbol = '💎'; } // 2%
+                else if (r < 52) { finalSymbol = '💰'; } // 3%
+                else if (r < 92) { finalSymbol = '🍀'; } // 3%
+                else if (r < 232) { finalSymbol = '🍒'; } // 15%
+                else if (r < 372) { finalSymbol = '🍇'; } // 13%
+                else if (r < 552) { finalSymbol = '🍊'; } // 15%
+                else { finalSymbol = '🍋'; } // 45%
             }
 
             // On place le symbole final à la bonne position dans la roue
