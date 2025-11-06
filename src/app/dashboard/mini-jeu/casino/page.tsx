@@ -514,7 +514,7 @@ const FreeSpinUnlockAnimation = () => {
                     >
                         🎉 FREE SPINS ! 🎉
                     </motion.div>
-                    <div className="text-3xl font-bold">4 Victoires Consécutives !</div>
+                    <div className="text-3xl font-bold">3 Victoires Consécutives !</div>
                     <div className="text-5xl font-black mt-4 text-yellow-200">
                         +3 TOURS GRATUITS
                     </div>
@@ -719,11 +719,11 @@ export default function CasinoSlotPage() {
     const [freeSpins, setFreeSpins] = useState(0); // Nombre de free spins restants
     const [isFreeSpinMode, setIsFreeSpinMode] = useState(false); // Mode free spin actif
     const [showFreeSpinUnlock, setShowFreeSpinUnlock] = useState(false); // Animation de déblocage
-    const [lastFourBets, setLastFourBets] = useState<number[]>([]); // Historique des 4 dernières mises
+    const [lastThreeBets, setLastThreeBets] = useState<number[]>([]); // Historique des 3 dernières mises
     const [freeSpinBet, setFreeSpinBet] = useState<number>(0); // Mise verrouillée pour les freespins
 
-    // Avantage de la maison augmenté pour rendre le jeu plus difficile
-    const HOUSE_EDGE = 0.10; // 10% au lieu de 15%, pour rendre le jeu un peu plus rentable
+    // Avantage de la maison DIMINUÉ car les gains sont plus généreux
+    const HOUSE_EDGE = 0.05; // 5% (gains plus élevés, mais chances de gagner réduites)
 
     // 😈 DEVIL MODE
     const [isDevilMode, setIsDevilMode] = useState(false);
@@ -897,13 +897,14 @@ export default function CasinoSlotPage() {
             return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' as const };
         }
 
-        // 2 symboles identiques = PETIT GAIN
+        // 2 symboles identiques = GAIN GÉNÉREUX (minimum x2)
         if (s1 === s2 || s2 === s3 || s1 === s3) {
             const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
 
-            // En Devil Mode, le gain de base pour 2 symboles est encore plus faible (division par 4)
-            const divisor = isDevilMode ? 4 : 2;
-            const multiplier = PAYOUTS[sym] ? Math.max(1, Math.floor(PAYOUTS[sym] / divisor)) : 1;
+            // 💰 GAINS AUGMENTÉS : Utiliser directement le multiplicateur sans division
+            // En Devil Mode, utiliser 75% du multiplicateur
+            const multiplier = PAYOUTS[sym] || 2;
+            const adjustedMultiplier = isDevilMode ? Math.floor(multiplier * 0.75) : multiplier;
             
             // Déterminer le type de ligne selon les symboles qui matchent
             let lineType: 'two-left' | 'two-middle' | 'two-right' = 'two-left';
@@ -911,14 +912,12 @@ export default function CasinoSlotPage() {
             else if (s2 === s3) lineType = 'two-middle';
             else if (s1 === s3) lineType = 'two-right';
             
-            // On garantit au minimum 120% de la mise pour que ça soit rentable
-            const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
-            finalAmount = Math.max(Math.floor(currentBet * 1.2), baseAmount);
+            // 💰 NOUVEAU : Garantir au minimum x2 la mise (au lieu de 120%)
+            const baseAmount = Math.floor(currentBet * adjustedMultiplier * (1 - HOUSE_EDGE));
+            finalAmount = Math.max(currentBet * 2, baseAmount); // Minimum x2
 
-            // --- SÉCURITÉ ANTI GROS GAINS ---
-            // On plafonne aussi les petits gains pour éviter les abus sur les grosses mises.
-            // Par exemple, à 5 fois la mise pour une ligne de 2 symboles.
-            const maxSmallWinMultiplier = 5;
+            // Plafonnement généreux pour les gains de 2 symboles : x10 au lieu de x5
+            const maxSmallWinMultiplier = 10;
             finalAmount = Math.min(finalAmount, currentBet * maxSmallWinMultiplier);
 
             return { win: true, amount: finalAmount, isJackpot: false, lineType };
@@ -979,12 +978,12 @@ export default function CasinoSlotPage() {
                 }, 5000);
             }
         } else {
-            // 🔒 ANTI-TRICHE: Enregistrer la mise dans l'historique des 4 dernières mises
-            // pour empêcher les joueurs de miser petit puis d'augmenter au 4ème tour
-            setLastFourBets(prev => {
+            // 🔒 ANTI-TRICHE: Enregistrer la mise dans l'historique des 3 dernières mises
+            // pour empêcher les joueurs de miser petit puis d'augmenter au 3ème tour
+            setLastThreeBets(prev => {
                 const updated = [...prev, lockedBet];
-                // Garder seulement les 4 dernières mises
-                return updated.slice(-4);
+                // Garder seulement les 3 dernières mises
+                return updated.slice(-3);
             });
         }
 
@@ -1032,31 +1031,33 @@ export default function CasinoSlotPage() {
             let finalSymbol = '🍋'; // Symbole par défaut
 
             if (isDevilMode) {
-                // Probabilités plus difficiles en Devil Mode
-                if (r < 2) { finalSymbol = '7️⃣'; } // 0.2%
-                else if (r < 52) { finalSymbol = '💎'; } // 5%
-                else if (r < 122) { finalSymbol = '💰'; } // 7%
-                else if (r < 222) { finalSymbol = '🍀'; } // 10%
-                else if (r < 422) { finalSymbol = '💀'; } // 20%
-                else if (r < 622) { finalSymbol = '😈'; } // 20%
-                else if (r < 822) { finalSymbol = '🔱'; } // 20%
-                else { finalSymbol = '🔥'; } // 17.8%
+                // 🔥 Devil Mode : Probabilités EXTRÊMES (pertes fréquentes)
+                if (r < 1) { finalSymbol = '7️⃣'; } // 0.1%
+                else if (r < 21) { finalSymbol = '💎'; } // 2% (réduit de 3%)
+                else if (r < 41) { finalSymbol = '💰'; } // 2% (réduit de 4%)
+                else if (r < 71) { finalSymbol = '🍀'; } // 3% (réduit de 6%)
+                else if (r < 221) { finalSymbol = '💀'; } // 15% (réduit de 20%)
+                else if (r < 371) { finalSymbol = '😈'; } // 15% (réduit de 20%)
+                else if (r < 521) { finalSymbol = '🔱'; } // 15% (réduit de 20%)
+                else { finalSymbol = '🔥'; } // 47.9% (augmenté de 26.9%)
             } else {
-                // Probabilités normales
-                if (r < 3) { // 0.3% de chance
+                // ⚠️ Probabilités ENCORE PLUS DIFFICILES (séquences de perte augmentées)
+                if (r < 2) { // 0.2% de chance
                     finalSymbol = '7️⃣';
-                } else if (r < 83) { // 8% de chance
+                } else if (r < 32) { // 3% de chance (réduit de 4%)
                     finalSymbol = '💎';
-                } else if (r < 183) { // 10% de chance
+                } else if (r < 62) { // 3% de chance (réduit de 5%)
                     finalSymbol = '💰';
-                } else if (r < 303) { // 12% de chance
+                } else if (r < 102) { // 4% de chance (réduit de 6%)
                     finalSymbol = '🍀';
-                } else if (r < 483) { // 18% de chance
+                } else if (r < 222) { // 12% de chance (réduit de 15%)
                     finalSymbol = '🍒';
-                } else if (r < 663) { // 18% de chance
+                } else if (r < 342) { // 12% de chance (réduit de 15%)
                     finalSymbol = '🍇';
-                } else if (r < 833) { // 17% de chance
+                } else if (r < 462) { // 12% de chance (réduit de 15%)
                     finalSymbol = '🍊';
+                } else { // 53.8% de chance (augmenté de 39.8%)
+                    finalSymbol = '🍋'; // BEAUCOUP plus de citrons = plus de pertes
                 }
             }
 
@@ -1169,12 +1170,12 @@ export default function CasinoSlotPage() {
                                 setWinStreak(prev => {
                                     const newStreak = prev + 1;
                                     
-                                    // Si on atteint 4 victoires consécutives, débloquer 3 free spins
-                                    if (newStreak === 4) {
-                                        // 🔒 ANTI-TRICHE: Calculer la mise moyenne des 4 derniers tours
+                                    // Si on atteint 3 victoires consécutives, débloquer 3 free spins
+                                    if (newStreak === 3) {
+                                        // 🔒 ANTI-TRICHE: Calculer la mise moyenne des 3 derniers tours
                                         // pour éviter que les joueurs misent petit puis augmentent au dernier moment
-                                        const avgBet = lastFourBets.length > 0 
-                                            ? Math.floor(lastFourBets.reduce((sum, b) => sum + b, 0) / lastFourBets.length)
+                                        const avgBet = lastThreeBets.length > 0 
+                                            ? Math.floor(lastThreeBets.reduce((sum, b) => sum + b, 0) / lastThreeBets.length)
                                             : lockedBet;
                                         
                                         setFreeSpinBet(avgBet);
@@ -1183,10 +1184,10 @@ export default function CasinoSlotPage() {
                                         playSound('sequence3'); // Son spécial pour le déblocage
                                         setTimeout(() => setShowFreeSpinUnlock(false), 4000);
                                         
-                                        console.log('[FREESPIN] Débloqué ! Mise verrouillée:', avgBet, 'Historique:', lastFourBets);
+                                        console.log('[FREESPIN] Débloqué ! Mise verrouillée:', avgBet, 'Historique:', lastThreeBets);
                                         
                                         // Reset l'historique après déblocage
-                                        setLastFourBets([]);
+                                        setLastThreeBets([]);
                                         
                                         return 0; // Reset le streak après déblocage
                                     }
@@ -1219,7 +1220,7 @@ export default function CasinoSlotPage() {
                             if (!isUsingFreeSpin) {
                                 setWinStreak(0);
                                 // Reset aussi l'historique des mises en cas de défaite
-                                setLastFourBets([]);
+                                setLastThreeBets([]);
                             }
                             
                             if (lockedBet > biggestLoss) {
@@ -1666,7 +1667,7 @@ export default function CasinoSlotPage() {
                                     transition={{ duration: 1, repeat: Infinity }}
                                 >
                                     <p className="text-xs text-orange-300 font-bold flex items-center gap-1">
-                                        🔥 Série: {winStreak}/4
+                                        🔥 Série: {winStreak}/3
                                     </p>
                                 </motion.div>
                                 
