@@ -885,6 +885,13 @@ export default function CasinoSlotPage() {
             // On garantit au minimum le double de la mise
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
             finalAmount = Math.max(currentBet * 2, baseAmount);
+
+            // --- SÉCURITÉ ANTI GROS GAINS ---
+            // On plafonne le gain maximum pour une victoire normale (non-jackpot)
+            // Par exemple, à 50 fois la mise. Ajustez cette valeur si besoin.
+            const maxWinMultiplier = 50;
+            finalAmount = Math.min(finalAmount, currentBet * maxWinMultiplier);
+
             return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' as const };
         }
 
@@ -905,6 +912,13 @@ export default function CasinoSlotPage() {
             // On garantit au minimum 120% de la mise pour que ça soit rentable
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
             finalAmount = Math.max(Math.floor(currentBet * 1.2), baseAmount);
+
+            // --- SÉCURITÉ ANTI GROS GAINS ---
+            // On plafonne aussi les petits gains pour éviter les abus sur les grosses mises.
+            // Par exemple, à 5 fois la mise pour une ligne de 2 symboles.
+            const maxSmallWinMultiplier = 5;
+            finalAmount = Math.min(finalAmount, currentBet * maxSmallWinMultiplier);
+
             return { win: true, amount: finalAmount, isJackpot: false, lineType };
         }
 
