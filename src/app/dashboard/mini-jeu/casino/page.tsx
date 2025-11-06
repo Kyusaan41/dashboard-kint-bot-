@@ -114,7 +114,7 @@ const useCasinoSounds = () => {
 // Symboles de base et symboles "Devil Mode"
 const NORMAL_SYMBOLS = ['🍒', '🍇', '🍊', '🍋', '💎', '💰', '7️⃣', '🍀'];
 const DEVIL_SYMBOLS = ['🔥', '🔱', '😈', '💀', '💎', '💰', '7️⃣', '🍀']; // 💎, 💰, 7️⃣, 🍀 restent
-const DEVIL_MODE_THRESHOLD = 50000; // Seuil pour activer le Devil Mode
+const DEVIL_MODE_THRESHOLD = 100000; // Seuil pour activer le Devil Mode
 
 type Reel = string[];
 
@@ -122,16 +122,16 @@ function randomReel(symbols: string[], length = 50) {
     return Array.from({ length }, () => symbols[Math.floor(Math.random() * symbols.length)]);
 }
 
-// Multiplicateurs de gains RÉDUITS pour rendre le jeu plus difficile
+// NOUVEAUX multiplicateurs de gains pour un jeu plus équilibré
 const PAYOUTS: { [symbol: string]: number } = {
-    '7️⃣': 100,  // Jackpot ultra rare, gros gain (mais quasi impossible à avoir)
-    '💎': 12,     // Réduit de 10 à 12
-    '💰': 10,     // Augmenté de 6 à 10
-    '🍀': 8,     // Augmenté de 4 à 8
-    '🍒': 7,   // Augmenté de 2.5 à 7
-    '🍇': 6,   // Augmenté de 2.5 à 6
-    '🍊': 5,   // Augmenté de 1.8 à 5
-    '🍋': 4    // Augmenté de 1.5 à 4
+    '7️⃣': 50,    // Jackpot (logique spéciale)
+    '💎': 10,    // Réduit de 12 à 10
+    '💰': 8,     // Réduit de 10 à 8
+    '🍀': 6,     // Réduit de 8 à 6
+    '🍒': 5,     // Réduit de 7 à 5
+    '🍇': 4,     // Réduit de 6 à 4
+    '🍊': 3,     // Réduit de 5 à 3
+    '🍋': 2     // Réduit de 4 à 2
 };
 
 function useWindowSizeLocal() {
@@ -885,20 +885,15 @@ export default function CasinoSlotPage() {
             // On garantit au minimum le double de la mise
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
             finalAmount = Math.max(currentBet * 2, baseAmount);
-
-            // En Devil Mode, on double le gain final
-            if (isDevilMode) {
-                finalAmount *= 2;
-            }
             return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' as const };
         }
 
         // 2 symboles identiques = PETIT GAIN
         if (s1 === s2 || s2 === s3 || s1 === s3) {
             const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
-            
-            // En Devil Mode, le gain de base pour 2 symboles est plus faible (division par 3)
-            const divisor = isDevilMode ? 3 : 2;
+
+            // En Devil Mode, le gain de base pour 2 symboles est encore plus faible (division par 4)
+            const divisor = isDevilMode ? 4 : 2;
             const multiplier = PAYOUTS[sym] ? Math.max(1, Math.floor(PAYOUTS[sym] / divisor)) : 1;
             
             // Déterminer le type de ligne selon les symboles qui matchent
@@ -910,11 +905,6 @@ export default function CasinoSlotPage() {
             // On garantit au minimum 120% de la mise pour que ça soit rentable
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
             finalAmount = Math.max(Math.floor(currentBet * 1.2), baseAmount);
-
-            // En Devil Mode, on double le gain final
-            if (isDevilMode) {
-                finalAmount *= 2;
-            }
             return { win: true, amount: finalAmount, isJackpot: false, lineType };
         }
 
