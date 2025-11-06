@@ -719,6 +719,8 @@ export default function CasinoSlotPage() {
     const [freeSpins, setFreeSpins] = useState(0); // Nombre de free spins restants
     const [isFreeSpinMode, setIsFreeSpinMode] = useState(false); // Mode free spin actif
     const [showFreeSpinUnlock, setShowFreeSpinUnlock] = useState(false); // Animation de déblocage
+    const [lastFourBets, setLastFourBets] = useState<number[]>([]); // Historique des 4 dernières mises
+    const [freeSpinBet, setFreeSpinBet] = useState<number>(0); // Mise verrouillée pour les freespins
 
     // Avantage de la maison augmenté pour rendre le jeu plus difficile
     const HOUSE_EDGE = 0.10; // 10% au lieu de 15%, pour rendre le jeu un peu plus rentable
@@ -948,6 +950,10 @@ export default function CasinoSlotPage() {
             return;
         }
 
+        // 🔒 ANTI-TRICHE: Capturer la mise au début du spin pour éviter
+        // que l'utilisateur ne la change pendant le spinning
+        let lockedBet = bet;
+
         setReelsStopped([false, false, false]);
         setWinningLineType(null); // Reset winning line
 
@@ -961,10 +967,25 @@ export default function CasinoSlotPage() {
             setFreeSpins(prev => prev - 1);
             setIsFreeSpinMode(true);
             
+            // 🔒 ANTI-TRICHE: Utiliser la mise verrouillée des freespins
+            // plutôt que la mise actuelle
+            lockedBet = freeSpinBet;
+            
             // Si c'était le dernier free spin, désactiver le mode après ce spin
             if (freeSpins === 1) {
-                setTimeout(() => setIsFreeSpinMode(false), 5000);
+                setTimeout(() => {
+                    setIsFreeSpinMode(false);
+                    setFreeSpinBet(0); // Reset la mise verrouillée
+                }, 5000);
             }
+        } else {
+            // 🔒 ANTI-TRICHE: Enregistrer la mise dans l'historique des 4 dernières mises
+            // pour empêcher les joueurs de miser petit puis d'augmenter au 4ème tour
+            setLastFourBets(prev => {
+                const updated = [...prev, lockedBet];
+                // Garder seulement les 4 dernières mises
+                return updated.slice(-4);
+            });
         }
 
         // Reserve funds server-side: deduct bet before spinning (sauf en free spin)
@@ -979,20 +1000,20 @@ export default function CasinoSlotPage() {
                 const reserve = await fetch('/api/currency/me', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: -Math.abs(bet) })
+                    body: JSON.stringify({ amount: -Math.abs(lockedBet) })
                 });
 
                 if (reserve.ok) {
                     const json = await reserve.json();
                     if (typeof json.balance === 'number') setBalance(json.balance);
                 } else {
-                    setBalance((b) => b - bet);
+                    setBalance((b) => b - lockedBet);
                 }
             }
         } catch (e) {
             console.error('Erreur réservation:', e);
             if (!isUsingFreeSpin) {
-                setBalance((b) => b - bet);
+                setBalance((b) => b - lockedBet);
             }
         }
 
@@ -1080,7 +1101,8 @@ export default function CasinoSlotPage() {
                     
                     // Attendre 600ms pour que l'animation d'arrêt du dernier slot soit complète (transition: 0.5s)
                     setTimeout(async () => {
-                        const result = computeResult(finalSymbols as string[], bet);
+                        // 🔒 Utiliser la mise verrouillée (lockedBet) pour éviter la triche
+                        const result = computeResult(finalSymbols as string[], lockedBet);
                         if (result.win) {
                             // Show winning line
                             if (result.lineType) {
@@ -1142,21 +1164,36 @@ export default function CasinoSlotPage() {
                                 triggerWinAnimation(result.amount);
                             }
 
-                            // 🎰 FREE SPIN: Incrémenter le win streak
-                            setWinStreak(prev => {
-                                const newStreak = prev + 1;
-                                
-                                // Si on atteint 4 victoires consécutives, débloquer 3 free spins
-                                if (newStreak === 4) {
-                                    setFreeSpins(prevSpins => prevSpins + 3);
-                                    setShowFreeSpinUnlock(true);
-                                    playSound('sequence3'); // Son spécial pour le déblocage
-                                    setTimeout(() => setShowFreeSpinUnlock(false), 4000);
-                                    return 0; // Reset le streak après déblocage
-                                }
-                                
-                                return newStreak;
-                            });
+                            // 🎰 FREE SPIN: Incrémenter le win streak (sauf si on est déjà en freespin)
+                            if (!isUsingFreeSpin) {
+                                setWinStreak(prev => {
+                                    const newStreak = prev + 1;
+                                    
+                                    // Si on atteint 4 victoires consécutives, débloquer 3 free spins
+                                    if (newStreak === 4) {
+                                        // 🔒 ANTI-TRICHE: Calculer la mise moyenne des 4 derniers tours
+                                        // pour éviter que les joueurs misent petit puis augmentent au dernier moment
+                                        const avgBet = lastFourBets.length > 0 
+                                            ? Math.floor(lastFourBets.reduce((sum, b) => sum + b, 0) / lastFourBets.length)
+                                            : lockedBet;
+                                        
+                                        setFreeSpinBet(avgBet);
+                                        setFreeSpins(prevSpins => prevSpins + 3);
+                                        setShowFreeSpinUnlock(true);
+                                        playSound('sequence3'); // Son spécial pour le déblocage
+                                        setTimeout(() => setShowFreeSpinUnlock(false), 4000);
+                                        
+                                        console.log('[FREESPIN] Débloqué ! Mise verrouillée:', avgBet, 'Historique:', lastFourBets);
+                                        
+                                        // Reset l'historique après déblocage
+                                        setLastFourBets([]);
+                                        
+                                        return 0; // Reset le streak après déblocage
+                                    }
+                                    
+                                    return newStreak;
+                                });
+                            }
 
                             try {
                                 const post = await fetch('/api/currency/me', {
@@ -1178,17 +1215,21 @@ export default function CasinoSlotPage() {
                             // Jouer le son de défaite
                             playSound('lose');
                             
-                            // 🎰 FREE SPIN: Reset le win streak en cas de défaite
-                            setWinStreak(0);
+                            // 🎰 FREE SPIN: Reset le win streak en cas de défaite (sauf si on est en freespin)
+                            if (!isUsingFreeSpin) {
+                                setWinStreak(0);
+                                // Reset aussi l'historique des mises en cas de défaite
+                                setLastFourBets([]);
+                            }
                             
-                            if (bet > biggestLoss) {
-                                setBiggestLoss(bet);
+                            if (lockedBet > biggestLoss) {
+                                setBiggestLoss(lockedBet);
                             }
                             
                             setMessage('💔 Perdu...');
                             
                             // Augmenter le jackpot global via l'API NyxNode (50% de la mise)
-                            const jackpotIncrease = Math.max(1, Math.floor(bet * 0.5));
+                            const jackpotIncrease = Math.max(1, Math.floor(lockedBet * 0.5));
                             try {
                                 const increaseRes = await fetch(CASINO_ENDPOINTS.jackpotIncrease, {
                                     method: 'POST',
@@ -1631,23 +1672,43 @@ export default function CasinoSlotPage() {
                                 
                                 {/* Free Spins Counter */}
                                 {freeSpins > 0 && (
-                                    <motion.div
-                                        className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-yellow-500/40"
-                                        initial={{ scale: 0, opacity: 0 }}
-                                        animate={{
-                                            scale: 1,
-                                            opacity: 1,
-                                            borderColor: ['rgba(234, 179, 8, 0.4)', 'rgba(234, 179, 8, 0.8)', 'rgba(234, 179, 8, 0.4)'],
-                                        }}
-                                        transition={{ 
-                                            scale: { type: "spring", stiffness: 300 },
-                                            borderColor: { duration: 1, repeat: Infinity }
-                                        }}
-                                    >
-                                        <p className="text-xs text-yellow-300 font-bold flex items-center gap-1">
-                                            🎁 Free Spins: {freeSpins}
-                                        </p>
-                                    </motion.div>
+                                    <>
+                                        <motion.div
+                                            className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-yellow-500/40"
+                                            initial={{ scale: 0, opacity: 0 }}
+                                            animate={{
+                                                scale: 1,
+                                                opacity: 1,
+                                                borderColor: ['rgba(234, 179, 8, 0.4)', 'rgba(234, 179, 8, 0.8)', 'rgba(234, 179, 8, 0.4)'],
+                                            }}
+                                            transition={{ 
+                                                scale: { type: "spring", stiffness: 300 },
+                                                borderColor: { duration: 1, repeat: Infinity }
+                                            }}
+                                        >
+                                            <p className="text-xs text-yellow-300 font-bold flex items-center gap-1">
+                                                🎁 Free Spins: {freeSpins}
+                                            </p>
+                                        </motion.div>
+                                        
+                                        {/* 🔒 Locked Bet Display */}
+                                        <motion.div
+                                            className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-blue-500/40"
+                                            initial={{ scale: 0, opacity: 0 }}
+                                            animate={{
+                                                scale: 1,
+                                                opacity: 1,
+                                            }}
+                                            transition={{ 
+                                                scale: { type: "spring", stiffness: 300 },
+                                                delay: 0.2
+                                            }}
+                                        >
+                                            <p className="text-xs text-blue-300 font-bold flex items-center gap-1">
+                                                🔒 Mise: {formatMoney(freeSpinBet)}
+                                            </p>
+                                        </motion.div>
+                                    </>
                                 )}
                             </div>
                             
@@ -1871,6 +1932,9 @@ export default function CasinoSlotPage() {
                                         max={Math.max(1, balance)}
                                         value={bet}
                                         onChange={(e) => {
+                                            // Bloquer tout changement pendant le spinning pour éviter la triche
+                                            if (spinning) return;
+                                            
                                             const value = e.target.value;
                                             if (value === '') {
                                                 setBet(0);
@@ -1882,6 +1946,9 @@ export default function CasinoSlotPage() {
                                             }
                                         }}
                                         onBlur={(e) => {
+                                            // Bloquer tout changement pendant le spinning pour éviter la triche
+                                            if (spinning) return;
+                                            
                                             const numValue = Number(e.target.value);
                                             if (isNaN(numValue) || numValue < 1) {
                                                 setBet(1);
