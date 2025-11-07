@@ -1031,25 +1031,25 @@ export default function CasinoSlotPage() {
             let finalSymbol = '🍋'; // Symbole par défaut
 
             if (isDevilMode) {
-                // 🔥 Devil Mode : Probabilités EXTRÊMES (pertes fréquentes)
+                // 🔥 Devil Mode : Probabilités encore plus EXTRÊMES (pertes très fréquentes)
                 if (r < 1) { finalSymbol = '7️⃣'; } // 0.1%
-                else if (r < 21) { finalSymbol = '💎'; } // 2% (réduit de 3%)
-                else if (r < 41) { finalSymbol = '💰'; } // 2% (réduit de 4%)
-                else if (r < 71) { finalSymbol = '🍀'; } // 3% (réduit de 6%)
-                else if (r < 221) { finalSymbol = '💀'; } // 15% (réduit de 20%)
-                else if (r < 371) { finalSymbol = '😈'; } // 15% (réduit de 20%)
-                else if (r < 521) { finalSymbol = '🔱'; } // 15% (réduit de 20%)
-                else { finalSymbol = '🔥'; } // 47.9% (augmenté de 26.9%)
+                else if (r < 11) { finalSymbol = '💎'; } // 1%
+                else if (r < 21) { finalSymbol = '💰'; } // 1%
+                else if (r < 41) { finalSymbol = '🍀'; } // 2%
+                else if (r < 141) { finalSymbol = '💀'; } // 10%
+                else if (r < 241) { finalSymbol = '😈'; } // 10%
+                else if (r < 341) { finalSymbol = '🔱'; } // 10%
+                else { finalSymbol = '🔥'; } // 65.9% (très augmenté)
             } else {
-                // ⚠️ Probabilités ENCORE PLUS DIFFICILES (séquences de perte augmentées)
-                    if (r < 2) { finalSymbol = '7️⃣'; } // 0.2%
-                else if (r < 22) { finalSymbol = '💎'; } // 2%
-                else if (r < 52) { finalSymbol = '💰'; } // 3%
-                else if (r < 92) { finalSymbol = '🍀'; } // 3%
-                else if (r < 232) { finalSymbol = '🍒'; } // 15%
-                else if (r < 372) { finalSymbol = '🍇'; } // 13%
-                else if (r < 552) { finalSymbol = '🍊'; } // 15%
-                else { finalSymbol = '🍋'; } // 45%
+                // ⚠️ Probabilités plus difficiles (séquences de perte augmentées)
+                if (r < 1) { finalSymbol = '7️⃣'; } // 0.1%
+                else if (r < 11) { finalSymbol = '💎'; } // 1%
+                else if (r < 31) { finalSymbol = '💰'; } // 2%
+                else if (r < 51) { finalSymbol = '🍀'; } // 2%
+                else if (r < 151) { finalSymbol = '🍒'; } // 10%
+                else if (r < 251) { finalSymbol = '🍇'; } // 10%
+                else if (r < 351) { finalSymbol = '🍊'; } // 10%
+                else { finalSymbol = '🍋'; } // 64.9% (très augmenté)
             }
 
             // On place le symbole final à la bonne position dans la roue
