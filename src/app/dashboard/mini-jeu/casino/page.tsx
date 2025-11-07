@@ -1022,7 +1022,7 @@ export default function CasinoSlotPage() {
                 const finalSymbolIndex = reelLength - 13;
 
                 // 🔥🔧 VARIABLE FACILE À MODIFIER - Taux global de pertes (0.0 à 1.0)
-                const GLOBAL_LOSS_RATE = 0.88; // 👉 MODIFIE JUSTE CE CHIFFRE ! 0.85 = 85% de pertes
+                const GLOBAL_LOSS_RATE = 0.87; // 👉 MODIFIE JUSTE CE CHIFFRE ! 0.85 = 85% de pertes
 
                 const losingSymbols = ['🍋', '🍊', '🍇', '🍒'];
                 const profitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
