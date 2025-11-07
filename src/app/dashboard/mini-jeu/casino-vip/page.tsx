@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { 
     Coins, Crown, Dices, Sparkles, Star, 
-    PlayCircle, Lock, Zap, TrendingUp, Flame, Diamond
+    PlayCircle, Lock, Zap, TrendingUp, Flame, Diamond, Users
 } from 'lucide-react'
 import { NyxCard } from '@/components/ui/NyxCard'
 import { useState, useEffect } from 'react'
@@ -385,6 +385,18 @@ export default function CasinoVIPHome() {
                             isAvailable={true}
                             minBet="100 pièces"
                             maxWin="x2.5 (Blackjack)"
+                            isNew={true}
+                        />
+
+                        {/* Poker - NEW */}
+                        <VIPGameCard
+                            href="/dashboard/mini-jeu/poker"
+                            icon={<Users />}
+                            title="Poker en Ligne"
+                            description="Créez une table privée, invitez vos amis et affrontez-vous dans une partie de poker Texas Hold'em en temps réel."
+                            isAvailable={true}
+                            minBet="Variable"
+                            maxWin="Le Pot"
                             isNew={true}
                         />
 

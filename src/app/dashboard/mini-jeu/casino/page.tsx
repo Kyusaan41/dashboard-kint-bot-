@@ -901,20 +901,20 @@ export default function CasinoSlotPage() {
         if (s1 === s2 || s2 === s3 || s1 === s3) {
             const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
 
-            // 💰 GAINS AUGMENTÉS : Utiliser directement le multiplicateur sans division
-            // En Devil Mode, utiliser 75% du multiplicateur
+            // En Devil Mode, le diviseur est plus petit pour des gains plus élevés
             const multiplier = PAYOUTS[sym] || 2;
-            const adjustedMultiplier = isDevilMode ? Math.floor(multiplier * 0.75) : multiplier;
+            const divisor = isDevilMode ? 2 : 4;
+            const adjustedMultiplier = multiplier / divisor;
             
             // Déterminer le type de ligne selon les symboles qui matchent
             let lineType: 'two-left' | 'two-middle' | 'two-right' = 'two-left';
             if (s1 === s2) lineType = 'two-left';
             else if (s2 === s3) lineType = 'two-middle';
-            else if (s1 === s3) lineType = 'two-right';
+            else if (s1 === s3) lineType = 'two-right'; // Note: this case is less common in traditional slots
             
-            // 💰 NOUVEAU : Garantir au minimum x2 la mise (au lieu de 120%)
+            // Garantir au minimum 120% de la mise
             const baseAmount = Math.floor(currentBet * adjustedMultiplier * (1 - HOUSE_EDGE));
-            finalAmount = Math.max(currentBet * 2, baseAmount); // Minimum x2
+            finalAmount = Math.max(Math.floor(currentBet * 1.2), baseAmount);
 
             // Plafonnement généreux pour les gains de 2 symboles : x10 au lieu de x5
             const maxSmallWinMultiplier = 10;
