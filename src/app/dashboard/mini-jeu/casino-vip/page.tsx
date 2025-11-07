@@ -388,17 +388,7 @@ export default function CasinoVIPHome() {
                             isNew={true}
                         />
 
-                        {/* Poker - NEW */}
-                        <VIPGameCard
-                            href="/dashboard/mini-jeu/poker"
-                            icon={<Users />}
-                            title="Poker en Ligne"
-                            description="Créez une table privée, invitez vos amis et affrontez-vous dans une partie de poker Texas Hold'em en temps réel."
-                            isAvailable={true}
-                            minBet="Variable"
-                            maxWin="Le Pot"
-                            isNew={true}
-                        />
+                    
 
 
                     </div>
