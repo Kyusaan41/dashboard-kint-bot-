@@ -1017,46 +1017,74 @@ export default function CasinoSlotPage() {
         }
 
         const makeWeightedReel = () => {
-            const reel: string[] = [];
-            const reelLength = 50;
-            const finalSymbolIndex = reelLength - 13; // L'index du symbole qui s'arrête sur la ligne
+    const reel: string[] = [];
+    const reelLength = 50;
+    const finalSymbolIndex = reelLength - 13; // L'index du symbole qui s'arrête sur la ligne
 
-            // D'abord, on remplit la roue avec des symboles aléatoires pour l'animation
-            for (let i = 0; i < reelLength; i++) {
-                reel.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
-            }
+    // D'abord, on remplit la roue avec des symboles aléatoires pour l'animation
+    for (let i = 0; i < reelLength; i++) {
+        reel.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+    }
 
-            // Ensuite, on choisit le symbole final (celui qui compte) en fonction des probabilités
-            const r = Math.random() * 1000; // 0-1000 pour des pourcentages plus précis
-            let finalSymbol = '🍋'; // Symbole par défaut
+    // --- NOUVELLE VERSION ÉQUILIBRÉE DES PROBABILITÉS ---
+    const r = Math.random() * 1000; // 0 à 1000
+    let finalSymbol = '🍋'; // Symbole par défaut
 
-            if (isDevilMode) {
-                // 🔥 Devil Mode : Probabilités encore plus EXTRÊMES (pertes très fréquentes)
-                if (r < 1) { finalSymbol = '7️⃣'; } // 0.1%
-                else if (r < 11) { finalSymbol = '💎'; } // 1%
-                else if (r < 21) { finalSymbol = '💰'; } // 1%
-                else if (r < 41) { finalSymbol = '🍀'; } // 2%
-                else if (r < 141) { finalSymbol = '💀'; } // 10%
-                else if (r < 241) { finalSymbol = '😈'; } // 10%
-                else if (r < 341) { finalSymbol = '🔱'; } // 10%
-                else { finalSymbol = '🔥'; } // 65.9% (très augmenté)
-            } else {
-                // ⚠️ Probabilités plus difficiles (séquences de perte augmentées)
-                if (r < 1) { finalSymbol = '7️⃣'; } // 0.1%
-                else if (r < 11) { finalSymbol = '💎'; } // 1%
-                else if (r < 31) { finalSymbol = '💰'; } // 2%
-                else if (r < 51) { finalSymbol = '🍀'; } // 2%
-                else if (r < 151) { finalSymbol = '🍒'; } // 10%
-                else if (r < 251) { finalSymbol = '🍇'; } // 10%
-                else if (r < 351) { finalSymbol = '🍊'; } // 10%
-                else { finalSymbol = '🍋'; } // 64.9% (très augmenté)
-            }
-
-            // On place le symbole final à la bonne position dans la roue
-            reel[finalSymbolIndex] = finalSymbol;
-            
-            return reel;
+    if (isDevilMode) {
+        // 🔥 Mode Devil : pertes quasi systématiques (rare jackpot)
+        const weightsDevil: { [sym: string]: number } = {
+            '7️⃣': 1,   // 0.1%
+            '💎': 2,   // 0.2%
+            '💰': 4,   // 0.4%
+            '🍀': 8,   // 0.8%
+            '💀': 100, // 10%
+            '😈': 200, // 20%
+            '🔱': 200, // 20%
+            '🔥': 485  // 48.5% (presque toujours ça)
         };
+
+        const total = Object.values(weightsDevil).reduce((s, v) => s + v, 0);
+        let rand = Math.random() * total;
+
+        for (const sym of Object.keys(weightsDevil)) {
+            rand -= weightsDevil[sym];
+            if (rand <= 0) {
+                finalSymbol = sym;
+                break;
+            }
+        }
+
+    } else {
+        // ⚙️ Mode normal : taux de pertes augmenté (~70%)
+        const weightsNormal: { [sym: string]: number } = {
+            '7️⃣': 1,    // Ultra rare (jackpot)
+            '💎': 3,    // Très rare
+            '💰': 8,    // Rare
+            '🍀': 15,   // Peu commun
+            '🍒': 120,  // Commun
+            '🍇': 200,  // Fréquent
+            '🍊': 220,  // Fréquent
+            '🍋': 433   // Majoritaire
+        };
+
+        const total = Object.values(weightsNormal).reduce((s, v) => s + v, 0);
+        let rand = Math.random() * total;
+
+        for (const sym of Object.keys(weightsNormal)) {
+            rand -= weightsNormal[sym];
+            if (rand <= 0) {
+                finalSymbol = sym;
+                break;
+            }
+        }
+    }
+
+    // On place le symbole final à la bonne position dans la roue
+    reel[finalSymbolIndex] = finalSymbol;
+
+    return reel;
+};
+
 
         const newReels = [makeWeightedReel(), makeWeightedReel(), makeWeightedReel()];
         setReels(newReels);
