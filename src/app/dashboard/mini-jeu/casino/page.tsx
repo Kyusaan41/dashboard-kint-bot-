@@ -124,14 +124,14 @@ function randomReel(symbols: string[], length = 50) {
 
 // NOUVEAUX multiplicateurs de gains pour un jeu plus équilibré
 const PAYOUTS: { [symbol: string]: number } = {
-    '7️⃣': 50,    // Jackpot (logique spéciale)
-    '💎': 10,    // Réduit de 12 à 10
-    '💰': 8,     // Réduit de 10 à 8
-    '🍀': 6,     // Réduit de 8 à 6
-    '🍒': 5,     // Réduit de 7 à 5
-    '🍇': 4,     // Réduit de 6 à 4
-    '🍊': 3,     // Réduit de 5 à 3
-    '🍋': 2     // Réduit de 4 à 2
+    '7️⃣': 50,   // Jackpot (géré séparément, valeur symbolique)
+    '💎': 10,    // Gains élevés mais pas abusifs
+    '💰': 8,     // Moyen+
+    '🍀': 6,     // Moyen
+    '🍒': 5,     // Classique
+    '🍇': 4,     // Modéré
+    '🍊': 3,     // Petit gain
+    '🍋': 2      // Faible
 };
 
 function useWindowSizeLocal() {
@@ -891,7 +891,7 @@ export default function CasinoSlotPage() {
             // --- SÉCURITÉ ANTI GROS GAINS ---
             // On plafonne le gain maximum pour une victoire normale (non-jackpot)
             // Par exemple, à 50 fois la mise. Ajustez cette valeur si besoin.
-            const maxWinMultiplier = 50;
+            const maxWinMultiplier = 30;  
             finalAmount = Math.min(finalAmount, currentBet * maxWinMultiplier);
 
             return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' as const };
@@ -917,7 +917,7 @@ export default function CasinoSlotPage() {
             finalAmount = Math.max(Math.floor(currentBet * 1.2), baseAmount);
 
             // Plafonnement généreux pour les gains de 2 symboles : x10 au lieu de x5
-            const maxSmallWinMultiplier = 10;
+            const maxSmallWinMultiplier = 8; 
             finalAmount = Math.min(finalAmount, currentBet * maxSmallWinMultiplier);
 
             return { win: true, amount: finalAmount, isJackpot: false, lineType };
@@ -1016,55 +1016,67 @@ export default function CasinoSlotPage() {
             }
         }
 
+            // 🎯 ÉQUILIBRAGE PARFAIT DU SLOT MACHINE 🎰
+            // Objectif : ni trop de gains, ni trop de pertes, jackpot rare mais atteignable, progression naturelle.
+
+            // 🎰 ÉQUILIBRAGE PARFAIT — Taux stable, jackpot rare mais réaliste
             const makeWeightedReel = () => {
                 const reel: string[] = [];
                 const reelLength = 50;
                 const finalSymbolIndex = reelLength - 13;
 
-                // 🔥🔧 VARIABLE FACILE À MODIFIER - Taux global de pertes (0.0 à 1.0)
-                const GLOBAL_LOSS_RATE = 0.87; // 👉 MODIFIE JUSTE CE CHIFFRE ! 0.85 = 85% de pertes
+                // ⚖️ Taux global de pertes : 0.84 = environ 16% de victoires
+                const GLOBAL_LOSS_RATE = 0.84;
 
+                // Symboles perdants (majoritaires)
                 const losingSymbols = ['🍋', '🍊', '🍇', '🍒'];
-                const profitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
 
-                // Remplissage des rouleaux basé sur le taux de pertes
+                // Symboles rentables (avec pondération)
+                const profitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
+                const weights = { '💎': 4, '💰': 4, '🍀': 3, '7️⃣': 2 }; // Jackpot plus fréquent (x2)
+                const weightedPool = Object.entries(weights).flatMap(([sym, w]) => Array(w).fill(sym));
+
+                // 🌀 Remplissage des rouleaux
                 for (let i = 0; i < reelLength; i++) {
-                    // Le taux de remplissage avec symboles perdants = GLOBAL_LOSS_RATE + 5% de marge
-                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.05)) {
+                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.03)) {
+                        // Pertes majoritaires
                         const randomIndex = Math.floor(Math.random() * losingSymbols.length);
                         reel.push(losingSymbols[randomIndex]);
                     } else {
-                        const randomIndex = Math.floor(Math.random() * profitableSymbols.length);
-                        reel.push(profitableSymbols[randomIndex]);
+                        // Gains pondérés
+                        const randomSymbol = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+                        reel.push(randomSymbol);
                     }
                 }
 
                 let finalSymbol = '🍋';
 
+                // 😈 Mode Devil : plus risqué mais plus excitant
                 if (isDevilMode) {
                     const devilLosingSymbols = ['🔥', '😈', '💀', '🔱'];
                     const devilProfitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
-                    
-                    // Mode Devil : taux de pertes légèrement augmenté
-                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.07)) {
+
+                    // Moins punitif : +0.04 au lieu de +0.07
+                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.04)) {
                         finalSymbol = devilLosingSymbols[Math.floor(Math.random() * devilLosingSymbols.length)];
                     } else {
                         finalSymbol = devilProfitableSymbols[Math.floor(Math.random() * devilProfitableSymbols.length)];
                     }
                 } else {
-                    // Mode normal : utilise directement GLOBAL_LOSS_RATE
-                    if (Math.random() < (1 - GLOBAL_LOSS_RATE)) { // Inverse pour la clarté
-                        finalSymbol = profitableSymbols[Math.floor(Math.random() * profitableSymbols.length)];
+                    // Mode normal
+                    if (Math.random() < (1 - GLOBAL_LOSS_RATE)) {
+                        finalSymbol = weightedPool[Math.floor(Math.random() * weightedPool.length)];
                     } else {
                         finalSymbol = losingSymbols[Math.floor(Math.random() * losingSymbols.length)];
                     }
                 }
 
-                // On place le symbole final à la bonne position
+                // Positionne le symbole final
                 reel[finalSymbolIndex] = finalSymbol;
-
                 return reel;
             };
+
+
 
 
 
