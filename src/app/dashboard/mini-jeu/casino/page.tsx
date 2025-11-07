@@ -1022,7 +1022,7 @@ export default function CasinoSlotPage() {
                 const finalSymbolIndex = reelLength - 13; // L'index du symbole qui s'arrête sur la ligne
 
                 // Réglage du taux de pertes (0.0 = tout le monde gagne, 1.0 = personne ne gagne)
-                const LOSS_RATE = 0.7; // 👉 change juste ce chiffre
+                const LOSS_RATE = 0.85; // 👉 change juste ce chiffre
 
                 // D'abord, on remplit la roue pour l'animation
                 for (let i = 0; i < reelLength; i++) {
