@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { fetchCurrency } from '@/utils/api';
 
-const BOT_URL = "http://193.70.34.25:20007";
+const BOT_URL = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:20007";
 
 // --- Composant de Notification ---
 const Notification = ({ message, type }: { message: string; type: 'info' | 'error' | 'success' }) => {

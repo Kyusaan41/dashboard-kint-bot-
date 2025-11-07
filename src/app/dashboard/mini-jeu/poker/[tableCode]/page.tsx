@@ -9,7 +9,7 @@ import { useSession } from 'next-auth/react';
 import { Crown, Play, Coins, User, Bot, Spade, Hand, XCircle, Info, AlertTriangle, CheckCircle, Trophy, LogOut, Eye, EyeOff } from 'lucide-react';
 import { fetchCurrency } from '@/utils/api';
 
-const BOT_URL = "http://193.70.34.25:20007";
+const BOT_URL = process.env.NEXT_PUBLIC_BOT_URL || "http://localhost:20007";
 
 interface Player {
   id: string;

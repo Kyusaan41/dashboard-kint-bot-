@@ -499,6 +499,7 @@ function createPokerDeck() {
 
 
                   const newTable = {
+                      minBuyIn: minBuyIn, // IMPORTANT: Stocker le minBuyIn
                       code: tableCode,
                       players: [{
                           id: socket.id,
@@ -889,7 +890,7 @@ function createPokerDeck() {
               // Fonction utilitaire pour personnaliser l'état de la table pour chaque joueur
               function getPersonalizedTableState(table, playerId) {
                   return {
-                      ...table,
+                      ...table, // On garde toutes les propriétés de la table (y compris minBuyIn)
                       deck: null, // On ne renvoie jamais le paquet de cartes
                       players: table.players.map(p => {
                           const { hand, ...playerData } = p;
