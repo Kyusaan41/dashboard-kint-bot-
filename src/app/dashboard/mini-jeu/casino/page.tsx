@@ -1019,72 +1019,44 @@ export default function CasinoSlotPage() {
             const makeWeightedReel = () => {
                 const reel: string[] = [];
                 const reelLength = 50;
-                const finalSymbolIndex = reelLength - 13; // L'index du symbole qui s'arrête sur la ligne
+                const finalSymbolIndex = reelLength - 13;
 
-                // Réglage du taux de pertes (0.0 = tout le monde gagne, 1.0 = personne ne gagne)
-                const LOSS_RATE = 0.85; // 👉 change juste ce chiffre
+                // 🔥🔧 VARIABLE FACILE À MODIFIER - Taux global de pertes (0.0 à 1.0)
+                const GLOBAL_LOSS_RATE = 0.85; // 👉 MODIFIE JUSTE CE CHIFFRE ! 0.85 = 85% de pertes
 
-                // D'abord, on remplit la roue pour l'animation
+                const losingSymbols = ['🍋', '🍊', '🍇', '🍒'];
+                const profitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
+
+                // Remplissage des rouleaux basé sur le taux de pertes
                 for (let i = 0; i < reelLength; i++) {
-                    reel.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+                    // Le taux de remplissage avec symboles perdants = GLOBAL_LOSS_RATE + 5% de marge
+                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.05)) {
+                        const randomIndex = Math.floor(Math.random() * losingSymbols.length);
+                        reel.push(losingSymbols[randomIndex]);
+                    } else {
+                        const randomIndex = Math.floor(Math.random() * profitableSymbols.length);
+                        reel.push(profitableSymbols[randomIndex]);
+                    }
                 }
 
-                const r = Math.random();
                 let finalSymbol = '🍋';
 
                 if (isDevilMode) {
-                    // 😈 Mode Devil : pertes quasi garanties
-                    const weightsDevil: { [sym: string]: number } = {
-                        '7️⃣': 1,
-                        '💎': 2,
-                        '💰': 4,
-                        '🍀': 8,
-                        '💀': 100,
-                        '😈': 200,
-                        '🔱': 200,
-                        '🔥': 485
-                    };
-
-                    const total = Object.values(weightsDevil).reduce((s, v) => s + v, 0);
-                    let rand = Math.random() * total;
-
-                    for (const sym of Object.keys(weightsDevil)) {
-                        rand -= weightsDevil[sym];
-                        if (rand <= 0) {
-                            finalSymbol = sym;
-                            break;
-                        }
+                    const devilLosingSymbols = ['🔥', '😈', '💀', '🔱'];
+                    const devilProfitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
+                    
+                    // Mode Devil : taux de pertes légèrement augmenté
+                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.07)) {
+                        finalSymbol = devilLosingSymbols[Math.floor(Math.random() * devilLosingSymbols.length)];
+                    } else {
+                        finalSymbol = devilProfitableSymbols[Math.floor(Math.random() * devilProfitableSymbols.length)];
                     }
                 } else {
-                    // ⚙️ Mode normal : pertes ajustables via LOSS_RATE
-                    const baseWeights: { [sym: string]: number } = {
-                        '7️⃣': 1,    // Ultra rare (jackpot)
-                        '💎': 3,    // Très rare
-                        '💰': 8,    // Rare
-                        '🍀': 15,   // Peu commun
-                        '🍒': 120,  // Commun
-                        '🍇': 200,  // Fréquent
-                        '🍊': 220,  // Fréquent
-                        '🍋': 433   // Majoritaire
-                    };
-
-                    // Ajustement automatique selon le taux de pertes désiré
-                    // Plus LOSS_RATE est haut, plus 🍋 (perte) est renforcé
-                    const adjustedWeights = { ...baseWeights };
-                    adjustedWeights['🍋'] = Math.floor(433 + LOSS_RATE * 300); // Renforce 🍋
-                    adjustedWeights['🍒'] = Math.floor(120 * (1 - LOSS_RATE * 0.6));
-                    adjustedWeights['🍇'] = Math.floor(200 * (1 - LOSS_RATE * 0.6));
-                    adjustedWeights['🍊'] = Math.floor(220 * (1 - LOSS_RATE * 0.6));
-
-                    const total = Object.values(adjustedWeights).reduce((s, v) => s + v, 0);
-                    let rand = Math.random() * total;
-
-                    for (const sym of Object.keys(adjustedWeights)) {
-                        rand -= adjustedWeights[sym];
-                        if (rand <= 0) {
-                            finalSymbol = sym;
-                            break;
-                        }
+                    // Mode normal : utilise directement GLOBAL_LOSS_RATE
+                    if (Math.random() < (1 - GLOBAL_LOSS_RATE)) { // Inverse pour la clarté
+                        finalSymbol = profitableSymbols[Math.floor(Math.random() * profitableSymbols.length)];
+                    } else {
+                        finalSymbol = losingSymbols[Math.floor(Math.random() * losingSymbols.length)];
                     }
                 }
 
