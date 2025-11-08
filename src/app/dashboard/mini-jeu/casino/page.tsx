@@ -742,6 +742,81 @@ const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'tw
     );
 };
 
+// ✨ NOUVEAU: Titres de niveaux
+const getLevelTitle = (level: number) => {
+    if (level >= 50) return "Roi du Casino";
+    if (level >= 40) return "Prince du Casino";
+    if (level >= 30) return "Duc du Jackpot";
+    if (level >= 25) return "Baron du Spin";
+    if (level >= 20) return "Maître des Risques";
+    if (level >= 15) return "Flambeur";
+    if (level >= 10) return "Parieur Agile";
+    if (level >= 5) return "Joueur Régulier";
+    return "Novice";
+};
+
+// ✨ NOUVEAU: Animation de Level Up
+const LevelUpAnimation = ({ level, title }: { level: number, title: string }) => {
+    return (
+        <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center">
+            <motion.div
+                className="absolute inset-0 bg-black"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.8, 0.6, 0] }}
+                transition={{ duration: 5, ease: "easeInOut" }}
+            />
+            <Confetti />
+            <motion.div
+                className="relative text-center p-8 bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl border-4 border-purple-500 shadow-2xl shadow-purple-500/50"
+                initial={{ scale: 0, opacity: 0, rotate: -45 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                exit={{ scale: 0, opacity: 0, rotate: 45 }}
+                transition={{ duration: 0.8, type: "spring", stiffness: 150 }}
+            >
+                <motion.div
+                    className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-3xl blur-xl opacity-75"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <div className="relative z-10">
+                    <motion.h2
+                        className="text-2xl font-bold text-gray-300 mb-2"
+                        initial={{ y: -20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                    >
+                        NIVEAU SUPÉRIEUR !
+                    </motion.h2>
+                    <motion.div
+                        className="text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-fuchsia-400 mb-4"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.7, type: "spring", damping: 10 }}
+                    >
+                        {level}
+                    </motion.div>
+                    <motion.h3
+                        className="text-3xl font-bold text-white mb-6"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 1 }}
+                    >
+                        {title}
+                    </motion.h3>
+                    <motion.div
+                        className="text-sm text-purple-300 bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/30"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.3 }}
+                    >
+                        De nouvelles récompenses vous attendent !
+                    </motion.div>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
 export default function CasinoSlotPage() {
     const { data: session } = useSession();
     const { playSound, soundsEnabled, toggleSounds, masterVolume, changeVolume } = useCasinoSounds(); // @ts-ignore
@@ -762,9 +837,9 @@ export default function CasinoSlotPage() {
     const [jackpotLoading, setJackpotLoading] = useState<boolean>(true);
     
     // Top wins des joueurs
-    const [topWins, setTopWins] = useState<Array<{ username: string; biggestWin: number; totalWins?: number; winCount?: number }>>([]);
+    const [topWins, setTopWins] = useState<Array<{ username: string; biggestWin: number; totalWins?: number; winCount?: number; level?: number; xp?: number; }>>([]);
     const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
-    const [leaderboardType, setLeaderboardType] = useState<'biggestWin' | 'winCount' | 'totalWins'>('biggestWin');
+    const [leaderboardType, setLeaderboardType] = useState<'biggestWin' | 'winCount' | 'totalWins' | 'level'>('biggestWin');
     
     const [showConfetti, setShowConfetti] = useState(false);
     const [winAnimation, setWinAnimation] = useState(false);
@@ -829,6 +904,13 @@ export default function CasinoSlotPage() {
     const [spinHistory, setSpinHistory] = useState<SpinHistoryEntry[]>([]);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
 
+    // ✨ NOUVEAU: Système de niveaux
+    const [playerLevel, setPlayerLevel] = useState(1);
+    const [playerXp, setPlayerXp] = useState(0);
+    const [xpForNextLevel, setXpForNextLevel] = useState(1000);
+    const [showLevelUpAnimation, setShowLevelUpAnimation] = useState(false);
+    const [lastLevelUpInfo, setLastLevelUpInfo] = useState({ level: 0, title: '' });
+
 
     const SYMBOLS = isDevilMode ? DEVIL_SYMBOLS : NORMAL_SYMBOLS;
 
@@ -862,7 +944,7 @@ export default function CasinoSlotPage() {
     };
 
     // Fonction pour charger les top wins depuis l'API
-    const loadTopWins = async (type: 'biggestWin' | 'winCount' | 'totalWins' = 'biggestWin') => {
+    const loadTopWins = async (type: 'biggestWin' | 'winCount' | 'totalWins' | 'level' = 'biggestWin') => {
         try {
             const res = await fetch(`${CASINO_ENDPOINTS.stats}?type=${type}`);
             if (res.ok) {
@@ -903,8 +985,34 @@ export default function CasinoSlotPage() {
     // Load balance and jackpot from API on mount
     useEffect(() => {
         setInitialReels();
+        let isMounted = true;
 
         // Charger le solde
+        const fetchInitialData = async () => {
+            try {
+                setLoadingBalance(true);
+                const res = await fetch('/api/currency/me');
+                if (res.ok) {
+                    if (isMounted) {
+                        const data = await res.json();
+                        if (typeof data.balance === 'number') {
+                            setBalance(data.balance);
+                            updateBalance(data.balance);
+                        }
+                        if (data.level) setPlayerLevel(data.level);
+                        if (data.xp) setPlayerXp(data.xp);
+                        if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
+                    }
+                } else {
+                    console.warn('Impossible de récupérer le solde réel, status', res.status);
+                }
+            } catch (e) {
+                console.error('Erreur fetch balance', e);
+            } finally {
+                setLoadingBalance(false);
+            }
+        };
+
         (async () => {
             try {
                 setLoadingBalance(true);
@@ -915,6 +1023,11 @@ export default function CasinoSlotPage() {
                         setBalance(data.balance);
                         updateBalance(data.balance); // ✨ NOUVEAU: Initialiser le solde animé
                     }
+                    // Charger les stats de niveau initiales
+                    if (data.level) setPlayerLevel(data.level);
+                    if (data.xp) setPlayerXp(data.xp);
+                    if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
+
                 } else {
                     console.warn('Impossible de récupérer le solde réel, status', res.status);
                 }
@@ -931,7 +1044,42 @@ export default function CasinoSlotPage() {
         
         // Charger les top wins initial
         loadTopWins();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
+
+    // ✨ NOUVEAU: Fonction pour ajouter de l'XP
+    const addXp = async (amount: number) => {
+        if (!session?.user?.name || amount <= 0) return;
+
+        try {
+            const res = await fetch(CASINO_ENDPOINTS.xp, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: session.user.name, xpToAdd: amount }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setPlayerLevel(data.level);
+                setPlayerXp(data.xp);
+                setXpForNextLevel(data.xpForNextLevel);
+
+                if (data.leveledUp) {
+                    console.log(`[LEVEL UP] Niveau ${data.level} atteint !`);
+                    setLastLevelUpInfo({ level: data.level, title: getLevelTitle(data.level) });
+                    setShowLevelUpAnimation(true);
+                    playSound('jackpot'); // Réutiliser le son du jackpot pour le level up
+                    setTimeout(() => setShowLevelUpAnimation(false), 5000);
+                }
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'ajout d'XP:", error);
+        }
+    };
+
 
     // Polling automatique du jackpot toutes les 10 secondes
     useEffect(() => {
@@ -1065,6 +1213,9 @@ export default function CasinoSlotPage() {
             return;
         }
 
+        // 🎰 FREE SPIN: Vérifier si on utilise un free spin
+        let isUsingFreeSpin = false;
+
         // 🔒 ANTI-TRICHE: Capturer la mise au début du spin pour éviter
         // que l'utilisateur ne la change pendant le spinning
         let lockedBet = bet;
@@ -1075,8 +1226,6 @@ export default function CasinoSlotPage() {
         // Jouer le son de spin
         playSound('spin');
 
-        // 🎰 FREE SPIN: Vérifier si on utilise un free spin
-        let isUsingFreeSpin = false;
         if (freeSpins > 0) {
             isUsingFreeSpin = true;
             setFreeSpins(prev => prev - 1);
@@ -1098,6 +1247,11 @@ export default function CasinoSlotPage() {
             // pour empêcher les joueurs de miser petit puis d'augmenter au 3ème tour
             setLastThreeBets(prev => {
                 const updated = [...prev, lockedBet];
+                
+                // ✨ NOUVEAU: Ajouter de l'XP pour la mise (uniquement pour les spins payants)
+                if (!isUsingFreeSpin) {
+                    addXp(lockedBet);
+                }
                 // Garder seulement les 3 dernières mises
                 return updated.slice(-3);
             });
@@ -1280,6 +1434,11 @@ export default function CasinoSlotPage() {
                             // Enregistrer le gain dans l'API
                             const username = session?.user?.name || session?.user?.email?.split('@')[0] || 'Joueur';
                             console.log('[CASINO] Enregistrement gain:', username, spinResult.amount, 'Jackpot:', spinResult.isJackpot);
+
+                            // ✨ NOUVEAU: Ajouter de l'XP pour le gain
+                            const xpFromWin = Math.floor(spinResult.amount * 0.5);
+                            addXp(xpFromWin);
+
                             recordWin(username, spinResult.amount, spinResult.isJackpot);
                             
                             if (spinResult.isJackpot) {
@@ -1678,6 +1837,13 @@ export default function CasinoSlotPage() {
                 {showFreeSpinUnlock && <FreeSpinUnlockAnimation />}
             </AnimatePresence>
 
+            {/* ✨ NOUVEAU: Animation de Level Up */}
+            <AnimatePresence>
+                {showLevelUpAnimation && (
+                    <LevelUpAnimation level={lastLevelUpInfo.level} title={lastLevelUpInfo.title} />
+                )}
+            </AnimatePresence>
+
             {/* ✨ NOUVEAU: Effet de transition pour le Devil Mode */}
             <AnimatePresence>
                 {showDevilTransition && (
@@ -1917,6 +2083,25 @@ export default function CasinoSlotPage() {
                                 >
                                     {formatMoney(displayBalance)} 💰
                                 </motion.p>
+
+                                {/* ✨ NOUVEAU: Barre d'XP et Niveau */}
+                                <div className="mt-2">
+                                    <div className="flex justify-between items-center text-xs mb-1">
+                                        <span className="font-bold text-purple-300">{`Niv. ${playerLevel} - ${getLevelTitle(playerLevel)}`}</span>
+                                        <span className="text-gray-400">{`${formatMoney(playerXp)} / ${formatMoney(xpForNextLevel)} XP`}</span>
+                                    </div>
+                                    <div className="w-full bg-black/30 rounded-full h-2.5 border border-purple-500/30">
+                                        <motion.div
+                                            className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full"
+                                            initial={{ width: '0%' }}
+                                            animate={{ width: `${(playerXp / xpForNextLevel) * 100}%` }}
+                                            transition={{ duration: 1, ease: 'easeOut' }}
+                                        >
+                                        </motion.div>
+                                    </div>
+                                </div>
+
+
                             </motion.div>
                             
                             {/* Sound Control with Volume Slider */}
@@ -2506,9 +2691,10 @@ export default function CasinoSlotPage() {
                                 <div className="flex gap-2 mb-3">
                                     {[
                                         { key: 'biggestWin' as const, label: 'Plus gros gain', icon: '💎' },
+                                        { key: 'level' as const, label: 'Niveau', icon: '⭐' },
                                         { key: 'winCount' as const, label: 'Nombre de victoires', icon: '🏆' },
                                         { key: 'totalWins' as const, label: 'Gains total', icon: '💰' }
-                                    ].map((tab) => (
+                                    ].map((tab, i) => (
                                         <motion.button
                                             key={tab.key}
                                             onClick={() => {
@@ -2541,6 +2727,8 @@ export default function CasinoSlotPage() {
                                                     displayValue = `${player.winCount || 0} 🏆`;
                                                 } else if (leaderboardType === 'totalWins') {
                                                     displayValue = `${formatMoney(player.totalWins || 0)} 💰`;
+                                                } else if (leaderboardType === 'level') {
+                                                    displayValue = `Niv. ${player.level || 1}`;
                                                 }
                                                 
                                                 return (
