@@ -1,6 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-
-const BOT_API_URL = 'http://193.70.34.25:20007';
+import { NYXNODE_API_URL } from '@/config/api';
 
 export async function POST(request: NextRequest) {
     try {
@@ -15,7 +14,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Relayer la requête vers l'API du bot
-        const botResponse = await fetch(`${BOT_API_URL}/api/casino/xp`, {
+        const botResponse = await fetch(`${NYXNODE_API_URL}/api/casino/xp`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',

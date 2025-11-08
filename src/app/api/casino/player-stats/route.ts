@@ -1,29 +1,50 @@
-import { NextResponse, NextRequest } from 'next/server';
-const BOT_API_URL = 'http://193.70.34.25:20007/api';
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { NYXNODE_API_URL } from '@/config/api';
 
-export async function POST(request: NextRequest) {
+/**
+ * Récupère le solde et les statistiques de niveau/XP d'un joueur
+ * en appelant l'API du bot.
+ */
+export async function GET() {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user || !session.user.id) {
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+    const username = session.user.name || 'JoueurInconnu';
+
     try {
-        const body = await request.json();
+        // Récupérer le solde
+        const currencyRes = await fetch(`${NYXNODE_API_URL}/api/currency/${userId}`);
+        const currencyData = currencyRes.ok ? await currencyRes.json() : { balance: 0 };
 
-        // Relayer la requête vers l'API du bot
-        const botResponse = await fetch(`${BOT_API_URL}/api/casino/xp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
+        // Récupérer les stats du casino (niveau, xp, etc.)
+        const statsRes = await fetch(`${NYXNODE_API_URL}/api/casino/stats`);
+        const allStatsData = statsRes.ok ? await statsRes.json() : { players: [] };
+        
+        let playerStats = allStatsData.players.find((p: any) => p.username === username);
 
-        // Tenter de parser la réponse du bot, même en cas d'erreur
-        const responseData = await botResponse.json();
-
-        // Si le bot a renvoyé une erreur, la relayer au client
-        if (!botResponse.ok) {
-            return NextResponse.json(responseData, { status: botResponse.status });
+        if (!playerStats) {
+            playerStats = { level: 1, xp: 0 };
         }
 
-        // Si tout s'est bien passé, renvoyer la réponse du bot
+        const xpForNextLevel = Math.floor(1000 * Math.pow(playerStats.level, 1.5));
+
+        const responseData = {
+            balance: currencyData.balance,
+            level: playerStats.level,
+            xp: playerStats.xp,
+            xpForNextLevel,
+        };
+
         return NextResponse.json(responseData);
+
     } catch (error) {
-        console.error("[PROXY ERROR] Erreur lors du relais vers /api/casino/xp:", error);
-        return NextResponse.json({ success: false, message: 'Erreur de communication avec le serveur du bot.' }, { status: 502 });
+        console.error("Erreur dans GET /api/casino/player-stats:", error);
+        return NextResponse.json({ error: 'Erreur interne du serveur lors de la récupération des stats du joueur' }, { status: 500 });
     }
 }

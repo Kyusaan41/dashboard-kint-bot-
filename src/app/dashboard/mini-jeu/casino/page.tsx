@@ -6,6 +6,7 @@ import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, T
 import { useSession } from 'next-auth/react';
 import { CASINO_ENDPOINTS } from '@/config/api';
 import Link from 'next/link';
+import { updateCurrency } from '@/utils/api';
 import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 
 // Slot Machine page using real currency via /api/currency/me
@@ -912,16 +913,61 @@ export default function CasinoSlotPage() {
     const [lastLevelUpInfo, setLastLevelUpInfo] = useState({ level: 0, title: '' });
 
 
+    // ✨ NOUVEAU: État pour la modale des niveaux
+    const [isLevelModalOpen, setIsLevelModalOpen] = useState(false);
+    const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
+
+
+
     const SYMBOLS = isDevilMode ? DEVIL_SYMBOLS : NORMAL_SYMBOLS;
 
     useEffect(() => {
         return () => spinTimeouts.current.forEach((t) => clearTimeout(t));
     }, []);
 
+    // ✨ NOUVEAU: Charger les récompenses récupérées depuis le localStorage
+    useEffect(() => {
+        if (session?.user?.id) {
+            const savedRewards = localStorage.getItem(`casino_claimed_rewards_${session.user.id}`);
+            if (savedRewards) {
+                setClaimedRewards(JSON.parse(savedRewards));
+            }
+        }
+    }, [session?.user?.id]);
+
+    // ✨ NOUVEAU: Sauvegarder les récompenses récupérées
+    const saveClaimedRewards = (newClaimed: number[]) => {
+        if (session?.user?.id) {
+            localStorage.setItem(`casino_claimed_rewards_${session.user.id}`, JSON.stringify(newClaimed));
+        }
+    };
+
     const setInitialReels = () => {
         const currentSymbols = isDevilMode ? DEVIL_SYMBOLS : NORMAL_SYMBOLS;
         setReels([randomReel(currentSymbols, 50), randomReel(currentSymbols, 50), randomReel(currentSymbols, 50)]);
     };
+
+    const fetchUserCurrency = useCallback(async () => {
+        if (!session?.user?.id) return;
+        try {
+            setLoadingBalance(true);
+            const res = await fetch('/api/currency/me');
+            if (res.ok) {
+                const data = await res.json();
+                if (typeof data.balance === 'number') {
+                    setBalance(data.balance);
+                    updateBalance(data.balance);
+                }
+                if (data.level) setPlayerLevel(data.level);
+                if (data.xp) setPlayerXp(data.xp);
+                if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
+            }
+        } catch (e) {
+            console.error('Erreur fetch balance', e);
+        } finally {
+            setLoadingBalance(false);
+        }
+    }, [session?.user?.id, updateBalance]);
 
     // Fonction pour charger le jackpot depuis l'API
     const loadJackpot = async () => {
@@ -1588,6 +1634,23 @@ export default function CasinoSlotPage() {
         });
     };
 
+    // ✨ NOUVEAU: Fonction pour réclamer une récompense de niveau
+    const handleClaimReward = async (level: number, amount: number) => {
+        if (!session?.user?.id || claimedRewards.includes(level)) return;
+
+        try {
+            await updateCurrency(session.user.id, amount, `Récompense Casino Niveau ${level}`);
+            const newClaimed = [...claimedRewards, level];
+            setClaimedRewards(newClaimed);
+            saveClaimedRewards(newClaimed);
+            await fetchUserCurrency(); // Mettre à jour le solde affiché
+            playSound('win');
+        } catch (error) {
+            console.error(`Erreur lors de la réclamation de la récompense pour le niveau ${level}:`, error);
+            alert("Impossible de réclamer la récompense. Veuillez réessayer.");
+        }
+    };
+
     const formatMoney = (n: number) => n.toLocaleString('fr-FR');
 
     const reelDisplay = (reel: Reel, index: number) => {
@@ -1844,6 +1907,13 @@ export default function CasinoSlotPage() {
                 )}
             </AnimatePresence>
 
+            {/* ✨ NOUVEAU: Modale des niveaux */}
+            <AnimatePresence>
+                {isLevelModalOpen && (
+                    <LevelModal onClose={() => setIsLevelModalOpen(false)} currentLevel={playerLevel} claimedRewards={claimedRewards} onClaim={handleClaimReward} />
+                )}
+            </AnimatePresence>
+
             {/* ✨ NOUVEAU: Effet de transition pour le Devil Mode */}
             <AnimatePresence>
                 {showDevilTransition && (
@@ -2074,93 +2144,31 @@ export default function CasinoSlotPage() {
                                 transition={{ duration: 1, repeat: Infinity }}
                             >
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Solde</p>
-                                <motion.p
-                                    className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent"
-                                    key={displayBalance}
-                                    initial={{ scale: 1.2, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
-                                >
+                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
                                     {formatMoney(displayBalance)} 💰
-                                </motion.p>
+                                </p>
 
                                 {/* ✨ NOUVEAU: Barre d'XP et Niveau */}
-                                <div className="mt-2">
+                                <motion.div
+                                    className="mt-2 cursor-pointer"
+                                    onClick={() => setIsLevelModalOpen(true)}
+                                    whileHover={{ scale: 1.05 }}
+                                    title="Voir les récompenses de niveau"
+                                >
                                     <div className="flex justify-between items-center text-xs mb-1">
-                                        <span className="font-bold text-purple-300">{`Niv. ${playerLevel} - ${getLevelTitle(playerLevel)}`}</span>
+                                        <span className={`font-bold ${isDevilMode ? 'text-red-300' : 'text-purple-300'}`}>{`Niv. ${playerLevel} - ${getLevelTitle(playerLevel)}`}</span>
                                         <span className="text-gray-400">{`${formatMoney(playerXp)} / ${formatMoney(xpForNextLevel)} XP`}</span>
                                     </div>
-                                    <div className="w-full bg-black/30 rounded-full h-2.5 border border-purple-500/30">
+                                    <div className={`w-full bg-black/30 rounded-full h-2.5 border ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'}`}>
                                         <motion.div
-                                            className="bg-gradient-to-r from-purple-500 to-fuchsia-500 h-full rounded-full"
+                                            className={`h-full rounded-full ${isDevilMode ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-purple-500 to-fuchsia-500'}`}
                                             initial={{ width: '0%' }}
                                             animate={{ width: `${(playerXp / xpForNextLevel) * 100}%` }}
                                             transition={{ duration: 1, ease: 'easeOut' }}
-                                        >
-                                        </motion.div>
+                                        />
                                     </div>
-                                </div>
-
-
+                                </motion.div>
                             </motion.div>
-                            
-                            {/* Sound Control with Volume Slider */}
-                            <div className="flex items-center gap-3 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm px-4 py-2 rounded-xl border border-purple-500/30 shadow-lg">
-                                {/* Mute/Unmute Button */}
-                                <motion.button
-                                    onClick={toggleSounds}
-                                    className={`p-2 rounded-lg transition-all duration-300 ${
-                                        isDevilMode
-                                            ? (soundsEnabled ? 'bg-red-500/20 hover:bg-red-500/30' : 'bg-gray-600/20 hover:bg-gray-600/30')
-                                            : (soundsEnabled 
-                                            ? 'bg-purple-500/20 hover:bg-purple-500/30' 
-                                            : 'bg-gray-600/20 hover:bg-gray-600/30')
-                                    }`}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    title={soundsEnabled ? "Désactiver les sons" : "Activer les sons"}
-                                >
-                                    {soundsEnabled ? (
-                                        <Volume2 size={20} className={isDevilMode ? 'text-red-400' : 'text-purple-400'} />
-                                    ) : (
-                                        <VolumeX size={20} className="text-gray-400" />
-                                    )}
-                                </motion.button>
-                                
-                                {/* Volume Slider */}
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={masterVolume}
-                                        onChange={(e) => changeVolume(Number(e.target.value))}
-                                        disabled={!soundsEnabled}
-                                        className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer
-                                            disabled:opacity-50 disabled:cursor-not-allowed
-                                            [&::-webkit-slider-thumb]:appearance-none
-                                            [&::-webkit-slider-thumb]:w-4
-                                            [&::-webkit-slider-thumb]:h-4
-                                            [&::-moz-range-thumb]:w-4
-                                            [&::-moz-range-thumb]:h-4
-                                            [&::-moz-range-thumb]:rounded-full
-                                            [&::-moz-range-thumb]:border-0
-                                            [&::-moz-range-thumb]:cursor-pointer
-                                            [&::-moz-range-thumb]:shadow-lg
-                                            [&::-moz-range-thumb]:shadow-purple-500/50"
-                                        style={{ // @ts-ignore
-                                            background: soundsEnabled 
-                                                ? `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${masterVolume}%, rgb(55, 65, 81) ${masterVolume}%, rgb(55, 65, 81) 100%)`
-                                                : 'rgb(55, 65, 81)',
-                                        }}
-                                    />
-                                    <span className={`text-xs font-medium min-w-[2rem] text-right ${
-                                        soundsEnabled ? (isDevilMode ? 'text-red-400' : 'text-purple-400') : 'text-gray-500'
-                                    }`}>
-                                        {masterVolume}%
-                                    </span>
-                                </div>
-                            </div>
                         </div>
                     </motion.div>
 
@@ -2503,6 +2511,54 @@ export default function CasinoSlotPage() {
                                 </AnimatePresence>
                             </div>
                         </motion.div>
+
+                        {/* ✨ NOUVEAU: Contrôle du volume déplacé ici */}
+                        <div className="flex items-center justify-center gap-3 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm px-4 py-2 rounded-xl border border-purple-500/30 shadow-lg mt-4">
+                            {/* Mute/Unmute Button */}
+                            <motion.button
+                                onClick={toggleSounds}
+                                className={`p-2 rounded-lg transition-all duration-300 ${
+                                    isDevilMode
+                                        ? (soundsEnabled ? 'bg-red-500/20 hover:bg-red-500/30' : 'bg-gray-600/20 hover:bg-gray-600/30')
+                                        : (soundsEnabled 
+                                        ? 'bg-purple-500/20 hover:bg-purple-500/30' 
+                                        : 'bg-gray-600/20 hover:bg-gray-600/30')
+                                }`}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                                title={soundsEnabled ? "Désactiver les sons" : "Activer les sons"}
+                            >
+                                {soundsEnabled ? (
+                                    <Volume2 size={20} className={isDevilMode ? 'text-red-400' : 'text-purple-400'} />
+                                ) : (
+                                    <VolumeX size={20} className="text-gray-400" />
+                                )}
+                            </motion.button>
+                            
+                            {/* Volume Slider */}
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={masterVolume}
+                                    onChange={(e) => changeVolume(Number(e.target.value))}
+                                    disabled={!soundsEnabled}
+                                    className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer
+                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                        [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                                        [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:shadow-purple-500/50"
+                                    style={{ // @ts-ignore
+                                        background: soundsEnabled 
+                                            ? `linear-gradient(to right, ${isDevilMode ? 'rgb(249, 115, 22)' : 'rgb(168, 85, 247)'} 0%, ${isDevilMode ? 'rgb(249, 115, 22)' : 'rgb(168, 85, 247)'} ${masterVolume}%, rgb(55, 65, 81) ${masterVolume}%, rgb(55, 65, 81) 100%)`
+                                            : 'rgb(55, 65, 81)',
+                                    }}
+                                />
+                                <span className={`text-xs font-medium min-w-[2rem] text-right ${soundsEnabled ? (isDevilMode ? 'text-red-400' : 'text-purple-400') : 'text-gray-500'}`}>
+                                    {masterVolume}%
+                                </span>
+                            </div>
+                        </div>
                     </motion.div>
 
                     {/* Statistics Section */}
@@ -2859,3 +2915,142 @@ export default function CasinoSlotPage() {
         </WithMaintenanceCheck>
     );
 }
+
+// ✨ NOUVEAU: Modale pour afficher la frise des niveaux et les récompenses
+const LEVEL_REWARDS: { [level: number]: number } = {
+    10: 10000,
+    15: 15000,
+    20: 20000,
+    25: 25000,
+    30: 30000,
+    35: 35000,
+    40: 40000,
+    45: 45000,
+    50: 50000,  
+    55: 55000,
+    60: 60000,
+    65: 65000,
+    70: 70000,
+    75: 75000,
+    80: 80000,
+    85: 85000,
+    90: 90000,
+    95: 95000,
+    100: 100000,
+    105: 105000,
+    110: 110000,
+    115: 115000,
+    120: 120000,
+    125: 125000,
+    130: 130000,
+    135: 135000,
+    140: 140000,
+};
+
+const LevelModal = ({ onClose, currentLevel, claimedRewards, onClaim }: { onClose: () => void; currentLevel: number; claimedRewards: number[]; onClaim: (level: number, amount: number) => void; }) => {
+    const levels = Object.keys(LEVEL_REWARDS).map(Number);
+
+    return (
+        <motion.div
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+        >
+            <motion.div
+                className="bg-gradient-to-br from-slate-900 to-black rounded-2xl p-8 border-2 border-purple-500/50 w-full max-w-4xl max-h-[90vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+            >
+                <h2 className="text-3xl font-black text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-fuchsia-400">
+                    Récompenses de Niveau
+                </h2>
+                <p className="text-center text-gray-400 mb-8">Montez de niveau en misant pour débloquer des récompenses exclusives !</p>
+
+                <div className="flex-1 overflow-visible custom-scrollbar pr-4 -mr-4">
+                    <div className="relative flex items-center justify-between h-full py-8">
+                        {/* Ligne de progression */}
+                        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-700/50 rounded-full" style={{ transform: 'translateY(-50%)' }}>
+                            <motion.div
+                                className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full"
+                                initial={{ width: '0%' }}
+                                animate={{ width: `${Math.min(100, (currentLevel / Math.max(...levels)) * 100)}%` }}
+                                transition={{ duration: 1, ease: 'easeOut' }}
+                            />
+                        </div>
+
+                        {/* Points de niveau */}
+                        {levels.map((level, i) => {
+                            const isUnlocked = currentLevel >= level;
+                            const isClaimed = claimedRewards.includes(level);
+                            const canClaim = isUnlocked && !isClaimed;
+
+                            return (
+                                <motion.div
+                                    key={level} // ✨ MODIFIÉ: Ajout de padding pour agrandir la zone de survol
+                                    className="relative flex flex-col items-center group pt-48 -mt-48"
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ delay: i * 0.1, type: 'spring', stiffness: 200 }}
+                                >
+                                    {/* Point sur la ligne */}
+                                    <motion.div
+                                        className={`w-8 h-8 rounded-full border-4 flex items-center justify-center font-bold transition-all duration-300 ${
+                                            isUnlocked ? 'bg-purple-600 border-purple-400 text-white' : 'bg-gray-800 border-gray-600 text-gray-500'
+                                        }`}
+                                        animate={currentLevel === level ? { scale: [1, 1.3, 1], boxShadow: '0 0 20px rgba(168, 85, 247, 0.8)' } : {}}
+                                        transition={currentLevel === level ? { duration: 1.5, repeat: Infinity } : {}}
+                                    >
+                                        {isClaimed ? '✓' : <Star size={16} />}
+                                    </motion.div>
+
+                                    {/* Label du niveau */}
+                                    <div className={`mt-3 text-sm font-bold ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>
+                                        Niv. {level}
+                                    </div>
+
+                                    {/* Tooltip/Popup de récompense */}
+                                    <div className="absolute top-0 w-48 p-3 bg-slate-800 rounded-lg border border-slate-700 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-20">
+                                        <p className="text-lg font-bold text-yellow-400 mb-1">
+                                            +{LEVEL_REWARDS[level].toLocaleString()} 💰
+                                        </p>
+                                        <p className="text-xs text-gray-400">Récompense du niveau {level}</p>
+                                        {canClaim && (
+                                            <motion.button
+                                                onClick={() => onClaim(level, LEVEL_REWARDS[level])}
+                                                className="mt-3 w-full px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-md hover:bg-green-500 transition-colors"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                Récupérer
+                                            </motion.button>
+                                        )}
+                                        {isClaimed && (
+                                            <div className="mt-3 text-xs text-green-400 font-semibold">Récupéré</div>
+                                        )}
+                                        {!isUnlocked && (
+                                            <div className="mt-3 text-xs text-gray-500 font-semibold">Verrouillé</div>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="mt-auto pt-6 text-center">
+                    <motion.button
+                        onClick={onClose}
+                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
+                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    >
+                        Fermer
+                    </motion.button>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};

@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
+const fetch = require('node-fetch'); // Assurez-vous que node-fetch est installé
+
+// URL de l'API de monnaie de votre bot
+const CURRENCY_API_URL = 'http://localhost:20007/api/currency';
 
 const STATS_FILE = path.join(__dirname, '../casino_stats.json');
 
@@ -18,6 +22,8 @@ async function readStatsData() {
             ...p,
             level: p.level || 1,
             xp: p.xp || 0,
+            // ✨ NOUVEAU: Garder une trace des récompenses réclamées
+            claimedRewards: p.claimedRewards || [],
         }));
         return stats;
     } catch (error) {
@@ -117,6 +123,8 @@ router.post('/xp', async (req, res) => {
                 jackpotCount: 0,
                 level: 1,
                 xp: 0,
+                // ✨ NOUVEAU
+                claimedRewards: [],
                 lastWinDate: new Date().toISOString()
             };
             statsData.players.push(player);
@@ -153,6 +161,73 @@ router.post('/xp', async (req, res) => {
     }
 });
 
+// ✨ NOUVEAU: Route pour réclamer les récompenses de niveau
+router.post('/claim-reward', async (req, res) => {
+    try {
+        const { username, level } = req.body;
+
+        if (!username || typeof level !== 'number' || level <= 1) {
+            return res.status(400).json({ error: 'Données invalides pour la réclamation.' });
+        }
+
+        const statsData = await readStatsData();
+        const player = statsData.players.find(p => p.username === username);
+
+        if (!player) {
+            return res.status(404).json({ error: 'Joueur non trouvé.' });
+        }
+
+        // Vérifier si le joueur a le niveau requis
+        if (player.level < level) {
+            return res.status(403).json({ error: 'Niveau insuffisant pour réclamer cette récompense.' });
+        }
+
+        // Vérifier si la récompense a déjà été réclamée
+        if (player.claimedRewards.includes(level)) {
+            return res.status(409).json({ error: 'Cette récompense a déjà été réclamée.' });
+        }
+
+        // Définir les récompenses ici
+        const rewards = {
+            2: { type: 'currency', amount: 500 },
+            3: { type: 'currency', amount: 1000 },
+            4: { type: 'currency', amount: 1500 },
+            5: { type: 'currency', amount: 3000 }, // + Free spins (à gérer côté client/bot)
+            10: { type: 'currency', amount: 5000 },
+            15: { type: 'currency', amount: 10000 },
+            20: { type: 'currency', amount: 15000 },
+            25: { type: 'currency', amount: 25000 },
+        };
+
+        const reward = rewards[level];
+
+        if (!reward) {
+            return res.status(404).json({ error: 'Aucune récompense pour ce niveau.' });
+        }
+
+        // Donner la récompense (ici, de la monnaie)
+        if (reward.type === 'currency') {
+            // Il faut l'ID discord de l'utilisateur pour créditer la monnaie
+            // Pour l'instant, on simule. Il faudra une table de correspondance username -> userId
+            // const userId = getUserIdFromUsername(username);
+            // await fetch(`${CURRENCY_API_URL}/${userId}`, { method: 'POST', ... });
+            console.log(`[REWARD] ${username} a réclamé ${reward.amount} pièces pour le niveau ${level}. (Simulation)`);
+        }
+
+        // Marquer comme réclamée
+        player.claimedRewards.push(level);
+        await writeStatsData(statsData);
+
+        res.json({
+            success: true,
+            message: `Récompense pour le niveau ${level} réclamée avec succès !`,
+        });
+
+    } catch (error) {
+        console.error('Erreur POST /claim-reward:', error);
+        res.status(500).json({ error: 'Erreur lors de la réclamation de la récompense.' });
+    }
+});
 
 // POST - Enregistrer un gain
 router.post('/stats', async (req, res) => {
@@ -203,6 +278,7 @@ router.post('/stats', async (req, res) => {
                 totalWins: amount,
                 jackpotCount: isJackpot ? 1 : 0,
                 lastWinDate: new Date().toISOString()
+                // claimedRewards est déjà initialisé par readStatsData
             };
             
             statsData.players.push(newPlayer);
