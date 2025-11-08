@@ -67,7 +67,7 @@ export async function POST(request: NextRequest, context: any) {
         return NextResponse.json({
             success: true,
             message: 'Solde mis à jour avec succès',
-            newBalance,
+            balance: newBalance, // Correction: utiliser 'balance' pour être cohérent avec la réponse du GET
         });
 
     } catch (error) {
