@@ -87,12 +87,21 @@ const SellSuccessToast = ({ message, onComplete }: { message: string; onComplete
 };
 
 // --- NOUVEAU: MODALE DE VENTE DE CARTE ---
-const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCard, onSell: (cardId: string) => void, onAuction: () => void, onClose: () => void }) => {
+const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCard, onSell: (cardId: string, quantity: number) => void, onAuction: () => void, onClose: () => void }) => {
+    const [quantity, setQuantity] = useState(1);
+
     if (!card?.cardInfo) return null;
 
     const sellPrices: { [key: string]: number } = { 'Commun': 200, 'Rare': 400, 'Épique': 900, 'Légendaire': 2600, 'Mythique': 4500 };
     const sellPrice = sellPrices[card.cardInfo.rarity] || 20;
+    const maxQuantity = card.count - 1;
 
+    const handleQuantityChange = (amount: number) => {
+        setQuantity(prev => {
+            const newQuantity = prev + amount;
+            return Math.max(1, Math.min(newQuantity, maxQuantity));
+        });
+    };
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -120,16 +129,39 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
                     </div>
                 </div>
 
+                <div className="my-6">
+                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-300 mb-2 text-center">Quantité à vendre (max: {maxQuantity})</label>
+                    <div className="flex items-center justify-center gap-4">
+                        <button onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1} className="px-4 py-2 bg-white/10 rounded-md disabled:opacity-50">-</button>
+                        <input 
+                            type="number"
+                            id="quantity"
+                            value={quantity}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (isNaN(val)) {
+                                    setQuantity(1);
+                                } else {
+                                    setQuantity(Math.max(1, Math.min(val, maxQuantity)));
+                                }
+                            }}
+                            className="w-20 text-center bg-white/5 border border-white/20 rounded-lg py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                        <button onClick={() => handleQuantityChange(1)} disabled={quantity >= maxQuantity} className="px-4 py-2 bg-white/10 rounded-md disabled:opacity-50">+</button>
+                    </div>
+                </div>
+
                 <div className="space-y-4">
                     {/* Option 1: Vente à la banque */}
                     <button
-                        onClick={() => onSell(card.cardId)}
+                        onClick={() => onSell(card.cardId, quantity)}
+                        disabled={quantity <= 0 || quantity > maxQuantity}
                         className="w-full text-left p-4 bg-green-600/20 border border-green-500 rounded-lg flex items-center gap-4 hover:bg-green-600/40 transition-all group"
                     >
                         <Coins className="w-8 h-8 text-green-400 flex-shrink-0 transition-transform group-hover:scale-110" />
                         <div>
                             <p className="font-bold text-white">Vente Instantanée</p>
-                            <p className="text-sm text-green-300/80">Recevez immédiatement <span className="font-bold">{sellPrice}</span> pièces.</p>
+                            <p className="text-sm text-green-300/80">Recevez immédiatement <span className="font-bold">{sellPrice * quantity}</span> pièces.</p>
                         </div>
                     </button>
 
@@ -380,14 +412,14 @@ export default function CollectionPage() {
     };
 
     // ✨ NOUVEAU: Logique de vente
-    const handleSellCard = async (cardId: string) => {
+    const handleSellCard = async (cardId: string, quantity: number) => {
         if (!session?.user?.id) return;
 
         toast.promise(
             fetch(API_ENDPOINTS.gachaSellCard, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: session.user.id, cardId }),
+                body: JSON.stringify({ userId: session.user.id, cardId, quantity }),
             }).then(async (res) => {
                 if (!res.ok) {
                     const errorData = await res.json();
