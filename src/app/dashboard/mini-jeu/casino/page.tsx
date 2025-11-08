@@ -55,7 +55,7 @@ const useCasinoSounds = () => {
 
     // Initialiser les sons au premier appel (contourne la restriction autoplay)
     const initializeSounds = () => {
-        if (!soundsInitialized && soundsEnabled && bgMusicRef.current) {
+        if (!soundsInitialized && soundsEnabled && bgMusicRef.current) { // @ts-ignore
             bgMusicRef.current.play().catch(err => console.log('Erreur lecture musique de fond:', err));
             setSoundsInitialized(true);
         }
@@ -70,7 +70,7 @@ const useCasinoSounds = () => {
         const sound = soundsRef.current[soundName];
         if (sound) {
             sound.currentTime = 0;
-            sound.play().catch(err => console.log('Erreur lecture son:', err));
+            sound.play().catch((err: any) => console.log('Erreur lecture son:', err));
         }
     };
 
@@ -80,7 +80,7 @@ const useCasinoSounds = () => {
             
             // Gérer la musique de fond
             if (bgMusicRef.current) {
-                if (newState) {
+                if (newState) { // @ts-ignore
                     bgMusicRef.current.play().catch(err => console.log('Erreur lecture musique de fond:', err));
                     setSoundsInitialized(true);
                 } else {
@@ -103,7 +103,7 @@ const useCasinoSounds = () => {
         }
         
         // Mettre à jour le volume des effets sonores (25% du volume principal)
-        Object.values(soundsRef.current).forEach(audio => {
+        Object.values(soundsRef.current).forEach((audio: any) => {
             audio.volume = 0.25 * volumeRatio;
         });
     };
@@ -235,7 +235,7 @@ const LaughingEmojis = () => {
     
     // Mémoriser les propriétés aléatoires de chaque emoji pour éviter qu'ils se téléportent
     const emojiProperties = useMemo(
-        () => Array.from({ length: emojiCount }).map(() => ({
+        () => Array.from({ length: emojiCount }).map((_, i: number) => ({
             left: Math.random() * 100,
             rotation: Math.random() * 720 - 360,
             xOffset: (Math.random() - 0.5) * 150,
@@ -308,7 +308,7 @@ const CssFlameEffect = () => {
     // Un seul groupe de particules, généré une fois et réutilisé
     const particleGroup = useMemo(() => {
         return Array.from({ length: particleCount }).map((_, i) => (
-            <FlameParticle key={i} width={width} height={height} />
+            <FlameParticle key={i} width={width as number} height={height as number} />
         ));
     }, [width, height]);
 
@@ -833,7 +833,7 @@ export default function CasinoSlotPage() {
 
     // Polling automatique du jackpot toutes les 10 secondes
     useEffect(() => {
-        const interval = setInterval(() => {
+        const interval = setInterval((t: any) => {
             loadJackpot();
         }, 10000); // 10 secondes
 
@@ -865,65 +865,79 @@ export default function CasinoSlotPage() {
         }
     }, [biggestLoss]);
 
-    const computeResult = (finalSymbols: string[], currentBet: number) => {
+    // Add a typed result state so setResult exists and isPityWin is allowed
+    type SpinResult = {
+        win: boolean;
+        amount: number;
+        isJackpot: boolean;
+        lineType: 'three' | 'two-left' | 'two-middle' | 'two-right' | null;
+        isPityWin?: boolean; // optional flag for pity refunds
+    };
+
+    // Store the latest spin result (used by game logic)
+    const [result, setResult] = useState<SpinResult | null>(null);
+    
+    const computeResult = (finalSymbols: string[], currentBet: number): SpinResult => {
         const [s1, s2, s3] = finalSymbols;
-        
-        // DEBUG: Afficher les symboles finaux utilisés pour le calcul
+
+        // Small debug
         console.log('=== CALCUL DU RÉSULTAT ===');
         console.log('Symboles finaux:', finalSymbols);
         console.log(`s1=${s1}, s2=${s2}, s3=${s3}`);
-        
-        // 3 symboles identiques = GROS GAIN
+
+        // Safe bet reduction factor: scale based on currentBet to avoid referencing an undefined variable.
+        // This ensures larger bets slightly reduce multipliers while small bets keep reasonable returns.
+        const betReductionFactor = (() => {
+            if (currentBet <= 0) return 1;
+            if (currentBet >= 100000) return 0.85;
+            if (currentBet >= 10000) return 0.9;
+            if (currentBet >= 1000) return 0.95;
+            return 1;
+        })();
+
+        // 3 identical symbols = big win
         let finalAmount = 0;
         if (s1 === s2 && s2 === s3) {
             const multiplier = PAYOUTS[s1] || 1;
-            
-            // JACKPOT avec 7️⃣
+
+            // JACKPOT with 7️⃣
             if (s1 === '7️⃣') {
-                return { win: true, amount: Math.max(jackpot, currentBet * multiplier), isJackpot: true, lineType: 'three' as const };
+                return { win: true, amount: Math.max(jackpot, currentBet * multiplier), isJackpot: true, lineType: 'three' };
             }
-            
-            // Gain normal avec 3 symboles identiques
-            // On garantit au minimum le double de la mise
+
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
             finalAmount = Math.max(currentBet * 2, baseAmount);
 
-            // --- SÉCURITÉ ANTI GROS GAINS ---
-            // On plafonne le gain maximum pour une victoire normale (non-jackpot)
-            // Par exemple, à 50 fois la mise. Ajustez cette valeur si besoin.
-            const maxWinMultiplier = 30;  
+            const maxWinMultiplier = 30;
             finalAmount = Math.min(finalAmount, currentBet * maxWinMultiplier);
 
-            return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' as const };
+            return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' };
         }
 
-        // 2 symboles identiques = GAIN GÉNÉREUX (minimum x2)
+        // 2 identical symbols = smaller win
         if (s1 === s2 || s2 === s3 || s1 === s3) {
             const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
-
-            // En Devil Mode, le diviseur est plus petit pour des gains plus élevés
             const multiplier = PAYOUTS[sym] || 2;
-            const divisor = isDevilMode ? 2 : 4;
-            const adjustedMultiplier = multiplier / divisor;
-            
-            // Déterminer le type de ligne selon les symboles qui matchent
+            const divisor = isDevilMode ? 1.5 : 2.5;
+
+            // Use the local betReductionFactor (guarantees variable exists)
+            const adjustedMultiplier = Math.max(1.5, (multiplier * betReductionFactor) / divisor);
+
             let lineType: 'two-left' | 'two-middle' | 'two-right' = 'two-left';
             if (s1 === s2) lineType = 'two-left';
             else if (s2 === s3) lineType = 'two-middle';
-            else if (s1 === s3) lineType = 'two-right'; // Note: this case is less common in traditional slots
-            
-            // Garantir au minimum 120% de la mise
-            const baseAmount = Math.floor(currentBet * adjustedMultiplier * (1 - HOUSE_EDGE));
-            finalAmount = Math.max(Math.floor(currentBet * 1.2), baseAmount);
+            else if (s1 === s3) lineType = 'two-right';
 
-            // Plafonnement généreux pour les gains de 2 symboles : x10 au lieu de x5
-            const maxSmallWinMultiplier = 8; 
+            const baseAmount = Math.floor(currentBet * adjustedMultiplier * (1 - (HOUSE_EDGE + 0.02)));
+            finalAmount = Math.max(Math.floor(currentBet * 1.5), baseAmount);
+
+            const maxSmallWinMultiplier = 8;
             finalAmount = Math.min(finalAmount, currentBet * maxSmallWinMultiplier);
 
             return { win: true, amount: finalAmount, isJackpot: false, lineType };
         }
 
-        // Aucun symbole identique = PERTE
+        // No match = loss
         return { win: false, amount: 0, isJackpot: false, lineType: null };
     };
 
@@ -1081,7 +1095,7 @@ export default function CasinoSlotPage() {
 
 
         const newReels = [makeWeightedReel(), makeWeightedReel(), makeWeightedReel()];
-        setReels(newReels);
+        setReels(newReels as Reel[]);
 
         spinTimeouts.current.forEach((t) => clearTimeout(t));
         spinTimeouts.current = [];
@@ -1116,28 +1130,50 @@ export default function CasinoSlotPage() {
                     // Attendre 600ms pour que l'animation d'arrêt du dernier slot soit complète (transition: 0.5s)
                     setTimeout(async () => {
                         // 🔒 Utiliser la mise verrouillée (lockedBet) pour éviter la triche
-                        const result = computeResult(finalSymbols as string[], lockedBet);
-                        if (result.win) {
+                        let spinResult = computeResult(finalSymbols as string[], lockedBet);
+                        setResult(spinResult); // Store result in state
+
+                        // 🛡️ SYSTÈME ANTI-RUINE (Pitié)
+                        // Si le joueur perd, qu'il a peu de pièces et qu'il n'a pas fait un "all-in"
+                        if (!spinResult.win) {
+                            const postSpinBalance = balance - lockedBet;
+                            const isLowBalance = postSpinBalance < lockedBet * 5; // Le solde restant est inférieur à 5x la mise
+                            const isReasonableBet = lockedBet < balance * 0.3; // La mise est inférieure à 30% du solde
+
+                            if (isLowBalance && isReasonableBet) {
+                                console.log('[ANTI-RUINE] Pitié accordée ! Le joueur récupère sa mise.');
+                                spinResult = {
+                                    win: true,
+                                    amount: lockedBet, // Rembourse la mise
+                                    isJackpot: false,
+                                    lineType: null, // Pas de ligne gagnante affichée
+                                    isPityWin: true // 🚩 Marqueur pour ne pas compter dans le win streak
+                                };
+                            }
+                            setResult(spinResult); // Update state with pity win
+                        }
+
+                        if (spinResult.win) {
                             // Show winning line
-                            if (result.lineType) {
-                                setWinningLineType(result.lineType);
+                            if (spinResult.lineType) {
+                                setWinningLineType(spinResult.lineType);
                                 setTimeout(() => setWinningLineType(null), 4000); // Hide after 4 seconds
                             }
                             
-                            if (result.amount > biggestWin) {
-                                setBiggestWin(result.amount);
+                            if (spinResult.amount > biggestWin) {
+                                setBiggestWin(spinResult.amount);
                             }
                             
                             // Enregistrer le gain dans l'API
                             const username = session?.user?.name || session?.user?.email?.split('@')[0] || 'Joueur';
-                            console.log('[CASINO] Enregistrement gain:', username, result.amount, 'Jackpot:', result.isJackpot);
-                            recordWin(username, result.amount, result.isJackpot);
+                            console.log('[CASINO] Enregistrement gain:', username, spinResult.amount, 'Jackpot:', spinResult.isJackpot);
+                            recordWin(username, spinResult.amount, spinResult.isJackpot);
                             
-                            if (result.isJackpot) {
+                            if (spinResult.isJackpot) {
                                 // Jouer le son de jackpot
                                 playSound('jackpot');
                                 
-                                setMessage(`🎉 JACKPOT! +${result.amount} Pièces 🎉`);
+                                setMessage(`🎉 JACKPOT! +${spinResult.amount} Pièces 🎉`);
                                 setShowConfetti(true);
                                 setTimeout(() => setShowConfetti(false), 8000);
                                 
@@ -1148,7 +1184,7 @@ export default function CasinoSlotPage() {
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ 
                                             winner: 'Player', // Vous pouvez ajouter le nom du joueur ici
-                                            winAmount: result.amount 
+                                            winAmount: spinResult.amount 
                                         })
                                     });
                                     if (resetRes.ok) {
@@ -1162,10 +1198,10 @@ export default function CasinoSlotPage() {
                                     setJackpot(1000); // Fallback
                                 }
                                 
-                                triggerWinAnimation(result.amount);
+                                triggerWinAnimation(spinResult.amount);
                             } else {
                                 // Jouer le son approprié selon le type de victoire
-                                if (result.lineType === 'three') {
+                                if (spinResult.lineType === 'three') {
                                     // 3 symboles alignés (mais pas jackpot)
                                     playSound('sequence3');
                                 } else {
@@ -1173,19 +1209,23 @@ export default function CasinoSlotPage() {
                                     playSound('win');
                                 }
                                 
-                                setMessage(`✨ Gagné +${result.amount} Pièces ✨`);
+                                if (spinResult.isPityWin) {
+                                    setMessage(`Mise remboursée : +${formatMoney(spinResult.amount)}`);
+                                } else {
+                                    setMessage(`✨ Gagné +${formatMoney(spinResult.amount)} Pièces ✨`);
+                                }
                                 // Le jackpot ne descend JAMAIS sur un gain normal
-                                triggerWinAnimation(result.amount);
+                                triggerWinAnimation(spinResult.amount);
                             }
 
-                            // 🎰 FREE SPIN: Incrémenter le win streak (sauf si on est déjà en freespin)
-                            if (!isUsingFreeSpin) {
+                            // 🎰 FREE SPIN: Incrémenter le win streak (sauf si on est déjà en freespin ET que ce n'est pas une victoire de pitié)
+                            if (!isUsingFreeSpin && !spinResult.isPityWin) {
                                 setWinStreak(prev => {
                                     const newStreak = prev + 1;
                                     
                                     // Si on atteint 3 victoires consécutives, débloquer 3 free spins
                                     if (newStreak === 3) {
-                                        // 🔒 ANTI-TRICHE: Calculer la mise moyenne des 3 derniers tours
+                                        // 🔒 ANTI-TRICHE: Calculer la mise moyenne des 3 derniers tours pour éviter que les joueurs misent petit puis augmentent au dernier moment
                                         // pour éviter que les joueurs misent petit puis augmentent au dernier moment
                                         const avgBet = lastThreeBets.length > 0 
                                             ? Math.floor(lastThreeBets.reduce((sum, b) => sum + b, 0) / lastThreeBets.length)
@@ -1213,17 +1253,17 @@ export default function CasinoSlotPage() {
                                 const post = await fetch('/api/currency/me', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ amount: result.amount })
+                                    body: JSON.stringify({ amount: spinResult.amount })
                                 });
                                 if (post.ok) {
                                     const j = await post.json();
                                     if (typeof j.balance === 'number') setBalance(j.balance);
                                 } else {
-                                    setBalance((b) => b + result.amount);
+                                    setBalance((b) => b + spinResult.amount);
                                 }
                             } catch (e) {
                                 console.error('Erreur crédit gain:', e);
-                                setBalance((b) => b + result.amount);
+                                setBalance((b) => b + spinResult.amount);
                             }
                         } else {
                             // Jouer le son de défaite
@@ -1780,18 +1820,9 @@ export default function CasinoSlotPage() {
                                             [&::-webkit-slider-thumb]:appearance-none
                                             [&::-webkit-slider-thumb]:w-4
                                             [&::-webkit-slider-thumb]:h-4
-                                            ${isDevilMode 
-                                                ? '[&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-red-400 [&::-webkit-slider-thumb]:to-red-600 [&::-webkit-slider-thumb]:shadow-red-500/50' 
-                                                : '[&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-purple-400 [&::-webkit-slider-thumb]:to-purple-600 [&::-webkit-slider-thumb]:shadow-purple-500/50'
-                                            }
-                                            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:hover:scale-110
                                             [&::-moz-range-thumb]:w-4
                                             [&::-moz-range-thumb]:h-4
                                             [&::-moz-range-thumb]:rounded-full
-                                            ${isDevilMode
-                                                ? '[&::-moz-range-thumb]:bg-gradient-to-br [&::-moz-range-thumb]:from-red-400 [&::-moz-range-thumb]:to-red-600'
-                                                : '[&::-moz-range-thumb]:bg-gradient-to-br [&::-moz-range-thumb]:from-purple-400 [&::-moz-range-thumb]:to-purple-600'
-                                            }
                                             [&::-moz-range-thumb]:border-0
                                             [&::-moz-range-thumb]:cursor-pointer
                                             [&::-moz-range-thumb]:shadow-lg
@@ -2186,13 +2217,10 @@ export default function CasinoSlotPage() {
                                 <motion.div
                                     className={`w-12 h-12 rounded-xl ${isDevilMode ? 'bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/50' : 'bg-gradient-to-br from-yellow-500 to-orange-500 shadow-yellow-500/50'} flex items-center justify-center shadow-lg transition-all duration-500`}
                                     animate={{
-                                        rotate: [0, 360],
+                                        rotate: [0, 10, -10, 0],
                                         scale: [1, 1.1, 1],
                                     }}
-                                    transition={{
-                                        rotate: { duration: 3, repeat: Infinity, ease: "linear" },
-                                        scale: { duration: 1, repeat: Infinity },
-                                    }}
+                                    transition={{ duration: 2, repeat: Infinity }}
                                 >
                                     <Crown size={24} className="text-white" />
                                 </motion.div>
@@ -2329,7 +2357,7 @@ export default function CasinoSlotPage() {
                     >
                         <div className="flex items-center gap-3 mb-4">
                             <motion.div
-                                className={`w-10 h-10 rounded-xl ${isDevilMode ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/50' : 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/50'} flex items-center justify-center shadow-lg transition-all duration-500`}
+                                className={`w-10 h-10 rounded-xl ${isDevilMode ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/50' : 'bg-gradient-to-br from-yellow-500 to-yellow-600 shadow-yellow-500/50'} flex items-center justify-center shadow-lg transition-all duration-500`}
                                 animate={{
                                     scale: [1, 1.1, 1],
                                 }}
