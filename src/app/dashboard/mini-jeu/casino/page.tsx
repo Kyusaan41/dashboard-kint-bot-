@@ -1212,21 +1212,27 @@ export default function CasinoSlotPage() {
 
         // 2 identical symbols = smaller win
         if (s1 === s2 || s2 === s3 || s1 === s3) {
+            // 1. Identifier le symbole gagnant
             const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
+            // 2. Obtenir son multiplicateur de base (ex: 🍒 -> 5)
             const multiplier = PAYOUTS[sym] || 2;
+            // 3. Appliquer un diviseur selon le mode de jeu
             const divisor = isDevilMode ? 1.5 : 2.5;
 
             // Use the local betReductionFactor (guarantees variable exists)
+            // Calculer le multiplicateur ajusté
             const adjustedMultiplier = Math.max(1.5, (multiplier * betReductionFactor) / divisor);
 
             let lineType: 'two-left' | 'two-middle' | 'two-right' = 'two-left';
             if (s1 === s2) lineType = 'two-left';
             else if (s2 === s3) lineType = 'two-middle';
             else if (s1 === s3) lineType = 'two-right';
-
+            // 4. Calculer le montant de base avec la commission de la maison (5%)
             const baseAmount = Math.floor(currentBet * adjustedMultiplier * (1 - (HOUSE_EDGE + 0.02)));
+            // 5. Appliquer le gain minimum garanti (1.5x la mise)
             finalAmount = Math.max(Math.floor(currentBet * 1.5), baseAmount);
 
+            // 6. Appliquer le plafond (8x la mise)
             const maxSmallWinMultiplier = 8;
             finalAmount = Math.min(finalAmount, currentBet * maxSmallWinMultiplier);
 
