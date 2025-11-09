@@ -1227,9 +1227,11 @@ export default function CasinoSlotPage() {
             if (s1 === s2) lineType = 'two-left';
             else if (s2 === s3) lineType = 'two-middle';
             else if (s1 === s3) lineType = 'two-right';
-            // 4. Calculer le montant de base avec la commission de la maison (5%)
+            // 4. Calculer le montant de base basé sur le multiplicateur du symbole
             const baseAmount = Math.floor(currentBet * adjustedMultiplier * (1 - (HOUSE_EDGE + 0.02)));
-            // 5. Appliquer le gain minimum garanti (1.5x la mise)
+            
+            // 5. Le gain final est le PLUS ÉLEVÉ entre le gain calculé et le gain minimum garanti (1.5x la mise).
+            // C'est pourquoi les symboles faibles (🍋, 🍓) donnent le même gain : ils se heurtent à ce plancher.
             finalAmount = Math.max(Math.floor(currentBet * 1.5), baseAmount);
 
             // 6. Appliquer le plafond (8x la mise)
