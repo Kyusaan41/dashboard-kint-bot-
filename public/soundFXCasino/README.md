@@ -18,6 +18,16 @@ Placez vos fichiers audio dans ce dossier avec les noms **EXACTS** suivants :
 
 
 
+3. **`level_up_sound.mp3`** - Son joué lors d'une montée de niveau
+   - Moment: Quand le joueur gagne un niveau
+   - Durée recommandée: 2-4 secondes
+
+4. **`special_event_sound.mp3`** - Son joué lors d'un événement aléatoire
+   - Moment: Quand un multiplicateur de gain apparaît
+   - Durée recommandée: 1-2 secondes
+
+
+
 
 
 ## 🔊 Paramètres de volume
@@ -40,6 +50,8 @@ Placez vos fichiers audio dans ce dossier avec les noms **EXACTS** suivants :
 - **sequence3_sound**: Fanfare courte, plus intense que win_sound
 - **jackpot_sound**: Fanfare complète, célébration maximale
 - **lose_sound**: Son descendant, "aww" ou triste
+- **level_up_sound**: Son magique, ascendant et gratifiant
+- **special_event_sound**: Son de notification brillant et surprenant
 
 ## 🔧 Contrôle des sons
 
@@ -66,6 +78,8 @@ public/
     ├── sequence3_sound.mp3
     ├── jackpot_sound.mp3
     ├── lose_sound.mp3
+    ├── level_up_sound.mp3
+    ├── special_event_sound.mp3
     └── README.md (ce fichier)
 ```
 

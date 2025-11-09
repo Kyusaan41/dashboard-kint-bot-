@@ -1116,8 +1116,8 @@ export default function CasinoSlotPage() {
                 if (data.leveledUp) {
                     console.log(`[LEVEL UP] Niveau ${data.level} atteint !`);
                     setLastLevelUpInfo({ level: data.level, title: getLevelTitle(data.level) });
-                    setShowLevelUpAnimation(true);
-                    playSound('jackpot'); // Réutiliser le son du jackpot pour le level up
+                    setShowLevelUpAnimation(true); // @ts-ignore
+                    playSound('levelUp'); // ✨ NOUVEAU: Jouer le son de montée de niveau
                     setTimeout(() => setShowLevelUpAnimation(false), 5000);
                 }
             }
@@ -1266,6 +1266,15 @@ export default function CasinoSlotPage() {
         // que l'utilisateur ne la change pendant le spinning
         let lockedBet = bet;
 
+    // ✨ NOUVEAU: Événement aléatoire (1 chance sur 50)
+    let eventMultiplier = 1;
+    if (Math.random() < 0.02) { // 2% de chance
+        eventMultiplier = Math.random() < 0.7 ? 2 : 3; // 70% de chance pour x2, 30% pour x3
+        setMessage(`✨ ÉVÉNEMENT: GAINS x${eventMultiplier} POUR CE TOUR ! ✨`);
+        // ✨ NOUVEAU: Jouer un son spécial pour l'événement
+        playSound('specialEvent');
+    }
+
         setReelsStopped([false, false, false]);
         setWinningLineType(null); // Reset winning line
 
@@ -1296,7 +1305,7 @@ export default function CasinoSlotPage() {
                 
                 // ✨ NOUVEAU: Ajouter de l'XP pour la mise (uniquement pour les spins payants)
                 if (!isUsingFreeSpin) {
-                    addXp(lockedBet);
+                    addXp(lockedBet); // @ts-ignore
                 }
                 // Garder seulement les 3 dernières mises
                 return updated.slice(-3);
@@ -1444,7 +1453,7 @@ export default function CasinoSlotPage() {
                     // Attendre 600ms pour que l'animation d'arrêt du dernier slot soit complète (transition: 0.5s)
                     setTimeout(async () => {
                         // 🔒 Utiliser la mise verrouillée (lockedBet) pour éviter la triche
-                        let spinResult = computeResult(finalSymbols as string[], lockedBet);
+                    let spinResult = computeResult(finalSymbols as string[], lockedBet); // @ts-ignore
                         setResult(spinResult); // Store result in state
 
                         // ✨ NOUVEAU: Gérer la récompense de consolation du "Quasi-Jackpot"
@@ -1487,6 +1496,11 @@ export default function CasinoSlotPage() {
                             }
                             setResult(spinResult); // Update state with pity win
                         }
+
+                    // Appliquer le multiplicateur d'événement
+                    if (spinResult.win && eventMultiplier > 1) {
+                        spinResult.amount *= eventMultiplier;
+                    }
 
                         if (spinResult.win) {
                             // Show winning line
@@ -2967,6 +2981,42 @@ const LEVEL_REWARDS: { [level: number]: number } = {
     130: 130000,
     135: 135000,
     140: 140000,
+    150: 150000,
+    160: 160000,
+    170: 170000,
+    180: 180000,
+    190: 190000,
+    200: 200000,
+    210: 210000,
+    220: 220000,
+    230: 230000,
+    240: 240000,
+    250: 250000,
+    260: 260000,
+    270: 270000,    
+    280: 280000,
+    290: 290000,
+    300: 300000,        
+    310: 310000,    
+    320: 320000,
+    330: 330000,
+    340: 340000,
+    350: 350000,
+    360: 360000,
+    370: 370000,
+    380: 380000,
+    390: 390000,
+    400: 400000,
+    410: 410000,
+    420: 420000,
+    430: 430000,
+    440: 440000,
+    450: 450000,
+    460: 460000,
+    470: 470000,
+    480: 480000,
+    490: 490000,
+    500: 500000,
 };
 
 const LevelModal = ({ onClose, currentLevel, claimedRewards, onClaim }: { onClose: () => void; currentLevel: number; claimedRewards: number[]; onClaim: (level: number, amount: number) => void; }) => {
