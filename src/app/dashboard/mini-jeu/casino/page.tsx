@@ -1417,6 +1417,13 @@ export default function CasinoSlotPage() {
                 const final = reel[reel.length - 13];
                 finalSymbols[idx] = final;
                 
+                // ✨ NOUVEAU: Détection du "Quasi-Jackpot"
+                if (idx === 1 && finalSymbols[0] === '7️⃣' && finalSymbols[1] === '7️⃣') {
+                    console.log('[NEAR MISS] Détection de deux 7 ! Animation spéciale pour la 3ème roue.');
+                    // Ici, vous déclencheriez un état pour une animation de roue plus lente/tremblante
+                    // et un son de tension.
+                }
+
                 // DEBUG: Afficher les 15 derniers symboles et celui qui est considéré comme gagnant
                 console.log(`Roue ${idx}: 15 derniers symboles =`, reel.slice(-15));
                 console.log(`Roue ${idx}: Symbole gagnant (index -13) =`, final);
@@ -1439,6 +1446,21 @@ export default function CasinoSlotPage() {
                         // 🔒 Utiliser la mise verrouillée (lockedBet) pour éviter la triche
                         let spinResult = computeResult(finalSymbols as string[], lockedBet);
                         setResult(spinResult); // Store result in state
+
+                        // ✨ NOUVEAU: Gérer la récompense de consolation du "Quasi-Jackpot"
+                        if (!spinResult.win && finalSymbols[0] === '7️⃣' && finalSymbols[1] === '7️⃣' && finalSymbols[2] !== '7️⃣') {
+                            console.log('[NEAR MISS] Quasi-Jackpot ! Attribution d\'une récompense de consolation.');
+                            const consolationAmount = Math.floor(lockedBet * 0.5); // Rembourse 50%
+                            const consolationXp = 500;
+                            
+                            // On modifie le résultat pour en faire une victoire de consolation
+                            spinResult = { win: true, amount: consolationAmount, isJackpot: false, lineType: null, isPityWin: true };
+                            setResult(spinResult);
+
+                            addXp(consolationXp);
+                            setMessage(`QUASIMENT ! +${formatMoney(consolationAmount)} pièces & ${consolationXp} XP !`);
+                            // Jouer un son spécifique pour cet événement
+                        }
 
                         // ✨ NOUVEAU: Ajouter au début de l'historique des spins
                         setSpinHistory(prev => [
