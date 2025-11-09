@@ -192,7 +192,7 @@ const useAnimatedBalance = (initialBalance: number) => {
 };
 
 // Symboles de base et symboles "Devil Mode"
-const NORMAL_SYMBOLS = ['🍒', '🍇', '🍊', '🍋', '💎', '💰', '7️⃣', '🍀'];
+const NORMAL_SYMBOLS = ['🍒', '🍇', '🍓', '🍋', '💎', '💰', '7️⃣', '🍀'];
 const DEVIL_SYMBOLS = ['🔥', '🔱', '😈', '💀', '💎', '💰', '7️⃣', '🍀']; // 💎, 💰, 7️⃣, 🍀 restent
 const DEVIL_MODE_THRESHOLD = 100000; // Seuil pour activer le Devil Mode
 
@@ -210,7 +210,7 @@ const PAYOUTS: { [symbol: string]: number } = {
     '🍀': 6,     // Moyen
     '🍒': 5,     // Classique
     '🍇': 4,     // Modéré
-    '🍊': 3,     // Petit gain
+    '🍓': 3,     // Petit gain
     '🍋': 2      // Faible
 };
 
@@ -1359,7 +1359,7 @@ export default function CasinoSlotPage() {
                 const GLOBAL_LOSS_RATE = 0.70; // 1 - 0.80 = 20% de chances de victoire
 
                 // Symboles perdants (majoritaires)
-                const losingSymbols = ['🍋', '🍊', '🍇', '🍒'];
+                const losingSymbols = ['🍋', '🍓', '🍇', '🍒'];
 
                 // Symboles rentables (avec pondération)
                 const profitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
