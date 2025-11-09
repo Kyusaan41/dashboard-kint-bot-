@@ -2948,7 +2948,19 @@ const LEVEL_REWARDS: { [level: number]: number } = {
 };
 
 const LevelModal = ({ onClose, currentLevel, claimedRewards, onClaim }: { onClose: () => void; currentLevel: number; claimedRewards: number[]; onClaim: (level: number, amount: number) => void; }) => {
-    const levels = Object.keys(LEVEL_REWARDS).map(Number);
+    // ✨ NOUVEAU: Affichage progressif des niveaux
+    const levels = useMemo(() => {
+        const allLevels = Object.keys(LEVEL_REWARDS).map(Number);
+        // Trouver le premier niveau de récompense non atteint
+        const nextRewardIndex = allLevels.findIndex(l => l > currentLevel);
+
+        // Si toutes les récompenses sont atteintes, tout afficher
+        if (nextRewardIndex === -1) return allLevels;
+
+        // Afficher les niveaux atteints + les 4 prochains paliers
+        const levelsToShow = Math.min(allLevels.length, nextRewardIndex + 4);
+        return allLevels.slice(0, levelsToShow);
+    }, [currentLevel]);
 
     return (
         <motion.div
@@ -2998,12 +3010,23 @@ const LevelModal = ({ onClose, currentLevel, claimedRewards, onClaim }: { onClos
                                 >
                                     {/* Point sur la ligne */}
                                     <motion.div
-                                        className={`w-8 h-8 rounded-full border-4 flex items-center justify-center font-bold transition-all duration-300 ${
-                                            isUnlocked ? 'bg-purple-600 border-purple-400 text-white' : 'bg-gray-800 border-gray-600 text-gray-500'
+                                        className={`relative w-8 h-8 rounded-full border-4 flex items-center justify-center font-bold transition-all duration-300 ${
+                                            isUnlocked ? (canClaim ? 'bg-yellow-500 border-yellow-300 text-black' : 'bg-purple-600 border-purple-400 text-white') : 'bg-gray-800 border-gray-600 text-gray-500'
                                         }`}
                                         animate={currentLevel === level ? { scale: [1, 1.3, 1], boxShadow: '0 0 20px rgba(168, 85, 247, 0.8)' } : {}}
                                         transition={currentLevel === level ? { duration: 1.5, repeat: Infinity } : {}}
                                     >
+                                        {/* ✨ NOUVEAU: Lueur dorée pour les récompenses à récupérer */}
+                                        {canClaim && (
+                                            <motion.div
+                                                className="absolute -inset-1 rounded-full bg-yellow-400"
+                                                animate={{
+                                                    opacity: [0, 0.7, 0],
+                                                    scale: [1, 1.5, 1],
+                                                }}
+                                                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                                            />
+                                        )}
                                         {isClaimed ? '✓' : <Star size={16} />}
                                     </motion.div>
 
