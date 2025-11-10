@@ -929,6 +929,14 @@ export default function CasinoSlotPage() {
     const [isLevelModalOpen, setIsLevelModalOpen] = useState(false);
     const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
 
+    // ✨ NOUVEAU: Détecter si une récompense est disponible
+    const hasClaimableReward = useMemo(() => {
+        return Object.keys(LEVEL_REWARDS).some(levelStr => {
+            const level = Number(levelStr);
+            return playerLevel >= level && !claimedRewards.includes(level);
+        });
+    }, [playerLevel, claimedRewards]);
+
 
 
     const SYMBOLS = isDevilMode ? DEVIL_SYMBOLS : NORMAL_SYMBOLS;
@@ -2140,10 +2148,26 @@ export default function CasinoSlotPage() {
 
                                 {/* ✨ NOUVEAU: Barre d'XP et Niveau */}
                                 <motion.div
-                                    className="mt-2 cursor-pointer"
+                                    className="mt-2 cursor-pointer relative p-2 -m-2 rounded-lg" // ✨ NOUVEAU: Ajout de 'relative' et padding pour l'aura
                                     onClick={() => setIsLevelModalOpen(true)}
                                     whileHover={{ scale: 1.05 }}
                                     title="Voir les récompenses de niveau"
+                                    // ✨ NOUVEAU: Animation de clignotement si une récompense est disponible
+                                    animate={hasClaimableReward ? {
+                                        scale: [1, 1.03, 1],
+                                        boxShadow: [ // ✨ NOUVEAU: Aura dorée
+                                            "0 0 0px rgba(251, 191, 36, 0)",
+                                            "0 0 15px rgba(251, 191, 36, 0.6)",
+                                            "0 0 25px rgba(251, 191, 36, 0.4)",
+                                            "0 0 15px rgba(251, 191, 36, 0.6)",
+                                            "0 0 0px rgba(251, 191, 36, 0)",
+                                        ]
+                                    } : {}}
+                                    transition={hasClaimableReward ? {
+                                        duration: 2,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    } : {}}
                                 >
                                     <div className="flex justify-between items-center text-xs mb-1">
                                         <span className={`font-bold ${isDevilMode ? 'text-red-300' : 'text-purple-300'}`}>{`Niv. ${playerLevel} - ${getLevelTitle(playerLevel)}`}</span>
@@ -2157,6 +2181,17 @@ export default function CasinoSlotPage() {
                                             transition={{ duration: 1, ease: 'easeOut' }}
                                         />
                                     </div>
+                                    {/* ✨ NOUVEAU: Message si une récompense est disponible */}
+                                    {hasClaimableReward && (
+                                        <motion.div
+                                            className="text-center text-xs font-bold text-yellow-400 mt-2"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.5, duration: 0.5 }}
+                                        >
+                                            Une récompense t'attend !
+                                        </motion.div>
+                                    )}
                                 </motion.div>
                             </motion.div>
                         </div>
