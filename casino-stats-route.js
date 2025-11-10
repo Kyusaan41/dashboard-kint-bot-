@@ -2,10 +2,6 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
-const fetch = require('node-fetch'); // Assurez-vous que node-fetch est installé
-
-// URL de l'API de monnaie de votre bot
-const CURRENCY_API_URL = 'http://localhost:20007/api/currency';
 
 const STATS_FILE = path.join(__dirname, '../casino_stats.json');
 

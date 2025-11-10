@@ -1331,7 +1331,7 @@ export default function CasinoSlotPage() {
                 const finalSymbolIndex = reelLength - 13;
 
                 // ⚖️ Taux global de pertes : 0.84 = environ 16% de victoires
-                const GLOBAL_LOSS_RATE = 0.70; // 1 - 0.80 = 20% de chances de victoire
+                const GLOBAL_LOSS_RATE = 0.75; // 1 - 0.80 = 20% de chances de victoire
 
                 // Symboles perdants (majoritaires)
                 const losingSymbols = ['🍋', '🍓', '🍇', '🍒'];
@@ -1549,37 +1549,42 @@ export default function CasinoSlotPage() {
                                 triggerWinAnimation(spinResult.amount);
                             }
 
-                            // 🎰 FREE SPIN: Incrémenter le win streak (sauf si on est déjà en freespin ET que ce n'est pas une victoire de pitié)
-                            if (!isUsingFreeSpin && !spinResult.isPityWin) {
-                                setWinStreak(prev => {
-                                    const newStreak = prev + 1;
-                                    
-                                    // Si on atteint 3 victoires consécutives, débloquer 3 free spins
-                                    if (newStreak === 3) {
-                                        // 🔒 ANTI-TRICHE: Calculer la mise moyenne des 3 derniers tours pour éviter que les joueurs misent petit puis augmentent au dernier moment
-                                        // pour éviter que les joueurs misent petit puis augmentent au dernier moment
-                                        const avgBet = lastThreeBets.length > 0 
-                                            ? Math.floor(lastThreeBets.reduce((sum, b) => sum + b, 0) / lastThreeBets.length)
-                                            : lockedBet;
-                                        
-                                        setFreeSpinBet(avgBet);
-                                        setFreeSpins(prevSpins => prevSpins + 3);
-                                        setShowFreeSpinUnlock(true);
-                                        playSound('sequence3'); // Son spécial pour le déblocage
-                                        setTimeout(() => setShowFreeSpinUnlock(false), 4000);
-                                        
-                                        console.log('[FREESPIN] Débloqué ! Mise verrouillée:', avgBet, 'Historique:', lastThreeBets);
-                                        
-                                        // Reset l'historique après déblocage
-                                        setLastThreeBets([]);
-                                        
-                                        return 0; // Reset le streak après déblocage
-                                    }
-                                    
-                                    return newStreak;
-                                });
-                            }
-
+                                                    // 🎰 FREE SPIN: Gérer le compteur de victoires consécutives.
+                                                    if (!isUsingFreeSpin) {
+                                                        if (spinResult.isPityWin) {
+                                                            // Une victoire de pitié (remboursement) doit réinitialiser le compteur, comme une défaite.
+                                                            setWinStreak(0);
+                                                            setLastThreeBets([]);
+                                                        } else {
+                                                            // C'est une vraie victoire, on incrémente le compteur.
+                                                            setWinStreak(prev => {
+                                                                const newStreak = prev + 1;
+                                                                
+                                                                // Si on atteint 3 victoires consécutives, débloquer 3 free spins
+                                                                if (newStreak === 3) {
+                                                                    // 🔒 ANTI-TRICHE: Calculer la mise moyenne des 3 derniers tours pour éviter que les joueurs misent petit puis augmentent au dernier moment
+                                                                    const avgBet = lastThreeBets.length > 0 
+                                                                        ? Math.floor(lastThreeBets.reduce((sum, b) => sum + b, 0) / lastThreeBets.length)
+                                                                        : lockedBet;
+                                                                    
+                                                                    setFreeSpinBet(avgBet);
+                                                                    setFreeSpins(prevSpins => prevSpins + 3);
+                                                                    setShowFreeSpinUnlock(true);
+                                                                    playSound('sequence3'); // Son spécial pour le déblocage
+                                                                    setTimeout(() => setShowFreeSpinUnlock(false), 4000);
+                                                                    
+                                                                    console.log('[FREESPIN] Débloqué ! Mise verrouillée:', avgBet, 'Historique:', lastThreeBets);
+                                                                    
+                                                                    // Reset l'historique après déblocage
+                                                                    setLastThreeBets([]);
+                                                                    
+                                                                    return 0; // Reset le streak après déblocage
+                                                                }
+                                                                
+                                                                return newStreak;
+                                                            });
+                                                        }
+                                                    }
                             try {
                                 const post = await fetch('/api/currency/me', {
                                     method: 'POST',
