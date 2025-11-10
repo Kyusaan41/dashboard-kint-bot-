@@ -395,7 +395,7 @@ const LaughingEmojis = () => {
                     y: [0, -10, -20, -30, -50],
                 }}
                 transition={{
-                    duration: 3.5,
+                    duration: 3,
                     ease: 'easeOut',
                 }}
             >
@@ -558,7 +558,7 @@ const FreeSpinUnlockAnimation = () => {
                 className="absolute inset-0 bg-black/60"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0, 0.8, 0.6, 0.8, 0] }}
-                transition={{ duration: 4, ease: 'easeInOut' }}
+                transition={{ duration: 3, ease: 'easeInOut' }}
             />
             
             {/* Particules dorées qui explosent */}
@@ -598,7 +598,7 @@ const FreeSpinUnlockAnimation = () => {
                     rotate: [-180, 10, -10, 0],
                     opacity: [0, 1, 1, 1, 0],
                 }}
-                transition={{ duration: 4, ease: 'easeOut' }}
+                transition={{ duration: 3, ease: 'easeOut' }}
             >
                 <div className="bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 text-white px-12 py-8 rounded-3xl border-4 border-yellow-300 shadow-2xl">
                     <motion.div
@@ -789,7 +789,7 @@ const LevelUpAnimation = ({ level, title }: { level: number, title: string }) =>
                 className="absolute inset-0 bg-black"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0, 0.8, 0.6, 0] }}
-                transition={{ duration: 5, ease: "easeInOut" }}
+                transition={{ duration: 3, ease: "easeInOut" }}
             />
             <Confetti />
             <motion.div
@@ -1096,7 +1096,7 @@ export default function CasinoSlotPage() {
                     setLastLevelUpInfo({ level: data.level, title: getLevelTitle(data.level) });
                     setShowLevelUpAnimation(true); // @ts-ignore
                     playSound('levelUp'); // ✨ NOUVEAU: Jouer le son de montée de niveau
-                    setTimeout(() => setShowLevelUpAnimation(false), 5000);
+                    setTimeout(() => setShowLevelUpAnimation(false), 3000);
                 }
             }
         } catch (error) {
@@ -1224,7 +1224,7 @@ export default function CasinoSlotPage() {
         setLoseAnimation(true);
         setShowLaughingEmojis(true);
         setTimeout(() => setLoseAnimation(false), 2000);
-        setTimeout(() => setShowLaughingEmojis(false), 4000);
+        setTimeout(() => setShowLaughingEmojis(false), 3000);
     };
 
     const handleSpin = async () => {
@@ -1331,7 +1331,7 @@ export default function CasinoSlotPage() {
                 const finalSymbolIndex = reelLength - 13;
 
                 // ⚖️ Taux global de pertes : 0.84 = environ 16% de victoires
-                const GLOBAL_LOSS_RATE = 0.75; // 1 - 0.80 = 20% de chances de victoire
+                const GLOBAL_LOSS_RATE = 0.80; // 1 - 0.80 = 20% de chances de victoire
 
                 // Symboles perdants (majoritaires)
                 const losingSymbols = ['🍋', '🍓', '🍇', '🍒'];
@@ -1481,7 +1481,7 @@ export default function CasinoSlotPage() {
                             // Show winning line
                             if (spinResult.lineType) {
                                 setWinningLineType(spinResult.lineType);
-                                setTimeout(() => setWinningLineType(null), 4000); // Hide after 4 seconds
+                                setTimeout(() => setWinningLineType(null), 3000); // Hide after 3 seconds
                             }
                             
                             if (spinResult.amount > biggestWin) {
@@ -1571,7 +1571,7 @@ export default function CasinoSlotPage() {
                                                                     setFreeSpins(prevSpins => prevSpins + 3);
                                                                     setShowFreeSpinUnlock(true);
                                                                     playSound('sequence3'); // Son spécial pour le déblocage
-                                                                    setTimeout(() => setShowFreeSpinUnlock(false), 4000);
+                                                                    setTimeout(() => setShowFreeSpinUnlock(false), 3000);
                                                                     
                                                                     console.log('[FREESPIN] Débloqué ! Mise verrouillée:', avgBet, 'Historique:', lastThreeBets);
                                                                     
