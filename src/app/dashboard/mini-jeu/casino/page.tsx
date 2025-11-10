@@ -217,14 +217,14 @@ const PAYOUTS: { [symbol: string]: number } = {
 
 // ✨ NOUVEAU: Multiplicateurs spécifiques pour 2 symboles identiques
 const PAYOUTS_TWO_SYMBOLS: { [symbol: string]: number } = {
-    '7️⃣': 10,   // Gain spécial élevé
-    '💎': 5,     // Maintien d'un gain correct
+    '7️⃣': 6,   // Gain spécial élevé
+    '💎': 4,     // Maintien d'un gain correct
     '💰': 3,     // Maintien d'un gain correct
     '🍀': 2,     // Maintien d'un gain correct
-    '🍒': 1.8,   // 1800 pour une mise de 1000
-    '🍇': 1.7,   // 1700 pour une mise de 1000
-    '🍓': 1.6,   // 1600 pour une mise de 1000
-    '🍋': 1.5    // 1500 pour une mise de 1000
+    '🍒': 1.6,   // 1800 pour une mise de 1000
+    '🍇': 1.5,   // 1700 pour une mise de 1000
+    '🍓': 1.4,   // 1600 pour une mise de 1000
+    '🍋': 1.3    // 1500 pour une mise de 1000
 };
 
 function useWindowSizeLocal() {
@@ -1336,7 +1336,7 @@ export default function CasinoSlotPage() {
                 const finalSymbolIndex = reelLength - 13;
 
                 // ⚖️ Taux global de pertes : 0.84 = environ 16% de victoires
-                const GLOBAL_LOSS_RATE = 0.85; // 1 - 0.80 = 20% de chances de victoire
+                const GLOBAL_LOSS_RATE = 0.87; // 1 - 0.80 = 20% de chances de victoire
 
                 // Symboles perdants (majoritaires)
                 const losingSymbols = ['🍋', '🍓', '🍇', '🍒'];
