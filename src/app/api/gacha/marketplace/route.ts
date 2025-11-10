@@ -1,40 +1,59 @@
 import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { NYXNODE_API_URL } from '@/config/api';
 
-export async function GET() {
+// GET - Récupérer les listings du marketplace
+export async function GET(): Promise<NextResponse> {
     try {
-        // On relaie la requête GET à l'API du bot
-        const botResponse = await fetch(`${NYXNODE_API_URL}/api/gacha/marketplace`);
+        console.log('🔍 [MARKETPLACE GET] Relais vers:', `${NYXNODE_API_URL}/api/gacha/marketplace`);
+        
+        const botResponse = await fetch(`${NYXNODE_API_URL}/api/gacha/marketplace`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (!botResponse.ok) {
+            throw new Error(`NyxNode error: ${botResponse.status}`);
+        }
+
         const data = await botResponse.json();
         return NextResponse.json(data, { status: botResponse.status });
     } catch (error) {
-        console.error('[MARKETPLACE GET] Erreur lors de la récupération des offres:', error);
-        return NextResponse.json({ success: false, message: 'Erreur interne du serveur.' }, { status: 500 });
+        console.error('[MARKETPLACE GET] Erreur:', error);
+        return NextResponse.json({ 
+            success: false, 
+            message: 'Erreur interne du serveur.',
+            listings: []
+        }, { status: 500 });
     }
 }
 
-/**
- * Relaye une requête POST vers l'API du bot et retourne la réponse.
- * @param endpoint L'endpoint de l'API du bot (ex: '/gacha/marketplace/sell')
- * @param request La requête Next.js originale.
- */
-async function proxyPostToBot(endpoint: string, request: Request) {
+// POST - Mettre une carte en vente (alternative à /sell)
+export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
         const body = await request.json();
-        const botResponse = await fetch(`${NYXNODE_API_URL}${endpoint}`, {
+        console.log('🔍 [MARKETPLACE POST] Relais vers NyxNode:', body);
+
+        const botResponse = await fetch(`${NYXNODE_API_URL}/api/gacha/marketplace/sell`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
         });
 
         const responseData = await botResponse.json();
-        return new NextResponse(JSON.stringify(responseData), { status: botResponse.status, headers: { 'Content-Type': 'application/json' } });
-    } catch (error) {
-        console.error(`[PROXY ERROR] Erreur lors du relais vers ${endpoint}:`, error);
-        return NextResponse.json({ success: false, message: 'Erreur de communication avec le serveur du bot.' }, { status: 502 }); // 502 Bad Gateway
-    }
-}
+        console.log('🔍 [MARKETPLACE POST] Réponse NyxNode:', responseData);
 
-export async function POST(request: Request) {
-    return proxyPostToBot('/api/gacha/marketplace/sell', request);
+        return NextResponse.json(responseData, { 
+            status: botResponse.status, 
+            headers: { 'Content-Type': 'application/json' } 
+        });
+    } catch (error) {
+        console.error('[MARKETPLACE POST] Erreur:', error);
+        return NextResponse.json({ 
+            success: false, 
+            message: 'Erreur de communication avec le serveur du bot.' 
+        }, { status: 502 });
+    }
 }

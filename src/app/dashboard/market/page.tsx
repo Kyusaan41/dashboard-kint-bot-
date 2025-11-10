@@ -19,13 +19,20 @@ export default function GachaMarketplacePage() {
                 throw new Error("Impossible de récupérer les offres du marché.");
             }
             const data = await response.json();
+            
+            // CORRECTION : Vérifiez la structure de la réponse
+            console.log('🔍 [MARKETPLACE] Réponse API:', data);
+            
             if (data.success) {
-                setListings(data.data);
+                // CORRECTION : Utilisez data.listings au lieu de data.data
+                setListings(data.listings || data.data || []);
             } else {
                 throw new Error(data.message || "Une erreur est survenue.");
             }
         } catch (error) {
+            console.error('❌ [MARKETPLACE] Erreur:', error);
             toast.error(error instanceof Error ? error.message : "Erreur inconnue");
+            setListings([]); // Assurez-vous que listings est toujours un tableau
         } finally {
             setIsLoading(false);
         }
@@ -79,16 +86,17 @@ export default function GachaMarketplacePage() {
             {isLoading ? (
                 <div className="text-center text-gray-400">Chargement des offres...</div>
             ) : (
-                listings.length > 0 ? (
+                // CORRECTION : Vérification plus robuste
+                Array.isArray(listings) && listings.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                    {listings.map((listing) => (
-                        <MarketplaceCard 
-                            key={listing.listingId} 
-                            listing={listing} 
-                            onBuy={handleBuyCard} 
-                        />
-                    ))}
-                </div>
+                        {listings.map((listing) => (
+                            <MarketplaceCard 
+                                key={listing.listingId} 
+                                listing={listing} 
+                                onBuy={handleBuyCard} 
+                            />
+                        ))}
+                    </div>
                 ) : (
                     <div className="text-center py-20 bg-white/5 rounded-lg">
                         <h2 className="text-2xl font-bold mb-2">Le marché est vide pour le moment.</h2>

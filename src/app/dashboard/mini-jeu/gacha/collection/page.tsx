@@ -486,7 +486,7 @@ export default function CollectionPage() {
                     success: (data) => {
                         setSellModalInfo({ show: false, card: null }); // Fermer la modale
                         if (viewedUserId) fetchCollection(viewedUserId); // Recharger la collection
-                        return data.message || "Carte vendue avec succès !";
+                        return data.message || "Carte vendue avec succès ! Elle apparaîtra sur le marché dans quelques instants.";
                     },
                     error: (err) => err.message || "La vente a échoué.",
                 }
@@ -519,7 +519,7 @@ export default function CollectionPage() {
                     success: (data) => {
                         setAuctionModalInfo({ show: false, card: null }); // Fermer la modale d'enchères
                         if (viewedUserId) fetchCollection(viewedUserId); // Recharger la collection
-                        return data.message || "Votre carte est maintenant sur le marché !";
+                        return data.message || "Votre carte a été mise en vente. Elle apparaîtra sur le marché dans quelques instants.";
                     },
                     error: (err) => err.message || "La mise en vente a échoué.",
                 }
