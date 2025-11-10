@@ -1637,6 +1637,21 @@ export default function CasinoSlotPage() {
                             }
                             
                             triggerLoseAnimation();
+
+                            // ✨ NOUVEAU: Envoyer la part de la maison (house edge) à la banque
+                            const houseCut = Math.max(1, Math.floor(lockedBet * HOUSE_EDGE));
+                            if (houseCut > 0) {
+                                try {
+                                    await fetch('/api/casino/banque', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ amount: houseCut })
+                                    });
+                                    console.log(`[BANQUE] ${houseCut} pièces transférées à la banque.`);
+                                } catch (e) {
+                                    console.error('Erreur transfert banque:', e);
+                                }
+                            }
                         }
                     }, 600);
                 }
