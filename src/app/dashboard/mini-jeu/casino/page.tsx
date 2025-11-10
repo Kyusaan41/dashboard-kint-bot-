@@ -1336,7 +1336,7 @@ export default function CasinoSlotPage() {
                 const finalSymbolIndex = reelLength - 13;
 
                 // ⚖️ Taux global de pertes : 0.84 = environ 16% de victoires
-                const GLOBAL_LOSS_RATE = 0.80; // 1 - 0.80 = 20% de chances de victoire
+                const GLOBAL_LOSS_RATE = 0.85; // 1 - 0.80 = 20% de chances de victoire
 
                 // Symboles perdants (majoritaires)
                 const losingSymbols = ['🍋', '🍓', '🍇', '🍒'];
