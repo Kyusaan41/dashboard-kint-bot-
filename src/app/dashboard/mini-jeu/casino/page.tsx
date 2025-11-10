@@ -8,6 +8,7 @@ import { CASINO_ENDPOINTS } from '@/config/api';
 import Link from 'next/link';
 import { updateCurrency } from '@/utils/api';
 import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
+import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 // Slot Machine page using real currency via /api/currency/me
 
@@ -1965,6 +1966,9 @@ export default function CasinoSlotPage() {
                             Retour au Carré VIP
                         </motion.button>
                     </Link>
+                    <div>
+                        <FavoriteToggleButton pageId="casino" />
+                    </div>
                 </div>
             </div>
             

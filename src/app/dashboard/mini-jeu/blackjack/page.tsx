@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import { User, Bot, Coins, ArrowLeft, Shield, Swords, Diamond, Spade, Club, Heart } from 'lucide-react';
+import { User, Bot, Coins, ArrowLeft, Shield, Swords, Spade } from 'lucide-react';
 import Link from 'next/link';
 import { updateCurrency, fetchCurrency } from '@/utils/api';
+import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 // --- Types et Structures de Données ---
 type Suit = '♠' | '♥' | '♦' | '♣';
@@ -345,6 +346,9 @@ const BlackjackPage = () => {
               <Coins className="text-yellow-400" />
               <span className="font-bold text-lg">{loadingBalance ? '...' : balance.toLocaleString()}</span>
             </div>
+             <div className="ml-2">
+                            <FavoriteToggleButton pageId="blackjack" />
+                        </div>
             <Link href="/dashboard/mini-jeu">
               <motion.button
                 className="p-3 bg-black/50 rounded-full border border-yellow-700/50"

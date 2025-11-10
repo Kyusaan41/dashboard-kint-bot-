@@ -13,6 +13,7 @@ import {
     BookOpen, Crown, Gem, CheckCircle, Newspaper, 
     Bot, TrendingUp, Activity, Users, Shield, Sparkles, Settings
 } from 'lucide-react';
+import { FavoritesBar } from '@/components/FavoritesBar';
 
 // --- Types (inchangÃ©s) ---
 type UserStats = {
@@ -436,6 +437,9 @@ export default function DashboardHomePage() {
 
             {/* Welcome Header */}
             <WelcomeHeader user={session?.user} server={serverInfo} />
+
+            {/* Barre de favoris */}
+            <FavoritesBar />
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

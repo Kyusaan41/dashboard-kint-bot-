@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
-import { Star, Filter, History, X, BookOpen } from 'lucide-react';
+import { Star, Filter, History, X, BookOpen, Gem } from 'lucide-react';
 import Link from 'next/link';
 import { getRandomCardByRarity, getCardById, getCardsByRarity, AnimeCard } from './cards';
 import { useSession } from 'next-auth/react'; 
@@ -11,6 +11,7 @@ import { fetchCurrency as apiFetchCurrency, updateCurrency } from '@/utils/api';
 import { RevealedCard } from './RevealedCard'; 
 import { GachaProvider, useGacha, FeaturedCharacter } from './GachaContext';
 import { API_ENDPOINTS } from '@/lib/api-config.js';
+import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 const BANNER_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 jours
 
@@ -550,6 +551,9 @@ function GachaPageContent() {
                             />
                             <span className="font-semibold">{wishes}</span>
                         </div>
+                        <Link href="/dashboard/mini-jeu">
+                            <FavoriteToggleButton pageId="gacha" />
+                        </Link>
                         <Link href="/dashboard/mini-jeu">
                             <button className="bg-black/40 w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors">
                                 <X size={20} />
