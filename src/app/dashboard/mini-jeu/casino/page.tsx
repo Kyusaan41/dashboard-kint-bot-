@@ -2943,6 +2943,7 @@ export default function CasinoSlotPage() {
 
 // ✨ NOUVEAU: Modale pour afficher la frise des niveaux et les récompenses
 const LEVEL_REWARDS: { [level: number]: number } = {
+    5: 5000,
     10: 10000,
     15: 15000,
     20: 20000,
