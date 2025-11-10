@@ -1042,59 +1042,8 @@ export default function CasinoSlotPage() {
 
     // Load balance and jackpot from API on mount
     useEffect(() => {
-        setInitialReels();
-        let isMounted = true;
-
-        // Charger le solde
-        const fetchInitialData = async () => {
-            try {
-                setLoadingBalance(true);
-                const res = await fetch('/api/currency/me');
-                if (res.ok) {
-                    if (isMounted) {
-                        const data = await res.json();
-                        if (typeof data.balance === 'number') {
-                            setBalance(data.balance);
-                            updateBalance(data.balance);
-                        }
-                        if (data.level) setPlayerLevel(data.level);
-                        if (data.xp) setPlayerXp(data.xp);
-                        if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
-                    }
-                } else {
-                    console.warn('Impossible de récupérer le solde réel, status', res.status);
-                }
-            } catch (e) {
-                console.error('Erreur fetch balance', e);
-            } finally {
-                setLoadingBalance(false);
-            }
-        };
-
-        (async () => {
-            try {
-                setLoadingBalance(true);
-                const res = await fetch('/api/currency/me');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (typeof data.balance === 'number') {
-                        setBalance(data.balance);
-                        updateBalance(data.balance); // ✨ NOUVEAU: Initialiser le solde animé
-                    }
-                    // Charger les stats de niveau initiales
-                    if (data.level) setPlayerLevel(data.level);
-                    if (data.xp) setPlayerXp(data.xp);
-                    if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
-
-                } else {
-                    console.warn('Impossible de récupérer le solde réel, status', res.status);
-                }
-            } catch (e) {
-                console.error('Erreur fetch balance', e);
-            } finally {
-                setLoadingBalance(false);
-            }
-        })();
+        // ✨ CORRECTION: Appeler fetchUserCurrency pour charger le solde ET le niveau/XP au démarrage.
+        fetchUserCurrency();
 
         // Charger le jackpot initial
         setJackpotLoading(true);
@@ -1102,11 +1051,7 @@ export default function CasinoSlotPage() {
         
         // Charger les top wins initial
         loadTopWins();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []);
+    }, [fetchUserCurrency]); // fetchUserCurrency est mémorisé avec useCallback, donc cela ne se déclenchera qu'une fois.
 
     // ✨ NOUVEAU: Fonction pour ajouter de l'XP
     const addXp = async (amount: number) => {

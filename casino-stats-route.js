@@ -9,6 +9,13 @@ const CURRENCY_API_URL = 'http://localhost:20007/api/currency';
 
 const STATS_FILE = path.join(__dirname, '../casino_stats.json');
 
+// 🛡️ NOUVEAU: Système de verrouillage pour éviter la corruption du JSON
+let isWriting = false;
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function waitForLock() {
+    while (isWriting) await delay(50); // Attend par tranches de 50ms si le fichier est en cours d'écriture
+}
+
 /**
  * Lit les données des statistiques depuis le fichier.
  * @returns {Promise<Object>} Les données des statistiques.
@@ -42,7 +49,13 @@ async function readStatsData() {
  * @param {Object} data - Les données à écrire.
  */
 async function writeStatsData(data) {
-    await fs.writeFile(STATS_FILE, JSON.stringify(data, null, 2));
+    await waitForLock(); // Attend que toute lecture/écriture précédente soit terminée
+    isWriting = true;    // Verrouille le fichier
+    try {
+        await fs.writeFile(STATS_FILE, JSON.stringify(data, null, 2));
+    } finally {
+        isWriting = false; // Libère le verrou, même en cas d'erreur
+    }
 }
 
 // GET - Récupérer les statistiques (avec type optionnel)
