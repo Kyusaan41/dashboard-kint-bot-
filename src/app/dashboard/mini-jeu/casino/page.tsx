@@ -1492,9 +1492,11 @@ export default function CasinoSlotPage() {
                             const username = session?.user?.name || session?.user?.email?.split('@')[0] || 'Joueur';
                             console.log('[CASINO] Enregistrement gain:', username, spinResult.amount, 'Jackpot:', spinResult.isJackpot);
 
-                            // ✨ NOUVEAU: Ajouter de l'XP pour le gain
-                            const xpFromWin = Math.floor(spinResult.amount * 0.5);
-                            addXp(xpFromWin);
+                            // ✨ NOUVEAU: Ajouter de l'XP pour le gain (sauf si c'est un remboursement)
+                            if (!spinResult.isPityWin) {
+                                const xpFromWin = Math.floor(spinResult.amount * 0.5);
+                                addXp(xpFromWin);
+                            }
 
                             recordWin(username, spinResult.amount, spinResult.isJackpot);
                             

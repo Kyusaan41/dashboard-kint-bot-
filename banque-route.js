@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // Chemin vers le fichier de la banque
-const BANQUE_FILE = path.join(__dirname, 'data', 'banque.json');
+const BANQUE_FILE = path.join(__dirname, '..', 'banque.json');
 
 // Système de verrouillage simple pour éviter la corruption du JSON
 let isWriting = false;
@@ -21,11 +21,22 @@ async function waitForLock() {
 async function readBanqueBalance() {
     try {
         const data = await fs.readFile(BANQUE_FILE, 'utf8');
+        // Si le fichier est vide, on initialise
+        if (data.trim() === '') {
+            await writeBanqueBalance(0);
+            return 0;
+        }
         const banque = JSON.parse(data);
         return banque.balance || 0;
     } catch (error) {
         if (error.code === 'ENOENT') {
             // Si le fichier n'existe pas, on le crée avec un solde de 0
+            await writeBanqueBalance(0);
+            return 0;
+        }
+        // Gérer les erreurs de parsing JSON pour les fichiers corrompus
+        if (error instanceof SyntaxError) {
+            console.error('[BANQUE] Fichier JSON corrompu. Réinitialisation du solde à 0.', error);
             await writeBanqueBalance(0);
             return 0;
         }
