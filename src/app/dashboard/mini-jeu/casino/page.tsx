@@ -270,36 +270,48 @@ const Confetti = () => {
     );
 };
 
+// ✨ NOUVEAU: Composant pour une seule pièce, pour une animation stable
+const Coin = () => {
+    const properties = useMemo(() => ({
+        left: `${Math.random() * 100}%`,
+        duration: Math.random() * 3 + 3, // Ralenti : dure maintenant entre 3 et 6 secondes
+        delay: Math.random() * 1, // Délai légèrement augmenté pour un effet plus étalé
+        rotate: Math.random() * 720,
+        x: (Math.random() - 0.5) * 100,
+    }), []);
+
+    return (
+        <motion.div
+            className="absolute text-3xl"
+            style={{
+                left: properties.left,
+                top: '-10%',
+            }}
+            initial={{ y: 0, opacity: 1, rotate: 0, scale: 0 }}
+            animate={{
+                y: window.innerHeight + 100,
+                opacity: [0, 1, 1, 0],
+                rotate: properties.rotate,
+                scale: [0, 1, 1, 0],
+                x: properties.x,
+            }}
+            transition={{
+                duration: properties.duration,
+                ease: 'easeIn',
+                delay: properties.delay,
+            }}
+        >
+            💰
+        </motion.div>
+    );
+};
+
 // Coin rain effect
 const CoinRain = ({ amount }: { amount: number }) => {
     const coinCount = Math.min(Math.floor(amount / 10), 50);
     return (
         <div className="fixed inset-0 pointer-events-none z-50">
-            {Array.from({ length: coinCount }).map((_, i) => (
-                <motion.div
-                    key={i}
-                    className="absolute text-3xl"
-                    style={{
-                        left: `${Math.random() * 100}%`,
-                        top: '-10%',
-                    }}
-                    initial={{ y: 0, opacity: 1, rotate: 0, scale: 0 }}
-                    animate={{
-                        y: window.innerHeight + 100,
-                        opacity: [0, 1, 1, 0],
-                        rotate: Math.random() * 720,
-                        scale: [0, 1, 1, 0],
-                        x: (Math.random() - 0.5) * 100,
-                    }}
-                    transition={{
-                        duration: Math.random() * 1.5 + 1.5,
-                        ease: 'easeIn',
-                        delay: Math.random() * 0.3,
-                    }}
-                >
-                    💰
-                </motion.div>
-            ))}
+            {Array.from({ length: coinCount }).map((_, i) => <Coin key={i} />)}
         </div>
     );
 };
