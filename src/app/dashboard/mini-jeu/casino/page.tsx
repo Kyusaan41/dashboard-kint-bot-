@@ -1452,25 +1452,29 @@ export default function CasinoSlotPage() {
                             ...prev
                         ].slice(0, 5)); // Garder les 5 derniers
 
-                        // 🛡️ SYSTÈME ANTI-RUINE (Pitié)
-                        // Si le joueur perd, qu'il a peu de pièces et qu'il n'a pas fait un "all-in"
-                        if (!spinResult.win) {
-                            const postSpinBalance = balance - lockedBet;
-                            const isLowBalance = postSpinBalance < lockedBet * 5; // Le solde restant est inférieur à 5x la mise
-                            const isReasonableBet = lockedBet < balance * 0.3; // La mise est inférieure à 30% du solde
-
-                            if (isLowBalance && isReasonableBet) {
-                                console.log('[ANTI-RUINE] Pitié accordée ! Le joueur récupère sa mise.');
-                                spinResult = {
-                                    win: true,
-                                    amount: lockedBet, // Rembourse la mise
-                                    isJackpot: false,
-                                    lineType: null, // Pas de ligne gagnante affichée
-                                    isPityWin: true // 🚩 Marqueur pour ne pas compter dans le win streak
-                                };
+                                                    // 🛡️ SYSTÈME ANTI-RUINE (Pitié) - VERSION STRICTE
+                            if (!spinResult.win) {
+                                const postSpinBalance = balance - lockedBet;
+                                const isLowBalance = postSpinBalance < lockedBet * 5;
+                                const isReasonableBet = lockedBet < balance * 0.3;
+                                
+                                // ✨ MODIFICATION STRICTE: Désactiver complètement au-delà de 100K
+                                const isVeryHighBet = lockedBet > 100000;
+                                
+                                if (isLowBalance && isReasonableBet && !isVeryHighBet) {
+                                    console.log('[ANTI-RUINE] Pitié accordée ! Le joueur récupère sa mise.');
+                                    spinResult = {
+                                        win: true,
+                                        amount: lockedBet,
+                                        isJackpot: false,
+                                        lineType: null,
+                                        isPityWin: true
+                                    };
+                                } else if (isVeryHighBet) {
+                                    console.log(`[ANTI-RUINE] Pitié refusée - mise très élevée: ${lockedBet}`);
+                                }
+                                setResult(spinResult);
                             }
-                            setResult(spinResult); // Update state with pity win
-                        }
 
                     // Appliquer le multiplicateur d'événement
                     if (spinResult.win && eventMultiplier > 1) {
