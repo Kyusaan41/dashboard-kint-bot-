@@ -1228,6 +1228,11 @@ export default function CasinoSlotPage() {
     };
 
     const handleSpin = async () => {
+         // ✨ NOUVELLE VÉRIFICATION: Limite à 100K maximum
+    if (bet > 100000) {
+        setMessage('Mise maximale de 100K dépassée');
+        return;
+    }
         if (spinning) return;
         if (bet <= 0) {
             setMessage('Mise invalide');
@@ -2370,33 +2375,35 @@ export default function CasinoSlotPage() {
                                     <input
                                         type="number"
                                         min={1}
-                                        max={Math.max(1, balance)}
+                                        max={Math.min(100000, Math.max(1, balance))}
                                         value={bet}
                                         onChange={(e) => {
-                                            // Bloquer tout changement pendant le spinning pour éviter la triche
-                                            if (spinning) return;
-                                            
-                                            const value = e.target.value;
-                                            if (value === '') {
-                                                setBet(0);
-                                                return;
-                                            }
-                                            const numValue = Number(value);
-                                            if (!isNaN(numValue)) {
-                                                setBet(numValue);
-                                            }
-                                        }}
+                                        if (spinning) return;
+                                        
+                                        const value = e.target.value;
+                                        if (value === '') {
+                                            setBet(0);
+                                            return;
+                                        }
+                                        const numValue = Number(value);
+                                        if (!isNaN(numValue)) {
+                                            // ✨ MODIFICATION: Limiter à 100K maximum
+                                            const limitedValue = Math.min(numValue, 100000);
+                                            setBet(limitedValue);
+                                        }
+                                    }}
                                         onBlur={(e) => {
-                                            // Bloquer tout changement pendant le spinning pour éviter la triche
-                                            if (spinning) return;
-                                            
-                                            const numValue = Number(e.target.value);
-                                            if (isNaN(numValue) || numValue < 1) {
-                                                setBet(1);
-                                            } else if (numValue > balance) {
-                                                setBet(Math.max(1, balance));
-                                            }
-                                        }}
+                                        if (spinning) return;
+                                        
+                                        const numValue = Number(e.target.value);
+                                        if (isNaN(numValue) || numValue < 1) {
+                                            setBet(1);
+                                        } else {
+                                            // ✨ MODIFICATION: Limiter à 100K maximum
+                                            const limitedValue = Math.min(numValue, 100000, Math.max(1, balance));
+                                            setBet(limitedValue);
+                                        }
+                                    }}
                                         disabled={spinning || loadingBalance || isFreeSpinMode || freeSpins > 0}
                                         className={`nyx-input w-32 text-center font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed ${
                                             isDevilMode
@@ -2418,16 +2425,16 @@ export default function CasinoSlotPage() {
                                             if (spinning || isFreeSpinMode) return;
                                             let newBet = bet;
                                             if (action === '/2') newBet = Math.max(1, Math.floor(bet / 2));
-                                            if (action === 'x2') newBet = Math.min(balance, bet * 2);
+                                            if (action === 'x2') newBet = Math.min(100000, bet * 2, balance);
                                             if (action === 'MIN') newBet = 1;
-                                            if (action === 'MAX') newBet = balance;
+                                            if (action === 'MAX') newBet = Math.min(100000, balance);
                                             setBet(newBet);
                                         };
 
                                         const isDisabled = spinning || isFreeSpinMode || 
-                                            (action === 'x2' && bet * 2 > balance) ||
+                                            (action === 'x2' && (bet * 2 > 100000 || bet * 2 > balance)) ||
                                             (action === '/2' && bet <= 1) ||
-                                            (action === 'MAX' && balance === 0);
+                                            (action === 'MAX' && (balance === 0 || balance > 100000))
 
                                         return (
                                             <motion.button
@@ -2440,14 +2447,24 @@ export default function CasinoSlotPage() {
                                                         : 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 enabled:hover:scale-105'
                                                 }`}
                                                 whileTap={!isDisabled ? { scale: 0.95 } : {}}
-                                                title={action === '/2' ? 'Diviser par 2' : action === 'x2' ? 'Multiplier par 2' : action === 'MIN' ? 'Mise minimum' : 'Mise maximum'}
+                                                title={action === '/2' ? 'Diviser par 2' : action === 'x2' ? 'Multiplier par 2' : action === 'MIN' ? 'Mise minimum' : 'Mise maximum (100K max)'}
                                             >
                                                 {action}
                                             </motion.button>
                                         );
                                     })}
                                 </motion.div>
-
+                                    {/* Message limite de mise */}
+                                <motion.div
+                                    className="text-center mt-2"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.7 }}
+                                >
+                                    <p className="text-xs text-gray-500 font-semibold">
+                                        Mise maximale: 100 000 pièces
+                                    </p>
+                                </motion.div>
                                 <motion.button
                                     onClick={handleSpin}
                                     disabled={spinning || loadingBalance || bet > balance}
