@@ -214,6 +214,18 @@ const PAYOUTS: { [symbol: string]: number } = {
     '🍋': 2      // Faible
 };
 
+// ✨ NOUVEAU: Multiplicateurs spécifiques pour 2 symboles identiques
+const PAYOUTS_TWO_SYMBOLS: { [symbol: string]: number } = {
+    '7️⃣': 10,   // Gain spécial élevé
+    '💎': 5,     // Maintien d'un gain correct
+    '💰': 3,     // Maintien d'un gain correct
+    '🍀': 2,     // Maintien d'un gain correct
+    '🍒': 1.8,   // 1800 pour une mise de 1000
+    '🍇': 1.7,   // 1700 pour une mise de 1000
+    '🍓': 1.6,   // 1600 pour une mise de 1000
+    '🍋': 1.5    // 1500 pour une mise de 1000
+};
+
 function useWindowSizeLocal() {
     const [size, setSize] = useState({ width: typeof window !== 'undefined' ? window.innerWidth : 1200, height: typeof window !== 'undefined' ? window.innerHeight : 800 });
     useEffect(() => {
@@ -1213,30 +1225,19 @@ export default function CasinoSlotPage() {
         // 2 identical symbols = smaller win
         if (s1 === s2 || s2 === s3 || s1 === s3) {
             // 1. Identifier le symbole gagnant
-            const sym = s1 === s2 ? s1 : s2 === s3 ? s2 : s1 === s3 ? s1 : s2;
-            // 2. Obtenir son multiplicateur de base (ex: 🍒 -> 5)
-            const multiplier = PAYOUTS[sym] || 2;
-            // 3. Appliquer un diviseur selon le mode de jeu
-            const divisor = isDevilMode ? 1.5 : 2.5;
-
-            // Use the local betReductionFactor (guarantees variable exists)
-            // Calculer le multiplicateur ajusté
-            const adjustedMultiplier = Math.max(1.5, (multiplier * betReductionFactor) / divisor);
+            const sym = s1 === s2 ? s1 : (s2 === s3 ? s2 : s1); // s1 === s3 est le dernier cas
+            
+            // 2. Obtenir le multiplicateur spécifique pour 2 symboles
+            const multiplier = PAYOUTS_TWO_SYMBOLS[sym] || 1.5; // Fallback à 1.5x
 
             let lineType: 'two-left' | 'two-middle' | 'two-right' = 'two-left';
             if (s1 === s2) lineType = 'two-left';
             else if (s2 === s3) lineType = 'two-middle';
             else if (s1 === s3) lineType = 'two-right';
-            // 4. Calculer le montant de base basé sur le multiplicateur du symbole
-            const baseAmount = Math.floor(currentBet * adjustedMultiplier * (1 - (HOUSE_EDGE + 0.02)));
             
-            // 5. Le gain final est le PLUS ÉLEVÉ entre le gain calculé et le gain minimum garanti (1.5x la mise).
-            // C'est pourquoi les symboles faibles (🍋, 🍓) donnent le même gain : ils se heurtent à ce plancher.
-            finalAmount = Math.max(Math.floor(currentBet * 1.5), baseAmount);
-
-            // 6. Appliquer le plafond (8x la mise)
-            const maxSmallWinMultiplier = 8;
-            finalAmount = Math.min(finalAmount, currentBet * maxSmallWinMultiplier);
+            // 3. Calculer le gain directement
+            const gainAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
+            finalAmount = Math.max(gainAmount, Math.floor(currentBet * 1.1)); // Assurer un gain minimum de 1.1x la mise
 
             return { win: true, amount: finalAmount, isJackpot: false, lineType };
         }
