@@ -3364,7 +3364,7 @@ const LevelModal = ({ onClose, currentLevel, claimedRewards, onClaim }: { onClos
                                     {/* Tooltip/Popup de récompense */}
                                     <div className="absolute top-0 w-48 p-3 bg-slate-800 rounded-lg border border-slate-700 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-20">
                                         <p className="text-lg font-bold text-yellow-400 mb-1">
-                                            +{LEVEL_REWARDS[level].toLocaleString()} 💰
+                                            +{LEVEL_REWARDS[level].toLocaleString()} 💎
                                         </p>
                                         <p className="text-xs text-gray-400">Récompense du niveau {level}</p>
                                         {canClaim && (
