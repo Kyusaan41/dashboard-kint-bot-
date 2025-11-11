@@ -6,7 +6,6 @@ import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, T
 import { useSession } from 'next-auth/react';
 import { CASINO_ENDPOINTS } from '@/config/api';
 import Link from 'next/link';
-import { updateCurrency } from '@/utils/api';
 import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
@@ -835,7 +834,7 @@ const LevelUpAnimation = ({ level, title }: { level: number, title: string }) =>
                         animate={{ opacity: 1 }}
                         transition={{ delay: 1.3 }}
                     >
-                        De nouvelles récompenses vous attendent !
+                       
                     </motion.div>
                 </div>
             </motion.div>
@@ -846,7 +845,8 @@ const LevelUpAnimation = ({ level, title }: { level: number, title: string }) =>
 export default function CasinoSlotPage() {
     const { data: session } = useSession();
     const { playSound, soundsEnabled, toggleSounds, masterVolume, changeVolume } = useCasinoSounds(); // @ts-ignore
-    const [balance, setBalance] = useState<number>(0);
+    const [piecesBalance, setPiecesBalance] = useState<number>(0);
+    const [jetonsBalance, setJetonsBalance] = useState<number>(0);
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
     const [bet, setBet] = useState<number>(10);
     const [reels, setReels] = useState<Reel[]>([
@@ -856,7 +856,7 @@ export default function CasinoSlotPage() {
     ]);
     const [spinning, setSpinning] = useState(false);
     const [message, setMessage] = useState<string>('Bonne chance !');
-    const { displayBalance, updateBalance } = useAnimatedBalance(balance);
+    const { displayBalance: displayJetonsBalance, updateBalance: updateJetonsBalance } = useAnimatedBalance(jetonsBalance);
     
     // Jackpot global (chargé depuis l'API)
     const [jackpot, setJackpot] = useState<number>(10000);
@@ -887,6 +887,10 @@ export default function CasinoSlotPage() {
         }
         return 0;
     });
+    
+    const [buyAmount, setBuyAmount] = useState<number>(100); // Default buy amount
+    const [sellAmount, setSellAmount] = useState<number>(100); // Default sell amount
+    const [loadingExchange, setLoadingExchange] = useState<boolean>(false);
     
     const [showCoinRain, setShowCoinRain] = useState(false);
     const [showLaughingEmojis, setShowLaughingEmojis] = useState(false);
@@ -980,27 +984,43 @@ export default function CasinoSlotPage() {
         setReels([randomReel(currentSymbols, 50), randomReel(currentSymbols, 50), randomReel(currentSymbols, 50)]);
     };
 
-    const fetchUserCurrency = useCallback(async () => {
+    const fetchUserBalances = useCallback(async () => {
         if (!session?.user?.id) return;
         try {
             setLoadingBalance(true);
-            const res = await fetch('/api/currency/me');
-            if (res.ok) {
-                const data = await res.json();
+            
+            // Fetch Pièces balance
+            const piecesRes = await fetch('/api/currency/me');
+            if (piecesRes.ok) {
+                const data = await piecesRes.json();
                 if (typeof data.balance === 'number') {
-                    setBalance(data.balance);
-                    updateBalance(data.balance);
+                    setPiecesBalance(data.balance);
                 }
                 if (data.level) setPlayerLevel(data.level);
                 if (data.xp) setPlayerXp(data.xp);
                 if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
+            } else {
+                console.error('Erreur fetch pièces balance', piecesRes.status);
             }
+
+            // Fetch Jetons balance
+            const jetonsRes = await fetch('/api/jetons/me');
+            if (jetonsRes.ok) {
+                const data = await jetonsRes.json();
+                if (typeof data.balance === 'number') {
+                    setJetonsBalance(data.balance);
+                    updateJetonsBalance(data.balance);
+                }
+            } else {
+                console.error('Erreur fetch jetons balance', jetonsRes.status);
+            }
+
         } catch (e) {
-            console.error('Erreur fetch balance', e);
+            console.error('Erreur fetch balances', e);
         } finally {
             setLoadingBalance(false);
         }
-    }, [session?.user?.id, updateBalance]);
+    }, [session?.user?.id, updateJetonsBalance]);
 
     // Fonction pour charger le jackpot depuis l'API
     const loadJackpot = async () => {
@@ -1063,8 +1083,8 @@ export default function CasinoSlotPage() {
 
     // Load balance and jackpot from API on mount
     useEffect(() => {
-        // ✨ CORRECTION: Appeler fetchUserCurrency pour charger le solde ET le niveau/XP au démarrage.
-        fetchUserCurrency();
+        // ✨ CORRECTION: Appeler fetchUserBalances pour charger les soldes ET le niveau/XP au démarrage.
+        fetchUserBalances();
 
         // Charger le jackpot initial
         setJackpotLoading(true);
@@ -1072,7 +1092,7 @@ export default function CasinoSlotPage() {
         
         // Charger les top wins initial
         loadTopWins();
-    }, [fetchUserCurrency]); // fetchUserCurrency est mémorisé avec useCallback, donc cela ne se déclenchera qu'une fois.
+    }, [fetchUserBalances]); // fetchUserBalances est mémorisé avec useCallback, donc cela ne se déclenchera qu'une fois.
 
     // ✨ NOUVEAU: Fonction pour ajouter de l'XP
     const addXp = async (amount: number) => {
@@ -1238,6 +1258,10 @@ export default function CasinoSlotPage() {
             setMessage('Mise invalide');
             return;
         }
+        if (jetonsBalance < bet) {
+            setMessage('Solde de jetons insuffisant !');
+            return;
+        }
 
         // 🎰 FREE SPIN: Vérifier si on utilise un free spin
         let isUsingFreeSpin = false;
@@ -1301,28 +1325,31 @@ export default function CasinoSlotPage() {
             } else {
                 setMessage('🎰 Mise en cours...');
                 
-                const reserve = await fetch('/api/currency/me', {
+                // Deduct jetons
+                const reserve = await fetch('/api/jetons/me', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: -Math.abs(lockedBet) }) // @ts-ignore
+                    body: JSON.stringify({ amount: -Math.abs(lockedBet) })
                 });
 
                 if (reserve.ok) {
                     const json = await reserve.json();
                     if (typeof json.balance === 'number') {
-                        setBalance(json.balance);
+                        setJetonsBalance(json.balance);
                         // ✨ NOUVEAU: Animer la diminution du solde
-                        updateBalance(json.balance);
+                        updateJetonsBalance(json.balance);
                     }
                 } else {
-                    setBalance((b) => b - lockedBet);
+                    // Fallback if API fails
+                    setJetonsBalance((b) => b - lockedBet);
+                    updateJetonsBalance(jetonsBalance - lockedBet);
                 }
             }
         } catch (e) {
-            console.error('Erreur réservation:', e);
+            console.error('Erreur réservation jetons:', e);
             if (!isUsingFreeSpin) {
-                setBalance((b) => b - lockedBet);
-                updateBalance(balance - lockedBet);
+                setJetonsBalance((b) => b - lockedBet);
+                updateJetonsBalance(jetonsBalance - lockedBet);
             }
         }
 
@@ -1447,7 +1474,7 @@ export default function CasinoSlotPage() {
                             setResult(spinResult);
 
                             addXp(consolationXp);
-                            setMessage(`QUASIMENT ! +${formatMoney(consolationAmount)} pièces & ${consolationXp} XP !`);
+                            setMessage(`QUASIMENT ! +${formatMoney(consolationAmount)} jetons & ${consolationXp} XP !`);
                             // Jouer un son spécifique pour cet événement
                         }
 
@@ -1459,9 +1486,9 @@ export default function CasinoSlotPage() {
 
                                                     // 🛡️ SYSTÈME ANTI-RUINE (Pitié) - VERSION STRICTE
                             if (!spinResult.win) {
-                                const postSpinBalance = balance - lockedBet;
+                                const postSpinBalance = jetonsBalance - lockedBet;
                                 const isLowBalance = postSpinBalance < lockedBet * 5;
-                                const isReasonableBet = lockedBet < balance * 0.3;
+                                const isReasonableBet = lockedBet < jetonsBalance * 0.3;
                                 
                                 // ✨ MODIFICATION STRICTE: Désactiver complètement au-delà de 100K
                                 const isVeryHighBet = lockedBet > 100000;
@@ -1513,7 +1540,7 @@ export default function CasinoSlotPage() {
                                 // Jouer le son de jackpot
                                 playSound('jackpot');
                                 
-                                setMessage(`🎉 JACKPOT! +${spinResult.amount} Pièces 🎉`);
+                                setMessage(`🎉 JACKPOT! +${spinResult.amount} Jetons 🎉`);
                                 setShowConfetti(true);
                                 setTimeout(() => setShowConfetti(false), 8000);
                                 
@@ -1524,7 +1551,7 @@ export default function CasinoSlotPage() {
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ 
                                             winner: 'Player', // Vous pouvez ajouter le nom du joueur ici
-                                            winAmount: spinResult.amount 
+                                            winAmount: spinResult.amount * 80 // Convert jetons to pieces for jackpot stats
                                         })
                                     });
                                     if (resetRes.ok) {
@@ -1542,7 +1569,7 @@ export default function CasinoSlotPage() {
                             } else {
                                 // Jouer le son approprié selon le type de victoire
                                 if (spinResult.lineType === 'three') {
-                                    // 3 symboles alignés (mais pas jackpot)
+                                    // 3 symboles alignés (but not jackpot)
                                     playSound('sequence3');
                                 } else {
                                     // 2 symboles alignés
@@ -1550,9 +1577,9 @@ export default function CasinoSlotPage() {
                                 }
                                 
                                 if (spinResult.isPityWin) {
-                                    setMessage(`Mise remboursée : +${formatMoney(spinResult.amount)}`);
+                                    setMessage(`Mise remboursée : +${formatMoney(spinResult.amount)} jetons`);
                                 } else {
-                                    setMessage(`✨ Gagné +${formatMoney(spinResult.amount)} Pièces ✨`);
+                                    setMessage(`✨ Gagné +${formatMoney(spinResult.amount)} Jetons ✨`);
                                 }
                                 // Le jackpot ne descend JAMAIS sur un gain normal
                                 triggerWinAnimation(spinResult.amount);
@@ -1595,7 +1622,8 @@ export default function CasinoSlotPage() {
                                                         }
                                                     }
                             try {
-                                const post = await fetch('/api/currency/me', {
+                                // Credit jetons
+                                const post = await fetch('/api/jetons/me', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ amount: spinResult.amount })
@@ -1603,18 +1631,19 @@ export default function CasinoSlotPage() {
                                 if (post.ok) {
                                     const j = await post.json();
                                     if (typeof j.balance === 'number') {
-                                        setBalance(j.balance);
+                                        setJetonsBalance(j.balance);
                                         // ✨ NOUVEAU: Animer l'augmentation du solde
-                                        updateBalance(j.balance);
+                                        updateJetonsBalance(j.balance);
                                     }
                                 } else {
-                                    setBalance((b) => b + spinResult.amount);
-                                    updateBalance(balance + spinResult.amount);
+                                    // Fallback if API fails
+                                    setJetonsBalance((b) => b + spinResult.amount);
+                                    updateJetonsBalance(jetonsBalance + spinResult.amount);
                                 }
                             } catch (e) {
-                                console.error('Erreur crédit gain:', e);
-                                setBalance((b) => b + spinResult.amount);
-                                updateBalance(balance + spinResult.amount);
+                                console.error('Erreur crédit gain jetons:', e);
+                                setJetonsBalance((b) => b + spinResult.amount);
+                                updateJetonsBalance(jetonsBalance + spinResult.amount);
                             }
                         } else {
                             // Jouer le son de défaite
@@ -1633,41 +1662,26 @@ export default function CasinoSlotPage() {
                             
                             setMessage('💔 Perdu...');
                             
-                            // Augmenter le jackpot global via l'API NyxNode (50% de la mise)
-                            const jackpotIncrease = Math.max(1, Math.floor(lockedBet * 0.5));
+                            // Augmenter le jackpot global via l'API NyxNode (50% de la mise en jetons convertie en pièces)
+                            const jackpotIncreaseAmount = Math.max(1, Math.floor(lockedBet * 0.5 * 80)); // Convert jetons to pieces
                             try {
                                 const increaseRes = await fetch(CASINO_ENDPOINTS.jackpotIncrease, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ amount: jackpotIncrease })
+                                    body: JSON.stringify({ amount: jackpotIncreaseAmount })
                                 });
                                 if (increaseRes.ok) {
                                     const data = await increaseRes.json();
                                     setJackpot(data.newAmount);
                                 } else {
-                                    setJackpot((j) => j + jackpotIncrease); // Fallback
+                                    setJackpot((j) => j + jackpotIncreaseAmount); // Fallback
                                 }
                             } catch (e) {
                                 console.error('Erreur augmentation jackpot:', e);
-                                setJackpot((j) => j + jackpotIncrease); // Fallback
+                                setJackpot((j) => j + jackpotIncreaseAmount); // Fallback
                             }
                             
                             triggerLoseAnimation();
-
-                            // ✨ NOUVEAU: Envoyer la part de la maison (house edge) à la banque
-                            const houseCut = Math.max(1, Math.floor(lockedBet * HOUSE_EDGE));
-                            if (houseCut > 0) {
-                                try {
-                                    await fetch('/api/casino/banque', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ amount: houseCut })
-                                    });
-                                    console.log(`[BANQUE] ${houseCut} pièces transférées à la banque.`);
-                                } catch (e) {
-                                    console.error('Erreur transfert banque:', e);
-                                }
-                            }
                         }
                     }, 600);
                 }
@@ -1681,12 +1695,22 @@ export default function CasinoSlotPage() {
         if (!session?.user?.id || claimedRewards.includes(level)) return;
 
         try {
-            await updateCurrency(session.user.id, amount, `Récompense Casino Niveau ${level}`);
-            const newClaimed = [...claimedRewards, level];
-            setClaimedRewards(newClaimed);
-            saveClaimedRewards(newClaimed);
-            await fetchUserCurrency(); // Mettre à jour le solde affiché
-            playSound('win');
+            const res = await fetch('/api/jetons/me', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: amount }),
+            });
+
+            if (res.ok) {
+                const newClaimed = [...claimedRewards, level];
+                setClaimedRewards(newClaimed);
+                saveClaimedRewards(newClaimed);
+                await fetchUserBalances(); // Mettre à jour le solde affiché
+                playSound('win');
+            } else {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to claim jetons reward');
+            }
         } catch (error) {
             console.error(`Erreur lors de la réclamation de la récompense pour le niveau ${level}:`, error);
             alert("Impossible de réclamer la récompense. Veuillez réessayer.");
@@ -1694,6 +1718,60 @@ export default function CasinoSlotPage() {
     };
 
     const formatMoney = (n: number) => n.toLocaleString('fr-FR');
+
+    const handleBuyJetons = async () => {
+        if (!session?.user?.id || buyAmount <= 0 || loadingExchange) return;
+        setLoadingExchange(true);
+        try {
+            const res = await fetch('/api/jetons/exchange/buy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: buyAmount }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setPiecesBalance(data.currencyBalance);
+                setJetonsBalance(data.jetonsBalance);
+                updateJetonsBalance(data.jetonsBalance);
+                setMessage(`Acheté ${formatMoney(data.bought)} jetons pour ${formatMoney(data.cost)} pièces !`);
+            } else {
+                const errorData = await res.json();
+                setMessage(`Erreur: ${errorData.error || 'Impossible d\'acheter des jetons.'}`);
+            }
+        } catch (error) {
+            console.error('Error buying jetons:', error);
+            setMessage('Erreur interne lors de l\'achat de jetons.');
+        } finally {
+            setLoadingExchange(false);
+        }
+    };
+
+    const handleSellJetons = async () => {
+        if (!session?.user?.id || sellAmount <= 0 || loadingExchange) return;
+        setLoadingExchange(true);
+        try {
+            const res = await fetch('/api/jetons/exchange/sell', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: sellAmount }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setPiecesBalance(data.currencyBalance);
+                setJetonsBalance(data.jetonsBalance);
+                updateJetonsBalance(data.jetonsBalance);
+                setMessage(`Vendu ${formatMoney(data.sold)} jetons pour ${formatMoney(data.gain)} pièces !`);
+            } else {
+                const errorData = await res.json();
+                setMessage(`Erreur: ${errorData.error || 'Impossible de vendre des jetons.'}`);
+            }
+        } catch (error) {
+            console.error('Error selling jetons:', error);
+            setMessage('Erreur interne lors de la vente de jetons.');
+        } finally {
+            setLoadingExchange(false);
+        }
+    };
 
     const reelDisplay = (reel: Reel, index: number) => {
         const isStopped = reelsStopped[index];
@@ -2188,9 +2266,13 @@ export default function CasinoSlotPage() {
                                 animate={loadingBalance ? { opacity: [0.5, 1, 0.5] } : {}}
                                 transition={{ duration: 1, repeat: Infinity }}
                             >
-                                <p className="text-sm text-gray-400 font-semibold mb-1">Solde</p>
+                                <p className="text-sm text-gray-400 font-semibold mb-1">Vos Pièces</p>
+                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent mb-4">
+                                    {formatMoney(piecesBalance)} 💰
+                                </p>
+                                <p className="text-sm text-gray-400 font-semibold mb-1">Vos Jetons</p>
                                 <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
-                                    {formatMoney(displayBalance)} 💰
+                                    {formatMoney(displayJetonsBalance)} 💎
                                 </p>
 
                                 {/* ✨ NOUVEAU: Barre d'XP et Niveau */}
@@ -2375,7 +2457,7 @@ export default function CasinoSlotPage() {
                                     <input
                                         type="number"
                                         min={1}
-                                        max={Math.min(100000, Math.max(1, balance))}
+                                        max={Math.min(100000, Math.max(1, jetonsBalance))}
                                         value={bet}
                                         onChange={(e) => {
                                         if (spinning) return;
@@ -2400,7 +2482,7 @@ export default function CasinoSlotPage() {
                                             setBet(1);
                                         } else {
                                             // ✨ MODIFICATION: Limiter à 100K maximum
-                                            const limitedValue = Math.min(numValue, 100000, Math.max(1, balance));
+                                            const limitedValue = Math.min(numValue, 100000, Math.max(1, jetonsBalance));
                                             setBet(limitedValue);
                                         }
                                     }}
@@ -2425,16 +2507,16 @@ export default function CasinoSlotPage() {
                                             if (spinning || isFreeSpinMode) return;
                                             let newBet = bet;
                                             if (action === '/2') newBet = Math.max(1, Math.floor(bet / 2));
-                                            if (action === 'x2') newBet = Math.min(100000, bet * 2, balance);
+                                            if (action === 'x2') newBet = Math.min(100000, bet * 2, jetonsBalance);
                                             if (action === 'MIN') newBet = 1;
-                                            if (action === 'MAX') newBet = Math.min(100000, balance);
+                                            if (action === 'MAX') newBet = Math.min(100000, jetonsBalance);
                                             setBet(newBet);
                                         };
 
                                         const isDisabled = spinning || isFreeSpinMode || 
-                                            (action === 'x2' && (bet * 2 > 100000 || bet * 2 > balance)) ||
+                                            (action === 'x2' && (bet * 2 > 100000 || bet * 2 > jetonsBalance)) ||
                                             (action === '/2' && bet <= 1) ||
-                                            (action === 'MAX' && (balance === 0 || balance > 100000))
+                                            (action === 'MAX' && (jetonsBalance === 0 || jetonsBalance > 100000))
 
                                         return (
                                             <motion.button
@@ -2462,16 +2544,16 @@ export default function CasinoSlotPage() {
                                     transition={{ delay: 0.7 }}
                                 >
                                     <p className="text-xs text-gray-500 font-semibold">
-                                        Mise maximale: 100 000 pièces
+                                        Mise maximale: 100 000 jetons
                                     </p>
                                 </motion.div>
                                 <motion.button
                                     onClick={handleSpin}
-                                    disabled={spinning || loadingBalance || bet > balance}
+                                    disabled={spinning || loadingBalance || bet > jetonsBalance}
                                     className={`relative px-12 py-5 rounded-2xl font-black text-xl shadow-2xl flex items-center gap-3 overflow-hidden transition-all duration-300 ${
                                         spinning
                                             ? 'bg-gray-700 cursor-not-allowed'
-                                            : bet > balance
+                                            : bet > jetonsBalance
                                             ? 'bg-gray-700 cursor-not-allowed opacity-50'
                                             : isDevilMode
                                             ? 'btn-nyx-danger'
@@ -2920,6 +3002,110 @@ export default function CasinoSlotPage() {
                                 </div>
                             </div>
                         </div>
+
+
+                    {/* Jeton Exchange Card */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5, duration: 0.5 }}
+                        className={`relative bg-black/30 backdrop-blur-2xl rounded-2xl p-1 border-2 border-transparent overflow-hidden transition-all duration-300 ${isDevilMode ? 'shadow-red-500/40' : 'shadow-purple-500/30'}`}
+                        whileHover={{ scale: 1.02, boxShadow: isDevilMode ? '0 0 30px rgba(239, 68, 68, 0.4)' : '0 0 30px rgba(139, 92, 246, 0.3)' }}
+                    >
+                        <motion.div className="absolute inset-0 rounded-xl pointer-events-none"
+                            style={{
+                                border: '2px solid transparent',
+                                background: isDevilMode 
+                                    ? 'conic-gradient(from var(--angle), rgba(239, 68, 68, 0.5), rgba(255, 165, 0, 0.3), rgba(239, 68, 68, 0.5)) border-box'
+                                    : 'conic-gradient(from var(--angle), rgba(139, 92, 246, 0.5), rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.5)) border-box',
+                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                                maskComposite: 'exclude',
+                                '--angle': '0deg',
+                            } as any}
+                            animate={{ '--angle': '360deg' } as any}
+                            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <div className={`relative z-10 p-5 rounded-lg h-full ${isDevilMode ? 'bg-gradient-to-br from-red-900/20 to-black/30' : 'bg-gradient-to-br from-purple-900/20 to-black/30'}`}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <motion.div
+                                    className={`w-12 h-12 rounded-xl ${isDevilMode ? 'bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/50' : 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/50'} flex items-center justify-center shadow-lg transition-all duration-500`}
+                                    animate={{
+                                        rotate: [0, 10, -10, 0],
+                                        scale: [1, 1.1, 1],
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <Coins size={24} className="text-white" />
+                                </motion.div>
+                                <h3 className={`text-xl font-black ${isDevilMode ? 'text-red-400' : 'text-purple-400'} transition-colors duration-500`}>Échange de Jetons</h3>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Buy Jetons */}
+                                <div>
+                                    <p className="text-sm text-gray-400 mb-2">Acheter des Jetons (1000 💎 = 500 💰)</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={buyAmount}
+                                            onChange={(e) => setBuyAmount(Number(e.target.value))}
+                                            className="nyx-input flex-grow text-center font-bold text-lg"
+                                            disabled={loadingExchange}
+                                        />
+                                        <motion.button
+                                            onClick={handleBuyJetons}
+                                            disabled={loadingExchange || buyAmount <= 0 || piecesBalance < buyAmount * 100}
+                                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${
+                                                isDevilMode
+                                                    ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 enabled:hover:scale-105'
+                                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 enabled:hover:scale-105'
+                                            }`}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            Acheter
+                                        </motion.button>
+                                    </div>
+                                        {buyAmount > 0 && (
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Coût: {formatMoney(Math.ceil(buyAmount * 0.5))} 💰
+                                            </p>
+                                        )}
+                                    </div>
+
+                                {/* Sell Jetons */}
+                                <div>
+                                    <p className="text-sm text-gray-400 mb-2">Vendre des Jetons (500,000💎 = 10,000 💰)</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={sellAmount}
+                                            onChange={(e) => setSellAmount(Number(e.target.value))}
+                                            className="nyx-input flex-grow text-center font-bold text-lg"
+                                            disabled={loadingExchange}
+                                        />
+                                        <motion.button
+                                            onClick={handleSellJetons}
+                                            disabled={loadingExchange || sellAmount <= 0 || jetonsBalance < sellAmount}
+                                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${
+                                                isDevilMode
+                                                    ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 enabled:hover:scale-105'
+                                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 enabled:hover:scale-105'
+                                            }`}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            Vendre
+                                        </motion.button>
+                                    </div>
+                                            {sellAmount > 0 && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Gain: {formatMoney(Math.floor(sellAmount * 0.02))} 💰
+                                                </p>
+                                            )}
+                                        </div>
+                            </div>
+                        </div>
                     </motion.div>
 
                     {/* Payouts Table */}
@@ -2992,6 +3178,7 @@ export default function CasinoSlotPage() {
                             2 symboles identiques = gain réduit
                         </motion.p>
                         </div>
+                    </motion.div>
                     </motion.div>
                 </div>
             </div>

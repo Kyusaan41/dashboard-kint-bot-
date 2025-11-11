@@ -5,8 +5,18 @@ const app = express();
 const cors = require('cors');
 const PORT = 3001;
 
+// Importation des routes
+const casinoRoute = require('../../casinoRoute');
+const casinoStatsRoute = require('../../casino-stats-route');
+const tokenRoute = require('../../tokenRoute');
+
 app.use(cors());
 app.use(express.json());
+
+// Utilisation des routes
+app.use('/api/casino', casinoRoute);
+app.use('/api/casino-stats', casinoStatsRoute);
+app.use('/api/tokens', tokenRoute);
 
 
 app.get('/api/xp', (req, res) => {

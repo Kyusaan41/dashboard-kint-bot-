@@ -3,7 +3,7 @@ const router = express.Router();
 const fs = require('fs').promises;
 const path = require('path');
 
-const STATS_FILE = path.join(__dirname, '../casino_stats.json');
+const STATS_TOKENS_FILE = path.join(__dirname, '../data/casino-stats-tokens.json');
 
 // 🛡️ NOUVEAU: Système de verrouillage pour éviter la corruption du JSON
 let isWriting = false;
@@ -18,7 +18,7 @@ async function waitForLock() {
  */
 async function readStatsData() {
     try {
-        const data = await fs.readFile(STATS_FILE, 'utf8');
+        const data = await fs.readFile(STATS_TOKENS_FILE, 'utf8');
         const stats = JSON.parse(data);
         // Assurer que les joueurs ont des valeurs par défaut pour level/xp
         stats.players = stats.players.map(p => ({
@@ -48,7 +48,7 @@ async function writeStatsData(data) {
     await waitForLock(); // Attend que toute lecture/écriture précédente soit terminée
     isWriting = true;    // Verrouille le fichier
     try {
-        await fs.writeFile(STATS_FILE, JSON.stringify(data, null, 2));
+        await fs.writeFile(STATS_TOKENS_FILE, JSON.stringify(data, null, 2));
     } finally {
         isWriting = false; // Libère le verrou, même en cas d'erreur
     }
@@ -198,14 +198,14 @@ router.post('/claim-reward', async (req, res) => {
 
         // Définir les récompenses ici
         const rewards = {
-            2: { type: 'currency', amount: 500 },
-            3: { type: 'currency', amount: 1000 },
-            4: { type: 'currency', amount: 1500 },
-            5: { type: 'currency', amount: 3000 }, // + Free spins (à gérer côté client/bot)
-            10: { type: 'currency', amount: 5000 },
-            15: { type: 'currency', amount: 10000 },
-            20: { type: 'currency', amount: 15000 },
-            25: { type: 'currency', amount: 25000 },
+            2: { type: 'tokens', amount: 500 },
+            3: { type: 'tokens', amount: 1000 },
+            4: { type: 'tokens', amount: 1500 },
+            5: { type: 'tokens', amount: 3000 }, // + Free spins (à gérer côté client/bot)
+            10: { type: 'tokens', amount: 5000 },
+            15: { type: 'tokens', amount: 10000 },
+            20: { type: 'tokens', amount: 15000 },
+            25: { type: 'tokens', amount: 25000 },
         };
 
         const reward = rewards[level];
@@ -215,12 +215,12 @@ router.post('/claim-reward', async (req, res) => {
         }
 
         // Donner la récompense (ici, de la monnaie)
-        if (reward.type === 'currency') {
+        if (reward.type === 'tokens') {
             // Il faut l'ID discord de l'utilisateur pour créditer la monnaie
             // Pour l'instant, on simule. Il faudra une table de correspondance username -> userId
             // const userId = getUserIdFromUsername(username);
             // await fetch(`${CURRENCY_API_URL}/${userId}`, { method: 'POST', ... });
-            console.log(`[REWARD] ${username} a réclamé ${reward.amount} pièces pour le niveau ${level}. (Simulation)`);
+            console.log(`[REWARD] ${username} a réclamé ${reward.amount} jetons pour le niveau ${level}. (Simulation)`);
         }
 
         // Marquer comme réclamée

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const BOT_API_URL = 'http://193.70.34.25:20007/api';
+const SELL_RATE = 80; // 1 Jeton = 80 Pièces (for converting win amount to pieces for bot stats)
 
 /**
  * GET /api/casino/stats?type=biggestWin|winCount|totalWins
@@ -34,18 +35,22 @@ export async function GET(request: Request) {
 /**
  * POST /api/casino/stats
  * Enregistre ou met à jour les statistiques d'un joueur sur NyxNode
- * Body: { username: string, amount: number, isJackpot: boolean }
+ * Body: { username: string, amount: number, isJackpot: boolean } (amount is in Jetons from frontend)
  */
 export async function POST(request: Request) {
     try {
         const body = await request.json();
+        let { username, amount, isJackpot } = body;
+
+        // Convert amount from Jetons to Pièces for bot statistics
+        const amountInPieces = amount * SELL_RATE;
         
         const response = await fetch(`${BOT_API_URL}/casino/stats`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(body),
+            body: JSON.stringify({ username, amount: amountInPieces, isJackpot }),
         });
 
         if (!response.ok) {
