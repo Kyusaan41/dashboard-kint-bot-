@@ -3122,7 +3122,7 @@ const handleSellJetons = async () => {
                                     </div>
                                             {sellAmount > 0 && (
                                                 <p className="text-xs text-gray-500 mt-1">
-                                                    Gain: {formatMoney(Math.floor(sellAmount * 0.02))} 💰
+                                                    Gain: {formatMoney(Math.floor(sellAmount * 0.001))} 💰
                                                 </p>
                                             )}
                                         </div>
