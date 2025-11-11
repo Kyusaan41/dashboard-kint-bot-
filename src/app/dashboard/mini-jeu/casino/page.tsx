@@ -2557,7 +2557,7 @@ const handleSellJetons = async () => {
                                     transition={{ delay: 0.7 }}
                                 >
                                     <p className="text-xs text-gray-500 font-semibold">
-                                        Mise maximale: 100 000 jetons
+                                        By Kyû | 2025
                                     </p>
                                 </motion.div>
                                 <motion.button
