@@ -846,13 +846,7 @@ export default function CasinoSlotPage() {
     const { data: session } = useSession();
     const { playSound, soundsEnabled, toggleSounds, masterVolume, changeVolume } = useCasinoSounds(); // @ts-ignore
     const [piecesBalance, setPiecesBalance] = useState<number>(0);
-    const [jetonsBalance, setJetonsBalance] = useState<number>(() => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('casino_jetons_balance');
-    return saved ? Number(saved) : 0;
-  }
-  return 0;
-});
+    const [jetonsBalance, setJetonsBalance] = useState<number>(0);
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
     const [bet, setBet] = useState<number>(10);
     const [reels, setReels] = useState<Reel[]>([
@@ -995,35 +989,29 @@ export default function CasinoSlotPage() {
         try {
             setLoadingBalance(true);
             
-            // Fetch Pièces balance
-            const piecesRes = await fetch('/api/currency/me');
-            if (piecesRes.ok) {
-                const data = await piecesRes.json();
+            // Fetch Pièces ET Jetons balance depuis l'API
+            const currencyRes = await fetch('/api/currency/me');
+            if (currencyRes.ok) {
+                const data = await currencyRes.json();
+                console.log('💰 Données currency:', data);
+                
                 if (typeof data.balance === 'number') {
                     setPiecesBalance(data.balance);
+                }
+                if (typeof data.tokens === 'number') {
+                    setJetonsBalance(data.tokens);
+                    updateJetonsBalance(data.tokens);
                 }
                 if (data.level) setPlayerLevel(data.level);
                 if (data.xp) setPlayerXp(data.xp);
                 if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
             } else {
-                console.error('Erreur fetch pièces balance', piecesRes.status);
-            }
-
-            // Fetch Jetons balance
-            const jetonsRes = await fetch('/api/jetons/me');
-            if (jetonsRes.ok) {
-                const data = await jetonsRes.json();
-                if (typeof data.balance === 'number') {
-                    setJetonsBalance(data.balance);
-                    updateJetonsBalance(data.balance);
-                    localStorage.setItem('casino_jetons_balance', data.balance.toString());
-                }
-            } else {
-                console.error('Erreur fetch jetons balance', jetonsRes.status);
+                console.error('Erreur fetch currency balance', currencyRes.status);
             }
 
         } catch (e) {
             console.error('Erreur fetch balances', e);
+            setMessage('Erreur de connexion pour charger votre solde.');
         } finally {
             setLoadingBalance(false);
         }
@@ -1100,6 +1088,8 @@ export default function CasinoSlotPage() {
         // Charger les top wins initial
         loadTopWins();
     }, [fetchUserBalances]); // fetchUserBalances est mémorisé avec useCallback, donc cela ne se déclenchera qu'une fois.
+
+    
 
     // ✨ NOUVEAU: Fonction pour ajouter de l'XP
     const addXp = async (amount: number) => {
@@ -1332,19 +1322,22 @@ export default function CasinoSlotPage() {
             } else {
                 setMessage('🎰 Mise en cours...');
                 
-                // Deduct jetons
-                const reserve = await fetch('/api/jetons/me', {
+                // Déduction via API NyxNode
+                const deductRes = await fetch('/api/currency/me', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount: -Math.abs(lockedBet) })
+                    body: JSON.stringify({ 
+                        action: 'spend',
+                        amount: lockedBet,
+                        type: 'tokens'
+                    })
                 });
 
-                if (reserve.ok) {
-                    const json = await reserve.json();
-                    if (typeof json.balance === 'number') {
-                        setJetonsBalance(json.balance);
-                        // ✨ NOUVEAU: Animer la diminution du solde
-                        updateJetonsBalance(json.balance);
+                if (deductRes.ok) {
+                    const data = await deductRes.json();
+                    if (typeof data.tokens === 'number') {
+                        setJetonsBalance(data.tokens);
+                        updateJetonsBalance(data.tokens);
                     }
                 } else {
                     // Fallback if API fails
@@ -1629,18 +1622,21 @@ export default function CasinoSlotPage() {
                                                         }
                                                     }
                             try {
-                                // Credit jetons
-                                const post = await fetch('/api/jetons/me', {
+                                // Crédit via API NyxNode
+                                const creditRes = await fetch('/api/currency/me', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ amount: spinResult.amount })
+                                    body: JSON.stringify({ 
+                                        action: 'add', 
+                                        amount: spinResult.amount,
+                                        type: 'tokens'
+                                    })
                                 });
-                                if (post.ok) {
-                                    const j = await post.json();
-                                    if (typeof j.balance === 'number') {
-                                        setJetonsBalance(j.balance);
-                                        // ✨ NOUVEAU: Animer l'augmentation du solde
-                                        updateJetonsBalance(j.balance);
+                                if (creditRes.ok) {
+                                    const data = await creditRes.json();
+                                    if (typeof data.tokens === 'number') {
+                                        setJetonsBalance(data.tokens);
+                                        updateJetonsBalance(data.tokens);
                                     }
                                 } else {
                                     // Fallback if API fails
@@ -1702,16 +1698,19 @@ export default function CasinoSlotPage() {
         if (!session?.user?.id || claimedRewards.includes(level)) return;
 
         try {
-            const res = await fetch('/api/jetons/me', {
+            const res = await fetch('/api/currency/me', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: amount }),
+                body: JSON.stringify({ 
+                    action: 'add',
+                    amount: amount,
+                    type: 'tokens'
+                }),
             });
 
             if (res.ok) {
                 const newClaimed = [...claimedRewards, level];
                 setClaimedRewards(newClaimed);
-                saveClaimedRewards(newClaimed);
                 await fetchUserBalances(); // Mettre à jour le solde affiché
                 playSound('win');
             } else {
@@ -2291,7 +2290,7 @@ const handleSellJetons = async () => {
                                 </p>
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Vos Jetons</p>
                                 <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
-                                    {formatMoney(displayJetonsBalance)} 💎
+                                    {loadingBalance ? '...' : formatMoney(displayJetonsBalance)} 💎
                                 </p>
 
                                 {/* ✨ NOUVEAU: Barre d'XP et Niveau */}
