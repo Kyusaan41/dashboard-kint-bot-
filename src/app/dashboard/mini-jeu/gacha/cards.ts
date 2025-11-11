@@ -1415,7 +1415,99 @@ export const ANIME_CARDS: AnimeCard[] = [
     { id: 'ff_015', name: 'Charon', anime: 'Fire Force', rarity: 'Épique', image: '/gacha/cards/ff_015.jpg', malId: 149930, description: 'Gardien de Haumea, capable d\'absorber et de renvoyer l\'énergie.', power: 83 },
     { id: 'ff_008', name: 'Sho Kusakabe', anime: 'Fire Force', rarity: 'Légendaire', image: '/gacha/cards/ff_008.jpg', malId: 149925, description: 'Le frère de Shinra, commandant des Chevaliers de la Cendre.', power: 90 },
     { id: 'ff_009', name: 'Haumea', anime: 'Fire Force', rarity: 'Légendaire', image: '/gacha/cards/ff_009.jpg', malId: 149926, description: 'La "Gardienne du Grand Prédicateur", capable de contrôler les esprits.', power: 92 },
-    
+
+    { id: 'nar_026', name: 'Shisui Uchiha', anime: 'Naruto', rarity: 'Épique', image: '/gacha/cards/nar_026.jpg', malId: 5552, description: 'Le Téléporteur de Konoha, maître du Kotoamatsukami.', power: 82 },
+    { id: 'nar_027', name: 'Hiruzen Sarutobi', anime: 'Naruto', rarity: 'Légendaire', image: '/gacha/cards/nar_027.jpg', malId: 85, description: 'Le Troisième Hokage, le Dieu des Shinobi de son ère.', power: 92 },
+    { id: 'nar_028', name: 'Tsunade', anime: 'Naruto', rarity: 'Rare', image: '/gacha/cards/nar_028.jpg', malId: 87, description: 'La Cinquième Hokage, Sannin légendaire et médecin hors pair.', power: 66 },
+    { id: 'nar_029', name: 'Kisame Hoshigaki', anime: 'Naruto', rarity: 'Épique', image: '/gacha/cards/nar_029.jpg', malId: 2389, description: 'Le Monstre de la Brume, manieur de Samehada.', power: 79 },
+
+    { id: 'op_026', name: 'Edward Newgate (Barbe Blanche)', anime: 'One Piece', rarity: 'Légendaire', image: '/gacha/cards/op_026.jpg', malId: 62, description: 'Le plus fort homme du monde, porteur du Gura Gura no Mi.', power: 97 },
+    { id: 'op_027', name: 'Kuzan (Aokiji)', anime: 'One Piece', rarity: 'Épique', image: '/gacha/cards/op_027.jpg', malId: 312, description: 'Ancien amiral de la Marine, maître de la glace.', power: 85 },
+    { id: 'op_028', name: 'Yamato', anime: 'One Piece', rarity: 'Légendaire', image: '/gacha/cards/op_028.jpg', malId: 188271, description: 'Fille de Kaido, qui rêve de liberté comme Oden.', power: 86 },
+    { id: 'op_029', name: 'Rob Lucci', anime: 'One Piece', rarity: 'Rare', image: '/gacha/cards/op_029.jpg', malId: 3232, description: 'Agent du CP0, utilisateur du Neko Neko no Mi, modèle léopard.', power: 63 },
+
+    { id: 'jjk_026', name: 'Mai Zenin', anime: 'Jujutsu Kaisen', rarity: 'Rare', image: '/gacha/cards/jjk_026.jpg', malId: 164484, description: 'Tireuse d’élite, crée une balle par jour avec sa technique.', power: 58 },
+    { id: 'jjk_027', name: 'Naoya Zenin', anime: 'Jujutsu Kaisen', rarity: 'Épique', image: '/gacha/cards/jjk_027.jpg', malId: 201389, description: 'Héritier du clan Zenin, technique du Projection Sorcery.', power: 79 },
+    { id: 'jjk_028', name: 'Rika (Manifestation)', anime: 'Jujutsu Kaisen', rarity: 'Légendaire', image: '/gacha/cards/jjk_028.jpg', malId: 164477, description: 'L’esprit liée à Yuta, puissance écrasante quand libérée.', power: 92 },
+    { id: 'jjk_029', name: 'Momo Nishimiya', anime: 'Jujutsu Kaisen', rarity: 'Commun', image: '/gacha/cards/jjk_029.jpg', malId: 171815, description: 'Élève de Kyoto, sorcière aérienne sur son balai.', power: 34 },
+
+    { id: 'dbz_026', name: 'Android 17', anime: 'Dragon Ball Z', rarity: 'Rare', image: '/gacha/cards/dbz_026.jpg', malId: 2147, description: 'Cyborg indépendant, énergie inépuisable.', power: 66 },
+    { id: 'dbz_027', name: 'Android 16', anime: 'Dragon Ball Z', rarity: 'Rare', image: '/gacha/cards/dbz_027.jpg', malId: 2148, description: 'Cyborg pacifiste, force colossale.', power: 62 },
+    { id: 'dbz_028', name: 'Hit', anime: 'Dragon Ball Z', rarity: 'Épique', image: '/gacha/cards/dbz_028.jpg', malId: 118341, description: 'Tueur légendaire de l’Univers 6, maître du Saut temporel.', power: 84 },
+    { id: 'dbz_029', name: 'Gotenks', anime: 'Dragon Ball Z', rarity: 'Légendaire', image: '/gacha/cards/dbz_029.jpg', malId: 652, description: 'Fusion de Goten et Trunks, arrogance et puissance.', power: 91 },
+
+    { id: 'ble_026', name: 'Jushiro Ukitake', anime: 'Bleach', rarity: 'Épique', image: '/gacha/cards/ble_026.jpg', malId: 122, description: 'Capitaine malade mais redoutable, Sôgyo no Kotowari.', power: 79 },
+    { id: 'ble_027', name: 'Mayuri Kurotsuchi', anime: 'Bleach', rarity: 'Épique', image: '/gacha/cards/ble_027.jpg', malId: 124, description: 'Scientifique fou, capitaine de la 12e division.', power: 82 },
+    { id: 'ble_028', name: 'Kaname Tosen', anime: 'Bleach', rarity: 'Rare', image: '/gacha/cards/ble_028.jpg', malId: 123, description: 'Capitaine aveugle, justice jusqu’à l’extrême.', power: 61 },
+    { id: 'ble_029', name: 'Retsu Unohana', anime: 'Bleach', rarity: 'Légendaire', image: '/gacha/cards/ble_029.png', malId: 113, description: 'La première Kenpachi, guérisseuse et démon du sabre.', power: 93 },
+
+    { id: 'aot_026', name: 'Floch Forster', anime: 'Attack on Titan', rarity: 'Rare', image: '/gacha/cards/aot_026.jpg', malId: 129640, description: 'Fanatique du Jagerisme, impitoyable stratège.', power: 62 },
+    { id: 'aot_027', name: 'Hannes', anime: 'Attack on Titan', rarity: 'Commun', image: '/gacha/cards/aot_027.jpg', malId: 40883, description: 'Membre du Bataillon d’exploration au grand cœur.', power: 28 },
+    { id: 'aot_028', name: 'Ymir', anime: 'Attack on Titan', rarity: 'Rare', image: '/gacha/cards/aot_028.jpg', malId: 46493, description: 'Porteuse du Titan Mâchoire, âme tourmentée.', power: 66 },
+
+    { id: 'mha_024', name: 'Best Jeanist', anime: 'My Hero Academia', rarity: 'Légendaire', image: '/gacha/cards/mha_024.jpg', malId: 137401, description: 'Héros numéro 3, couture des fibres à volonté.', power: 90 },
+    { id: 'mha_025', name: 'Hizashi Yamada (Present Mic)', anime: 'My Hero Academia', rarity: 'Rare', image: '/gacha/cards/mha_025.jpg', malId: 117924, description: 'La voix qui fracasse tout, professeur à U.A.', power: 60 },
+    { id: 'mha_026', name: 'Mt. Lady', anime: 'My Hero Academia', rarity: 'Commun', image: '/gacha/cards/mha_026.jpg', malId: 117925, description: 'La géante glamour, héroïne en vue.', power: 36 },
+    { id: 'mha_027', name: 'Gentle Criminal', anime: 'My Hero Academia', rarity: 'Rare', image: '/gacha/cards/mha_027.jpg', malId: 137405, description: 'Vilain de courtoisie, manipule l’élasticité.', power: 58 },
+
+    { id: 'vs_011', name: 'Gudrid', anime: 'Vinland Saga', rarity: 'Commun', image: '/gacha/cards/vs_011.jpg', malId: 2476, description: 'Jeune femme libre d’esprit, rêve de voyages.', power: 22 },
+    { id: 'vs_014', name: 'Ketil', anime: 'Vinland Saga', rarity: 'Rare', image: '/gacha/cards/vs_014.jpg', malId: 2479, description: 'Propriétaire de ferme, homme complexe et faible.', power: 50 },
+
+    { id: 'bc_019', name: 'Noelle (Valkyrie Dress)', anime: 'Black Clover', rarity: 'Épique', image: '/gacha/cards/bc_019.jpg', malId: 122645, description: 'Forme d’assaut de Noelle, contrôle absolu de l’eau.', power: 83 },
+    { id: 'bc_020', name: 'Charmy Pappitson', anime: 'Black Clover', rarity: 'Rare', image: '/gacha/cards/bc_020.jpg', malId: 122648, description: 'Gloutonne à la magie du coton… et de la gastronomie.', power: 60 },
+
+    { id: 'ff_010', name: 'Inca Kasugatani', anime: 'Fire Force', rarity: 'Rare', image: '/gacha/cards/ff_010.jpg', malId: 149931, description: 'Cinquième pilote des flammes, capricieuse et dangereuse.', power: 63 },
+    { id: 'ff_011', name: 'Haijiki (Arrow)', anime: 'Fire Force', rarity: 'Épique', image: '/gacha/cards/ff_011.jpg', malId: 149932, description: 'Archer ardent de l’Évangéliste, précision mortelle.', power: 74 },
+
+    { id: 'dn_013', name: 'Aiber', anime: 'Death Note', rarity: 'Commun', image: '/gacha/cards/dn_013.jpg', malId: 239, description: 'Escroc élégant recruté par L pour l’enquête.', power: 20 },
+    { id: 'dn_014', name: 'Stephen Gevanni', anime: 'Death Note', rarity: 'Rare', image: '/gacha/cards/dn_014.jpg', malId: 240, description: 'Agent du SPK, discret et efficace.', power: 52 },
+
+    { id: 'csm_015', name: 'Kobeni Higashiyama', anime: 'Chainsaw Man', rarity: 'Commun', image: '/gacha/cards/csm_015.jpg', malId: 175959, description: 'Devil Hunter anxieuse mais surprenante.', power: 32 },
+    { id: 'csm_016', name: 'Aki (Future Devil Contract)', anime: 'Chainsaw Man', rarity: 'Épique', image: '/gacha/cards/csm_016.jpg', malId: 165268, description: 'Avec le démon du Futur, intuition et destin.', power: 78 },
+
+    { id: 'sg_017', name: 'Kagari (Suzuha Route)', anime: 'Steins;Gate', rarity: 'Rare', image: '/gacha/cards/sg_017.jpg', malId: 34626, description: 'Fille perdue, mélodie de routes croisées.', power: 54 },
+
+    { id: 'kono_015', name: 'Chris (Raflesia)', anime: 'Konosuba', rarity: 'Rare', image: '/gacha/cards/kono_015.jpg', malId: 118877, description: 'Voleuse charismatique, manieuse de Steal.', power: 59 },
+
+    { id: 'sds_020', name: 'Ludociel', anime: 'The Seven Deadly Sins', rarity: 'Légendaire', image: '/gacha/cards/sds_020.jpg', malId: 201396, description: 'Chef des Quatre Archanges, lumière écrasante.', power: 94 },
+
+    { id: 'ovl_019', name: 'Victim', anime: 'Overlord', rarity: 'Rare', image: '/gacha/cards/ovl_019.jpg', malId: 88655, description: 'Gardien sacrificiel, déclencheur d’alarmes absolues.', power: 57 },
+
+    { id: 'cg_017', name: 'Anya Alstreim', anime: 'Code Geass', rarity: 'Rare', image: '/gacha/cards/cg_017.jpg', malId: 430, description: 'Knight of Six, mémoire capricieuse.', power: 61 },
+
+    { id: 'ngnl_015', name: 'Tet (Human Form)', anime: 'No Game No Life', rarity: 'Légendaire', image: '/gacha/cards/ngnl_015.jpg', malId: 64025, description: 'Ange joueur sous apparence d’enfant.', power: 94 },
+
+    { id: 'spy_014', name: 'Yuri (Ostania Uniform)', anime: 'Spy x Family', rarity: 'Rare', image: '/gacha/cards/spy_014.jpg', malId: 166332, description: 'Agent secret protecteur… et beau-frère intense.', power: 58 },
+
+    { id: 'tr_010', name: 'Hina Tachibana', anime: 'Tokyo Revengers', rarity: 'Commun', image: '/gacha/cards/tr_010.jpg', malId: 138242, description: 'Cœur de Takemichi, source d’espoir.', power: 22 },
+
+    { id: 'ft_020', name: 'Cana Alberona', anime: 'Fairy Tail', rarity: 'Rare', image: '/gacha/cards/ft_020.jpg', malId: 6719, description: 'Mage des cartes, force tranquille et taverne.', power: 60 },
+
+    { id: 'sao_020', name: 'Egil (Shop Owner)', anime: 'Sword Art Online', rarity: 'Rare', image: '/gacha/cards/sao_020.jpg', malId: 40836, description: 'Marchand et allié loyal, force au cœur grand.', power: 56 },
+
+    { id: 'tg_001', name: 'Ken Kaneki', anime: 'Tokyo Ghoul', rarity: 'Rare', image: '/gacha/cards/tg_001.jpg', malId: 22319, description: 'Étudiant devenu goule, combat pour son humanité.', power: 66 },
+    { id: 'tg_002', name: 'Touka Kirishima', anime: 'Tokyo Ghoul', rarity: 'Rare', image: '/gacha/cards/tg_002.jpg', malId: 72349, description: 'Serveuse du Anteiku, aile de combat Kagune.', power: 62 },
+    { id: 'tg_003', name: 'Juuzou Suzuya', anime: 'Tokyo Ghoul', rarity: 'Épique', image: '/gacha/cards/tg_003.jpg', malId: 72356, description: 'Inspecteur excentrique, talent tranchant.', power: 78 },
+    { id: 'tg_004', name: 'Kishou Arima', anime: 'Tokyo Ghoul', rarity: 'Légendaire', image: '/gacha/cards/tg_004.jpg', malId: 72360, description: 'Le Faucheur Blanc, invaincu du CCG.', power: 94 },
+    { id: 'tg_005', name: 'Shuu Tsukiyama', anime: 'Tokyo Ghoul', rarity: 'Épique', image: '/gacha/cards/tg_005.jpg', malId: 72355, description: 'Le Gourmet, obsédé par les saveurs rares.', power: 80 },
+    { id: 'tg_006', name: 'Eto Yoshimura', anime: 'Tokyo Ghoul', rarity: 'Légendaire', image: '/gacha/cards/tg_006.jpg', malId: 72363, description: 'Auteure et reine borgne, stratège implacable.', power: 92 },
+    { id: 'tg_007', name: 'Hideyoshi Nagachika', anime: 'Tokyo Ghoul', rarity: 'Commun', image: '/gacha/cards/tg_007.jpg', malId: 72350, description: 'Ami fidèle de Kaneki, courage discret.', power: 28 },
+
+    { id: 'kkg_001', name: 'Yumeko Jabami', anime: 'Gambling School', rarity: 'Épique', image: '/gacha/cards/kkg_001.jpg', malId: 34964, description: 'Joueuse compulsive, recherche du frisson pur.', power: 82 },
+    { id: 'kkg_002', name: 'Mary Saotome', anime: 'Gambling School', rarity: 'Rare', image: '/gacha/cards/kkg_002.jpg', malId: 34965, description: 'Calculatrice et fière, rivalité et respect.', power: 64 },
+    { id: 'kkg_003', name: 'Kirari Momobami', anime: 'Gambling School', rarity: 'Légendaire', image: '/gacha/cards/kkg_003.jpg', malId: 34966, description: 'Présidente de conseil, froide et imprévisible.', power: 90 },
+    { id: 'kkg_004', name: 'Ririka Momobami', anime: 'Gambling School', rarity: 'Rare', image: '/gacha/cards/kkg_004.jpg', malId: 38438, description: 'Sœur masquée, ombre menaçante.', power: 61 },
+    { id: 'kkg_005', name: 'Itsuki Sumeragi', anime: 'Gambling School', rarity: 'Rare', image: '/gacha/cards/kkg_005.jpg', malId: 34967, description: 'Héritière des jouets, obsessions et enjeux.', power: 58 },
+    { id: 'kkg_006', name: 'Midari Ikishima', anime: 'Gambling School', rarity: 'Épique', image: '/gacha/cards/kkg_006.jpg', malId: 34968, description: 'Déviante suicidaire, aime jouer avec la mort.', power: 77 },
+    { id: 'kkg_007', name: 'Ryota Suzui', anime: 'Gambling School', rarity: 'Commun', image: '/gacha/cards/kkg_007.jpg', malId: 34969, description: 'Élève prudent, fidèle à Yumeko.', power: 26 },
+
+    { id: 'brk_001', name: 'Guts', anime: 'Berserk', rarity: 'Légendaire', image: '/gacha/cards/brk_001.jpg', malId: 323, description: 'Le Guerrier Noir, portant le Dragon Slayer.', power: 96 },
+    { id: 'brk_002', name: 'Griffith', anime: 'Berserk', rarity: 'Légendaire', image: '/gacha/cards/brk_002.jpg', malId: 324, description: 'Chef de la Troupe du Faucon, charisme et ambition.', power: 95 },
+    { id: 'brk_003', name: 'Casca', anime: 'Berserk', rarity: 'Rare', image: '/gacha/cards/brk_003.jpg', malId: 325, description: 'Commandante fidèle, force et tragédie.', power: 63 },
+    { id: 'brk_004', name: 'Skull Knight', anime: 'Berserk', rarity: 'Épique', image: '/gacha/cards/brk_004.jpg', malId: 326, description: 'Chevalier énigmatique, au-delà de la causalité.', power: 88 },
+    { id: 'brk_005', name: 'Serpico', anime: 'Berserk', rarity: 'Rare', image: '/gacha/cards/brk_005.jpg', malId: 327, description: 'Épéiste subtil, tacticien au vent.', power: 60 },
+    { id: 'brk_006', name: 'Zodd', anime: 'Berserk', rarity: 'Épique', image: '/gacha/cards/brk_006.jpg', malId: 328, description: 'La Bête Immortelle, soif de combat.', power: 86 }
+
 ];
 
 // Fonction pour obtenir toutes les cartes d'une rareté donnée
