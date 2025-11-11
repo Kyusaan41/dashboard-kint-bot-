@@ -1,16 +1,22 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-
-const BOT_API_URL = 'http://193.70.34.25:20007/api';
+import { NYXNODE_API_URL } from '@/config/api'; // ← Utilisez la même config
 
 export async function POST(request: NextRequest) {
     console.log('✅ Route /api/jetons/exchange appelée');
+    
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-        console.log('❌ Non autorisé');
-        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+
+    if (!session || !session.user) {
+        console.log('❌ Non autorisé - Session utilisateur non trouvée');
+        return NextResponse.json({ success: false, message: 'Non autorisé' }, { status: 401 });
     }
+
+    console.log('🔍 Session trouvée:', {
+        userId: session.user.id,
+        name: session.user.name
+    });
 
     try {
         const { action, amount } = await request.json();
@@ -23,10 +29,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Action invalide. Utilisez "buy" ou "sell".' }, { status: 400 });
         }
 
-        console.log(`🔄 ${action.toUpperCase()} de jetons:`, { userId: session.user.id, amount });
+        console.log(`🔄 ${action.toUpperCase()} de jetons:`, { 
+            userId: session.user.id, 
+            amount 
+        });
 
-        // Appeler votre bot Express pour l'échange
-        const res = await fetch(`${BOT_API_URL}/exchange/${action}`, {
+        // UTILISEZ LE PROXY COMME L'AUTRE ROUTE
+        console.log("🌐 Requête envoyée à:", `${NYXNODE_API_URL}/api/tokens/exchange/${action}`);
+        const botResponse = await fetch(`${NYXNODE_API_URL}/api/tokens/exchange/${action}`, {
+
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -35,32 +46,30 @@ export async function POST(request: NextRequest) {
             }),
         });
 
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({ message: 'Erreur du serveur' }));
-            return NextResponse.json({ 
-                error: errorData.message || `Erreur lors de l'${action === 'buy' ? 'achat' : 'vente'}` 
-            }, { status: res.status });
+        const responseData = await botResponse.json();
+
+        if (!botResponse.ok) {
+            console.log('❌ Erreur du bot:', responseData);
+            return NextResponse.json(responseData, { status: botResponse.status });
         }
 
-        const data = await res.json();
-
-        console.log(`✅ ${action.toUpperCase()} réussi:`, data);
+        console.log(`✅ ${action.toUpperCase()} réussi:`, responseData);
 
         // Formater la réponse selon l'action
         if (action === 'buy') {
             return NextResponse.json({
                 success: true,
-                currencyBalance: data.newBalance.coins,
-                jetonsBalance: data.newBalance.tokens,
-                cost: data.transaction.coinsSpent,
+                currencyBalance: responseData.newBalance.coins,
+                jetonsBalance: responseData.newBalance.tokens,
+                cost: responseData.transaction.coinsSpent,
                 bought: amount
             });
         } else {
             return NextResponse.json({
                 success: true,
-                currencyBalance: data.newBalance.coins,
-                jetonsBalance: data.newBalance.tokens,
-                gain: data.transaction.coinsReceived,
+                currencyBalance: responseData.newBalance.coins,
+                jetonsBalance: responseData.newBalance.tokens,
+                gain: responseData.transaction.coinsReceived,
                 sold: amount
             });
         }
