@@ -1,6 +1,8 @@
-import { NextResponse, NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+
+const BOT_BASE_URL = 'http://193.70.34.25:20007/api';
 
 export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -15,66 +17,47 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Montant invalide' }, { status: 400 });
         }
 
-        const SELL_RATE = 0.02; // 1000 Jetons = 20 Pièces (soit 1 Jeton = 0.02 Pièce)
-        const gainInCurrency = amount * SELL_RATE;
+        console.log('💰 Vente de jetons demandée:', { userId: session.user.id, amount });
 
-        // 1. Déduire les jetons
-        const jetonsRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/jetons/me`, {
+        // Appeler directement votre bot Express
+        const res = await fetch(`${BOT_BASE_URL}/exchange/sell`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Cookie': request.headers.get('cookie') || ''
-            },
-            body: JSON.stringify({ amount: -amount }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: session.user.id,
+                amount: amount
+            }),
         });
 
-        if (!jetonsRes.ok) {
-            const errorData = await jetonsRes.json();
-            return NextResponse.json({ 
-                error: errorData.error || 'Solde de jetons insuffisant' 
-            }, { status: 400 });
+        const text = await res.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = { error: 'Réponse du bot non valide', raw: text };
         }
 
-        // 2. Ajouter les pièces
-        const currencyRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/currency/me`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Cookie': request.headers.get('cookie') || ''
-            },
-            body: JSON.stringify({ amount: gainInCurrency }),
-        });
+        console.log('📡 Réponse du bot pour vente:', data);
 
-        if (!currencyRes.ok) {
-            // Rembourser les jetons en cas d'erreur
-            await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/jetons/me`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cookie': request.headers.get('cookie') || ''
-                },
-                body: JSON.stringify({ amount: amount }),
-            });
-            
-            const errorData = await currencyRes.json();
+        if (!res.ok) {
             return NextResponse.json({ 
-                error: errorData.error || 'Erreur lors de l\'ajout des pièces' 
-            }, { status: 500 });
+                error: data.message || 'Erreur lors de la vente' 
+            }, { status: res.status });
         }
 
-        const updatedJetons = await jetonsRes.json();
-        const updatedCurrency = await currencyRes.json();
-
+        // Adapter la réponse au format attendu par le frontend
         return NextResponse.json({
             success: true,
-            currencyBalance: updatedCurrency.balance,
-            jetonsBalance: updatedJetons.balance,
-            gain: gainInCurrency,
+            currencyBalance: data.newBalance.coins,
+            jetonsBalance: data.newBalance.tokens,
+            gain: data.transaction.coinsReceived,
             sold: amount
         });
 
     } catch (error) {
-        console.error('Erreur vente jetons:', error);
-        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+        console.error('💥 Erreur vente jetons:', error);
+        return NextResponse.json({ 
+            error: 'Erreur de connexion avec le serveur d\'échange' 
+        }, { status: 500 });
     }
 }
