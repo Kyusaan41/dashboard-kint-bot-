@@ -846,7 +846,13 @@ export default function CasinoSlotPage() {
     const { data: session } = useSession();
     const { playSound, soundsEnabled, toggleSounds, masterVolume, changeVolume } = useCasinoSounds(); // @ts-ignore
     const [piecesBalance, setPiecesBalance] = useState<number>(0);
-    const [jetonsBalance, setJetonsBalance] = useState<number>(0);
+    const [jetonsBalance, setJetonsBalance] = useState<number>(() => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('casino_jetons_balance');
+    return saved ? Number(saved) : 0;
+  }
+  return 0;
+});
     const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
     const [bet, setBet] = useState<number>(10);
     const [reels, setReels] = useState<Reel[]>([
@@ -1010,6 +1016,7 @@ export default function CasinoSlotPage() {
                 if (typeof data.balance === 'number') {
                     setJetonsBalance(data.balance);
                     updateJetonsBalance(data.balance);
+                    localStorage.setItem('casino_jetons_balance', data.balance.toString());
                 }
             } else {
                 console.error('Erreur fetch jetons balance', jetonsRes.status);
