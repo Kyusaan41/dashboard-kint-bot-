@@ -207,23 +207,23 @@ const PAYOUTS: { [symbol: string]: number } = {
     '7️⃣': 50,   // Jackpot (géré séparément, valeur symbolique)
     '💎': 10,    // Gains élevés mais pas abusifs
     '💰': 8,     // Moyen+
-    '🍀': 6,     // Moyen
-    '🍒': 5,     // Classique
-    '🍇': 4,     // Modéré
-    '🍓': 3,     // Petit gain
-    '🍋': 2      // Faible
+    '🍀': 7,     // Moyen
+    '🍒': 6,     // Classique
+    '🍇': 5,     // Modéré
+    '🍓': 4,     // Petit gain
+    '🍋': 3      // Faible
 };
 
 // ✨ NOUVEAU: Multiplicateurs spécifiques pour 2 symboles identiques
 const PAYOUTS_TWO_SYMBOLS: { [symbol: string]: number } = {
-    '7️⃣': 6,   // Gain spécial élevé
-    '💎': 4,     // Maintien d'un gain correct
-    '💰': 3,     // Maintien d'un gain correct
-    '🍀': 2,     // Maintien d'un gain correct
-    '🍒': 1.6,   // 1800 pour une mise de 1000
-    '🍇': 1.5,   // 1700 pour une mise de 1000
-    '🍓': 1.4,   // 1600 pour une mise de 1000
-    '🍋': 1.3    // 1500 pour une mise de 1000
+    '7️⃣': 7,   // Gain spécial élevé
+    '💎': 4.5,     // Maintien d'un gain correct
+    '💰': 3.2,     // Maintien d'un gain correct
+    '🍀': 2.2,     // Maintien d'un gain correct
+    '🍒': 1.8,   // 1800 pour une mise de 1000
+    '🍇': 1.7,   // 1700 pour une mise de 1000
+    '🍓': 1.6,   // 1600 pour une mise de 1000
+    '🍋': 1.5    // 1500 pour une mise de 1000
 };
 
 function useWindowSizeLocal() {
@@ -1199,7 +1199,7 @@ export default function CasinoSlotPage() {
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
             finalAmount = Math.max(currentBet * 2, baseAmount);
 
-            const maxWinMultiplier = 30;
+            const maxWinMultiplier = 40;
             finalAmount = Math.min(finalAmount, currentBet * maxWinMultiplier);
 
             return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' };
@@ -1245,11 +1245,6 @@ export default function CasinoSlotPage() {
     };
 
     const handleSpin = async () => {
-         // ✨ NOUVELLE VÉRIFICATION: Limite à 100K maximum
-    if (bet > 100000) {
-        setMessage('Mise maximale de 100K dépassée');
-        return;
-    }
         if (spinning) return;
         if (bet <= 0) {
             setMessage('Mise invalide');
@@ -1362,8 +1357,8 @@ export default function CasinoSlotPage() {
                 const reelLength = 50;
                 const finalSymbolIndex = reelLength - 13;
 
-                // ⚖️ Taux global de pertes : 0.84 = environ 16% de victoires
-                const GLOBAL_LOSS_RATE = 0.87; // 1 - 0.80 = 20% de chances de victoire
+                // ⚖️ Taux global de pertes ajusté pour augmenter le winrate
+                const GLOBAL_LOSS_RATE = 0.75; // ≈25% de chances de victoire
 
                 // Symboles perdants (majoritaires)
                 const losingSymbols = ['🍋', '🍓', '🍇', '🍒'];
@@ -1393,8 +1388,8 @@ export default function CasinoSlotPage() {
                     const devilLosingSymbols = ['🔥', '😈', '💀', '🔱'];
                     const devilProfitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
 
-                    // Moins punitif : +0.04 au lieu de +0.07
-                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.04)) {
+                    // Moins punitif en Devil Mode
+                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.02)) {
                         finalSymbol = devilLosingSymbols[Math.floor(Math.random() * devilLosingSymbols.length)];
                     } else {
                         finalSymbol = devilProfitableSymbols[Math.floor(Math.random() * devilProfitableSymbols.length)];
