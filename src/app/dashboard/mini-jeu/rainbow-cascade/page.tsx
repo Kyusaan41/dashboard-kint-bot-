@@ -1,4 +1,3 @@
-    const BET_MAX = 100000;
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
@@ -6,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown, Volume2, VolumeX, ArrowLeft, Rainbow } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+
+    const BET_MAX = 100000;
 
 // Rainbow Cascade - Plinko-style game with color-changing ball
 // 🔒 SECURITY: All results are pre-calculated server-side to prevent exploits
