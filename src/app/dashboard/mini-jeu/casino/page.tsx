@@ -3068,7 +3068,7 @@ const handleSellJetons = async () => {
                                         />
                                         <motion.button
                                             onClick={handleBuyJetons}
-                                            disabled={loadingExchange || buyAmount <= 0 || piecesBalance < buyAmount * 100}
+                                            disabled={loadingExchange || buyAmount <= 0 || piecesBalance < Math.ceil(buyAmount * 0.5)}
                                             className={`px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${
                                                 isDevilMode
                                                     ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 enabled:hover:scale-105'
