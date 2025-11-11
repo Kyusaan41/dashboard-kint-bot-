@@ -282,6 +282,11 @@ export default function CollectionPage() {
     const [groupByAnime, setGroupByAnime] = useState(true); // ✨ NOUVEAU: État pour le regroupement
     const [showMissingCards, setShowMissingCards] = useState(false);
 
+    // ✨ NOUVEAU: Autocomplete des utilisateurs + recherche de cartes
+    const [members, setMembers] = useState<Array<{ id: string; username: string; avatar: string }>>([]);
+    const [showUserSuggestions, setShowUserSuggestions] = useState(false);
+    const [cardQuery, setCardQuery] = useState('');
+
     // ✨ CORRECTION: On définit fetchCollection ici avec useCallback
     const fetchCollection = useCallback(async (userIdToFetch: string) => {
         if (!userIdToFetch) return;
@@ -460,8 +465,46 @@ export default function CollectionPage() {
         // ✨ NOUVEAU: Gérer la recherche
         const handleSearch = (e: React.FormEvent) => {
             e.preventDefault();
-            if (searchInput.trim()) {
-                setViewedUserId(searchInput.trim());
+            const q = searchInput.trim();
+            if (!q) return;
+            const match = members.find(m => m.username.toLowerCase().includes(q.toLowerCase()))
+                || members.find(m => m.id === q);
+            if (match) {
+                setViewedUserId(match.id);
+                setSearchInput(match.username);
+                setShowUserSuggestions(false);
+            } else {
+                setViewedUserId(q);
+            }
+        };
+
+        // ✨ NOUVEAU: Suggestions d'utilisateurs filtrées
+        const userSuggestions = useMemo(() => {
+            const q = searchInput.trim().toLowerCase();
+            if (!q) return [] as Array<{ id: string; username: string; avatar: string }>;
+            return members.filter(m => m.username.toLowerCase().includes(q)).slice(0, 8);
+        }, [members, searchInput]);
+
+        // ✨ NOUVEAU: Recherche d'une carte par nom et scroll vers la carte possédée
+        const handleCardSearch = (e: React.FormEvent) => {
+            e.preventDefault();
+            const q = cardQuery.trim().toLowerCase();
+            if (!q) return;
+            const match = ANIME_CARDS.find(c => c.name.toLowerCase().includes(q));
+            if (!match) {
+                toast.error('Carte introuvable.');
+                return;
+            }
+            const owned = !!collection?.collections.flatMap(c => c.cards).find(c => c.cardId === match.id);
+            if (!owned) {
+                toast.error("Vous ne possédez pas cette carte.");
+                return;
+            }
+            const el = document.querySelector(`[data-card-id="${match.id}"]`) as HTMLElement | null;
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                toast.message?.('Carte trouvée, mais non visible avec les filtres actuels.');
             }
         };
     
@@ -525,28 +568,46 @@ export default function CollectionPage() {
                 }
             );
         };
-    
+
+        // ✨ Initialiser l'utilisateur affiché depuis la session
         useEffect(() => {
             if (session?.user?.id && !viewedUserId) {
                 setViewedUserId(session.user.id);
             }
         }, [session, viewedUserId]);
-    
+
+        // ✨ Charger la collection quand l'utilisateur change
         useEffect(() => {
             if (viewedUserId) {
                 fetchCollection(viewedUserId);
             }
         }, [viewedUserId, fetchCollection]);
-    
-        if (loading) {
+
+        // ✨ Charger la liste des membres pour l'autocomplete
+        useEffect(() => {
+            (async () => {
+                try {
+                    const res = await fetch('/api/discord/members');
+                    if (res.ok) {
+                        const data = await res.json();
+                        setMembers(Array.isArray(data?.members) ? data.members : []);
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            })();
+        }, []);
+
+        // ✨ Chargement
+        if (loading && !collection) {
             return (
-                <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-900 text-white p-4">
-                    <Loader className="w-12 h-12 animate-spin text-purple-400 mb-4" />
+                <div className="min-h-screen w-full flex flex-col items-center justify-center bg-transparent text-white p-4">
+                    <Loader className="w-6 h-6 animate-spin mb-2" />
                     <p className="text-lg">Chargement de votre collection...</p>
                 </div>
             );
         }
-    
+
         if (error && !collection) {
             return (
                 <div className="min-h-screen w-full flex flex-col items-center justify-center bg-transparent text-white p-4">
@@ -609,18 +670,52 @@ export default function CollectionPage() {
                         </Link>
                     </div>
     
-                    {/* ✨ NOUVEAU: Barre de recherche d'utilisateur */}
-                    <div className="mb-8">
+                    {/* ✨ NOUVEAU: Barre de recherche d'utilisateur avec suggestions */}
+                    <div className="mb-6 relative">
                         <form onSubmit={handleSearch} className="flex gap-2">
                             <input
                                 type="text"
                                 value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                placeholder="Entrez l'ID Discord d'un utilisateur..."
+                                onFocus={() => setShowUserSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowUserSuggestions(false), 120)}
+                                onChange={(e) => { setSearchInput(e.target.value); setShowUserSuggestions(true); }}
+                                placeholder="Rechercher un utilisateur par pseudo..."
                                 className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                             <button type="submit" className="px-6 py-2 bg-purple-600 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
                                 Chercher
+                            </button>
+                        </form>
+                        {showUserSuggestions && userSuggestions.length > 0 && (
+                            <div className="absolute z-20 mt-2 w-full bg-slate-800 border border-white/20 rounded-lg shadow-lg max-h-64 overflow-auto">
+                                {userSuggestions.map(u => (
+                                    <button
+                                        key={u.id}
+                                        type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => { setViewedUserId(u.id); setSearchInput(u.username); setShowUserSuggestions(false); }}
+                                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 text-left"
+                                    >
+                                        <img src={u.avatar} alt={u.username} className="w-6 h-6 rounded-full" />
+                                        <span className="text-sm">{u.username}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ✨ NOUVEAU: Recherche de carte */}
+                    <div className="mb-8">
+                        <form onSubmit={handleCardSearch} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={cardQuery}
+                                onChange={(e) => setCardQuery(e.target.value)}
+                                placeholder="Rechercher une carte (ex: Eren Yeager)"
+                                className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                            <button type="submit" className="px-6 py-2 bg-purple-600 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                                Aller à la carte
                             </button>
                         </form>
                     </div>
@@ -719,6 +814,7 @@ export default function CollectionPage() {
                                                     <motion.div
                                                         key={card.id}
                                                         layout
+                                                        data-card-id={card.id}
                                                         className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[card.rarity] || RARITY_STYLES['Commun']} ${card.rarity === 'Mythique' ? 'holographic-border' : ''}`}
                                                         style={card.rarity === 'Mythique' ? { animation: 'mythic-aura-pulse 4s ease-in-out infinite' } : {}}
                                                         initial={{ opacity: 0, y: 20 }}
@@ -800,6 +896,7 @@ export default function CollectionPage() {
                                     <motion.div
                                         key={card.id}
                                         layout
+                                        data-card-id={card.id}
                                         className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[card.rarity] || RARITY_STYLES['Commun']} ${card.rarity === 'Mythique' ? 'holographic-border' : ''}`}
                                         style={card.rarity === 'Mythique' ? { animation: 'mythic-aura-pulse 4s ease-in-out infinite' } : {}}
                                         initial={{ opacity: 0, y: 20 }}
