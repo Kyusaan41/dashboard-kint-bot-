@@ -5,8 +5,10 @@ import { authOptions } from '@/lib/auth';
 const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 export async function POST(request: NextRequest) {
+    console.log('✅ Route /api/jetons/exchange appelée');
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
+        console.log('❌ Non autorisé');
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
