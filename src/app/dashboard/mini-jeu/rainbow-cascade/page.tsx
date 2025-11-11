@@ -1,3 +1,4 @@
+    const BET_MAX = 100000;
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
@@ -348,7 +349,13 @@ export default function RainbowCascadePage() {
     
     // 🔒 SECURITY: Play game with server-side validation
     const playGame = async () => {
-        if (isPlaying || betAmount < 10 || betAmount > balance) return;
+        if (isPlaying) return;
+        const clampedBet = Math.min(Math.max(10, betAmount), Math.min(balance, BET_MAX));
+        if (clampedBet !== betAmount) {
+            setBetAmount(clampedBet);
+            return;
+        }
+        if (betAmount < 10 || betAmount > balance || betAmount > BET_MAX) return;
         
         setIsPlaying(true);
         playSound('drop');
@@ -526,9 +533,13 @@ export default function RainbowCascadePage() {
                             <input
                                 type="number"
                                 value={betAmount}
-                                onChange={(e) => setBetAmount(Math.max(10, parseInt(e.target.value) || 10))}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value) || 10;
+                                    const clamped = Math.min(Math.max(10, val), Math.min(balance, BET_MAX));
+                                    setBetAmount(clamped);
+                                }}
                                 min={10}
-                                max={balance}
+                                max={Math.min(balance, BET_MAX)}
                                 disabled={isPlaying}
                                 className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white text-center text-xl font-bold focus:outline-none focus:border-purple-500 transition-all disabled:opacity-50"
                             />
@@ -539,7 +550,7 @@ export default function RainbowCascadePage() {
                                         key={amount}
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
-                                        onClick={() => setBetAmount(amount)}
+                                        onClick={() => setBetAmount(Math.min(amount, Math.min(balance, BET_MAX)))}
                                         disabled={isPlaying}
                                         className="px-4 py-2 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/50 rounded-lg font-bold transition-all disabled:opacity-50"
                                     >
@@ -552,7 +563,7 @@ export default function RainbowCascadePage() {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={playGame}
-                                disabled={isPlaying || betAmount < 10 || betAmount > balance}
+                                disabled={isPlaying || betAmount < 10 || betAmount > balance || betAmount > BET_MAX}
                                 className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl font-bold text-lg shadow-lg shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isPlaying ? 'En cours...' : 'Lancer la balle 🎯'}

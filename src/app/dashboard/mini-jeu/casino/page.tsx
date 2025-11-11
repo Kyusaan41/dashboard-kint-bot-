@@ -910,6 +910,9 @@ export default function CasinoSlotPage() {
     // Avantage de la maison DIMINUÉ car les gains sont plus généreux
     const HOUSE_EDGE = 0.05; // 5% (gains plus élevés, mais chances de gagner réduites) // @ts-ignore
 
+    // Limite de mise
+    const BET_MAX = 100000;
+
     // 😈 DEVIL MODE
     const [isDevilMode, setIsDevilMode] = useState(false);
     const [showDevilTransition, setShowDevilTransition] = useState(false);
@@ -1250,6 +1253,12 @@ export default function CasinoSlotPage() {
             setMessage('Mise invalide');
             return;
         }
+        // Limite de mise maximum
+        if (bet > BET_MAX) {
+            setMessage(`Mise maximale autorisée: ${BET_MAX.toLocaleString('fr-FR')}`);
+            setBet(BET_MAX);
+            return;
+        }
         if (jetonsBalance < bet) {
             setMessage('Solde de jetons insuffisant !');
             return;
@@ -1259,8 +1268,8 @@ export default function CasinoSlotPage() {
         let isUsingFreeSpin = false;
 
         // 🔒 ANTI-TRICHE: Capturer la mise au début du spin pour éviter
-        // que l'utilisateur ne la change pendant le spinning
-        let lockedBet = bet;
+        // que l'utilisateur ne la change pendant le spinning et la limiter à BET_MAX
+        let lockedBet = Math.min(bet, BET_MAX);
 
     // ✨ NOUVEAU: Événement aléatoire (1 chance sur 50)
     let eventMultiplier = 1;
