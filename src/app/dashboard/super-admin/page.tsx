@@ -415,3 +415,5 @@ export default function SuperAdminPage() {
         </AnimatePresence>
       </div>
     </div>
+  )
+}
