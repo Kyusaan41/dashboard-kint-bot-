@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
-const BOT_BASE_URL = 'http://193.70.34.25:20007/api';
+const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -21,10 +21,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Action invalide. Utilisez "buy" ou "sell".' }, { status: 400 });
         }
 
-        console.log(`🔄 ${action.toUpperCase()} de jetons demandé:`, { userId: session.user.id, amount });
+        console.log(`🔄 ${action.toUpperCase()} de jetons:`, { userId: session.user.id, amount });
 
-        const endpoint = action === 'buy' ? 'buy' : 'sell';
-        const res = await fetch(`${BOT_BASE_URL}/exchange/${endpoint}`, {
+        // Appeler votre bot Express pour l'échange
+        const res = await fetch(`${BOT_API_URL}/exchange/${action}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -33,23 +33,18 @@ export async function POST(request: NextRequest) {
             }),
         });
 
-        const text = await res.text();
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch {
-            data = { error: 'Réponse du bot non valide', raw: text };
-        }
-
-        console.log(`📡 Réponse du bot pour ${action}:`, data);
-
         if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ message: 'Erreur du serveur' }));
             return NextResponse.json({ 
-                error: data.message || `Erreur lors de l'${action === 'buy' ? 'achat' : 'vente'}` 
+                error: errorData.message || `Erreur lors de l'${action === 'buy' ? 'achat' : 'vente'}` 
             }, { status: res.status });
         }
 
-        // Adapter la réponse au format attendu
+        const data = await res.json();
+
+        console.log(`✅ ${action.toUpperCase()} réussi:`, data);
+
+        // Formater la réponse selon l'action
         if (action === 'buy') {
             return NextResponse.json({
                 success: true,
