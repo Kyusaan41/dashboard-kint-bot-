@@ -1761,8 +1761,8 @@ const handleSellJetons = async () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                action: 'sell',
-                amount: sellAmount 
+                action: 'sell',  // ✅ CORRECTION: 'sell' au lieu de 'buy'
+                amount: sellAmount  // ✅ CORRECTION: sellAmount au lieu de buyAmount
             }),
         });
         
