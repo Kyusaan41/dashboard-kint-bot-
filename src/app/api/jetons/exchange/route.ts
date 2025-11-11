@@ -25,8 +25,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Montant invalide' }, { status: 400 });
         }
 
-        if (action !== 'buy' && action !== 'sell') {
-            return NextResponse.json({ error: 'Action invalide. Utilisez "buy" ou "sell".' }, { status: 400 });
+        // Désormais, seule l'action d'achat est autorisée
+        if (action !== 'buy') {
+            return NextResponse.json({ error: 'La revente de jetons est désactivée.' }, { status: 400 });
         }
 
         console.log(`🔄 ${action.toUpperCase()} de jetons:`, { 
@@ -35,8 +36,8 @@ export async function POST(request: NextRequest) {
         });
 
         // UTILISEZ LE PROXY COMME L'AUTRE ROUTE
-        console.log("🌐 Requête envoyée à:", `${NYXNODE_API_URL}/api/tokens/exchange/${action}`);
-        const botResponse = await fetch(`${NYXNODE_API_URL}/api/tokens/exchange/${action}`, {
+        console.log("🌐 Requête envoyée à:", `${NYXNODE_API_URL}/api/tokens/exchange/buy`);
+        const botResponse = await fetch(`${NYXNODE_API_URL}/api/tokens/exchange/buy`, {
 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -53,26 +54,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(responseData, { status: botResponse.status });
         }
 
-        console.log(`✅ ${action.toUpperCase()} réussi:`, responseData);
+        console.log(`✅ BUY réussi:`, responseData);
 
-        // Formater la réponse selon l'action
-        if (action === 'buy') {
-            return NextResponse.json({
-                success: true,
-                currencyBalance: responseData.newBalance.coins,
-                jetonsBalance: responseData.newBalance.tokens,
-                cost: responseData.transaction.coinsSpent,
-                bought: amount
-            });
-        } else {
-            return NextResponse.json({
-                success: true,
-                currencyBalance: responseData.newBalance.coins,
-                jetonsBalance: responseData.newBalance.tokens,
-                gain: responseData.transaction.coinsReceived,
-                sold: amount
-            });
-        }
+        // Formater la réponse pour l'achat uniquement
+        return NextResponse.json({
+            success: true,
+            currencyBalance: responseData.newBalance.coins,
+            jetonsBalance: responseData.newBalance.tokens,
+            cost: responseData.transaction.coinsSpent,
+            bought: amount
+        });
 
     } catch (error) {
         console.error('💥 Erreur échange jetons:', error);

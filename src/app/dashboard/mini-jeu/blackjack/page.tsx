@@ -3,9 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import { User, Bot, Coins, ArrowLeft, Shield, Swords, Spade } from 'lucide-react';
+import { User, Bot, ArrowLeft, Shield, Swords, Spade } from 'lucide-react';
 import Link from 'next/link';
-import { updateCurrency, fetchCurrency } from '@/utils/api';
 import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 // --- Types et Structures de Données ---
@@ -98,6 +97,7 @@ const Hand = ({ title, cards, score, isPlayer, isTurn }: { title: string; cards:
 const BlackjackPage = () => {
   const { data: session } = useSession();
   const [balance, setBalance] = useState(0);
+
   const [loadingBalance, setLoadingBalance] = useState(true);
 
   const [gameState, setGameState] = useState<GameState>('betting');
@@ -128,8 +128,10 @@ const BlackjackPage = () => {
     if (!session?.user?.id) return;
     setLoadingBalance(true);
     try {
-      const data = await fetchCurrency(session.user.id);
-      setBalance(data.balance || 0);
+      const res = await fetch('/api/currency/me');
+      if (!res.ok) throw new Error('Status ' + res.status);
+      const data = await res.json();
+      setBalance(typeof data.tokens === 'number' ? data.tokens : 0);
     } catch (error) {
       console.error("Erreur de récupération du solde:", error);
       setMessage("Impossible de charger votre solde.");
@@ -153,7 +155,13 @@ const BlackjackPage = () => {
     }
 
     try {
-      await updateCurrency(session!.user.id, -bet, 'Mise Blackjack');
+      // Déduction des jetons via l'API
+      const res = await fetch('/api/currency/me', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'spend', amount: bet, type: 'tokens' })
+      });
+      if (!res.ok) throw new Error('Spend failed');
       setBalance(prev => prev - bet);
 
       setGameState('player-turn');
@@ -241,14 +249,14 @@ const BlackjackPage = () => {
         setMessage('Perdu ! Vous avez dépassé 21.');
       } else if (finalDealerScore > 21) {
         winAmount = bet * 2;
-        setMessage(`Gagné ! Le croupier a dépassé 21. Vous gagnez ${winAmount} pièces.`);
+        setMessage(`Gagné ! Le croupier a dépassé 21. Vous gagnez ${winAmount} jetons.`);
       } else if (finalPlayerScore > finalDealerScore) {
         if (finalPlayerScore === 21 && playerHand.length === 2) {
           winAmount = Math.floor(bet * 2.5);
-          setMessage(`BLACKJACK ! Vous gagnez ${winAmount} pièces !`);
+          setMessage(`BLACKJACK ! Vous gagnez ${winAmount} jetons !`);
         } else {
           winAmount = bet * 2;
-          setMessage(`Gagné ! Vous battez le croupier. Vous gagnez ${winAmount} pièces.`);
+          setMessage(`Gagné ! Vous battez le croupier. Vous gagnez ${winAmount} jetons.`);
         }
       } else if (finalPlayerScore < finalDealerScore) {
         setMessage('Perdu ! Le croupier a un meilleur score.');
@@ -258,9 +266,13 @@ const BlackjackPage = () => {
       }
 
       if (winAmount > 0) {
-        updateCurrency(session!.user.id, winAmount, 'Gain Blackjack').then(() => {
+        fetch('/api/currency/me', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'add', amount: winAmount, type: 'tokens' })
+        }).then(() => {
           setBalance(prev => prev + winAmount);
-        });
+        }).catch(() => fetchUserCurrency());
       }
     }
   }, [gameState, playerHand, dealerHand, bet, session]);
@@ -271,7 +283,7 @@ const BlackjackPage = () => {
         return (
           <div className="flex flex-col md:flex-row items-center gap-4">
             <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-full border border-slate-700">
-              <Coins className="text-yellow-400" />
+              <span className="text-yellow-400">Jetons</span>
               <input
                 type="number"
                 value={bet}
@@ -343,7 +355,7 @@ const BlackjackPage = () => {
           </div>
           <div className="flex items-center gap-4">
             <div className="bg-black/50 px-4 py-2 rounded-full flex items-center gap-2 border border-yellow-700/50">
-              <Coins className="text-yellow-400" />
+              <span className="text-yellow-400">Jetons</span>
               <span className="font-bold text-lg">{loadingBalance ? '...' : balance.toLocaleString()}</span>
             </div>
              <div className="ml-2">
@@ -399,7 +411,7 @@ const BlackjackPage = () => {
                 className="text-center"
               >
                 <p className="text-xl font-semibold text-white/90">{message}</p>
-                {gameState === 'betting' && <p className="text-sm text-gray-400">Votre solde: {balance.toLocaleString()} pièces</p>}
+                {gameState === 'betting' && <p className="text-sm text-gray-400">Votre solde: {balance.toLocaleString()} jetons</p>}
               </motion.div>
             </AnimatePresence>
             <div className="mt-4">

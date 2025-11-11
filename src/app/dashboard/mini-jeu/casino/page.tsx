@@ -2288,10 +2288,6 @@ const handleSellJetons = async () => {
                                 animate={loadingBalance ? { opacity: [0.5, 1, 0.5] } : {}}
                                 transition={{ duration: 1, repeat: Infinity }}
                             >
-                                <p className="text-sm text-gray-400 font-semibold mb-1">Vos Pièces</p>
-                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent mb-4">
-                                    {formatMoney(piecesBalance)} 💰
-                                </p>
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Vos Jetons</p>
                                 <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
                                     {loadingBalance ? '...' : formatMoney(displayJetonsBalance)} 💎
@@ -3026,109 +3022,7 @@ const handleSellJetons = async () => {
                         </div>
 
 
-                    {/* Jeton Exchange Card */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5, duration: 0.5 }}
-                        className={`relative bg-black/30 backdrop-blur-2xl rounded-2xl p-1 border-2 border-transparent overflow-hidden transition-all duration-300 ${isDevilMode ? 'shadow-red-500/40' : 'shadow-purple-500/30'}`}
-                        whileHover={{ scale: 1.02, boxShadow: isDevilMode ? '0 0 30px rgba(239, 68, 68, 0.4)' : '0 0 30px rgba(139, 92, 246, 0.3)' }}
-                    >
-                        <motion.div className="absolute inset-0 rounded-xl pointer-events-none"
-                            style={{
-                                border: '2px solid transparent',
-                                background: isDevilMode 
-                                    ? 'conic-gradient(from var(--angle), rgba(239, 68, 68, 0.5), rgba(255, 165, 0, 0.3), rgba(239, 68, 68, 0.5)) border-box'
-                                    : 'conic-gradient(from var(--angle), rgba(139, 92, 246, 0.5), rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.5)) border-box',
-                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                maskComposite: 'exclude',
-                                '--angle': '0deg',
-                            } as any}
-                            animate={{ '--angle': '360deg' } as any}
-                            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                        />
-                        <div className={`relative z-10 p-5 rounded-lg h-full ${isDevilMode ? 'bg-gradient-to-br from-red-900/20 to-black/30' : 'bg-gradient-to-br from-purple-900/20 to-black/30'}`}>
-                            <div className="flex items-center gap-3 mb-4">
-                                <motion.div
-                                    className={`w-12 h-12 rounded-xl ${isDevilMode ? 'bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/50' : 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/50'} flex items-center justify-center shadow-lg transition-all duration-500`}
-                                    animate={{
-                                        rotate: [0, 10, -10, 0],
-                                        scale: [1, 1.1, 1],
-                                    }}
-                                    transition={{ duration: 2, repeat: Infinity }}
-                                >
-                                    <Coins size={24} className="text-white" />
-                                </motion.div>
-                                <h3 className={`text-xl font-black ${isDevilMode ? 'text-red-400' : 'text-purple-400'} transition-colors duration-500`}>Échange de Jetons</h3>
-                            </div>
-
-                            <div className="space-y-4">
-                                {/* Buy Jetons */}
-                                <div>
-                                    <p className="text-sm text-gray-400 mb-2">Acheter des Jetons (1000 💎 = 500 💰)</p>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={buyAmount}
-                                            onChange={(e) => setBuyAmount(Number(e.target.value))}
-                                            className="nyx-input flex-grow text-center font-bold text-lg"
-                                            disabled={loadingExchange}
-                                        />
-                                        <motion.button
-                                            onClick={handleBuyJetons}
-                                            disabled={loadingExchange || buyAmount <= 0 || piecesBalance < Math.ceil(buyAmount * 0.5)}
-                                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${
-                                                isDevilMode
-                                                    ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 enabled:hover:scale-105'
-                                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 enabled:hover:scale-105'
-                                            }`}
-                                            whileTap={{ scale: 0.95 }}
-                                        >
-                                            Acheter
-                                        </motion.button>
-                                    </div>
-                                        {buyAmount > 0 && (
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Coût: {formatMoney(Math.ceil(buyAmount * 0.5))} 💰
-                                            </p>
-                                        )}
-                                    </div>
-
-                                {/* Sell Jetons */}
-                                <div>
-                                    <p className="text-sm text-gray-400 mb-2">Vendre des Jetons (500,000💎 = 10,000 💰)</p>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={sellAmount}
-                                            onChange={(e) => setSellAmount(Number(e.target.value))}
-                                            className="nyx-input flex-grow text-center font-bold text-lg"
-                                            disabled={loadingExchange}
-                                        />
-                                        <motion.button
-                                            onClick={handleSellJetons}
-                                            disabled={loadingExchange || sellAmount <= 0 || jetonsBalance < sellAmount}
-                                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${
-                                                isDevilMode
-                                                    ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 enabled:hover:scale-105'
-                                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 enabled:hover:scale-105'
-                                            }`}
-                                            whileTap={{ scale: 0.95 }}
-                                        >
-                                            Vendre
-                                        </motion.button>
-                                    </div>
-                                            {sellAmount > 0 && (
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    Gain: {formatMoney(Math.floor(sellAmount * 0.001))} 💰
-                                                </p>
-                                            )}
-                                        </div>
-                            </div>
-                        </div>
-                    </motion.div>
+                    
 
                     {/* Payouts Table */}
                     <motion.div

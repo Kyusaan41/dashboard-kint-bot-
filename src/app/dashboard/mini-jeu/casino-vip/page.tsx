@@ -137,6 +137,8 @@ const VIPGameCard = ({
                 >
                     {icon}
                 </motion.div>
+
+                
                 
                 {/* Game Title */}
                 <h2 className={`text-3xl font-bold text-center mb-3 ${
@@ -240,6 +242,10 @@ const FloatingGoldParticle = ({ delay }: { delay: number }) => (
 
 export default function CasinoVIPHome() {
     const [currentTime, setCurrentTime] = useState('');
+    const [buyAmount, setBuyAmount] = useState<number>(100);
+    const [loadingExchange, setLoadingExchange] = useState<boolean>(false);
+    const [exchangeMessage, setExchangeMessage] = useState<string>('');
+    const [coinsBalance, setCoinsBalance] = useState<number>(0);
     
     useEffect(() => {
         const updateTime = () => {
@@ -249,6 +255,19 @@ export default function CasinoVIPHome() {
         updateTime();
         const interval = setInterval(updateTime, 1000);
         return () => clearInterval(interval);
+    }, []);
+
+    // Charger le solde de pièces pour afficher ce que l'utilisateur peut dépenser
+    useEffect(() => {
+        const loadCurrency = async () => {
+            try {
+                const res = await fetch('/api/currency/me');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (typeof data.balance === 'number') setCoinsBalance(data.balance);
+            } catch {}
+        };
+        loadCurrency();
     }, []);
 
     return (
@@ -337,6 +356,147 @@ export default function CasinoVIPHome() {
                     </motion.div>
                 </motion.div>
 
+                {/* Jetons - Achat (VIP) */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.0 }}
+                    className="max-w-6xl mx-auto mt-4"
+                >
+                    <div className="relative bg-black/30 backdrop-blur-2xl rounded-2xl p-1 border-2 border-transparent overflow-hidden transition-all duration-300 shadow-yellow-500/20">
+                        <motion.div className="absolute inset-0 rounded-xl pointer-events-none"
+                            style={{
+                                border: '2px solid transparent',
+                                background: 'conic-gradient(from var(--angle), rgba(234,179,8,0.5), rgba(249,115,22,0.3), rgba(234,179,8,0.5)) border-box',
+                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                                maskComposite: 'exclude',
+                                ['--angle' as any]: '0deg',
+                            }}
+                            animate={{ ['--angle' as any]: '360deg' }}
+                            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <div className="relative z-10 p-4 rounded-xl bg-gradient-to-br from-yellow-900/15 to-black/40 border border-yellow-600/20">
+                            <div className="flex flex-col gap-3 items-center text-center">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-500/40 flex items-center justify-center shadow">
+                                            <Coins className="text-white" size={18} />
+                                        </div>
+                                        <h3 className="text-sm font-extrabold tracking-wide text-yellow-300">Acheter des Jetons</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 justify-center">
+                                        <span className="text-[11px] px-2 py-1 rounded-full border border-yellow-600/40 text-yellow-300/90 bg-yellow-500/10 whitespace-nowrap">Taux: 1000 💎 = 500 💰</span>
+                                        <span className="text-[11px] text-gray-400 whitespace-nowrap">Solde: {coinsBalance.toLocaleString('fr-FR')} 💰</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 justify-center">
+                                    <div className="relative">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-yellow-400 text-xs">💎</span>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={buyAmount}
+                                            onChange={(e) => setBuyAmount(Math.max(1, Number(e.target.value)))}
+                                            className="nyx-input pl-7 pr-3 h-10 w-32 text-sm text-center font-bold"
+                                            disabled={loadingExchange}
+                                        />
+                                    </div>
+                                    <motion.button
+                                        disabled={loadingExchange || buyAmount <= 0 || Math.ceil(Math.max(1, buyAmount) * 0.5) > coinsBalance}
+                                        whileTap={{ scale: 0.97 }}
+                                        onClick={async () => {
+                                            if (buyAmount <= 0 || loadingExchange) return;
+                                            setLoadingExchange(true);
+                                            setExchangeMessage('');
+                                            try {
+                                                const res = await fetch('/api/jetons/exchange', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ action: 'buy', amount: buyAmount })
+                                                });
+                                                const data = await res.json();
+                                                if (res.ok) {
+                                                    setExchangeMessage(`Acheté ${data.bought?.toLocaleString('fr-FR')} jetons pour ${data.cost?.toLocaleString('fr-FR')} pièces.`);
+                                                    if (typeof data.currencyBalance === 'number') setCoinsBalance(data.currencyBalance);
+                                                } else {
+                                                    setExchangeMessage(data.error || 'Achat impossible.');
+                                                }
+                                            } catch (e) {
+                                                setExchangeMessage('Erreur interne.');
+                                            } finally {
+                                                setLoadingExchange(false);
+                                            }
+                                        }}
+                                        className="h-10 px-4 rounded-lg text-sm font-bold bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow hover:from-yellow-400 hover:to-orange-500 disabled:opacity-50"
+                                    >
+                                        {loadingExchange ? '...' : 'Acheter'}
+                                    </motion.button>
+                                </div>
+
+                                {/* Presets rapides */}
+                                <div className="flex items-center gap-2 justify-center">
+                                    {([100, 500, 1000] as number[]).map((p) => {
+                                        const cost = Math.ceil(p * 0.5);
+                                        const disabled = coinsBalance < cost || loadingExchange;
+                                        return (
+                                            <motion.button
+                                                key={p}
+                                                disabled={disabled}
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={() => setBuyAmount(p)}
+                                                className={`h-8 px-3 rounded-md text-xs font-bold border ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:scale-105'} bg-yellow-500/10 text-yellow-300 border-yellow-600/30`}
+                                            >
+                                                +{p.toLocaleString('fr-FR')} 💎
+                                            </motion.button>
+                                        );
+                                    })}
+                                    <motion.button
+                                        disabled={coinsBalance <= 0 || loadingExchange}
+                                        whileTap={{ scale: 0.97 }}
+                                        onClick={() => setBuyAmount(Math.max(1, Math.floor(coinsBalance * 2)))}
+                                        className={`h-8 px-3 rounded-md text-xs font-bold border ${coinsBalance <= 0 ? 'opacity-40 cursor-not-allowed' : 'hover:scale-105'} bg-yellow-500/10 text-yellow-300 border-yellow-600/30`}
+                                        title="Utiliser le maximum disponible"
+                                    >
+                                        MAX
+                                    </motion.button>
+                                </div>
+
+                                {/* Barre d'accessibilité du coût */}
+                                <div className="space-y-1 w-full max-w-md">
+                                    <div className="h-2 w-full rounded-full bg-black/30 border border-yellow-600/20 overflow-hidden mx-auto">
+                                        {(() => {
+                                            const cost = Math.ceil(Math.max(1, buyAmount) * 0.5);
+                                            const ratio = coinsBalance > 0 ? Math.min(100, Math.floor((cost / coinsBalance) * 100)) : 0;
+                                            return (
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${ratio}%` }}
+                                                    transition={{ duration: 0.3 }}
+                                                    className={`h-full ${cost <= coinsBalance ? 'bg-gradient-to-r from-emerald-500 to-green-400' : 'bg-gradient-to-r from-red-500 to-orange-500'}`}
+                                                />
+                                            );
+                                        })()}
+                                    </div>
+                                    <div className="flex items-center justify-center gap-4 text-[11px]">
+                                        <span className={`font-medium ${Math.ceil(Math.max(1, buyAmount) * 0.5) <= coinsBalance ? 'text-emerald-300' : 'text-red-300'}`}>
+                                            Coût: {(Math.ceil(Math.max(1, buyAmount) * 0.5)).toLocaleString('fr-FR')} 💰
+                                        </span>
+                                        <span className="text-gray-400">Max: {(Math.max(0, Math.floor(coinsBalance * 2))).toLocaleString('fr-FR')} 💎</span>
+                                    </div>
+                                </div>
+
+                                {/* Message retour */}
+                                {exchangeMessage && (
+                                    <div className="text-[11px] font-semibold text-yellow-300 truncate text-center max-w-md">
+                                        {exchangeMessage}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
                 {/* Games Grid */}
                 <motion.div
                     initial={{ opacity: 0, y: 50 }}
@@ -393,6 +553,7 @@ export default function CasinoVIPHome() {
 
                     </div>
                 </motion.div>
+
 
                 {/* Coming Soon Section */}
                 <motion.div
