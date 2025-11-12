@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server'
 import { store } from '@/lib/dataStore'
+import { loadSanctionsFromDisk } from '@/lib/persistence'
+
+let sanctionsLoaded = false
+async function ensureSanctionsLoaded() {
+  if (!sanctionsLoaded) {
+    await loadSanctionsFromDisk()
+    sanctionsLoaded = true
+  }
+}
 
 export async function GET(request: Request) {
   try {
+    await ensureSanctionsLoaded()
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 

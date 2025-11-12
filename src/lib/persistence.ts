@@ -2,7 +2,17 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import { store, Sanction } from './dataStore'
 
-const dataDir = path.join(process.cwd(), '.data')
+// Resolve a writable directory for serverless/container environments
+function resolveDataDir() {
+  const base = process.env.NYX_DATA_DIR
+    || process.env.TMPDIR
+    || process.env.TEMP
+    || process.env.TMP
+    || (process.platform === 'win32' ? 'C:\\Windows\\Temp' : '/tmp')
+  return path.join(base, 'nyxbot')
+}
+
+const dataDir = resolveDataDir()
 const sanctionsFile = path.join(dataDir, 'sanctions.json')
 
 async function ensureDir() {
