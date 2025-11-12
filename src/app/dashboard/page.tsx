@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState, FC, ReactNode } from 'react';
@@ -195,6 +195,7 @@ export default function DashboardHomePage() {
     const [articles, setArticles] = useState<Article[]>([]);
     const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
     const [previousWeekStats, setPreviousWeekStats] = useState<{ currency: number; xp: number; points: number } | null>(null);
+    const [nextClaimAt, setNextClaimAt] = useState<number | null>(null);
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setNotification({ show: true, message, type });
@@ -279,22 +280,22 @@ export default function DashboardHomePage() {
                     setPreviousWeekStats(simulatedPreviousStats);
 
                     if (currency) {
-                        const updateClaimStatus = () => {
-                            const now = Date.now();
-                            const twentyFourHours = 24 * 60 * 60 * 1000;
-                            const lastClaimTime = currency.lastBonus;
-                            if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
-                                const timeLeftValue = twentyFourHours - (now - lastClaimTime);
-                                const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
-                                const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));
-                                const seconds = Math.floor((timeLeftValue % (1000 * 60)) / 1000);
-                                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                                setClaimStatus({ canClaim: false, timeLeft: timeString });
-                            } else {
-                                setClaimStatus({ canClaim: true, timeLeft: '' });
-                            }
-                        };
-                        updateClaimStatus();
+                        const now = Date.now();
+                        const twentyFourHours = 24 * 60 * 60 * 1000;
+                        const lastClaimTime = currency.lastBonus;
+                        if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
+                            const target = lastClaimTime + twentyFourHours;
+                            setNextClaimAt(target);
+                            const timeLeftValue = target - now;
+                            const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
+                            const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));
+                            const seconds = Math.floor((timeLeftValue % (1000 * 60)) / 1000);
+                            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                            setClaimStatus({ canClaim: false, timeLeft: timeString });
+                        } else {
+                            setNextClaimAt(null);
+                            setClaimStatus({ canClaim: true, timeLeft: '' });
+                        }
                     }
                     if (statsData) setSelectedTitle(statsData.equippedTitle || '');
                 } catch (error) {
@@ -316,38 +317,28 @@ export default function DashboardHomePage() {
         }
     }, [articles.length]);
 
-    // Timer en temps réel pour la récompense quotidienne
+    // Timer en temps réel pour la récompense quotidienne (calcul local, pas de refetch)
     useEffect(() => {
-        if (!claimStatus.canClaim && session?.user?.id) {
-            const interval = setInterval(async () => {
-                try {
-                    const currency = await fetch(`/api/currency/${session.user.id}`).then(res => res.json());
-                    if (currency) {
-                        const now = Date.now();
-                        const twentyFourHours = 24 * 60 * 60 * 1000;
-                        const lastClaimTime = currency.lastBonus;
-                        if (lastClaimTime && (now - lastClaimTime < twentyFourHours)) {
-                            const timeLeftValue = twentyFourHours - (now - lastClaimTime);
-                            if (timeLeftValue > 0) {
-                                const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
-                                const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));
-                                const seconds = Math.floor((timeLeftValue % (1000 * 60)) / 1000);
-                                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                                setClaimStatus({ canClaim: false, timeLeft: timeString });
-                            } else {
-                                setClaimStatus({ canClaim: true, timeLeft: '' });
-                            }
-                        } else {
-                            setClaimStatus({ canClaim: true, timeLeft: '' });
-                        }
-                    }
-                } catch (error) {
-                    console.error('Erreur de mise à jour du timer:', error);
-                }
-            }, 1000);
-            return () => clearInterval(interval);
+        if (!nextClaimAt) {
+            return;
         }
-    }, [claimStatus.canClaim, session?.user?.id]);
+        const interval = setInterval(() => {
+            const now = Date.now();
+            const timeLeftValue = nextClaimAt - now;
+            if (timeLeftValue > 0) {
+                const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeftValue % (1000 * 60)) / 1000);
+                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                setClaimStatus({ canClaim: false, timeLeft: timeString });
+            } else {
+                setClaimStatus({ canClaim: true, timeLeft: '' });
+                setNextClaimAt(null);
+                clearInterval(interval);
+            }
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [nextClaimAt]);
 
     const handleClaimReward = async () => {
         if (!claimStatus.canClaim || isClaiming || !session?.user?.id) return;
@@ -365,6 +356,7 @@ export default function DashboardHomePage() {
                 const now = Date.now();
                 const twentyFourHours = 24 * 60 * 60 * 1000;
                 const nextClaimTime = now + twentyFourHours;
+                setNextClaimAt(nextClaimTime);
                 const timeLeftValue = nextClaimTime - now;
                 const hours = Math.floor(timeLeftValue / (1000 * 60 * 60));
                 const minutes = Math.floor((timeLeftValue % (1000 * 60 * 60)) / (1000 * 60));

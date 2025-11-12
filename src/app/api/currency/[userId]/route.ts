@@ -6,13 +6,13 @@ const BOT_API_URL = 'http://193.70.34.25:20007/api';
 export async function GET(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = await params;
+        const { userId } = params;
 
         if (!userId) {
             return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
         }
 
-        const res = await fetch(`${BOT_API_URL}/currency/${userId}`);
+        const res = await fetch(`${BOT_API_URL}/currency/${userId}`, { cache: 'no-store' });
         if (!res.ok) {
             throw new Error(`Erreur du bot API: ${res.statusText}`);
         }
@@ -22,7 +22,8 @@ export async function GET(request: NextRequest, context: any) {
 
     } catch (error) {
         console.error("Erreur dans GET /api/currency/[userId]:", error);
-        return NextResponse.json({ balance: 0, lastClaim: null }, { status: 500 });
+        // Retourner un fallback sans erreur pour éviter de spammer la console et garder l'UI fluide
+        return NextResponse.json({ balance: 0, lastBonus: null }, { status: 200 });
     }
 }
 
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, context: any) {
 export async function POST(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = await params;
+        const { userId } = params;
         // Le frontend envoie la différence de montant dans le champ 'amount'.
         const { amount } = await request.json();
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest, context: any) {
         }
 
         // 1. Récupérer le solde actuel depuis le bot
-        const currentCurrencyRes = await fetch(`${BOT_API_URL}/currency/${userId}`);
+        const currentCurrencyRes = await fetch(`${BOT_API_URL}/currency/${userId}`, { cache: 'no-store' });
         if (!currentCurrencyRes.ok) {
              throw new Error("Impossible de récupérer le solde actuel de l'utilisateur avant la mise à jour.");
         }
@@ -73,6 +74,6 @@ export async function POST(request: NextRequest, context: any) {
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
         console.error("Erreur dans POST /api/currency/[userId]:", errorMessage);
-        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+        return NextResponse.json({ error: 'Erreur interne du serveur', balance: 0, lastBonus: null }, { status: 200 });
     }
 }
