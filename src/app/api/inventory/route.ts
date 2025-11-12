@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
@@ -15,8 +15,8 @@ export async function GET(request: Request) {
 
     try {
         const [inventoryRes, shopRes] = await Promise.all([
-            fetch(`${BOT_API_URL}/inventaire/${userId}`),
-            fetch(`${BOT_API_URL}/shop`)
+            fetch(`${BOT_API_URL}/inventaire/${userId}`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/shop`, { cache: 'no-store' })
         ]);
 
         console.log(`[API /inventory] Statut de la rÃ©ponse du bot pour l'inventaire : ${inventoryRes.status}`);
@@ -24,17 +24,23 @@ export async function GET(request: Request) {
 
         if (!shopRes.ok) {
             console.error("[API /inventory] Erreur critique: Impossible de rÃ©cupÃ©rer les articles de la boutique.");
-            return NextResponse.json({ message: "Impossible de charger la boutique." }, { status: 502 });
+            // Fallback sÃ»r: retour d'une liste vide pour ne pas casser le dashboard
+            return NextResponse.json([], { status: 200 });
         }
         const shopItems = await shopRes.json();
         console.log('[API /inventory] Articles de la boutique chargÃ©s :', shopItems);
 
 
-        let userInventory = {};
+        let userInventory = {} as Record<string, { quantity: number }>;
         if (inventoryRes.ok) {
             const inventoryText = await inventoryRes.text();
             console.log('[API /inventory] Inventaire brut (texte) reÃ§u du bot :', inventoryText);
-            userInventory = inventoryText ? JSON.parse(inventoryText) : {};
+            try {
+                userInventory = inventoryText ? JSON.parse(inventoryText) : {};
+            } catch (e) {
+                console.warn('[API /inventory] JSON invalide pour inventaire, fallback {}');
+                userInventory = {} as Record<string, { quantity: number }>;
+            }
         }
         console.log('[API /inventory] Inventaire brut (JSON) de l\'utilisateur :', userInventory);
 
@@ -65,10 +71,11 @@ export async function GET(request: Request) {
 
         console.log('[API /inventory] Inventaire final "enrichi" envoyÃ© au dashboard :', enrichedInventory);
 
-        return NextResponse.json(enrichedInventory);
+        return NextResponse.json(enrichedInventory, { status: 200 });
 
     } catch (error) {
         console.error("Erreur critique dans la route API /api/inventory:", error);
-        return NextResponse.json({ message: 'Erreur interne du serveur.' }, { status: 500 });
+        // Fallback pour ne pas faire Ã©chouer le Promise.all du dashboard
+        return NextResponse.json([], { status: 200 });
     }
 }

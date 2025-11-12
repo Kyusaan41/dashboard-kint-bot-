@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
@@ -19,13 +19,13 @@ export async function GET() {
 
     try {
         const results = await Promise.allSettled([
-            fetch(`${BOT_API_URL}/currency/${userId}`),
-            fetch(`${BOT_API_URL}/points/${userId}`),
-            fetch(`${BOT_API_URL}/xp/${userId}`),
-            fetch(`${BOT_API_URL}/currency`),
-            fetch(`${BOT_API_URL}/points`),
-            fetch(`${BOT_API_URL}/xp`),
-            fetch(`${BOT_API_URL}/titres/${userId}`),
+            fetch(`${BOT_API_URL}/currency/${userId}`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/points/${userId}`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/xp/${userId}`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/currency`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/points`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/xp`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/titres/${userId}`, { cache: 'no-store' }),
         ]);
 
         // --- CORRECTION ICI : On traite les promesses rÃ©solues de maniÃ¨re plus sÃ»re ---
@@ -50,9 +50,18 @@ export async function GET() {
             equippedTitle: titlesRes?.titreActuel || 'Aucun',
         };
 
-        return NextResponse.json(combinedStats);
+        return NextResponse.json(combinedStats, { status: 200 });
     } catch (error) {
         console.error("Erreur API /api/stats/me:", error);
-        return NextResponse.json({ error: "Erreur lors de la rÃ©cupÃ©ration des statistiques." }, { status: 500 });
+        // Fallback sÃ»r pour ne pas casser le dashboard
+        return NextResponse.json({
+            currency: 0,
+            currencyRank: null,
+            points: 0,
+            pointsRank: null,
+            xp: 0,
+            xpRank: null,
+            equippedTitle: 'Aucun',
+        }, { status: 200 });
     }
 }
