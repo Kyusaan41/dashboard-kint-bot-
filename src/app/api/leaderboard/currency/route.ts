@@ -1,37 +1,43 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 export async function GET() {
     try {
-        // On lance les deux appels en parallÃ¨le pour plus d'efficacitÃ©
-        const [leaderboardRes, serverInfoRes] = await Promise.all([
-            fetch(`${BOT_API_URL}/currency`),   // RÃ©cupÃ¨re le classement { userId, balance }
-            fetch(`${BOT_API_URL}/serverinfo`)  // RÃ©cupÃ¨re les infos des membres
+        const [leaderboardRes, serverInfoRes] = await Promise.allSettled([
+            fetch(`${BOT_API_URL}/currency`, { cache: 'no-store' }),
+            fetch(`${BOT_API_URL}/serverinfo`, { cache: 'no-store' })
         ]);
 
-        if (!leaderboardRes.ok || !serverInfoRes.ok) {
-            throw new Error("Impossible de rÃ©cupÃ©rer toutes les donnÃ©es nÃ©cessaires depuis le bot.");
+        if (leaderboardRes.status !== 'fulfilled' || !leaderboardRes.value.ok) {
+            return NextResponse.json([], { status: 200 });
         }
 
-        const leaderboard = await leaderboardRes.json();
-        const serverInfo = await serverInfoRes.json();
-        const members = serverInfo.members || [];
+        const leaderboard = await leaderboardRes.value.json();
 
-        // On "enrichit" le classement avec les donnÃ©es des membres
-        const enrichedLeaderboard = leaderboard.map((player: { userId: string, balance: number }) => {
-            const memberInfo = members.find((m: any) => m.id === player.userId);
-            return {
-                ...player,
-                username: memberInfo?.username || 'Utilisateur inconnu',
-                avatar: memberInfo?.avatar || '/default-avatar.png'
-            };
-        });
+        if (serverInfoRes.status === 'fulfilled' && serverInfoRes.value.ok) {
+            const serverInfo = await serverInfoRes.value.json();
+            const members = serverInfo.members || [];
+            const enrichedLeaderboard = Array.isArray(leaderboard) ? leaderboard.map((player: { userId: string, balance: number }) => {
+                const memberInfo = members.find((m: any) => m.id === player.userId);
+                return {
+                    ...player,
+                    username: memberInfo?.username || 'Utilisateur inconnu',
+                    avatar: memberInfo?.avatar || '/default-avatar.png'
+                };
+            }) : [];
+            return NextResponse.json(enrichedLeaderboard, { status: 200 });
+        }
 
-        return NextResponse.json(enrichedLeaderboard);
+        // Si serverinfo indispo, renvoyer le leaderboard simple
+        return NextResponse.json(Array.isArray(leaderboard) ? leaderboard : [], { status: 200 });
 
     } catch (error) {
         console.error("Erreur dans /api/leaderboard/currency:", error);
-        return NextResponse.json([], { status: 500 });
+        return NextResponse.json([], { status: 200 });
     }
 }
