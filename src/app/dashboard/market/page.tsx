@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MarketplaceCard, MarketplaceListing } from '@/components/gacha/MarketplaceCard';
+
 import { API_ENDPOINTS } from '@/lib/api-config';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -21,7 +22,7 @@ export default function GachaMarketplacePage() {
             const data = await response.json();
             
             // CORRECTION : Vérifiez la structure de la réponse
-            console.log('🔍 [MARKETPLACE] Réponse API:', data);
+            console.log(' [MARKETPLACE] Réponse API:', data);
             
             if (data.success) {
                 // CORRECTION : Utilisez data.listings au lieu de data.data
@@ -30,13 +31,48 @@ export default function GachaMarketplacePage() {
                 throw new Error(data.message || "Une erreur est survenue.");
             }
         } catch (error) {
-            console.error('❌ [MARKETPLACE] Erreur:', error);
+            console.error(' [MARKETPLACE] Erreur:', error);
             toast.error(error instanceof Error ? error.message : "Erreur inconnue");
             setListings([]); // Assurez-vous que listings est toujours un tableau
         } finally {
             setIsLoading(false);
         }
     };
+
+    const handleRemoveListing = async (listingId: string) => {
+        if (!session?.user) {
+            toast.error("Vous devez être connecté pour retirer une carte.");
+            return;
+        }
+
+        const listing = listings.find(l => l.listingId === listingId)
+        if (!listing) return
+
+        toast.promise(
+            fetch(API_ENDPOINTS.marketplaceRemove, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: session.user.id,
+                    listingId,
+                }),
+            }).then(async (res) => {
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}))
+                    throw new Error(errorData.message || "Impossible de retirer l'annonce.")
+                }
+                return res.json()
+            }),
+            {
+                loading: `Retrait de ${listing.cardInfo.name}...`,
+                success: (data) => {
+                    fetchMarketplaceListings()
+                    return data.message || "Annonce retirée, carte retournée dans votre collection."
+                },
+                error: (err) => err.message || "Échec du retrait.",
+            }
+        )
+    }
 
     useEffect(() => {
         fetchMarketplaceListings();
@@ -90,10 +126,12 @@ export default function GachaMarketplacePage() {
                 Array.isArray(listings) && listings.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                         {listings.map((listing) => (
-                            <MarketplaceCard 
-                                key={listing.listingId} 
-                                listing={listing} 
-                                onBuy={handleBuyCard} 
+                            <MarketplaceCard
+                                key={listing.listingId}
+                                listing={listing}
+                                onBuy={handleBuyCard}
+                                onRemove={handleRemoveListing}
+                                isOwner={!!session?.user && (listing.sellerId === session.user.id || listing.sellerUsername === session.user.name)}
                             />
                         ))}
                     </div>

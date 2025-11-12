@@ -11,11 +11,12 @@ const rarityIcons = {
     'Épique': <Gem size={16} className="text-purple-500" />,
     'Légendaire': <Sparkles size={16} className="text-yellow-500" />,
     'Mythique': <Crown size={16} className="text-red-500" />,
-};
+} as const;
 
 export interface MarketplaceListing {
     listingId: string;
     sellerUsername: string;
+    sellerId?: string;
     cardId: string;
     cardInfo: {
         name: string;
@@ -32,9 +33,11 @@ export interface MarketplaceListing {
 interface MarketplaceCardProps {
     listing: MarketplaceListing;
     onBuy: (listingId: string) => void;
+    onRemove?: (listingId: string) => void;
+    isOwner?: boolean;
 }
 
-export function MarketplaceCard({ listing, onBuy }: MarketplaceCardProps) {
+export function MarketplaceCard({ listing, onBuy, onRemove, isOwner }: MarketplaceCardProps) {
     const imageUrl = `/gacha/cards/${listing.cardId}.jpg`;
 
     return (
@@ -54,11 +57,21 @@ export function MarketplaceCard({ listing, onBuy }: MarketplaceCardProps) {
                     <span className="text-lg font-bold text-yellow-400">{listing.price.toLocaleString()} pièces</span>
                     <span className="text-xs text-gray-500">Vendu par {listing.sellerUsername}</span>
                 </div>
-                <Button
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    onClick={() => onBuy(listing.listingId)}>
-                    Acheter
-                </Button>
+                {isOwner ? (
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => onRemove && onRemove(listing.listingId)}
+                  >
+                    Retirer
+                  </Button>
+                ) : (
+                  <Button
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => onBuy(listing.listingId)}>
+                      Acheter
+                  </Button>
+                )}
             </div>
         </NyxCard>
     );

@@ -13,5 +13,6 @@ export const API_ENDPOINTS = {
   // --- Nouveaux endpoints pour le Marché ---
   marketplaceListings: `/api/gacha/marketplace`,
   marketplaceBuy: `/api/gacha/marketplace/buy`, // Cette route devra être créée dans le dashboard
-    marketplaceSell: `/api/gacha/marketplace` // Pointe maintenant vers la route POST principale
+  marketplaceSell: `/api/gacha/marketplace`, // Pointe maintenant vers la route POST principale
+  marketplaceRemove: `/api/gacha/marketplace/remove`
 };
