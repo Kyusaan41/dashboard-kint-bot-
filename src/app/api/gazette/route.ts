@@ -1,4 +1,4 @@
-﻿// Fichier : src/app/api/gazette/route.ts
+// Fichier : src/app/api/gazette/route.ts
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
@@ -14,15 +14,15 @@ export async function GET() {
     }
 
     try {
-        const res = await fetch(`${BOT_API_URL}/gazette`);
+        const res = await fetch(`${BOT_API_URL}/gazette`, { cache: 'no-store' });
         if (!res.ok) {
             console.error("Erreur de l'API du bot lors de la rÃ©cupÃ©ration de la gazette");
-            return NextResponse.json({ error: "Impossible de rÃ©cupÃ©rer la gazette depuis le bot." }, { status: res.status });
+            return NextResponse.json([], { status: 200 });
         }
         const data = await res.json();
-        return NextResponse.json(data);
+        return NextResponse.json(Array.isArray(data) ? data : [], { status: 200 });
     } catch (error) {
         console.error("Erreur dans /api/gazette:", error);
-        return NextResponse.json({ error: 'Erreur interne du serveur.' }, { status: 500 });
+        return NextResponse.json([], { status: 200 });
     }
 }

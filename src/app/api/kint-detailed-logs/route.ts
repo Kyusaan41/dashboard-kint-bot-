@@ -1,4 +1,4 @@
-﻿// src/app/api/kint-detailed-logs/route.ts
+// src/app/api/kint-detailed-logs/route.ts
 
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
@@ -30,22 +30,24 @@ export async function GET(request: NextRequest, context: any) {
         
         console.log('RequÃªte envoyÃ©e au bot API:', botApiUrl);
 
-        const botResponse = await fetch(botApiUrl);
+        const botResponse = await fetch(botApiUrl, { cache: 'no-store' });
 
         if (!botResponse.ok) {
             const errorText = await botResponse.text().catch(() => "Pas de rÃ©ponse textuelle.");
             console.error(`Erreur lors de la rÃ©cupÃ©ration des logs Kint dÃ©taillÃ©s par le bot: ${botResponse.status} ${botResponse.statusText}. RÃ©ponse: ${errorText}`);
-            return NextResponse.json({ error: `Erreur du bot: ${errorText}` }, { status: botResponse.status });
+            // Retourner un fallback vide pour éviter les erreurs côté UI
+            return NextResponse.json([], { status: 200 });
         }
 
         const data = await botResponse.json();
-        return NextResponse.json(data);
+        return NextResponse.json(Array.isArray(data) ? data : [], { status: 200 });
 
     } catch (error) {
         console.error("Erreur critique dans /api/kint-detailed-logs (Dashboard API):", error);
         if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
              console.error("Erreur rÃ©seau probable lors de la connexion au bot API. VÃ©rifiez l'URL et l'accessibilitÃ© du bot.");
         }
-        return NextResponse.json({ error: 'Erreur interne du serveur du dashboard.' }, { status: 500 });
+        // Fallback sûr
+        return NextResponse.json([], { status: 200 });
     }
 }

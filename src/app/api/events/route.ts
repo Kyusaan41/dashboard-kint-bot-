@@ -1,4 +1,4 @@
-﻿﻿// Fichier : src/app/api/events/route.ts
+// Fichier : src/app/api/events/route.ts
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
@@ -10,8 +10,28 @@ const BOT_API_URL = 'http://193.70.34.25:20007/api';
 export async function GET(request: Request) {
     // On vérifie la session pour s'assurer que l'utilisateur est connecté
     const session = await getServerSession(authOptions);
+    const accept = request.headers.get('accept') || '';
+
+    // Si on demande du JSON (ex: fetch côté client pour check périodique), on renvoie une liste JSON
+    if (!accept.includes('text/event-stream')) {
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+        }
+        try {
+            const res = await fetch(`${BOT_API_URL}/events`, { cache: 'no-store' });
+            if (!res.ok) {
+                return NextResponse.json([], { status: 200 });
+            }
+            const data = await res.json();
+            return NextResponse.json(Array.isArray(data) ? data : [], { status: 200 });
+        } catch (error) {
+            console.error('[Events] Erreur JSON GET /api/events:', error);
+            return NextResponse.json([], { status: 200 });
+        }
+    }
+
+    // Sinon: on sert le flux SSE
     if (!session?.user?.id) {
-        // Retourne une réponse d'erreur avec le bon content-type pour SSE
         return new NextResponse(
             `data: ${JSON.stringify({ error: 'Non autorisé' })}\n\n`,
             {
@@ -26,59 +46,42 @@ export async function GET(request: Request) {
     }
 
     try {
-        // Récupère l'ID utilisateur depuis la session
         const userId = session.user.id;
         console.log(`[SSE] Connexion établie pour l'utilisateur: ${userId}`);
-
-        // Crée un custom encoder pour streamer les données
         const encoder = new TextEncoder();
-
-        // Crée un ReadableStream pour streamer les événements
         const stream = new ReadableStream({
             async start(controller) {
                 try {
-                    // Envoie un message d'initialisation
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', userId })}\n\n`));
-
-                    // Récupère les événements actuels de l'API du bot
-                    const res = await fetch(`${BOT_API_URL}/events`);
+                    const res = await fetch(`${BOT_API_URL}/events`, { cache: 'no-store' });
                     if (res.ok) {
                         const data = await res.json();
                         if (Array.isArray(data)) {
-                            // Envoie chaque événement
                             for (const event of data) {
                                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'event', data: event })}\n\n`));
                             }
                         }
                     }
-
-                    // Garde la connexion ouverte avec des heartbeats
                     let heartbeatCount = 0;
-                    let isClosed = false; // ✨ AJOUT: Flag pour suivre l'état de la connexion
-
+                    let isClosed = false;
                     const heartbeatInterval = setInterval(() => {
-                        // ✨ CORRECTION: On vérifie si la connexion n'est pas déjà fermée
                         if (!isClosed) {
                             try {
                                 controller.enqueue(encoder.encode(`: heartbeat ${heartbeatCount++}\n\n`));
                             } catch (error) {
-                                console.error('[SSE] Erreur lors du heartbeat (connexion probablement fermée):', error);
+                                console.error('[SSE] Erreur lors du heartbeat:', error);
                                 clearInterval(heartbeatInterval);
                             }
                         }
-                    }, 30000); // Toutes les 30 secondes
+                    }, 30000);
 
-                    // Gère la fermeture de la connexion
                     const handleClose = () => {
-                        isClosed = true; // ✨ AJOUT: On met le flag à jour
+                        isClosed = true;
                         clearInterval(heartbeatInterval);
                         controller.close();
                         console.log(`[SSE] Connexion fermée pour l'utilisateur: ${userId}`);
                     };
-
-                    // Dans un environnement réel, il y aurait ici une logique pour envoyer les nouveaux événements
-                    // Pour maintenant, la connexion reste ouverte avec des heartbeats
-
+                    // Note: Next.js n'expose pas un hook direct ici pour close; on garderait cela si on écoute abortSignal, etc.
                 } catch (error) {
                     console.error('[SSE] Erreur lors de l\'initialisation:', error);
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Erreur interne du serveur.' })}\n\n`));
@@ -92,7 +95,7 @@ export async function GET(request: Request) {
                 'Content-Type': 'text/event-stream',
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
-                'X-Accel-Buffering': 'no', // Pour Nginx
+                'X-Accel-Buffering': 'no',
             },
         });
     } catch (error) {

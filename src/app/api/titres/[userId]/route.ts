@@ -8,9 +8,9 @@ const BOT_API_URL = 'http://193.70.34.25:20007/api';
 export async function GET(request: NextRequest, context: any) {
     try {
         const { params } = context;
-        const { userId } = await params;
+        const { userId } = params;
 
-        const res = await fetch(`${BOT_API_URL}/titres/${userId}`);
+        const res = await fetch(`${BOT_API_URL}/titres/${userId}`, { cache: 'no-store' });
         if (!res.ok) {
             // Si l'utilisateur n'est pas trouvé (404), on renvoie une structure vide
             if (res.status === 404) {
@@ -22,7 +22,8 @@ export async function GET(request: NextRequest, context: any) {
         return NextResponse.json(data);
     } catch (error) {
         console.error("Erreur dans GET /api/titres/[userId]:", error);
-        return NextResponse.json({ titresPossedes: [], titreActuel: null }, { status: 500 });
+        // Eviter le spam d'erreurs console
+        return NextResponse.json({ titresPossedes: [], titreActuel: null }, { status: 200 });
     }
 }
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest, context: any) {
 export async function POST(request: NextRequest, context: any) {
     const session = await getServerSession(authOptions);
     const { params } = context;
-    const { userId } = await params;
+    const { userId } = params;
 
     if (session?.user?.id !== userId) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -56,6 +57,6 @@ export async function POST(request: NextRequest, context: any) {
         return NextResponse.json(data);
     } catch (error) {
         console.error("Erreur dans POST /api/titres/[userId]:", error);
-        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 });
+        return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 200 });
     }
 }
