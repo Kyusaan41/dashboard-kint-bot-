@@ -13,11 +13,11 @@ export default withAuth(
       return NextResponse.redirect(new URL("/login", req.url))
     }
     
-    // Enforce bans: if user is banned, redirect to /banned (except when already there or on public/API routes)
+    // Enforce bans: if user is banned, redirect to /banned (except when already there or on login; APIs are excluded)
     if (req.nextauth.token) {
       const userId = (req.nextauth.token as any)?.id as string | undefined
       const pathname = req.nextUrl.pathname
-      const isPublic = pathname === "/login" || pathname === "/banned" || pathname === "/"
+      const isPublic = pathname === "/login" || pathname === "/banned"
       const isApi = pathname.startsWith("/api")
       if (userId && !isApi && !isPublic) {
         const url = new URL(`/api/ban-check?userId=${encodeURIComponent(userId)}`, req.url)

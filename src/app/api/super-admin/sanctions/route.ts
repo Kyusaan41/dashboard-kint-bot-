@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { store, Sanction } from '@/lib/dataStore'
+import { loadSanctionsFromDisk, saveSanctionsToDisk } from '@/lib/persistence'
 
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim())
 
+let sanctionsLoaded = false
+async function ensureSanctionsLoaded() {
+  if (!sanctionsLoaded) {
+    await loadSanctionsFromDisk()
+    sanctionsLoaded = true
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    await ensureSanctionsLoaded()
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !SUPER_ADMIN_IDS.includes(session.user.id)) {
@@ -42,6 +52,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureSanctionsLoaded()
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !SUPER_ADMIN_IDS.includes(session.user.id)) {
@@ -71,6 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     store.sanctions.push(sanction)
+    await saveSanctionsToDisk()
 
     return NextResponse.json({ success: true, sanction })
   } catch (error) {
@@ -81,6 +93,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    await ensureSanctionsLoaded()
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !SUPER_ADMIN_IDS.includes(session.user.id)) {
@@ -100,6 +113,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     store.sanctions[index].active = false
+    await saveSanctionsToDisk()
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting sanction:', error)
