@@ -1,8 +1,9 @@
-﻿﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./nyx-theme.css"; // NyxBot Dark Purple Theme
 import Providers from "./providers";
+import BanGuard from "@/components/BanGuard";
 import { Analytics } from "@vercel/analytics/react";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
           <FavoritesProvider>
+            <BanGuard />
             {children}
           </FavoritesProvider>
         </Providers>
