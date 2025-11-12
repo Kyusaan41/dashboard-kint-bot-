@@ -53,14 +53,23 @@ export async function GET(request: Request) {
             async start(controller) {
                 try {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', userId })}\n\n`));
-                    const res = await fetch(`${BOT_API_URL}/events`, { cache: 'no-store' });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (Array.isArray(data)) {
-                            for (const event of data) {
-                                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'event', data: event })}\n\n`));
+                    // Preload des événements avec timeout court pour éviter un blocage de 10s sur Vercel
+                    try {
+                        const controllerAbort = new AbortController();
+                        const t = setTimeout(() => controllerAbort.abort(), 6000);
+                        const res = await fetch(`${BOT_API_URL}/events`, { cache: 'no-store', signal: controllerAbort.signal });
+                        clearTimeout(t);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (Array.isArray(data)) {
+                                for (const event of data) {
+                                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'event', data: event })}\n\n`));
+                                }
                             }
                         }
+                    } catch (e) {
+                        // En cas de timeout/échec on continue le flux sans précharger
+                        console.warn('[SSE] Préchargement des événements ignoré (timeout/échec).');
                     }
                     let heartbeatCount = 0;
                     let isClosed = false;
