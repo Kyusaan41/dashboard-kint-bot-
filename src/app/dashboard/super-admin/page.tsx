@@ -141,23 +141,26 @@ export default function SuperAdminPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-900">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-4">
           <Loader2 className="animate-spin h-12 w-12 text-purple-500" />
-          <p className="text-gray-300 font-medium">Chargement du panneau super-admin...</p>
+          <p className="text-gray-300 font-medium">Chargement de la session...</p>
         </motion.div>
       </div>
     )
   }
 
   if (!SUPER_ADMIN_IDS.includes(session?.user?.id || '')) {
-    return null
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-6">
+        <div className="nyx-card p-8 rounded-2xl border border-red-500/30 text-center">
+          <h2 className="text-2xl font-bold mb-2">Accès refusé</h2>
+          <p className="text-gray-400">Votre compte n'est pas autorisé à accéder au panneau super-admin.</p>
+        </div>
+      </div>
+    )
   }
 
   const onlinePages = pages.filter(p => p.status === 'online').length
@@ -244,6 +247,12 @@ export default function SuperAdminPage() {
               transition={{ duration: 0.3 }}
               className="space-y-8"
             >
+              {loading && (
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  Chargement des données...
+                </div>
+              )}
               <GlobalStats
                 totalUsers={users.length}
                 onlinePages={onlinePages}
@@ -311,6 +320,12 @@ export default function SuperAdminPage() {
               transition={{ duration: 0.3 }}
               className="nyx-card p-8 rounded-2xl border border-purple-primary/20"
             >
+              {loading && (
+                <div className="flex items-center gap-2 text-gray-400 mb-4">
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  Chargement des utilisateurs...
+                </div>
+              )}
               <UserManagement
                 users={users}
                 onRoleChange={handleRoleChange}
@@ -328,6 +343,12 @@ export default function SuperAdminPage() {
               transition={{ duration: 0.3 }}
               className="nyx-card p-8 rounded-2xl border border-purple-primary/20"
             >
+              {loading && (
+                <div className="flex items-center gap-2 text-gray-400 mb-4">
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  Chargement des pages...
+                </div>
+              )}
               <PageManagement
                 pages={pages}
                 onMaintenanceToggle={handlePageMaintenance}
@@ -344,6 +365,12 @@ export default function SuperAdminPage() {
               transition={{ duration: 0.3 }}
               className="nyx-card p-8 rounded-2xl border border-purple-primary/20 space-y-6"
             >
+              {loading && (
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Loader2 className="animate-spin h-5 w-5" />
+                  Chargement des données...
+                </div>
+              )}
               <div>
                 <h3 className="text-2xl font-bold mb-6">Fonctionnalités Avancées</h3>
                 

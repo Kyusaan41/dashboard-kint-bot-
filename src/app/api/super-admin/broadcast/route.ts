@@ -1,34 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { store } from '@/lib/dataStore'
 
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim())
-
-// In-memory storage for broadcasts
-let broadcasts: Array<{
-  id: string
-  title: string
-  message: string
-  type: 'announcement' | 'warning' | 'maintenance'
-  priority: 'low' | 'medium' | 'high'
-  createdAt: string
-  expiresAt?: string
-  createdBy: string
-  active: boolean
-  views?: number
-}> = [
-  {
-    id: '1',
-    title: 'Bienvenue!',
-    message: 'Bienvenue sur le nouveau dashboard super-admin!',
-    type: 'announcement',
-    priority: 'high',
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    createdBy: 'SuperAdmin',
-    active: true,
-    views: 42,
-  },
-]
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const active = searchParams.get('active') !== 'false'
 
-    let filtered = broadcasts
+    let filtered = store.broadcasts
 
     if (active) {
       filtered = filtered.filter(b => {
@@ -90,7 +65,7 @@ export async function POST(request: NextRequest) {
       views: 0,
     }
 
-    broadcasts.push(broadcast)
+    store.broadcasts.unshift(broadcast)
 
     return NextResponse.json({ success: true, broadcast })
   } catch (error) {
@@ -114,12 +89,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Missing broadcast ID' }, { status: 400 })
     }
 
-    const index = broadcasts.findIndex(b => b.id === broadcastId)
+    const index = store.broadcasts.findIndex(b => b.id === broadcastId)
     if (index === -1) {
       return NextResponse.json({ error: 'Broadcast not found' }, { status: 404 })
     }
 
-    broadcasts[index].active = false
+    store.broadcasts[index].active = false
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting broadcast:', error)

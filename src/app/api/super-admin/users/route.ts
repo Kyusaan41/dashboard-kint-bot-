@@ -28,16 +28,20 @@ export async function GET(request: NextRequest) {
           const users = serverInfo.members || []
           console.log(`[SUPER-ADMIN] Successfully fetched ${users.length} users from bot API`)
           
-          const transformedUsers = (Array.isArray(users) ? users : []).map((user: any) => ({
-            id: user.id,
-            username: user.username,
-            avatar: user.avatar || `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id.slice(-1)) % 5}.png`,
-            siteRole: user.siteRole || 'user',
-            joinedAt: user.joinedAt || new Date().toISOString(),
-            lastActive: user.lastActive || new Date().toISOString(),
-            points: user.points || 0,
-            currency: user.currency || 0,
-          }))
+          const transformedUsers = (Array.isArray(users) ? users : []).map((user: any) => {
+            const rawRole = user.siteRole || 'user'
+            const normalizedRole = rawRole === 'admin' ? 'administrator' : rawRole
+            return {
+              id: user.id,
+              username: user.username,
+              avatar: user.avatar || `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id.slice(-1)) % 5}.png`,
+              siteRole: ['user','moderator','administrator','super_admin'].includes(normalizedRole) ? normalizedRole : 'user',
+              joinedAt: user.joinedAt || new Date().toISOString(),
+              lastActive: user.lastActive || new Date().toISOString(),
+              points: user.points || 0,
+              currency: user.currency || 0,
+            }
+          })
           return NextResponse.json({ users: transformedUsers })
         } else {
           const errorText = await response.text()
@@ -64,7 +68,7 @@ export async function GET(request: NextRequest) {
             id: '5180198075891712',
             username: 'Test User 1',
             avatar: 'https://cdn.discordapp.com/embed/avatars/1.png',
-            siteRole: 'admin',
+            siteRole: 'administrator',
             joinedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
             lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
             points: 2500,

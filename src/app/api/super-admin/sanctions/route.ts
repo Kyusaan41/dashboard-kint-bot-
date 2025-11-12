@@ -1,35 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { store, Sanction } from '@/lib/dataStore'
 
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim())
-
-// In-memory storage for sanctions
-let sanctions: Array<{
-  id: string
-  userId: string
-  username: string
-  type: 'ban' | 'mute' | 'warn'
-  reason: string
-  duration?: number // in minutes, null = permanent
-  createdAt: string
-  expiresAt?: string
-  createdBy: string
-  active: boolean
-}> = [
-  {
-    id: '1',
-    userId: '123456789',
-    username: 'Spammer123',
-    type: 'mute',
-    reason: 'Spam excessif',
-    duration: 1440,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    expiresAt: new Date(Date.now() + 22 * 60 * 60 * 1000).toISOString(),
-    createdBy: 'SuperAdmin',
-    active: true,
-  },
-]
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +17,7 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId')
     const active = searchParams.get('active') === 'true'
 
-    let filtered = sanctions
+    let filtered = store.sanctions
 
     if (userId) {
       filtered = filtered.filter(s => s.userId === userId)
@@ -81,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const sanction = {
+    const sanction: Sanction = {
       id: Date.now().toString(),
       userId,
       username: username || 'Unknown',
@@ -96,7 +70,7 @@ export async function POST(request: NextRequest) {
       active: true,
     }
 
-    sanctions.push(sanction)
+    store.sanctions.push(sanction)
 
     return NextResponse.json({ success: true, sanction })
   } catch (error) {
@@ -120,12 +94,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Missing sanction ID' }, { status: 400 })
     }
 
-    const index = sanctions.findIndex(s => s.id === sanctionId)
+    const index = store.sanctions.findIndex(s => s.id === sanctionId)
     if (index === -1) {
       return NextResponse.json({ error: 'Sanction not found' }, { status: 404 })
     }
 
-    sanctions[index].active = false
+    store.sanctions[index].active = false
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting sanction:', error)
