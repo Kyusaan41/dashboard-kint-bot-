@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { userId, username, type, reason, duration } = body
+    const { userId, username, type, reason } = body
+    // Sanitize duration: ensure positive number (minutes); otherwise treat as permanent
+    const rawDuration = Number(body?.duration)
+    const minutes = Number.isFinite(rawDuration) && rawDuration > 0 ? Math.floor(rawDuration) : undefined
 
     if (!userId || !type || !reason) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -72,10 +75,10 @@ export async function POST(request: NextRequest) {
       username: username || 'Unknown',
       type,
       reason,
-      duration,
+      duration: minutes,
       createdAt: new Date().toISOString(),
-      expiresAt: duration
-        ? new Date(Date.now() + duration * 60 * 1000).toISOString()
+      expiresAt: minutes !== undefined
+        ? new Date(Date.now() + minutes * 60 * 1000).toISOString()
         : undefined,
       createdBy: session.user.name || 'Unknown',
       active: true,
