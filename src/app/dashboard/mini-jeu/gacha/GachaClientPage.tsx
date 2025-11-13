@@ -100,112 +100,174 @@ const RARITY_FLASH_COLORS = {
 
 // --- COMPOSANT D'ANIMATION DE SOUHAIT (WishAnimation) ---
 
-const WishAnimation = ({ count, highestRarity }: { count: number, highestRarity: CardRarity | null }) => {
-	const rarityStyle = getRarityStyle(highestRarity || 'Commun');
-	const isHighRarity = highestRarity === 'Légendaire' || highestRarity === 'Mythique';
-	const isMultiPull = count > 1;
+const WishAnimation = ({ count, highestRarity, onSkip }: { count: number, highestRarity: CardRarity | null, onSkip?: () => void }) => {
+    const isMultiPull = count > 1;
+    
+    // Couleurs selon la rareté (style Genshin)
+    const getRarityColor = (rarity: CardRarity | null) => {
+        switch (rarity) {
+            case 'Mythique': return { primary: '#FFD700', secondary: '#FFA500' }; // Or
+            case 'Légendaire': return { primary: '#9D4EDD', secondary: '#7209B7' }; // Violet
+            case 'Épique': return { primary: '#4CC9F0', secondary: '#0077B6' }; // Bleu
+            case 'Rare': return { primary: '#06FFA5', secondary: '#028A0F' }; // Vert
+            default: return { primary: '#FFFFFF', secondary: '#CCCCCC' }; // Blanc
+        }
+    };
+    
+    const colors = getRarityColor(highestRarity);
+    
+    return (
+        <motion.div
+            exit={{ opacity: 0, transition: { duration: 0.8 } }}
+            className="fixed inset-0 bg-gradient-to-b from-slate-950 to-black z-50 flex items-center justify-center overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+        >
+            {/* Onde cosmique principale */}
+            <motion.div
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{
+                    width: 400,
+                    height: 400,
+                    background: `radial-gradient(circle, ${colors.primary}60, ${colors.secondary}40, transparent 70%)`,
+                    filter: 'blur(1px)'
+                }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{
+                    scale: [0, 1, 1.2, 1],
+                    opacity: [0, 0.8, 0.6, 0.8]
+                }}
+                transition={{
+                    duration: 2,
+                    ease: "easeOut"
+                }}
+            />
 
-	const cometColor = isMultiPull
-		? 'bg-gradient-to-r from-red-500 via-yellow-400 to-cyan-400'
-		: highestRarity === 'Mythique' ? 'bg-yellow-400'
-		: highestRarity === 'Légendaire' ? 'bg-purple-400'
-		: highestRarity === 'Épique' ? 'bg-blue-400'
-		: 'bg-white';
+            {/* Anneaux d'énergie expansifs */}
+            <motion.div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <motion.div
+                        key={`ring-${i}`}
+                        className="absolute border-4 rounded-full"
+                        style={{
+                            borderColor: i === 0 ? colors.primary : colors.secondary,
+                            borderStyle: 'solid',
+                            boxShadow: `0 0 40px ${i === 0 ? colors.primary : colors.secondary}`
+                        }}
+                        initial={{
+                            width: 0,
+                            height: 0,
+                            opacity: 0,
+                            left: 0,
+                            top: 0
+                        }}
+                        animate={{
+                            width: [0, 600 + i * 200, 1000 + i * 300],
+                            height: [0, 600 + i * 200, 1000 + i * 300],
+                            opacity: [0, 0.8, 0],
+                            left: [0, -(300 + i * 100), -(500 + i * 150)],
+                            top: [0, -(300 + i * 100), -(500 + i * 150)],
+                            borderWidth: [4, 2, 0]
+                        }}
+                        transition={{
+                            duration: 3,
+                            delay: 0.5 + i * 0.3,
+                            ease: "easeOut"
+                        }}
+                    />
+                ))}
+            </motion.div>
 
-	return (
-		<motion.div
-			exit={{ opacity: 0, transition: { delay: 1.5 } }}
-			className="fixed inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
-			variants={{
-				hidden: { opacity: 0 },
-				visible: { opacity: 1 },
-				shake: { x: [0, -5, 5, -5, 5, 0], y: [0, 2, -2, 2, -2, 0], transition: { duration: 0.2, delay: 3.6 } },
-			}}
-			initial="hidden"
-			animate={["visible", "shake"]}
-		>
-			{/* Fond étoilé */}
-			{Array.from({ length: 100 }).map((_, i) => (
-				<motion.div
-					key={i}
-					className="absolute rounded-full bg-white/50"
-					style={{
-						width: Math.random() * 2 + 0.5,
-						height: Math.random() * 2 + 0.5,
-						top: `${Math.random() * 100}%`,
-						left: `${Math.random() * 100}%`,
-					}}
-					initial={{ opacity: 0, scale: 0.5 }}
-					animate={{ opacity: [0, 1, 0] }}
-					transition={{ duration: Math.random() * 3 + 2, repeat: Infinity, delay: Math.random() * 4 }}
-				/>
-			))}
+            {/* Particules orbitales élégantes */}
+            <motion.div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                {Array.from({ length: 8 }).map((_, i) => {
+                    const angle = (i / 8) * 360;
+                    const radius = 180;
+                    
+                    return (
+                        <motion.div
+                            key={`particle-${i}`}
+                            className="absolute w-4 h-4 rounded-full"
+                            style={{
+                                background: `radial-gradient(circle, ${colors.primary}, ${colors.secondary})`,
+                                boxShadow: `0 0 20px ${colors.primary}`,
+                                left: -8,
+                                top: -8
+                            }}
+                            initial={{
+                                x: Math.cos(angle * Math.PI / 180) * radius,
+                                y: Math.sin(angle * Math.PI / 180) * radius,
+                                opacity: 0,
+                                scale: 0
+                            }}
+                            animate={{
+                                x: Math.cos((angle + 360) * Math.PI / 180) * radius,
+                                y: Math.sin((angle + 360) * Math.PI / 180) * radius,
+                                opacity: [0, 1, 0.7, 1],
+                                scale: [0, 1.5, 1, 1.2]
+                            }}
+                            transition={{
+                                duration: 4,
+                                delay: 0.8 + i * 0.1,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                        />
+                    );
+                })}
+            </motion.div>
 
-			{/* Étoile filante principale */}
-			<motion.div
-				className="absolute"
-				initial={{ x: '-100vw', y: '-50vh', opacity: 0 }}
-				animate={{ x: '100vw', y: '50vh', opacity: [0, 1, 1, 0] }}
-				transition={{ duration: 1.2, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
-			>
-				<div className={`w-48 h-1.5 ${cometColor} rounded-full blur-[1px]`} />
-				<div className={`absolute top-0 left-0 w-48 h-1.5 ${cometColor} rounded-full blur-md opacity-70`} />
-			</motion.div>
+            {/* Pulse énergétique central */}
+            <motion.div
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full"
+                style={{
+                    background: `radial-gradient(circle, ${colors.primary}, ${colors.secondary})`,
+                    boxShadow: `0 0 60px ${colors.primary}, 0 0 120px ${colors.primary}50`
+                }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{
+                    scale: [0, 1, 1.3, 1],
+                    opacity: [0, 1, 0.8, 1]
+                }}
+                transition={{
+                    duration: 2,
+                    delay: 1,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                }}
+            />
 
-			{/* Onde de choc */}
-			<motion.div
-				className={`absolute w-1 h-1 rounded-full border-4 ${rarityStyle.border}`}
-				initial={{ scale: 0, opacity: 0 }}
-				animate={{ scale: [0, 1, 300], opacity: [0, 1, 0] }}
-				transition={{ duration: 0.7, ease: 'easeOut', delay: 1.5 }}
-			/>
-			
-			{/* Formation de la porte */}
-			<motion.div
-				className="absolute"
-				initial={{ opacity: 0, scale: 0 }}
-				animate={{ opacity: 1, scale: 1 }}
-				transition={{ delay: 1.8, duration: 0.5 }}
-			>
-				<motion.div
-					className={`absolute -inset-8 w-80 h-80 rounded-full ${rarityStyle.bg} blur-2xl`}
-					animate={{ rotate: 360 }}
-					transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
-				/>
-				<svg width="256" height="256" viewBox="0 0 256 256" className="relative">
-					<defs>
-						<radialGradient id="gateGradient" cx="50%" cy="50%" r="50%">
-							<stop offset="60%" stopColor="rgba(10, 5, 20, 0)" />
-							<stop offset="85%" stopColor={isHighRarity ? 'rgba(255, 220, 120, 0.5)' : 'rgba(190, 150, 255, 0.5)'} />
-							<stop offset="100%" stopColor={isHighRarity ? 'rgba(255, 255, 255, 1)' : 'rgba(220, 200, 255, 1)'} />
-						</radialGradient>
-					</defs>
-					<motion.circle
-						cx="128" cy="128" r="120"
-						stroke="url(#gateGradient)" strokeWidth="8" fill="none"
-						initial={{ pathLength: 0, opacity: 0 }}
-						animate={{ pathLength: 1, opacity: 1 }}
-						transition={{ duration: 1, delay: 2.0, ease: 'easeInOut' }}
-					/>
-					<motion.circle
-						cx="128" cy="128" r="120"
-						fill="none" stroke={isHighRarity ? 'rgba(255, 220, 120, 0.7)' : 'rgba(190, 150, 255, 0.7)'} strokeWidth="2"
-						initial={{ scale: 1, opacity: 0 }}
-						animate={{ scale: [1, 1.05, 1], opacity: [0, 0.8, 0] }}
-						transition={{ duration: 1, repeat: Infinity, delay: 3.0, repeatType: "mirror" }}
-					/>
-				</svg>
-			</motion.div>
+            {/* Flash final spectaculaire */}
+            <motion.div
+                className="absolute inset-0"
+                style={{
+                    background: `linear-gradient(45deg, ${colors.primary}40, transparent, ${colors.secondary}40)`
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0, 1, 0] }}
+                transition={{
+                    duration: 0.5,
+                    delay: 3.5,
+                    ease: "easeOut"
+                }}
+            />
 
-			{/* Flash final */}
-			<motion.div
-				className={`absolute inset-0 ${RARITY_FLASH_COLORS[highestRarity || 'Commun']}`}
-				initial={{ opacity: 0, zIndex: -1 }}
-				animate={{ opacity: [0, 1, 0] }}
-				transition={{ delay: 3.8, duration: 0.4, times: [0, 0.1, 1] }}
-			/>
-		</motion.div>
-	);
+            {/* Bouton Passer */}
+            {onSkip && (
+                <motion.button
+                    onClick={onSkip}
+                    className="absolute bottom-6 right-6 px-6 py-3 rounded-full bg-black/50 hover:bg-black/70 border border-white/30 text-white font-medium backdrop-blur-sm transition-all"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                >
+                    Passer
+                </motion.button>
+            )}
+        </motion.div>
+    );
 };
 
 // --- ✨ NOUVEAU: CERCLE DE PROGRESSION POUR LA PITY ---
@@ -1053,7 +1115,16 @@ function GachaPageContent() {
                 </AnimatePresence>
 
                 <AnimatePresence>
-                    {pullAnimation.active && <WishAnimation count={pullAnimation.count} highestRarity={pullAnimation.highestRarity} />}
+                    {pullAnimation.active && (
+                        <WishAnimation
+                            count={pullAnimation.count}
+                            highestRarity={pullAnimation.highestRarity}
+                            onSkip={() => {
+                                setPullAnimation({ active: false, count: 0, highestRarity: null, currentBalance: pullAnimation.currentBalance });
+                                setShowResults(true);
+                            }}
+                        />
+                    )}
                 </AnimatePresence>
             </div>
         </div>
