@@ -508,6 +508,8 @@ function GachaPageContent() {
 
     const pityStatus = currentFeaturedChar ? getPityStatus(currentFeaturedChar.pity) : { text: '', className: '' };
 
+    const remainingToFive = currentFeaturedChar ? Math.max(0, 90 - currentFeaturedChar.pity) : 0;
+
     if (!currentFeaturedChar) {
         return <div className="flex h-screen w-full items-center justify-center"><div className="nyx-spinner"></div></div>;
     }
@@ -731,38 +733,58 @@ function GachaPageContent() {
                             >
                                 {activeTab === 'shop' && (
                                     <div>
-                                        <h3 className="text-2xl font-bold text-white mb-6 text-center">Boutique de Vœux</h3>
+                                        <div className="flex items-center justify-center gap-2 mb-1">
+                                            <Sparkles className="w-5 h-5 text-yellow-400" />
+                                            <h3 className="text-2xl font-bold text-white text-center">Boutique de Vœux</h3>
+                                        </div>
+                                        <div className="text-center text-xs text-white/60 mb-4">Achetez des vœux avec vos pièces</div>
+                                        <div className="flex items-center justify-center gap-3 mb-6">
+                                            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full text-sm">
+                                                <Gem className="w-4 h-4 text-yellow-400" />
+                                                <span className="font-semibold">{currency}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full text-sm">
+                                                <img src="/gacha/icons/wish.png" alt="Vœux" className="w-4 h-4" />
+                                                <span className="font-semibold">{wishes}</span>
+                                            </div>
+                                        </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                                             {/* Carte pour 1 Vœu */}
-                                            <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700 text-center flex flex-col justify-between transition-all hover:border-blue-500 hover:bg-slate-800">
+                                            <div className="bg-slate-800/60 rounded-2xl p-6 border border-white/10 text-center flex flex-col justify-between transition-all hover:border-blue-400/60 hover:bg-slate-800/70 shadow-lg">
                                                 <img src="/gacha/icons/wish.png" alt="Vœu" className="w-20 h-20 mx-auto mb-4"/>
                                                 <h4 className="text-lg font-semibold text-white mb-2">1 Vœu</h4>
-                                                <p className="text-gray-400 mb-4 flex-grow">Pour un tirage unique.</p>
+                                                <p className="text-gray-300/80 mb-4 flex-grow">Pour un tirage unique</p>
                                                 <button 
                                                     onClick={() => buyWishes('single')}
                                                     disabled={isBuying || currency < 500}
                                                     className="w-full px-6 py-3 bg-blue-600 rounded-xl font-bold text-white shadow-lg hover:bg-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                                 >
-                                                    500 <span className="text-yellow-300">✦</span>
+                                                    <Gem className="w-4 h-4 text-yellow-300" /> 500
                                                 </button>
+                                                {(currency < 500) && (
+                                                    <div className="mt-2 text-xs text-red-300">Solde insuffisant</div>
+                                                )}
                                             </div>
                                             {/* Carte pour 10 Vœux avec encadrement promo */}
-                                            <div className="relative bg-gradient-to-br from-purple-900/30 via-slate-800/50 to-slate-800/50 rounded-xl p-6 border-2 border-purple-500 text-center flex flex-col justify-between shadow-lg shadow-purple-500/10">
+                                            <div className="relative bg-gradient-to-br from-purple-900/30 via-slate-800/60 to-slate-800/60 rounded-2xl p-6 border-2 border-purple-500/70 text-center flex flex-col justify-between shadow-xl shadow-purple-500/20">
                                                 <div className="absolute top-0 right-0 bg-purple-500 text-white font-bold text-xs uppercase px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-md">
                                                     -10%
                                                 </div>
                                                 <div>
                                                     <img src="/gacha/icons/wish-pack.png" alt="Pack de Vœux" className="w-24 h-24 mx-auto mb-4"/>
                                                     <h4 className="text-xl font-bold text-white mb-2">10 Vœux</h4>
-                                                    <p className="text-purple-300/80 mb-4 flex-grow">Le meilleur rapport qualité-prix pour vos tirages !</p>
+                                                    <p className="text-purple-200/80 mb-4 flex-grow">Le meilleur rapport qualité‑prix</p>
                                                 </div>
                                                 <button 
                                                     onClick={() => buyWishes('multi')}
                                                     disabled={isBuying || currency < 4500}
                                                     className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                                 >
-                                                    4500 <span className="text-yellow-300">✦</span>
+                                                    <Gem className="w-4 h-4 text-yellow-300" /> 4500
                                                 </button>
+                                                {(currency < 4500) && (
+                                                    <div className="mt-2 text-xs text-red-300">Solde insuffisant</div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -770,41 +792,74 @@ function GachaPageContent() {
 
                                 {activeTab === 'details' && (
                                     <div>
-                                        <h3 className="text-2xl font-bold text-white mb-6 text-center">Détails des Vœux</h3>
-                                        <div className="space-y-6 text-gray-300">
-                                            <div>
-                                                <h4 className="text-lg font-semibold text-purple-300 mb-2">Taux d'obtention de base</h4>
-                                                <p className="text-sm mb-3">Chaque vœu a une probabilité de base d'obtenir une carte des raretés suivantes :</p>
-                                                <ul className="space-y-2 text-sm list-disc list-inside bg-white/5 p-4 rounded-lg border border-white/10">
-                                                    <li><span className="font-bold text-yellow-400">Mythique (5★) :</span> 0.6%</li>
-                                                    <li><span className="font-bold text-purple-400">Légendaire (4★) :</span> 5.1%</li>
-                                                    <li><span className="font-bold text-blue-400">Épique (3★) :</span> 20%</li>
-                                                    <li><span className="font-bold text-green-400">Rare (2★) :</span> Le reste</li>
-                                                    <li><span className="font-bold text-gray-400">Commun (1★) :</span> Le reste</li>
-                                                </ul>
-                                            </div>
-
-                                            <div>
-                                                <h4 className="text-lg font-semibold text-purple-300 mb-2">Système de Pity (Garantie)</h4>
-                                                <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10">
-                                                    <p>
-                                                        <span className="font-bold text-yellow-400">Pour les cartes 5★ :</span> Une carte de rareté 5★ est garantie au moins une fois tous les <span className="font-bold">90 vœux</span>. Si vous n'obtenez pas de 5★ en 89 vœux, le 90ème sera obligatoirement un 5★.
-                                                    </p>
-                                                    <p>
-                                                        <span className="font-bold text-purple-400">Pour les cartes 4★ :</span> Une carte de rareté 4★ ou supérieure est garantie au moins une fois tous les <span className="font-bold">10 vœux</span>.
-                                                    </p>
+                                        <div className="flex items-center justify-center gap-2 mb-1">
+                                            <BookOpen className="w-5 h-5 text-purple-300" />
+                                            <h3 className="text-2xl font-bold text-white text-center">Détails de la Bannière</h3>
+                                        </div>
+                                        <div className="text-center text-xs text-white/60 mb-6">Aperçu du personnage vedette, garanties et probabilités</div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-gray-300">
+                                            <div className="lg:col-span-2 space-y-6">
+                                                <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex items-center gap-4">
+                                                    <img src={currentFeaturedChar.image} alt={currentFeaturedChar.name} className="w-16 h-16 rounded-lg object-cover" />
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="text-lg font-bold text-white">{currentFeaturedChar.name}</div>
+                                                            <div className="flex items-center">{getRarityStars('Mythique')}</div>
+                                                        </div>
+                                                        <div className="text-xs text-white/70">{currentFeaturedChar.anime}</div>
+                                                        <div className="mt-2 text-xs text-white/70">Puissance • <span className="font-semibold text-white">{currentFeaturedChar.power}</span></div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white/5 p-4 rounded-lg border border-white/10">
+                                                    <h4 className="text-lg font-semibold text-purple-300 mb-2">Taux d'obtention</h4>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                        <div className="px-3 py-2 rounded-lg bg-black/30 border border-white/10 flex items-center justify-between">
+                                                            <div className="flex items-center gap-1 text-yellow-400">{[...Array(5)].map((_,i)=>(<Star key={i} size={14} className="fill-yellow-400 text-yellow-400" />))}</div>
+                                                            <div className="text-sm font-semibold text-white">0.6%</div>
+                                                        </div>
+                                                        <div className="px-3 py-2 rounded-lg bg-black/30 border border-white/10 flex items-center justify-between">
+                                                            <div className="flex items-center gap-1 text-purple-400">{[...Array(4)].map((_,i)=>(<Star key={i} size={14} className="fill-purple-400 text-purple-400" />))}</div>
+                                                            <div className="text-sm font-semibold text-white">5.1%</div>
+                                                        </div>
+                                                        <div className="px-3 py-2 rounded-lg bg-black/30 border border-white/10 flex items-center justify-between">
+                                                            <div className="flex items-center gap-1 text-blue-400">{[...Array(3)].map((_,i)=>(<Star key={i} size={14} className="fill-blue-400 text-blue-400" />))}</div>
+                                                            <div className="text-sm font-semibold text-white">20%</div>
+                                                        </div>
+                                                        <div className="px-3 py-2 rounded-lg bg-black/30 border border-white/10 flex items-center justify-between">
+                                                            <div className="flex items-center gap-1 text-green-400">{[...Array(2)].map((_,i)=>(<Star key={i} size={14} className="fill-green-400 text-green-400" />))}</div>
+                                                            <div className="text-sm font-semibold text-white">—</div>
+                                                        </div>
+                                                        <div className="px-3 py-2 rounded-lg bg-black/30 border border-white/10 flex items-center justify-between">
+                                                            <div className="flex items-center gap-1 text-gray-400">{[...Array(1)].map((_,i)=>(<Star key={i} size={14} className="fill-gray-400 text-gray-400" />))}</div>
+                                                            <div className="text-sm font-semibold text-white">—</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white/5 p-4 rounded-lg border border-white/10 space-y-2">
+                                                    <h4 className="text-lg font-semibold text-purple-300">Règles de la bannière</h4>
+                                                    <ul className="list-disc list-inside text-sm space-y-1">
+                                                        <li>50% de chances que le 5★ soit le personnage vedette.</li>
+                                                        <li>Si le 5★ n'est pas le vedette, le prochain 5★ est garanti vedette.</li>
+                                                        <li>4★ ou plus garanti au moins tous les 10 vœux.</li>
+                                                    </ul>
                                                 </div>
                                             </div>
-
-                                            <div>
-                                                <h4 className="text-lg font-semibold text-purple-300 mb-2">Bannière d'Événement</h4>
-                                                <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10">
-                                                    <p>
-                                                        Lorsque vous obtenez une carte 5★ sur cette bannière, il y a <span className="font-bold">50% de chance</span> que ce soit le personnage mis en vedette (<span className="font-semibold text-white">{currentFeaturedChar.name}</span>).
-                                                    </p>
-                                                    <p>
-                                                        Si la première carte 5★ que vous obtenez n'est pas le personnage en vedette, la <span className="font-bold text-yellow-400">prochaine carte 5★</span> que vous obtiendrez sera <span className="font-bold">garantie</span> d'être ce personnage.
-                                                    </p>
+                                            <div className="space-y-6">
+                                                <div className="bg-black/30 rounded-lg border border-white/10 p-4 flex flex-col items-center gap-4">
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-white/70">Garantie 5★ (Pity)</div>
+                                                        <div className="text-sm font-semibold text-white">{currentFeaturedChar.name}</div>
+                                                    </div>
+                                                    <PityProgressCircle pity={currentFeaturedChar.pity} maxPity={90} />
+                                                    <div className={`text-xs font-semibold ${pityStatus.className}`}>{pityStatus.text}</div>
+                                                    <div className="text-xs text-white/80">Au plus tard dans <span className="font-bold text-white">{remainingToFive}</span> vœux</div>
+                                                </div>
+                                                <div className="bg-white/5 rounded-lg border border-white/10 p-4">
+                                                    <h4 className="text-sm font-semibold text-purple-300 mb-2">Astuces</h4>
+                                                    <ul className="list-disc list-inside text-xs space-y-1 text-white/80">
+                                                        <li>Les vœux multiples n'affectent pas les probabilités, mais garantissent un 4★+ sur 10.</li>
+                                                        <li>La progression de pity est conservée entre les sessions pendant l'événement.</li>
+                                                    </ul>
                                                 </div>
                                             </div>
                                         </div>
@@ -813,14 +868,19 @@ function GachaPageContent() {
 
                                 {activeTab === 'history' && (
                                     <div>
-                                        <div className="flex flex-wrap gap-4 mb-6 justify-center">
+                                        <div className="flex items-center justify-center gap-2 mb-1">
+                                            <History className="w-5 h-5 text-blue-300" />
+                                            <h3 className="text-2xl font-bold text-white text-center">Historique</h3>
+                                        </div>
+                                        <div className="text-center text-xs text-white/60 mb-4">Vos tirages récents et filtres</div>
+                                        <div className="flex flex-wrap gap-3 mb-6 justify-center bg-white/5 border border-white/10 rounded-xl p-3">
                                             <div className="flex items-center gap-2">
                                                 <Filter className="w-4 h-4 text-gray-400" />
-                                                <span className="text-sm text-gray-300">Rareté:</span>
+                                                <span className="text-sm text-gray-300">Rareté</span>
                                                 <select
                                                     value={rarityFilter}
                                                     onChange={(e) => setRarityFilter(e.target.value as any)}
-                                                    className="bg-white/10 border border-white/20 rounded px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    className="bg-black/30 border border-white/20 rounded px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                                                 >
                                                     <option value="all">Tout</option>
                                                     <option value="rare">2★+</option>
@@ -830,18 +890,30 @@ function GachaPageContent() {
                                                 </select>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-300">Qté:</span>
+                                                <span className="text-sm text-gray-300">Qté</span>
                                                 <select
                                                     value={quantityFilter}
                                                     onChange={(e) => setQuantityFilter(e.target.value as any)}
-                                                    className="bg-white/10 border border-white/20 rounded px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    className="bg-black/30 border border-white/20 rounded px-3 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                                                 >
                                                     <option value="all">Tout</option>
                                                     <option value="multiple">10x Seulement</option>
                                                 </select>
                                             </div>
                                         </div>
-
+                                        {(() => {
+                                            const total = pullHistory.reduce((a, e) => a + e.cards.length, 0);
+                                            const mythic = pullHistory.reduce((a, e) => a + e.cards.filter(r => r.card.rarity === 'Mythique').length, 0);
+                                            const legendary = pullHistory.reduce((a, e) => a + e.cards.filter(r => r.card.rarity === 'Légendaire').length, 0);
+                                            return (
+                                                <div className="flex flex-wrap justify-center gap-2 mb-6">
+                                                    <div className="px-3 py-1.5 rounded-full bg-black/30 border border-white/10 text-xs text-white/80">Total cartes: <span className="font-semibold text-white">{total}</span></div>
+                                                    <div className="px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-400/30 text-xs text-yellow-300">5★: <span className="font-semibold">{mythic}</span></div>
+                                                    <div className="px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-400/30 text-xs text-purple-300">4★: <span className="font-semibold">{legendary}</span></div>
+                                                </div>
+                                            );
+                                        })()}
+                                        
                                         <div className="space-y-4">
                                             {getFilteredHistory().length === 0 ? (
                                                 <div className="text-center py-12">
@@ -851,7 +923,7 @@ function GachaPageContent() {
                                                 </div>
                                             ) : (
                                                 getFilteredHistory().map((entry) => (
-                                                    <div key={entry.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                                    <div key={entry.id} className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-white/20 transition-colors">
                                                         <div className="flex justify-between items-center mb-3">
                                                             <div className="flex items-center gap-2">
                                                                 <History className="w-4 h-4 text-gray-400" />
@@ -872,7 +944,7 @@ function GachaPageContent() {
                                                                 return (
                                                                     <div
                                                                         key={index}
-                                                                        className={`relative p-2 rounded-lg border ${styles.border} ${styles.bg} min-w-[100px] text-center`}
+                                                                        className={`relative p-2 rounded-lg border ${styles.border} ${styles.bg} min-w-[110px] text-center shadow-sm`}
                                                                     >
                                                                         <div className="text-sm font-medium text-white truncate max-w-24 mb-1 mx-auto">
                                                                             {result.card.name}
