@@ -14,6 +14,7 @@ import {
     Bot, TrendingUp, Activity, Users, Shield, Sparkles, Settings
 } from 'lucide-react';
 import { FavoritesBar } from '@/components/FavoritesBar';
+import { NyxCard } from '@/components/ui/NyxCard';
 
 // --- Types (inchangÃ©s) ---
 type UserStats = {
@@ -46,15 +47,19 @@ type Article = {
 
 // --- NYXBOT COMPONENTS ---
 
-const NyxCard: FC<{ children: ReactNode; className?: string; delay?: number }> = ({ children, className = '', delay = 0 }) => (
-    <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay, ease: 'easeOut' }}
-        className={`nyx-card p-6 hover:scale-[1.02] transition-all duration-300 ${className}`}
-    >
-        {children}
-    </motion.div>
+const SectionHeader: FC<{ icon: ReactNode; title: string; badgeText?: string; badgeClassName?: string }>
+ = ({ icon, title, badgeText, badgeClassName }) => (
+    <div className="flex items-center gap-3 mb-6">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+            {icon}
+        </div>
+        <h3 className="text-xl font-bold text-white">{title}</h3>
+        {badgeText && (
+            <div className={`ml-auto px-3 py-1 rounded-lg text-xs font-medium ${badgeClassName || 'bg-purple-primary/20 text-purple-secondary'}`}>
+                {badgeText}
+            </div>
+        )}
+    </div>
 );
 
 const StatCard: FC<{ 
@@ -498,27 +503,19 @@ export default function DashboardHomePage() {
                     <NyxCard delay={0.4} className="relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-500 to-purple-400 opacity-5 rounded-full blur-3xl transform translate-x-8 -translate-y-8"></div>
                         <div className="relative">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
-                                        <Activity size={18} className="text-white" />
-                                    </div>
-                                    Activité NyxBot (7 derniers jours)
-                                </h3>
-                                {(() => {
-                                    const activityTrend = calculateActivityTrend(kintHistoryData);
-                                    return activityTrend !== 0 && (
-                                        <div className={`flex items-center gap-2 text-xs px-3 py-1 rounded-lg ${
-                                            activityTrend > 0 
-                                                ? 'text-green-400 bg-green-500/10' 
-                                                : 'text-red-400 bg-red-500/10'
-                                        }`}>
-                                            <TrendingUp size={12} className={activityTrend < 0 ? 'rotate-180' : ''} />
-                                            {activityTrend > 0 ? '+' : ''}{activityTrend}% cette semaine
-                                        </div>
-                                    );
-                                })()}
-                            </div>
+                            {(() => {
+                                const activityTrend = calculateActivityTrend(kintHistoryData);
+                                const badge = activityTrend !== 0 ? `${activityTrend > 0 ? '+' : ''}${activityTrend}% cette semaine` : undefined;
+                                const badgeClass = activityTrend > 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10';
+                                return (
+                                    <SectionHeader 
+                                        icon={<Activity size={18} className="text-white" />} 
+                                        title="Activité NyxBot (7 derniers jours)" 
+                                        badgeText={badge}
+                                        badgeClassName={badge ? badgeClass : undefined}
+                                    />
+                                );
+                            })()}
                             <ResponsiveContainer width="100%" height={280}>
                                 <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
@@ -569,15 +566,11 @@ export default function DashboardHomePage() {
                     {/* Update Notes */}
                     {patchNotes && (
                         <NyxCard delay={0.5}>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
-                                    <BookOpen size={18} className="text-white" />
-                                </div>
-                                <h3 className="text-xl font-bold text-white">{patchNotes.title}</h3>
-                                <div className="ml-auto px-3 py-1 bg-purple-primary/20 text-purple-secondary text-xs rounded-lg font-medium">
-                                    Nouveautés
-                                </div>
-                            </div>
+                            <SectionHeader 
+                                icon={<BookOpen size={18} className="text-white" />} 
+                                title={patchNotes.title} 
+                                badgeText="Nouveautés" 
+                            />
                             <div className="space-y-4">
                                 {patchNotes.ajouts?.length > 0 && (
                                     <div>
@@ -622,15 +615,11 @@ export default function DashboardHomePage() {
                     <NyxCard delay={0.6} className="relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500 to-purple-400 opacity-10 rounded-full blur-2xl"></div>
                         <div className="relative">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
-                                    <Gift size={24} className="text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-white">Récompense Quotidienne</h3>
-                                    <p className="text-sm text-gray-400">500 Pièces vous attendent !</p>
-                                </div>
-                            </div>
+                            <SectionHeader 
+                                icon={<Gift size={18} className="text-white" />} 
+                                title="Récompense Quotidienne" 
+                                badgeText={!claimStatus.canClaim ? `Disponible dans ${claimStatus.timeLeft}` : undefined}
+                            />
                             <motion.button 
                                 onClick={handleClaimReward} 
                                 disabled={!claimStatus.canClaim || isClaiming}
@@ -650,12 +639,7 @@ export default function DashboardHomePage() {
 
                     {/* News Feed */}
                     <NyxCard delay={0.7}>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
-                                <Newspaper size={18} className="text-white" />
-                            </div>
-                            <h3 className="font-bold text-white">Actualités NyxBot</h3>
-                        </div>
+                        <SectionHeader icon={<Newspaper size={18} className="text-white" />} title="Actualités NyxBot" />
                         <div className="relative min-h-[100px] flex items-center">
                             <AnimatePresence mode="wait">
                                 {articles.length > 0 ? (
@@ -689,12 +673,7 @@ export default function DashboardHomePage() {
 
                     {/* Customization */}
                     <NyxCard delay={0.8}>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
-                                <Crown size={18} className="text-white" />
-                            </div>
-                            <h3 className="font-bold text-white">Personnalisation</h3>
-                        </div>
+                        <SectionHeader icon={<Crown size={18} className="text-white" />} title="Personnalisation" />
                         <div className="p-4 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
@@ -715,15 +694,7 @@ export default function DashboardHomePage() {
 
                     {/* Quick Inventory */}
                     <NyxCard delay={0.9}>
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
-                                <Package size={18} className="text-white" />
-                            </div>
-                            <h3 className="font-bold text-white">Inventaire</h3>
-                            <div className="ml-auto px-2 py-1 bg-purple-primary/20 text-purple-secondary text-xs rounded-lg">
-                                {inventory.length} objets
-                            </div>
-                        </div>
+                        <SectionHeader icon={<Package size={18} className="text-white" />} title="Inventaire" badgeText={`${inventory.length} objets`} />
                         <div className="space-y-3 max-h-48 overflow-y-auto">
                             {inventory.length > 0 ? inventory.slice(0, 5).map(item => (
                                 <div key={item.id} className="flex items-center gap-3 p-3 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
@@ -753,15 +724,11 @@ export default function DashboardHomePage() {
 
             {/* Achievements Section */}
             <NyxCard delay={1.0}>
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
-                        <Trophy size={18} className="text-white" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white">Succès Débloqués</h2>
-                    <div className="ml-auto px-3 py-1 bg-purple-primary/20 text-purple-secondary text-xs rounded-lg font-medium">
-                        {unlockedSuccesses.length}/{totalAchievementsCount}
-                    </div>
-                </div>
+                <SectionHeader 
+                    icon={<Trophy size={18} className="text-white" />} 
+                    title="Succès Débloqués" 
+                    badgeText={`${unlockedSuccesses.length}/${totalAchievementsCount}`}
+                />
                 {unlockedSuccesses.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                         {unlockedSuccesses.map((successId, index) => (
@@ -805,8 +772,8 @@ export default function DashboardHomePage() {
                             initial={{ opacity: 0, scale: 0.9 }} 
                             animate={{ opacity: 1, scale: 1 }} 
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="nyx-card w-full max-w-md shadow-2xl"
                         >
+                            <NyxCard className="w-full max-w-md">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
                                     <Crown size={18} className="text-white" />
@@ -848,6 +815,7 @@ export default function DashboardHomePage() {
                                     Équiper
                                 </motion.button>
                             </div>
+                            </NyxCard>
                         </motion.div>
                     </motion.div>
                 )}
