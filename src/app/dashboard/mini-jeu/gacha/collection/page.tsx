@@ -92,7 +92,7 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
 
     if (!card?.cardInfo) return null;
 
-    const sellPrices: { [key: string]: number } = { 'Commun': 200, 'Rare': 400, 'Épique': 900, 'Légendaire': 2600, 'Mythique': 4500 };
+    const sellPrices: { [key: string]: number } = { 'Commun': 100, 'Rare': 200, 'Épique': 500, 'Légendaire': 1500, 'Mythique': 4500 };
     const sellPrice = sellPrices[card.cardInfo.rarity] || 20;
     const maxQuantity = card.count - 1;
 

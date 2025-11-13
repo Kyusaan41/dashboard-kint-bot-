@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
-import { Star, Filter, History, X, BookOpen, Gem } from 'lucide-react';
+import { Star, Filter, History, X, BookOpen, Gem, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { getRandomCardByRarity, getCardById, getCardsByRarity, AnimeCard } from './cards';
 import { useSession } from 'next-auth/react'; 
@@ -518,47 +518,57 @@ function GachaPageContent() {
             <Toaster richColors position="top-center" />
 
             
-            <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 font-sans relative overflow-hidden flex flex-col text-white z-50">
-
-                <div className="flex justify-between items-center mb-3 flex-shrink-0">
+            <div className="w-full max-w-7xl h-auto md:h-[750px] bg-slate-900/70 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-lg p-4 pb-24 font-sans relative overflow-hidden flex flex-col text-white z-50">
+                <div className="flex items-center justify-between gap-3 mb-3 flex-shrink-0">
                     <div className="flex items-center gap-3">
-                        <span className="text-white text-lg font-medium">✨ Bannières</span>
-                        <div className="hidden md:flex items-center gap-2">
-                            {featuredCharacters.map((char, index) => (
-                                <motion.div
-                                    key={char.id}
-                                    className={`w-10 h-10 bg-black/30 rounded-lg border-2 shadow-lg overflow-hidden cursor-pointer transition-all duration-300 ${
-                                        currentFeatured === index ? 'border-yellow-400 scale-110' : 'border-white/20 opacity-60 hover:opacity-100'
-                                    }`}
-                                    onClick={() => setCurrentFeatured(index)}
-                                    whileHover={{ y: -3 }}
-                                >
-                                    <img src={char.image} alt={char.name} className="w-full h-full object-cover" />
-                                </motion.div>
-                            ))}
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+                            <Sparkles className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <div className="text-lg md:text-xl font-semibold">Bannières d'Invocation</div>
+                            <div className="text-xs text-white/60 hidden md:block">Rotation des bannières toutes les 2 semaines</div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full text-sm">
-                            <span className="text-yellow-400">✦</span>
-                            <span>{currency}</span>
+                    <div className="flex items-center gap-2 md:gap-3">
+                        <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full text-sm">
+                            <Gem className="w-4 h-4 text-yellow-400" />
+                            <span className="font-semibold">{currency}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1.5 rounded-full text-sm">
-                            <img 
-                                src="/gacha/icons/wish.png" 
-                                alt="Vœux" 
-                                className="w-4 h-4"
-                            />
+                        <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full text-sm">
+                            <img src="/gacha/icons/wish.png" alt="Vœux" className="w-4 h-4" />
                             <span className="font-semibold">{wishes}</span>
                         </div>
+                        <Link href="/dashboard/mini-jeu"><FavoriteToggleButton pageId="gacha" /></Link>
                         <Link href="/dashboard/mini-jeu">
-                            <FavoriteToggleButton pageId="gacha" />
-                        </Link>
-                        <Link href="/dashboard/mini-jeu">
-                            <button className="bg-black/40 w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors">
-                                <X size={20} />
+                            <button className="w-8 h-8 md:w-9 md:h-9 bg-black/40 rounded-full flex items-center justify-center text-white/70 hover:text-white border border-white/10">
+                                <X size={18} />
                             </button>
                         </Link>
+                    </div>
+                </div>
+
+                {/* Bannières: chips horizontales */}
+                <div className="mt-1 overflow-x-auto">
+                    <div className="flex items-center gap-2 min-w-max">
+                        {featuredCharacters.map((char, index) => (
+                            <motion.button
+                                key={char.id}
+                                onClick={() => setCurrentFeatured(index)}
+                                tabIndex={0}
+                                role="tab"
+                                aria-selected={currentFeatured === index}
+                                title={`${char.name} • ${char.anime}`}
+                                className={`flex items-center gap-2 pr-3 rounded-full border transition-all outline-none focus-visible:ring-2 focus-visible:ring-purple-400/70 ${
+                                    currentFeatured === index
+                                        ? 'border-purple-400/60 bg-purple-400/10 ring-2 ring-purple-400/60 ring-offset-2 ring-offset-black/40'
+                                        : 'border-white/10 bg-black/30 hover:bg-black/40'
+                                }`}
+                                whileHover={{ y: -2 }}
+                            >
+                                <img src={char.image} alt={char.name} className="w-10 h-10 rounded-full object-cover shadow-md shadow-black/40" />
+                                <span className="text-sm whitespace-nowrap opacity-90">{char.name}</span>
+                            </motion.button>
+                        ))}
                     </div>
                 </div>
                 
@@ -567,7 +577,7 @@ function GachaPageContent() {
                     <motion.img
                         src={currentFeaturedChar.image}
                         alt="Banner Background"
-                        className="absolute inset-0 w-full h-full object-cover filter blur-sm scale-110 opacity-30"
+                        className="absolute inset-0 w-full h-full object-cover filter blur-sm scale-110 opacity-25"
                         animate={{ scale: [1.1, 1.15, 1.1], rotate: [0, 0.5, 0] }}
                         transition={{ duration: 20, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
                     />
@@ -599,15 +609,15 @@ function GachaPageContent() {
             <AnimatePresence mode="wait">
                 <motion.div
                     key={`char-container-${currentFeaturedChar.id}`}
-                    className="absolute right-0 md:right-[20px] bottom-0 h-full md:h-[105%] z-10 flex items-end"
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
+                    className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.02 }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
                 >
                     {/* Glow subtil autour du personnage */}
                     <motion.div
-                        className="absolute inset-0 blur-3xl rounded-full opacity-50"
+                        className="absolute top-1/2 left-1/2 w-[60%] h-[60%] max-w-[700px] max-h-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl opacity-50"
                         style={{
                             background: getGlowColor(currentFeaturedChar.rarity),
                             filter: 'blur(60px)',
@@ -616,11 +626,11 @@ function GachaPageContent() {
                         transition={{ duration: 4, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
                     />
 
-                    {/* Image du personnage */}
+                    {/* Image du personnage, centrée et à taille uniforme */}
                     <motion.img
                         src={currentFeaturedChar.image}
                         alt={currentFeaturedChar.name}
-                        className="relative h-full w-auto object-cover mix-blend-screen mask-fade"
+                        className="relative h-[85%] max-w-[85%] object-contain mix-blend-screen mask-fade select-none pointer-events-none"
                         draggable={false}
                     />
                 </motion.div>
@@ -673,72 +683,33 @@ function GachaPageContent() {
                         </div>
                     </div></div>
 
-                <div className="flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
-                    <div className="flex gap-2 bg-black/30 p-1 rounded-full">
-                        <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'shop' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
-                            onClick={() => setActiveTab('shop')}
-                        >
-                            Boutique
-                        </button>
-                        <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
-                            onClick={() => setActiveTab('details')}
-                        >
-                            Détails
-                        </button>
-                        <button
-                            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/90 text-purple-900' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
-                            onClick={() => setActiveTab('history')}
-                        >
-                            Historique
-                        </button>
-                    </div>
-
-                    <div className="flex gap-3">
-                        <Link href="/dashboard/mini-jeu/gacha/collection">
-                            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="h-full px-4 bg-white/10 rounded-full flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors">
-                                <BookOpen size={20} />
-                            </motion.button>
-                        </Link>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => performPull('single')}
-                                disabled={isPulling || wishes < 1}
-                            className="bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <div className="px-5 py-2.5 flex flex-col items-center">
-                                <span>Souhait x1</span>
-                                <div className="flex items-center gap-1 text-xs text-yellow-300">
-                                    <img 
-                                        src="/gacha/icons/wish.png" 
-                                        alt="Vœu" 
-                                        className="w-4 h-4"
-                                    />
-                                    <span className="font-semibold">1</span>
-                                </div>
+                {/* Barre d'actions sticky */}
+                <div className="fixed left-0 right-0 z-40" style={{ bottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+                    <div className="mx-auto max-w-7xl px-4">
+                        <div className="bg-slate-900/80 backdrop-blur-md border border-white/10 rounded-2xl p-2 md:p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2 shadow-2xl">
+                            <div className="flex gap-2 bg-black/20 p-1 rounded-full">
+                                <button className={`px-4 py-1.5 rounded-full text-sm ${activeTab === 'shop' ? 'bg-white text-slate-900' : 'text-white/80 hover:bg-white/10'}`} onClick={() => setActiveTab('shop')}>Boutique</button>
+                                <button className={`px-4 py-1.5 rounded-full text-sm ${activeTab === 'details' ? 'bg-white text-slate-900' : 'text-white/80 hover:bg-white/10'}`} onClick={() => setActiveTab('details')}>Détails</button>
+                                <button className={`px-4 py-1.5 rounded-full text-sm ${activeTab === 'history' ? 'bg-white text-slate-900' : 'text-white/80 hover:bg-white/10'}`} onClick={() => setActiveTab('history')}>Historique</button>
                             </div>
-                        </motion.button>
-                        <motion.button
-                            whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => performPull('multi')}
-                            disabled={isPulling || wishes < 10}
-                            className="bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 text-black font-bold rounded-full shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <div className="px-8 py-2.5 flex flex-col items-center">
-                                <span>Souhait x10</span>
-                                <div className="flex items-center gap-1 text-xs text-black/70">
-                                    <img 
-                                        src="/gacha/icons/wish.png" 
-                                        alt="Vœu" 
-                                        className="w-4 h-4"
-                                    />
-                                    <span className="font-semibold">10</span>
-                                </div>
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <Link href="/dashboard/mini-jeu/gacha/collection">
+                                    <button className="h-10 px-4 bg-white/10 rounded-full text-white/80 hover:bg-white/20">Collection</button>
+                                </Link>
+                                <motion.button title={`Coût: 1 vœu • Solde: ${wishes}`} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => performPull('single')} disabled={isPulling || wishes < 1} className="h-10 px-5 rounded-full bg-gradient-to-r from-slate-600 to-slate-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <div className="flex items-center gap-2">
+                                        <span>Souhait x1</span>
+                                        <img src="/gacha/icons/wish.png" alt="Vœu" className="w-4 h-4" />
+                                    </div>
+                                </motion.button>
+                                <motion.button title={`Coût: 10 vœux • Solde: ${wishes}`} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => performPull('multi')} disabled={isPulling || wishes < 10} className="h-10 px-6 rounded-full bg-gradient-to-r from-yellow-400 via-orange-400 to-orange-500 text-black font-bold shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <div className="flex items-center gap-2">
+                                        <span>Souhait x10</span>
+                                        <img src="/gacha/icons/wish.png" alt="Vœu" className="w-4 h-4" />
+                                    </div>
+                                </motion.button>
                             </div>
-                        </motion.button>
+                        </div>
                     </div>
                 </div>
 
