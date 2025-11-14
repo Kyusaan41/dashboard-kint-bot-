@@ -5,11 +5,11 @@ import { useSession } from "next-auth/react"
 import { Ban, Clock, AlertTriangle, Mail } from "lucide-react"
 
 export default function BannedPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [info, setInfo] = useState<{ reason?: string; expiresAt?: string | null } | null>(null)
 
   useEffect(() => {
-    if (!session?.user?.id) return
+    if (status !== 'authenticated' || !session?.user?.id) return
 
     // Check ban status every 3 seconds and redirect if unbanned
     const checkBanStatus = async () => {
@@ -35,7 +35,7 @@ export default function BannedPage() {
     const interval = setInterval(checkBanStatus, 3000)
 
     return () => clearInterval(interval)
-  }, [session?.user?.id])
+  }, [session])
 
   return (
     <div className="min-h-screen bg-gradient-nyx flex items-center justify-center px-6 relative overflow-hidden">
