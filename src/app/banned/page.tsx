@@ -1,22 +1,41 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Ban, Clock, AlertTriangle, Mail } from "lucide-react"
 
 export default function BannedPage() {
+  const { data: session } = useSession()
   const [info, setInfo] = useState<{ reason?: string; expiresAt?: string | null } | null>(null)
 
   useEffect(() => {
-    // Try to fetch current user's ban info via cookie session in middleware; fallback shows generic message
-    const fetchBan = async () => {
+    if (!session?.user?.id) return
+
+    // Check ban status every 3 seconds and redirect if unbanned
+    const checkBanStatus = async () => {
       try {
-        // We don't have the user id here; the middleware already redirected us because we're banned
-        // Show a minimal page; optionally could call an endpoint that returns current session ban
-        setInfo(null)
-      } catch {}
+        const res = await fetch(`/api/ban-check?userId=${encodeURIComponent(session.user.id)}`)
+        const data = await res.json()
+        if (!data.banned) {
+          // User is unbanned, redirect to dashboard
+          window.location.href = '/dashboard'
+          return
+        }
+        // Update ban info if available
+        setInfo({ reason: data.reason, expiresAt: data.expiresAt })
+      } catch (error) {
+        console.error('Error checking ban status:', error)
+      }
     }
-    fetchBan()
-  }, [])
+
+    // Initial check
+    checkBanStatus()
+
+    // Check every 3 seconds
+    const interval = setInterval(checkBanStatus, 3000)
+
+    return () => clearInterval(interval)
+  }, [session?.user?.id])
 
   return (
     <div className="min-h-screen bg-gradient-nyx flex items-center justify-center px-6 relative overflow-hidden">
