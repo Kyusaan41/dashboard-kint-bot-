@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { store } from '@/lib/dataStore'
+import { loadSanctionsFromDisk } from '@/lib/persistence'
 
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim())
 const BOT_API_URL = 'http://193.70.34.25:20007/api'
 
+let sanctionsLoaded = false
+async function ensureSanctionsLoaded() {
+  if (!sanctionsLoaded) {
+    await loadSanctionsFromDisk()
+    sanctionsLoaded = true
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    await ensureSanctionsLoaded()
     const session = await getServerSession(authOptions)
 
     // Check authentication and super-admin role
@@ -17,7 +28,7 @@ export async function GET(request: NextRequest) {
     // 🔄 Récupérer les vraies données directement depuis le bot API
     try {
       console.log(`[SUPER-ADMIN] Fetching from: ${BOT_API_URL}/serverinfo`)
-      
+
       try {
         const response = await fetch(`${BOT_API_URL}/serverinfo`)
 
@@ -27,7 +38,7 @@ export async function GET(request: NextRequest) {
           const serverInfo = await response.json()
           const users = serverInfo.members || []
           console.log(`[SUPER-ADMIN] Successfully fetched ${users.length} users from bot API`)
-          
+
           const transformedUsers = (Array.isArray(users) ? users : []).map((user: any) => {
             const rawRole = user.siteRole || 'user'
             const normalizedRole = rawRole === 'admin' ? 'administrator' : rawRole
@@ -42,7 +53,21 @@ export async function GET(request: NextRequest) {
               currency: user.currency || 0,
             }
           })
-          return NextResponse.json({ users: transformedUsers })
+
+          // Filter out banned users
+          const now = Date.now()
+          const filteredUsers = transformedUsers.filter(user => {
+            const activeBan = store.sanctions.find(s => {
+              if (!s.active) return false
+              if (s.userId !== user.id) return false
+              if (s.type !== 'ban') return false
+              if (s.expiresAt && new Date(s.expiresAt).getTime() <= now) return false
+              return true
+            })
+            return !activeBan
+          })
+
+          return NextResponse.json({ users: filteredUsers })
         } else {
           const errorText = await response.text()
           console.warn(`[SUPER-ADMIN] Bot API returned error: ${response.status} - ${errorText}`)
@@ -85,9 +110,22 @@ export async function GET(request: NextRequest) {
             currency: 200,
           },
         ]
-        
-        console.log(`[SUPER-ADMIN] Returning ${mockUsers.length} mock users for testing`)
-        return NextResponse.json({ users: mockUsers })
+
+        // Filter out banned users
+        const now = Date.now()
+        const filteredMockUsers = mockUsers.filter(user => {
+          const activeBan = store.sanctions.find(s => {
+            if (!s.active) return false
+            if (s.userId !== user.id) return false
+            if (s.type !== 'ban') return false
+            if (s.expiresAt && new Date(s.expiresAt).getTime() <= now) return false
+            return true
+          })
+          return !activeBan
+        })
+
+        console.log(`[SUPER-ADMIN] Returning ${filteredMockUsers.length} mock users for testing`)
+        return NextResponse.json({ users: filteredMockUsers })
       }
     } catch (error) {
       console.error('[SUPER-ADMIN] Unexpected error:', error)
