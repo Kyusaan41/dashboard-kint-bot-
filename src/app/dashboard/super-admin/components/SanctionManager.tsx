@@ -31,6 +31,7 @@ export function SanctionManager() {
   const [sanctions, setSanctions] = useState<Sanction[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [currentTab, setCurrentTab] = useState<'all' | 'bans'>('all')
   const [newSanction, setNewSanction] = useState({
     userId: '',
     username: '',
@@ -193,6 +194,8 @@ export function SanctionManager() {
     )
   }
 
+  const filteredSanctions = currentTab === 'all' ? sanctions : sanctions.filter(s => s.type === 'ban')
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -209,6 +212,30 @@ export function SanctionManager() {
           <Plus className="h-4 w-4" />
           Nouvelle Sanction
         </motion.button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setCurrentTab('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            currentTab === 'all'
+              ? 'bg-purple-600/20 border border-purple-500/30 text-purple-300'
+              : 'bg-gray-700/20 border border-gray-600/30 text-gray-400 hover:bg-gray-700/30'
+          }`}
+        >
+          Toutes les sanctions
+        </button>
+        <button
+          onClick={() => setCurrentTab('bans')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            currentTab === 'bans'
+              ? 'bg-red-600/20 border border-red-500/30 text-red-300'
+              : 'bg-gray-700/20 border border-gray-600/30 text-gray-400 hover:bg-gray-700/30'
+          }`}
+        >
+          Bans actifs
+        </button>
       </div>
 
       {showForm && (
@@ -329,7 +356,7 @@ export function SanctionManager() {
       )}
 
       <div className="space-y-3 max-h-96 overflow-y-auto">
-        {sanctions.map((sanction, i) => (
+        {filteredSanctions.map((sanction, i) => (
           <motion.div
             key={sanction.id}
             initial={{ opacity: 0, x: -20 }}
@@ -365,9 +392,9 @@ export function SanctionManager() {
         ))}
       </div>
 
-      {sanctions.length === 0 && (
+      {filteredSanctions.length === 0 && (
         <div className="text-center py-8 text-gray-400">
-          Aucune sanction active
+          {currentTab === 'all' ? 'Aucune sanction active' : 'Aucun ban actif'}
         </div>
       )}
     </div>
