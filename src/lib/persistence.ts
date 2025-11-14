@@ -4,8 +4,12 @@ import { store, Sanction } from './dataStore'
 
 // Resolve a writable directory for serverless/container environments
 function resolveDataDir() {
-  // Use project data directory for persistence
-  return path.join(process.cwd(), 'data')
+  const base = process.env.NYX_DATA_DIR
+    || process.env.TMPDIR
+    || process.env.TEMP
+    || process.env.TMP
+    || (process.platform === 'win32' ? 'C:\\Windows\\Temp' : '/tmp')
+  return path.join(base, 'nyxbot')
 }
 
 const dataDir = resolveDataDir()
