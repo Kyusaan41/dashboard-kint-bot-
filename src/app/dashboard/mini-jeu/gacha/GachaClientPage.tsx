@@ -602,7 +602,7 @@ function GachaPageContent() {
                         </div>
                         <div>
                             <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Invocation — Événement</h1>
-                            <p className="text-sm text-white/60">Bannière à durée limitée • Style invocation épique</p>
+                            <p className="text-sm text-white/60">Bannière à durée limitée • Gacha by Kyû</p>
                         </div>
                     </div>
 
