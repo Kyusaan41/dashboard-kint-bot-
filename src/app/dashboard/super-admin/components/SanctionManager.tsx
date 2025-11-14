@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Ban, AlertCircle, Volume2, Clock, X, Plus, Loader2 } from 'lucide-react'
+import { Ban, AlertCircle, Volume2, Clock, X, Plus, Loader2, Search, User } from 'lucide-react'
+import Image from 'next/image'
 
 interface Sanction {
   id: string
@@ -17,6 +18,15 @@ interface Sanction {
   active: boolean
 }
 
+interface UserSuggestion {
+  id: string
+  username: string
+  avatar: string
+  siteRole: string
+  points: number
+  currency: number
+}
+
 export function SanctionManager() {
   const [sanctions, setSanctions] = useState<Sanction[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,8 +39,23 @@ export function SanctionManager() {
     duration: 60,
   })
 
+  // États pour l'auto-complète
+  const [userSearch, setUserSearch] = useState('')
+  const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchingUsers, setSearchingUsers] = useState(false)
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     loadSanctions()
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
   }, [])
 
   const loadSanctions = async () => {
@@ -43,6 +68,63 @@ export function SanctionManager() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Fonction de recherche d'utilisateurs avec debounce
+  const searchUsers = async (query: string) => {
+    if (query.length < 2) {
+      setUserSuggestions([])
+      setShowSuggestions(false)
+      return
+    }
+
+    setSearchingUsers(true)
+    try {
+      const res = await fetch('/api/super-admin/users')
+      const data = await res.json()
+
+      if (res.ok && data.users) {
+        const filteredUsers = data.users.filter((user: UserSuggestion) =>
+          user.username.toLowerCase().includes(query.toLowerCase()) ||
+          user.id.includes(query)
+        ).slice(0, 5) // Limiter à 5 résultats
+
+        setUserSuggestions(filteredUsers)
+        setShowSuggestions(filteredUsers.length > 0)
+      }
+    } catch (error) {
+      console.error('Error searching users:', error)
+      setUserSuggestions([])
+    } finally {
+      setSearchingUsers(false)
+    }
+  }
+
+  // Gestionnaire de changement pour le champ de recherche utilisateur
+  const handleUserSearchChange = (value: string) => {
+    setUserSearch(value)
+    setNewSanction(prev => ({ ...prev, username: value }))
+
+    // Annuler le timeout précédent
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    // Déclencher la recherche avec debounce
+    searchTimeoutRef.current = setTimeout(() => {
+      searchUsers(value)
+    }, 300)
+  }
+
+  // Sélection d'un utilisateur depuis les suggestions
+  const selectUser = (user: UserSuggestion) => {
+    setNewSanction(prev => ({
+      ...prev,
+      userId: user.id,
+      username: user.username
+    }))
+    setUserSearch(user.username)
+    setShowSuggestions(false)
   }
 
   const handleAddSanction = async (e: React.FormEvent) => {
@@ -145,13 +227,60 @@ export function SanctionManager() {
               onChange={(e) => setNewSanction({ ...newSanction, userId: e.target.value })}
               className="px-3 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-red-500/50 text-sm"
             />
-            <input
-              type="text"
-              placeholder="Nom Utilisateur"
-              value={newSanction.username}
-              onChange={(e) => setNewSanction({ ...newSanction, username: e.target.value })}
-              className="px-3 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-red-500/50 text-sm"
-            />
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Rechercher un utilisateur..."
+                  value={userSearch}
+                  onChange={(e) => handleUserSearchChange(e.target.value)}
+                  onFocus={() => userSuggestions.length > 0 && setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="w-full pl-10 pr-3 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-red-500/50 text-sm"
+                />
+                {searchingUsers && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-gray-500" />
+                )}
+              </div>
+
+              {/* Dropdown des suggestions */}
+              {showSuggestions && userSuggestions.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+                >
+                  {userSuggestions.map((user) => (
+                    <motion.button
+                      key={user.id}
+                      type="button"
+                      onClick={() => selectUser(user)}
+                      whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                      className="w-full px-3 py-2 text-left hover:bg-red-500/10 transition-colors flex items-center gap-3"
+                    >
+                      <Image
+                        src={user.avatar}
+                        alt={user.username}
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{user.username}</p>
+                        <p className="text-xs text-gray-400">ID: {user.id}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-400">{user.points} pts</p>
+                        <p className="text-xs text-gray-400">{user.currency} 💰</p>
+                      </div>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
