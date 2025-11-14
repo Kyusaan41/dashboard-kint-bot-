@@ -31,7 +31,7 @@ export function SanctionManager() {
   const [sanctions, setSanctions] = useState<Sanction[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [currentTab, setCurrentTab] = useState<'all' | 'bans'>('bans')
+  // Only handling bans now
   const [newSanction, setNewSanction] = useState({
     userId: '',
     username: '',
@@ -49,7 +49,7 @@ export function SanctionManager() {
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    loadSanctions()
+    loadBans()
 
     // Cleanup timeout on unmount
     return () => {
@@ -59,13 +59,13 @@ export function SanctionManager() {
     }
   }, [])
 
-  const loadSanctions = async () => {
+  const loadBans = async () => {
     try {
-      const res = await fetch('/api/super-admin/sanctions?active=true')
+      const res = await fetch('/api/admin/bans')
       const data = await res.json()
-      setSanctions(data.sanctions || [])
+      setSanctions(data.bans || [])
     } catch (error) {
-      console.error('Error loading sanctions:', error)
+      console.error('Error loading bans:', error)
     } finally {
       setLoading(false)
     }
@@ -128,57 +128,61 @@ export function SanctionManager() {
     setShowSuggestions(false)
   }
 
-  const handleAddSanction = async (e: React.FormEvent) => {
+  const handleAddBan = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newSanction.userId || !newSanction.reason) return
 
     try {
-      const res = await fetch('/api/super-admin/sanctions', {
+      const res = await fetch('/api/admin/bans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSanction),
+        body: JSON.stringify({
+          userId: newSanction.userId,
+          reason: newSanction.reason,
+          duration: newSanction.duration || null
+        }),
       })
 
       if (res.ok) {
         const data = await res.json()
-        setSanctions([data.sanction, ...sanctions])
+        setSanctions([data.ban, ...sanctions])
         setNewSanction({ userId: '', username: '', type: 'ban', reason: '', duration: 60 })
         setShowForm(false)
       }
     } catch (error) {
-      console.error('Error adding sanction:', error)
+      console.error('Error adding ban:', error)
     }
   }
 
-  const handleRemoveSanction = async (sanctionId: string) => {
+  const handleRemoveBan = async (userId: string) => {
     try {
-      await fetch(`/api/super-admin/sanctions?id=${sanctionId}`, {
+      await fetch(`/api/admin/bans?userId=${userId}`, {
         method: 'DELETE',
       })
-      setSanctions(sanctions.filter(s => s.id !== sanctionId))
+      setSanctions(sanctions.filter(s => s.userId !== userId))
     } catch (error) {
-      console.error('Error removing sanction:', error)
+      console.error('Error removing ban:', error)
     }
   }
 
   const handleHardReset = async () => {
-    if (!confirm('ATTENTION: Cette action va supprimer TOUTES les sanctions de façon permanente. Êtes-vous sûr ?')) {
+    if (!confirm('ATTENTION: Cette action va supprimer TOUS les bans de façon permanente. Êtes-vous sûr ?')) {
       return
     }
 
     try {
-      const res = await fetch('/api/super-admin/sanctions/reset', {
+      const res = await fetch('/api/admin/bans/reset', {
         method: 'POST',
       })
 
       if (res.ok) {
         setSanctions([])
-        alert('Toutes les sanctions ont été supprimées.')
+        alert('Tous les bans ont été supprimés.')
       } else {
         alert('Erreur lors de la réinitialisation.')
       }
     } catch (error) {
-      console.error('Error resetting sanctions:', error)
+      console.error('Error resetting bans:', error)
       alert('Erreur lors de la réinitialisation.')
     }
   }
@@ -216,14 +220,14 @@ export function SanctionManager() {
     )
   }
 
-  const filteredSanctions = currentTab === 'all' ? sanctions : sanctions.filter(s => s.type === 'ban')
+  const filteredBans = sanctions
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-2xl font-bold flex items-center gap-2">
           <Ban className="h-6 w-6 text-red-400" />
-          Gestion des Sanctions
+          Gestion des Bans
         </h3>
         <div className="flex gap-2">
           <motion.button
@@ -242,41 +246,18 @@ export function SanctionManager() {
             className="px-4 py-2 bg-red-600/20 border border-red-500/30 rounded-lg hover:border-red-500/60 transition-all text-sm font-medium text-red-300 flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
-            Nouvelle Sanction
+            Nouveau Ban
           </motion.button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setCurrentTab('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            currentTab === 'all'
-              ? 'bg-purple-600/20 border border-purple-500/30 text-purple-300'
-              : 'bg-gray-700/20 border border-gray-600/30 text-gray-400 hover:bg-gray-700/30'
-          }`}
-        >
-          Toutes les sanctions
-        </button>
-        <button
-          onClick={() => setCurrentTab('bans')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            currentTab === 'bans'
-              ? 'bg-red-600/20 border border-red-500/30 text-red-300'
-              : 'bg-gray-700/20 border border-gray-600/30 text-gray-400 hover:bg-gray-700/30'
-          }`}
-        >
-          Bans actifs
-        </button>
-      </div>
 
       {showForm && (
         <motion.form
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          onSubmit={handleAddSanction}
+          onSubmit={handleAddBan}
           className="p-4 bg-gray-800/40 border border-red-500/30 rounded-lg space-y-4"
         >
           <div className="grid grid-cols-2 gap-4">
@@ -389,9 +370,9 @@ export function SanctionManager() {
       )}
 
       <div className="space-y-3 max-h-96 overflow-y-auto">
-        {filteredSanctions.map((sanction, i) => (
+        {filteredBans.map((ban, i) => (
           <motion.div
-            key={sanction.id}
+            key={ban.userId}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.05 }}
@@ -399,15 +380,15 @@ export function SanctionManager() {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3 flex-1">
-                {getTypeIcon(sanction.type)}
+                <Ban className="h-5 w-5 text-red-500" />
                 <div>
-                  <p className="font-semibold text-white">{sanction.username}</p>
-                  <p className="text-sm text-gray-400">{sanction.reason}</p>
+                  <p className="font-semibold text-white">User ID: {ban.userId}</p>
+                  <p className="text-sm text-gray-400">{ban.reason}</p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <span>Par: {sanction.createdBy}</span>
+                    <span>Par: {(ban as any).bannedBy}</span>
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {getDurationText(sanction.duration, sanction.expiresAt)}
+                      {ban.expiresAt ? `Expire: ${new Date(ban.expiresAt).toLocaleString("fr-FR")}` : 'Permanent'}
                     </div>
                   </div>
                 </div>
@@ -415,27 +396,19 @@ export function SanctionManager() {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => handleRemoveSanction(sanction.id)}
-                className={`p-2 rounded-lg transition-colors ${
-                  sanction.type === 'ban'
-                    ? 'hover:bg-green-600/20 text-green-500'
-                    : 'hover:bg-red-600/20 text-red-500'
-                }`}
+                onClick={() => handleRemoveBan(ban.userId)}
+                className="p-2 rounded-lg transition-colors hover:bg-green-600/20 text-green-500"
               >
-                {sanction.type === 'ban' ? (
-                  <span className="text-sm font-medium">Unban</span>
-                ) : (
-                  <X className="h-5 w-5" />
-                )}
+                <span className="text-sm font-medium">Unban</span>
               </motion.button>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {filteredSanctions.length === 0 && (
+      {filteredBans.length === 0 && (
         <div className="text-center py-8 text-gray-400">
-          {currentTab === 'all' ? 'Aucune sanction active' : 'Aucun ban actif'}
+          Aucun ban actif
         </div>
       )}
     </div>

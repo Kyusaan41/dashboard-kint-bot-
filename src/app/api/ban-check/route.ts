@@ -1,18 +1,8 @@
 import { NextResponse } from 'next/server'
-import { store } from '@/lib/dataStore'
-import { loadSanctionsFromDisk } from '@/lib/persistence'
-
-let sanctionsLoaded = false
-async function ensureSanctionsLoaded() {
-  if (!sanctionsLoaded) {
-    await loadSanctionsFromDisk()
-    sanctionsLoaded = true
-  }
-}
+import redisClient, { ensureRedisConnection } from '@/lib/redis'
 
 export async function GET(request: Request) {
   try {
-    await ensureSanctionsLoaded()
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
@@ -20,24 +10,28 @@ export async function GET(request: Request) {
       return NextResponse.json({ banned: false })
     }
 
-    const now = Date.now()
-    const activeBan = store.sanctions.find(s => {
-      if (!s.active) return false
-      if (s.userId !== userId) return false
-      if (s.type !== 'ban') return false
-      if (s.expiresAt && new Date(s.expiresAt).getTime() <= now) return false
-      return true
-    })
+    await ensureRedisConnection()
+    const banData = await redisClient.get(`ban:${userId}`)
 
-    if (!activeBan) {
+    if (!banData) {
+      return NextResponse.json({ banned: false })
+    }
+
+    const ban = JSON.parse(banData)
+    const now = Date.now()
+
+    // Check if ban has expired
+    if (ban.expiresAt && ban.expiresAt <= now) {
+      // Ban expired, remove it
+      await redisClient.del(`ban:${userId}`)
       return NextResponse.json({ banned: false })
     }
 
     return NextResponse.json({
       banned: true,
-      reason: activeBan.reason,
-      expiresAt: activeBan.expiresAt || null,
-      createdAt: activeBan.createdAt,
+      reason: ban.reason,
+      expiresAt: ban.expiresAt || null,
+      bannedAt: ban.bannedAt,
     })
   } catch (error) {
     console.error('ban-check error', error)
