@@ -31,7 +31,7 @@ export function SanctionManager() {
   const [sanctions, setSanctions] = useState<Sanction[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [currentTab, setCurrentTab] = useState<'all' | 'bans'>('all')
+  const [currentTab, setCurrentTab] = useState<'all' | 'bans'>('bans')
   const [newSanction, setNewSanction] = useState({
     userId: '',
     username: '',
