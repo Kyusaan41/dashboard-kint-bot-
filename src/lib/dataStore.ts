@@ -51,20 +51,7 @@ export interface AuditLog {
 }
 
 export const store = {
-  sanctions: [
-    {
-      id: '1',
-      userId: '123456789',
-      username: 'Spammer123',
-      type: 'mute' as SanctionType,
-      reason: 'Spam excessif',
-      duration: 1440,
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      expiresAt: new Date(Date.now() + 22 * 60 * 60 * 1000).toISOString(),
-      createdBy: 'SuperAdmin',
-      active: true,
-    },
-  ] as Sanction[],
+  sanctions: [] as Sanction[],
 
   broadcasts: [] as Broadcast[],
 

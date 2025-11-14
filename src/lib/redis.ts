@@ -1,6 +1,6 @@
 import { createClient } from 'redis';
 
-const redisUrl = process.env.REDIS_URL;
+const redisUrl = process.env.REDIS_URL || process.env.KV_REDIS_URL;
 
 if (!redisUrl) {
   if (process.env.NODE_ENV === 'production') {
