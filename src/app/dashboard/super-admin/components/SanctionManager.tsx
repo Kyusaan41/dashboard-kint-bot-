@@ -383,9 +383,17 @@ export function SanctionManager() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => handleRemoveSanction(sanction.id)}
-                className="p-2 hover:bg-red-600/20 rounded-lg transition-colors text-red-500"
+                className={`p-2 rounded-lg transition-colors ${
+                  sanction.type === 'ban'
+                    ? 'hover:bg-green-600/20 text-green-500'
+                    : 'hover:bg-red-600/20 text-red-500'
+                }`}
               >
-                <X className="h-5 w-5" />
+                {sanction.type === 'ban' ? (
+                  <span className="text-sm font-medium">Unban</span>
+                ) : (
+                  <X className="h-5 w-5" />
+                )}
               </motion.button>
             </div>
           </motion.div>
