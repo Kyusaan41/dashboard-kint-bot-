@@ -1,7 +1,7 @@
 import { store, Sanction } from './dataStore'
 import redisClient, { ensureRedisConnection } from './redis'
 
-const SANCTIONS_KEY = 'nyx:sanctions'
+const SANCTIONS_KEY = 'nyx:sanctions:v2'
 
 export async function loadSanctionsFromDisk() {
   try {
