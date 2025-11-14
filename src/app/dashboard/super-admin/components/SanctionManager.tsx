@@ -35,7 +35,7 @@ export function SanctionManager() {
   const [newSanction, setNewSanction] = useState({
     userId: '',
     username: '',
-    type: 'mute' as const,
+    type: 'ban' as const,
     reason: '',
     duration: 60,
   })
@@ -142,7 +142,7 @@ export function SanctionManager() {
       if (res.ok) {
         const data = await res.json()
         setSanctions([data.sanction, ...sanctions])
-        setNewSanction({ userId: '', username: '', type: 'mute', reason: '', duration: 60 })
+        setNewSanction({ userId: '', username: '', type: 'ban', reason: '', duration: 60 })
         setShowForm(false)
       }
     } catch (error) {
