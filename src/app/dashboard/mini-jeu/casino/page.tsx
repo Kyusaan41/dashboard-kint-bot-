@@ -207,23 +207,23 @@ const PAYOUTS: { [symbol: string]: number } = {
     '7️⃣': 50,   // Jackpot (géré séparément, valeur symbolique)
     '💎': 10,    // Gains élevés mais pas abusifs
     '💰': 8,     // Moyen+
-    '🍀': 7,     // Moyen
-    '🍒': 6,     // Classique
-    '🍇': 5,     // Modéré
-    '🍓': 4,     // Petit gain
-    '🍋': 3      // Faible
+    '🍀': 6,     // Moyen
+    '🍒': 5,     // Classique
+    '🍇': 4,     // Modéré
+    '🍓': 3,     // Petit gain
+    '🍋': 2      // Faible
 };
 
 // ✨ NOUVEAU: Multiplicateurs spécifiques pour 2 symboles identiques
 const PAYOUTS_TWO_SYMBOLS: { [symbol: string]: number } = {
-    '7️⃣': 7,   // Gain spécial élevé
-    '💎': 4.5,     // Maintien d'un gain correct
-    '💰': 3.2,     // Maintien d'un gain correct
-    '🍀': 2.2,     // Maintien d'un gain correct
-    '🍒': 1.8,   // 1800 pour une mise de 1000
-    '🍇': 1.7,   // 1700 pour une mise de 1000
-    '🍓': 1.6,   // 1600 pour une mise de 1000
-    '🍋': 1.5    // 1500 pour une mise de 1000
+    '7️⃣': 6,   // Gain spécial élevé
+    '💎': 4,     // Maintien d'un gain correct
+    '💰': 3,     // Maintien d'un gain correct
+    '🍀': 2,     // Maintien d'un gain correct
+    '🍒': 1.6,   // 1800 pour une mise de 1000
+    '🍇': 1.5,   // 1700 pour une mise de 1000
+    '🍓': 1.4,   // 1600 pour une mise de 1000
+    '🍋': 1.3    // 1500 pour une mise de 1000
 };
 
 function useWindowSizeLocal() {
@@ -910,9 +910,6 @@ export default function CasinoSlotPage() {
     // Avantage de la maison DIMINUÉ car les gains sont plus généreux
     const HOUSE_EDGE = 0.05; // 5% (gains plus élevés, mais chances de gagner réduites) // @ts-ignore
 
-    // Limite de mise
-    const BET_MAX = 100000;
-
     // 😈 DEVIL MODE
     const [isDevilMode, setIsDevilMode] = useState(false);
     const [showDevilTransition, setShowDevilTransition] = useState(false);
@@ -1202,7 +1199,7 @@ export default function CasinoSlotPage() {
             const baseAmount = Math.floor(currentBet * multiplier * (1 - HOUSE_EDGE));
             finalAmount = Math.max(currentBet * 2, baseAmount);
 
-            const maxWinMultiplier = 40;
+            const maxWinMultiplier = 30;
             finalAmount = Math.min(finalAmount, currentBet * maxWinMultiplier);
 
             return { win: true, amount: finalAmount, isJackpot: false, lineType: 'three' };
@@ -1248,15 +1245,14 @@ export default function CasinoSlotPage() {
     };
 
     const handleSpin = async () => {
+         // ✨ NOUVELLE VÉRIFICATION: Limite à 100K maximum
+    if (bet > 100000) {
+        setMessage('Mise maximale de 100K dépassée');
+        return;
+    }
         if (spinning) return;
         if (bet <= 0) {
             setMessage('Mise invalide');
-            return;
-        }
-        // Limite de mise maximum
-        if (bet > BET_MAX) {
-            setMessage(`Mise maximale autorisée: ${BET_MAX.toLocaleString('fr-FR')}`);
-            setBet(BET_MAX);
             return;
         }
         if (jetonsBalance < bet) {
@@ -1268,8 +1264,8 @@ export default function CasinoSlotPage() {
         let isUsingFreeSpin = false;
 
         // 🔒 ANTI-TRICHE: Capturer la mise au début du spin pour éviter
-        // que l'utilisateur ne la change pendant le spinning et la limiter à BET_MAX
-        let lockedBet = Math.min(bet, BET_MAX);
+        // que l'utilisateur ne la change pendant le spinning
+        let lockedBet = bet;
 
     // ✨ NOUVEAU: Événement aléatoire (1 chance sur 50)
     let eventMultiplier = 1;
@@ -1366,8 +1362,8 @@ export default function CasinoSlotPage() {
                 const reelLength = 50;
                 const finalSymbolIndex = reelLength - 13;
 
-                // ⚖️ Taux global de pertes ajusté pour augmenter le winrate
-                const GLOBAL_LOSS_RATE = 0.85; // ≈25% de chances de victoire
+                // ⚖️ Taux global de pertes : 0.84 = environ 16% de victoires
+                const GLOBAL_LOSS_RATE = 0.87; // 1 - 0.80 = 20% de chances de victoire
 
                 // Symboles perdants (majoritaires)
                 const losingSymbols = ['🍋', '🍓', '🍇', '🍒'];
@@ -1397,8 +1393,8 @@ export default function CasinoSlotPage() {
                     const devilLosingSymbols = ['🔥', '😈', '💀', '🔱'];
                     const devilProfitableSymbols = ['💎', '💰', '🍀', '7️⃣'];
 
-                    // Moins punitif en Devil Mode
-                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.02)) {
+                    // Moins punitif : +0.04 au lieu de +0.07
+                    if (Math.random() < (GLOBAL_LOSS_RATE + 0.04)) {
                         finalSymbol = devilLosingSymbols[Math.floor(Math.random() * devilLosingSymbols.length)];
                     } else {
                         finalSymbol = devilProfitableSymbols[Math.floor(Math.random() * devilProfitableSymbols.length)];
@@ -2288,6 +2284,10 @@ const handleSellJetons = async () => {
                                 animate={loadingBalance ? { opacity: [0.5, 1, 0.5] } : {}}
                                 transition={{ duration: 1, repeat: Infinity }}
                             >
+                                <p className="text-sm text-gray-400 font-semibold mb-1">Vos Pièces</p>
+                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent mb-4">
+                                    {formatMoney(piecesBalance)} 💰
+                                </p>
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Vos Jetons</p>
                                 <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
                                     {loadingBalance ? '...' : formatMoney(displayJetonsBalance)} 💎
@@ -2562,7 +2562,7 @@ const handleSellJetons = async () => {
                                     transition={{ delay: 0.7 }}
                                 >
                                     <p className="text-xs text-gray-500 font-semibold">
-                                        By Kyû | 2025
+                                        Mise maximale: 100 000 jetons
                                     </p>
                                 </motion.div>
                                 <motion.button
@@ -3022,7 +3022,109 @@ const handleSellJetons = async () => {
                         </div>
 
 
-                    
+                    {/* Jeton Exchange Card */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5, duration: 0.5 }}
+                        className={`relative bg-black/30 backdrop-blur-2xl rounded-2xl p-1 border-2 border-transparent overflow-hidden transition-all duration-300 ${isDevilMode ? 'shadow-red-500/40' : 'shadow-purple-500/30'}`}
+                        whileHover={{ scale: 1.02, boxShadow: isDevilMode ? '0 0 30px rgba(239, 68, 68, 0.4)' : '0 0 30px rgba(139, 92, 246, 0.3)' }}
+                    >
+                        <motion.div className="absolute inset-0 rounded-xl pointer-events-none"
+                            style={{
+                                border: '2px solid transparent',
+                                background: isDevilMode 
+                                    ? 'conic-gradient(from var(--angle), rgba(239, 68, 68, 0.5), rgba(255, 165, 0, 0.3), rgba(239, 68, 68, 0.5)) border-box'
+                                    : 'conic-gradient(from var(--angle), rgba(139, 92, 246, 0.5), rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.5)) border-box',
+                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                                maskComposite: 'exclude',
+                                '--angle': '0deg',
+                            } as any}
+                            animate={{ '--angle': '360deg' } as any}
+                            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                        />
+                        <div className={`relative z-10 p-5 rounded-lg h-full ${isDevilMode ? 'bg-gradient-to-br from-red-900/20 to-black/30' : 'bg-gradient-to-br from-purple-900/20 to-black/30'}`}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <motion.div
+                                    className={`w-12 h-12 rounded-xl ${isDevilMode ? 'bg-gradient-to-br from-red-500 to-orange-600 shadow-red-500/50' : 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/50'} flex items-center justify-center shadow-lg transition-all duration-500`}
+                                    animate={{
+                                        rotate: [0, 10, -10, 0],
+                                        scale: [1, 1.1, 1],
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                >
+                                    <Coins size={24} className="text-white" />
+                                </motion.div>
+                                <h3 className={`text-xl font-black ${isDevilMode ? 'text-red-400' : 'text-purple-400'} transition-colors duration-500`}>Échange de Jetons</h3>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Buy Jetons */}
+                                <div>
+                                    <p className="text-sm text-gray-400 mb-2">Acheter des Jetons (1000 💎 = 500 💰)</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={buyAmount}
+                                            onChange={(e) => setBuyAmount(Number(e.target.value))}
+                                            className="nyx-input flex-grow text-center font-bold text-lg"
+                                            disabled={loadingExchange}
+                                        />
+                                        <motion.button
+                                            onClick={handleBuyJetons}
+                                            disabled={loadingExchange || buyAmount <= 0 || piecesBalance < buyAmount * 100}
+                                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${
+                                                isDevilMode
+                                                    ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 enabled:hover:scale-105'
+                                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 enabled:hover:scale-105'
+                                            }`}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            Acheter
+                                        </motion.button>
+                                    </div>
+                                        {buyAmount > 0 && (
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Coût: {formatMoney(Math.ceil(buyAmount * 0.5))} 💰
+                                            </p>
+                                        )}
+                                    </div>
+
+                                {/* Sell Jetons */}
+                                <div>
+                                    <p className="text-sm text-gray-400 mb-2">Vendre des Jetons (500,000💎 = 10,000 💰)</p>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={sellAmount}
+                                            onChange={(e) => setSellAmount(Number(e.target.value))}
+                                            className="nyx-input flex-grow text-center font-bold text-lg"
+                                            disabled={loadingExchange}
+                                        />
+                                        <motion.button
+                                            onClick={handleSellJetons}
+                                            disabled={loadingExchange || sellAmount <= 0 || jetonsBalance < sellAmount}
+                                            className={`px-4 py-2 rounded-lg font-bold text-sm transition-all duration-200 ${
+                                                isDevilMode
+                                                    ? 'bg-red-500/10 text-red-300 border border-red-500/30 hover:bg-red-500/20 enabled:hover:scale-105'
+                                                    : 'bg-purple-500/10 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20 enabled:hover:scale-105'
+                                            }`}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            Vendre
+                                        </motion.button>
+                                    </div>
+                                            {sellAmount > 0 && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    Gain: {formatMoney(Math.floor(sellAmount * 0.02))} 💰
+                                                </p>
+                                            )}
+                                        </div>
+                            </div>
+                        </div>
+                    </motion.div>
 
                     {/* Payouts Table */}
                     <motion.div

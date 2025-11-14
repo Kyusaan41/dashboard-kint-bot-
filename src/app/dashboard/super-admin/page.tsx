@@ -141,6 +141,36 @@ export default function SuperAdminPage() {
     }
   }
 
+  // NEW: central Ban/Unban handler - refresh users after operation
+  const handleBanToggle = async (userId: string, ban: boolean) => {
+    if (userId === PROTECTED_USER_ID) {
+      showNotification('Impossible de bannir/débannir ce compte super-admin', 'error')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/super-admin/ban', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, ban })
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err?.error || 'Failed to update ban status')
+      }
+
+      const data = await res.json().catch(() => ({}))
+      // Refresh users list to keep UI in sync with server
+      await loadData()
+      showNotification(`Utilisateur ${ban ? 'banni' : 'rétabli'} avec succès`, 'success')
+      console.log('[SUPER-ADMIN] ban toggle result:', data)
+    } catch (error) {
+      console.error('Erreur ban/unban:', error)
+      showNotification('Erreur lors de la mise à jour du statut de sanction', 'error')
+    }
+  }
+
   if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-900">
