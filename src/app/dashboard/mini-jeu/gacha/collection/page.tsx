@@ -89,6 +89,7 @@ const SellSuccessToast = ({ message, onComplete }: { message: string; onComplete
 // --- NOUVEAU: MODALE DE VENTE DE CARTE ---
 const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCard, onSell: (cardId: string, quantity: number) => void, onAuction: () => void, onClose: () => void }) => {
     const [quantity, setQuantity] = useState(1);
+    const INSTANT_SELL_DISABLED = true; // Mettre à false pour activer la vente instantanée
 
     if (!card?.cardInfo) return null;
 
@@ -153,17 +154,36 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
 
                 <div className="space-y-4">
                     {/* Option 1: Vente à la banque */}
-                    <button
-                        onClick={() => onSell(card.cardId, quantity)}
-                        disabled={quantity <= 0 || quantity > maxQuantity}
-                        className="w-full text-left p-4 bg-green-600/20 border border-green-500 rounded-lg flex items-center gap-4 hover:bg-green-600/40 transition-all group"
-                    >
-                        <Coins className="w-8 h-8 text-green-400 flex-shrink-0 transition-transform group-hover:scale-110" />
-                        <div>
-                            <p className="font-bold text-white">Vente Instantanée</p>
-                            <p className="text-sm text-green-300/80">Recevez immédiatement <span className="font-bold">{sellPrice * quantity}</span> pièces.</p>
-                        </div>
-                    </button>
+                     <button
+                         onClick={() => onSell(card.cardId, quantity)}
+                         disabled={INSTANT_SELL_DISABLED || quantity <= 0 || quantity > maxQuantity}
+                         className={`w-full text-left p-4 rounded-lg flex items-center gap-4 transition-all group ${
+                             INSTANT_SELL_DISABLED
+                                 ? 'bg-gray-600/20 border border-gray-500 cursor-not-allowed opacity-50'
+                                 : 'bg-green-600/20 border border-green-500 hover:bg-green-600/40'
+                         }`}
+                     >
+                         <Coins className={`w-8 h-8 flex-shrink-0 transition-transform ${
+                             INSTANT_SELL_DISABLED
+                                 ? 'text-gray-400'
+                                 : 'text-green-400 group-hover:scale-110'
+                         }`} />
+                         <div>
+                             <p className={`font-bold ${
+                                 INSTANT_SELL_DISABLED ? 'text-gray-400' : 'text-white'
+                             }`}>Vente Instantanée</p>
+                             <p className={`text-sm ${
+                                 INSTANT_SELL_DISABLED
+                                     ? 'text-gray-400/80'
+                                     : 'text-green-300/80'
+                             }`}>
+                                 {INSTANT_SELL_DISABLED
+                                     ? '(Temporairement indisponible)'
+                                     : `Recevez immédiatement ${sellPrice * quantity} pièces.`
+                                 }
+                             </p>
+                         </div>
+                     </button>
 
                     {/* Option 2: Maison des ventes */}
                     <button
