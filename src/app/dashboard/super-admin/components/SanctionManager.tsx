@@ -161,6 +161,28 @@ export function SanctionManager() {
     }
   }
 
+  const handleHardReset = async () => {
+    if (!confirm('ATTENTION: Cette action va supprimer TOUTES les sanctions de façon permanente. Êtes-vous sûr ?')) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/super-admin/sanctions/reset', {
+        method: 'POST',
+      })
+
+      if (res.ok) {
+        setSanctions([])
+        alert('Toutes les sanctions ont été supprimées.')
+      } else {
+        alert('Erreur lors de la réinitialisation.')
+      }
+    } catch (error) {
+      console.error('Error resetting sanctions:', error)
+      alert('Erreur lors de la réinitialisation.')
+    }
+  }
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'ban':
@@ -203,15 +225,26 @@ export function SanctionManager() {
           <Ban className="h-6 w-6 text-red-400" />
           Gestion des Sanctions
         </h3>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-red-600/20 border border-red-500/30 rounded-lg hover:border-red-500/60 transition-all text-sm font-medium text-red-300 flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Nouvelle Sanction
-        </motion.button>
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleHardReset}
+            className="px-4 py-2 bg-gray-600/20 border border-gray-500/30 rounded-lg hover:border-gray-500/60 transition-all text-sm font-medium text-gray-300 flex items-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            HARD RESET BAN
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 bg-red-600/20 border border-red-500/30 rounded-lg hover:border-red-500/60 transition-all text-sm font-medium text-red-300 flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nouvelle Sanction
+          </motion.button>
+        </div>
       </div>
 
       {/* Tabs */}
