@@ -56,8 +56,26 @@ export const store = {
   broadcasts: [] as Broadcast[],
 
   pages: [
+    // Pages globales
     { id: 'home', name: 'Accueil', path: '/', status: 'online', lastChecked: new Date().toISOString() },
+
+    // Dashboard principal
     { id: 'dashboard', name: 'Dashboard', path: '/dashboard', status: 'online', lastChecked: new Date().toISOString() },
+
+    // Sous-pages du dashboard protégées par le wrapper de maintenance
+    { id: 'inventory', name: 'Inventaire', path: '/dashboard/inventory', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'admin', name: 'Admin Panel', path: '/dashboard/admin', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'boutique', name: 'Boutique', path: '/dashboard/boutique', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'classement', name: 'Classement', path: '/dashboard/classement', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'events', name: 'Événements', path: '/dashboard/events', status: 'online', lastChecked: new Date().toISOString() },
+
+    // Mini-jeux
+    { id: 'mini-jeu', name: 'Mini-jeux', path: '/dashboard/mini-jeu', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'casino', name: 'Casino VIP', path: '/dashboard/mini-jeu/casino', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'gacha', name: 'Anime Gacha', path: '/dashboard/mini-jeu/gacha', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'blackjack', name: 'Blackjack', path: '/dashboard/mini-jeu/blackjack', status: 'online', lastChecked: new Date().toISOString() },
+
+    // Anciennes pages encore utiles
     { id: 'profile', name: 'Profil', path: '/dashboard/profile', status: 'online', lastChecked: new Date().toISOString() },
     { id: 'guild', name: 'Guildes', path: '/dashboard/guild', status: 'online', lastChecked: new Date().toISOString() },
   ] as PageStatus[],
