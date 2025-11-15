@@ -50,10 +50,21 @@ export interface AuditLog {
   status: 'success' | 'failed'
 }
 
+export interface JackpotForce {
+  id: string
+  userId: string
+  username: string
+  markedAt: string
+  markedBy: string
+  active: boolean
+}
+
 export const store = {
   sanctions: [] as Sanction[],
 
   broadcasts: [] as Broadcast[],
+
+  jackpotForces: [] as JackpotForce[],
 
   pages: [
     // Pages globales

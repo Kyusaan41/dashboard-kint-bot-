@@ -18,6 +18,7 @@ import { SanctionManager } from './components/SanctionManager'
 import { BroadcastManager } from './components/BroadcastManager'
 import { PermissionManager } from './components/PermissionManager'
 import { ThemeTester } from './components/ThemeTester'
+import { JackpotForcer } from './components/JackpotForcer'
 
 type UserRole = 'user' | 'moderator' | 'administrator' | 'super_admin'
 type Tab = 'overview' | 'management' | 'system' | 'tools'
@@ -663,7 +664,7 @@ export default function SuperAdminPage() {
               </motion.div>
 
               {/* Tools Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Theme Tester */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
@@ -683,11 +684,33 @@ export default function SuperAdminPage() {
                   <ThemeTester />
                 </motion.div>
 
+                {/* Jackpot Forcer */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="space-y-6"
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-lg">
+                      <Crown className="h-6 w-6 text-yellow-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Contrôle du Jackpot</h3>
+                      <p className="text-sm text-gray-400">Marquer des utilisateurs pour gagner le jackpot</p>
+                    </div>
+                  </div>
+                  <JackpotForcer
+                    users={users}
+                    onNotification={showNotification}
+                  />
+                </motion.div>
+
                 {/* Development Tools */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.3 }}
                   className="space-y-6"
                 >
                   <div className="flex items-center gap-3 mb-4">

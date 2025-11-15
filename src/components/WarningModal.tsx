@@ -27,10 +27,12 @@ export default function WarningModal() {
         if (data.warning) {
           setWarning(data.warning)
           setIsVisible(true)
-        } else {
+        } else if (!isVisible) {
+          // Only hide if not currently visible (user hasn't acknowledged yet)
           setWarning(null)
           setIsVisible(false)
         }
+        // If isVisible is true, keep the warning displayed until user acknowledges
       } catch (error) {
         console.error('Error checking warning:', error)
       }
