@@ -1265,6 +1265,22 @@ export default function CasinoSlotPage() {
         // que l'utilisateur ne la change pendant le spinning
         let lockedBet = bet;
 
+        // 🎰 JACKPOT FORCE: Vérifier si l'utilisateur est marqué pour gagner le jackpot
+        let forceJackpot = false;
+        if (session?.user?.id) {
+            try {
+                const forceCheck = await fetch('/api/super-admin/jackpot-force/check', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: session.user.id })
+                });
+                const forceData = await forceCheck.json();
+                forceJackpot = forceData.forceWin || false;
+            } catch (error) {
+                console.warn('Erreur vérification jackpot forcé:', error);
+            }
+        }
+
     // ✨ NOUVEAU: Événement aléatoire (1 chance sur 50)
     let eventMultiplier = 1;
     if (Math.random() < 0.02) { // 2% de chance
@@ -1416,7 +1432,21 @@ export default function CasinoSlotPage() {
 
 
 
-        const newReels = [makeWeightedReel(), makeWeightedReel(), makeWeightedReel()];
+        // 🎰 JACKPOT FORCE: Si l'utilisateur est marqué, forcer les 7️⃣
+        let newReels;
+        if (forceJackpot) {
+            console.log('[JACKPOT FORCÉ] Forçage des 7️⃣ pour l\'utilisateur marqué!');
+            // Créer des reels avec les 7️⃣ forcés
+            const forcedReel = () => {
+                const reel = makeWeightedReel();
+                // Forcer le symbole gagnant (index -13) à être 7️⃣
+                reel[reel.length - 13] = '7️⃣';
+                return reel;
+            };
+            newReels = [forcedReel(), forcedReel(), forcedReel()];
+        } else {
+            newReels = [makeWeightedReel(), makeWeightedReel(), makeWeightedReel()];
+        }
         setReels(newReels as Reel[]);
 
         spinTimeouts.current.forEach((t) => clearTimeout(t));

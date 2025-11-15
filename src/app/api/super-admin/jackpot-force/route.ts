@@ -34,6 +34,67 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// POST /api/super-admin/jackpot-force/check - Vérifier si un utilisateur est marqué pour gagner le jackpot (pour le bot)
+export async function PATCH(request: NextRequest) {
+  try {
+    const { userId } = await request.json();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'userId requis' }, { status: 400 });
+    }
+
+    // Récupérer depuis Redis si disponible, sinon depuis le store en mémoire
+    let forces = store.jackpotForces;
+    try {
+      await ensureRedisConnection();
+      const redisData = await redisClient.get('jackpot_forces');
+      if (redisData) {
+        forces = JSON.parse(redisData);
+      }
+    } catch (redisError) {
+      console.warn('Redis non disponible');
+    }
+
+    // Chercher si l'utilisateur est marqué et actif
+    const forceEntry = forces.find(f => f.userId === userId && f.active);
+
+    if (forceEntry) {
+      // Marquer comme utilisé (désactiver après utilisation)
+      forceEntry.active = false;
+
+      // Sauvegarder dans Redis
+      try {
+        await ensureRedisConnection();
+        await redisClient.set('jackpot_forces', JSON.stringify(forces));
+      } catch (redisError) {
+        console.warn('Impossible de sauvegarder dans Redis');
+      }
+
+      // Ajouter au log d'audit
+      addAuditLog({
+        adminId: 'system',
+        adminName: 'Système Casino',
+        action: 'jackpot_force_used',
+        targetId: userId,
+        targetName: forceEntry.username,
+        details: `Utilisateur a gagné le jackpot forcé`,
+        status: 'success'
+      });
+
+      return NextResponse.json({
+        forceWin: true,
+        username: forceEntry.username,
+        message: 'Cet utilisateur doit gagner le jackpot'
+      });
+    }
+
+    return NextResponse.json({ forceWin: false });
+  } catch (error) {
+    console.error('Erreur PATCH jackpot-force:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
 // POST /api/super-admin/jackpot-force - Marquer ou démarquer un utilisateur pour le jackpot
 export async function POST(request: NextRequest) {
   try {
