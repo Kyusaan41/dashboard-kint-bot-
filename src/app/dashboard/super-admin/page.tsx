@@ -23,7 +23,7 @@ import { JackpotForcer } from './components/JackpotForcer'
 type UserRole = 'user' | 'moderator' | 'administrator' | 'super_admin'
 type Tab = 'overview' | 'management' | 'system' | 'tools'
 type ManagementTab = 'users' | 'pages'
-type SystemTab = 'logs' | 'sanctions' | 'broadcast' | 'permissions'
+type SystemTab = 'logs' | 'sanctions' | 'broadcast' | 'permissions' | 'jackpot'
 
 interface UserWithRole {
   id: string
@@ -590,11 +590,13 @@ export default function SuperAdminPage() {
                     { id: 'sanctions', label: 'Sanctions', icon: Ban },
                     { id: 'broadcast', label: 'Broadcasts', icon: Megaphone },
                     { id: 'permissions', label: 'Permissions', icon: Shield },
+                    { id: 'jackpot', label: 'Jackpot', icon: Crown },
                   ].map((tab) => {
                     const TabIcon = tab.id === 'logs' ? FileText :
                                     tab.id === 'sanctions' ? Ban :
                                     tab.id === 'broadcast' ? Megaphone :
-                                    Shield
+                                    tab.id === 'permissions' ? Shield :
+                                    Crown
                     return (
                       <motion.button
                         key={tab.id}
@@ -637,6 +639,14 @@ export default function SuperAdminPage() {
                     <PermissionManager />
                   </motion.div>
                 )}
+                {systemTab === 'jackpot' && (
+                  <motion.div key="jackpot" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <JackpotForcer
+                      users={users}
+                      onNotification={showNotification}
+                    />
+                  </motion.div>
+                )}
               </AnimatePresence>
             </motion.div>
           )}
@@ -664,7 +674,7 @@ export default function SuperAdminPage() {
               </motion.div>
 
               {/* Tools Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Theme Tester */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
@@ -684,27 +694,6 @@ export default function SuperAdminPage() {
                   <ThemeTester />
                 </motion.div>
 
-                {/* Jackpot Forcer */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="space-y-6"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-lg">
-                      <Crown className="h-6 w-6 text-yellow-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">Contrôle du Jackpot</h3>
-                      <p className="text-sm text-gray-400">Marquer des utilisateurs pour gagner le jackpot</p>
-                    </div>
-                  </div>
-                  <JackpotForcer
-                    users={users}
-                    onNotification={showNotification}
-                  />
-                </motion.div>
 
                 {/* Development Tools */}
                 <motion.div
