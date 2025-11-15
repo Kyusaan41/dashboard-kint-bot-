@@ -767,80 +767,7 @@ const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'tw
     );
 };
 
-// ✨ NOUVEAU: Titres de niveaux
-const getLevelTitle = (level: number) => {
-    if (level >= 50) return "Roi du Casino";
-    if (level >= 40) return "Prince du Casino";
-    if (level >= 30) return "Duc du Jackpot";
-    if (level >= 25) return "Baron du Spin";
-    if (level >= 20) return "Maître des Risques";
-    if (level >= 15) return "Flambeur";
-    if (level >= 10) return "Parieur Agile";
-    if (level >= 5) return "Joueur Régulier";
-    return "Novice";
-};
 
-// ✨ NOUVEAU: Animation de Level Up
-const LevelUpAnimation = ({ level, title }: { level: number, title: string }) => {
-    return (
-        <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center">
-            <motion.div
-                className="absolute inset-0 bg-black"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.8, 0.6, 0] }}
-                transition={{ duration: 3, ease: "easeInOut" }}
-            />
-            <Confetti />
-            <motion.div
-                className="relative text-center p-8 bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl border-4 border-purple-500 shadow-2xl shadow-purple-500/50"
-                initial={{ scale: 0, opacity: 0, rotate: -45 }}
-                animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                exit={{ scale: 0, opacity: 0, rotate: 45 }}
-                transition={{ duration: 0.8, type: "spring", stiffness: 150 }}
-            >
-                <motion.div
-                    className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-3xl blur-xl opacity-75"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <div className="relative z-10">
-                    <motion.h2
-                        className="text-2xl font-bold text-gray-300 mb-2"
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                    >
-                        NIVEAU SUPÉRIEUR !
-                    </motion.h2>
-                    <motion.div
-                        className="text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-fuchsia-400 mb-4"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.7, type: "spring", damping: 10 }}
-                    >
-                        {level}
-                    </motion.div>
-                    <motion.h3
-                        className="text-3xl font-bold text-white mb-6"
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 1 }}
-                    >
-                        {title}
-                    </motion.h3>
-                    <motion.div
-                        className="text-sm text-purple-300 bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/30"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1.3 }}
-                    >
-                       
-                    </motion.div>
-                </div>
-            </motion.div>
-        </div>
-    );
-};
 
 export default function CasinoSlotPage() {
     const { data: session } = useSession();
@@ -931,25 +858,6 @@ export default function CasinoSlotPage() {
     const [spinHistory, setSpinHistory] = useState<SpinHistoryEntry[]>([]);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
 
-    // ✨ NOUVEAU: Système de niveaux
-    const [playerLevel, setPlayerLevel] = useState(1);
-    const [playerXp, setPlayerXp] = useState(0);
-    const [xpForNextLevel, setXpForNextLevel] = useState(1000);
-    const [showLevelUpAnimation, setShowLevelUpAnimation] = useState(false);
-    const [lastLevelUpInfo, setLastLevelUpInfo] = useState({ level: 0, title: '' });
-
-
-    // ✨ NOUVEAU: État pour la modale des niveaux
-    const [isLevelModalOpen, setIsLevelModalOpen] = useState(false);
-    const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
-
-    // ✨ NOUVEAU: Détecter si une récompense est disponible
-    const hasClaimableReward = useMemo(() => {
-        return Object.keys(LEVEL_REWARDS).some(levelStr => {
-            const level = Number(levelStr);
-            return playerLevel >= level && !claimedRewards.includes(level);
-        });
-    }, [playerLevel, claimedRewards]);
 
 
 
@@ -959,15 +867,6 @@ export default function CasinoSlotPage() {
         return () => spinTimeouts.current.forEach((t) => clearTimeout(t));
     }, []);
 
-    // ✨ NOUVEAU: Charger les récompenses récupérées depuis le localStorage
-    useEffect(() => {
-        if (session?.user?.id) {
-            const savedRewards = localStorage.getItem(`casino_claimed_rewards_${session.user.id}`);
-            if (savedRewards) {
-                setClaimedRewards(JSON.parse(savedRewards));
-            }
-        }
-    }, [session?.user?.id]);
 
     // ✨ NOUVEAU: Sauvegarder les récompenses récupérées
     const saveClaimedRewards = (newClaimed: number[]) => {
@@ -999,9 +898,6 @@ export default function CasinoSlotPage() {
                     setJetonsBalance(data.tokens);
                     updateJetonsBalance(data.tokens);
                 }
-                if (data.level) setPlayerLevel(data.level);
-                if (data.xp) setPlayerXp(data.xp);
-                if (data.xpForNextLevel) setXpForNextLevel(data.xpForNextLevel);
             } else {
                 console.error('Erreur fetch currency balance', currencyRes.status);
             }
@@ -1088,35 +984,6 @@ export default function CasinoSlotPage() {
 
     
 
-    // ✨ NOUVEAU: Fonction pour ajouter de l'XP
-    const addXp = async (amount: number) => {
-        if (!session?.user?.name || amount <= 0) return;
-
-        try {
-            const res = await fetch(CASINO_ENDPOINTS.xp, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: session.user.name, xpToAdd: amount }),
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                setPlayerLevel(data.level);
-                setPlayerXp(data.xp);
-                setXpForNextLevel(data.xpForNextLevel);
-
-                if (data.leveledUp) {
-                    console.log(`[LEVEL UP] Niveau ${data.level} atteint !`);
-                    setLastLevelUpInfo({ level: data.level, title: getLevelTitle(data.level) });
-                    setShowLevelUpAnimation(true); // @ts-ignore
-                    playSound('levelUp'); // ✨ NOUVEAU: Jouer le son de montée de niveau
-                    setTimeout(() => setShowLevelUpAnimation(false), 3000);
-                }
-            }
-        } catch (error) {
-            console.error("Erreur lors de l'ajout d'XP:", error);
-        }
-    };
 
 
     // Polling automatique du jackpot toutes les 10 secondes
@@ -1242,11 +1109,6 @@ export default function CasinoSlotPage() {
     };
 
     const handleSpin = async () => {
-         // ✨ NOUVELLE VÉRIFICATION: Limite à 100K maximum
-    if (bet > 100000) {
-        setMessage('Mise maximale de 100K dépassée');
-        return;
-    }
         if (spinning) return;
         if (bet <= 0) {
             setMessage('Mise invalide');
@@ -1301,10 +1163,6 @@ export default function CasinoSlotPage() {
             setLastThreeBets(prev => {
                 const updated = [...prev, lockedBet];
                 
-                // ✨ NOUVEAU: Ajouter de l'XP pour la mise (uniquement pour les spins payants)
-                if (!isUsingFreeSpin) {
-                    addXp(lockedBet); // @ts-ignore
-                }
                 // Garder seulement les 3 dernières mises
                 return updated.slice(-3);
             });
@@ -1464,14 +1322,12 @@ export default function CasinoSlotPage() {
                         if (!spinResult.win && finalSymbols[0] === '7️⃣' && finalSymbols[1] === '7️⃣' && finalSymbols[2] !== '7️⃣') {
                             console.log('[NEAR MISS] Quasi-Jackpot ! Attribution d\'une récompense de consolation.');
                             const consolationAmount = Math.floor(lockedBet * 0.5); // Rembourse 50%
-                            const consolationXp = 500;
-                            
+
                             // On modifie le résultat pour en faire une victoire de consolation
                             spinResult = { win: true, amount: consolationAmount, isJackpot: false, lineType: null, isPityWin: true };
                             setResult(spinResult);
 
-                            addXp(consolationXp);
-                            setMessage(`QUASIMENT ! +${formatMoney(consolationAmount)} jetons & ${consolationXp} XP !`);
+                            setMessage(`QUASIMENT ! +${formatMoney(consolationAmount)} jetons !`);
                             // Jouer un son spécifique pour cet événement
                         }
 
@@ -1480,30 +1336,6 @@ export default function CasinoSlotPage() {
                             { ...spinResult, symbols: finalSymbols, bet: lockedBet, timestamp: Date.now() },
                             ...prev
                         ].slice(0, 5)); // Garder les 5 derniers
-
-                                                    // 🛡️ SYSTÈME ANTI-RUINE (Pitié) - VERSION STRICTE
-                            if (!spinResult.win) {
-                                const postSpinBalance = jetonsBalance - lockedBet;
-                                const isLowBalance = postSpinBalance < lockedBet * 5;
-                                const isReasonableBet = lockedBet < jetonsBalance * 0.3;
-                                
-                                // ✨ MODIFICATION STRICTE: Désactiver complètement au-delà de 100K
-                                const isVeryHighBet = lockedBet > 100000;
-                                
-                                if (isLowBalance && isReasonableBet && !isVeryHighBet) {
-                                    console.log('[ANTI-RUINE] Pitié accordée ! Le joueur récupère sa mise.');
-                                    spinResult = {
-                                        win: true,
-                                        amount: lockedBet,
-                                        isJackpot: false,
-                                        lineType: null,
-                                        isPityWin: true
-                                    };
-                                } else if (isVeryHighBet) {
-                                    console.log(`[ANTI-RUINE] Pitié refusée - mise très élevée: ${lockedBet}`);
-                                }
-                                setResult(spinResult);
-                            }
 
                     // Appliquer le multiplicateur d'événement
                     if (spinResult.win && eventMultiplier > 1) {
@@ -1525,11 +1357,6 @@ export default function CasinoSlotPage() {
                             const username = session?.user?.name || session?.user?.email?.split('@')[0] || 'Joueur';
                             console.log('[CASINO] Enregistrement gain:', username, spinResult.amount, 'Jackpot:', spinResult.isJackpot);
 
-                            // ✨ NOUVEAU: Ajouter de l'XP pour le gain (sauf si c'est un remboursement)
-                            if (!spinResult.isPityWin) {
-                                const xpFromWin = Math.floor(spinResult.amount * 0.5);
-                                addXp(xpFromWin);
-                            }
 
                             recordWin(username, spinResult.amount, spinResult.isJackpot);
                             
@@ -1690,35 +1517,6 @@ export default function CasinoSlotPage() {
         });
     };
 
-    // ✨ NOUVEAU: Fonction pour réclamer une récompense de niveau
-    const handleClaimReward = async (level: number, amount: number) => {
-        if (!session?.user?.id || claimedRewards.includes(level)) return;
-
-        try {
-            const res = await fetch('/api/currency/me', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'add',
-                    amount: amount,
-                    type: 'tokens'
-                }),
-            });
-
-            if (res.ok) {
-                const newClaimed = [...claimedRewards, level];
-                setClaimedRewards(newClaimed);
-                await fetchUserBalances(); // Mettre à jour le solde affiché
-                playSound('win');
-            } else {
-                const errorData = await res.json();
-                throw new Error(errorData.error || 'Failed to claim jetons reward');
-            }
-        } catch (error) {
-            console.error(`Erreur lors de la réclamation de la récompense pour le niveau ${level}:`, error);
-            alert("Impossible de réclamer la récompense. Veuillez réessayer.");
-        }
-    };
 
     const formatMoney = (n: number) => n.toLocaleString('fr-FR');
 
@@ -1970,19 +1768,6 @@ export default function CasinoSlotPage() {
                 {showFreeSpinUnlock && <FreeSpinUnlockAnimation />}
             </AnimatePresence>
 
-            {/* ✨ NOUVEAU: Animation de Level Up */}
-            <AnimatePresence>
-                {showLevelUpAnimation && (
-                    <LevelUpAnimation level={lastLevelUpInfo.level} title={lastLevelUpInfo.title} />
-                )}
-            </AnimatePresence>
-
-            {/* ✨ NOUVEAU: Modale des niveaux */}
-            <AnimatePresence>
-                {isLevelModalOpen && (
-                    <LevelModal onClose={() => setIsLevelModalOpen(false)} currentLevel={playerLevel} claimedRewards={claimedRewards} onClaim={handleClaimReward} />
-                )}
-            </AnimatePresence>
 
             {/* ✨ NOUVEAU: Effet de transition pour le Devil Mode */}
             <AnimatePresence>
@@ -2225,53 +2010,6 @@ export default function CasinoSlotPage() {
                                     {loadingBalance ? '...' : formatMoney(displayJetonsBalance)} 💎
                                 </p>
 
-                                {/* ✨ NOUVEAU: Barre d'XP et Niveau */}
-                                <motion.div
-                                    className="mt-2 cursor-pointer relative p-2 -m-2 rounded-lg" // ✨ NOUVEAU: Ajout de 'relative' et padding pour l'aura
-                                    onClick={() => setIsLevelModalOpen(true)}
-                                    whileHover={{ scale: 1.05 }}
-                                    title="Voir les récompenses de niveau"
-                                    // ✨ NOUVEAU: Animation de clignotement si une récompense est disponible
-                                    animate={hasClaimableReward ? {
-                                        scale: [1, 1.03, 1],
-                                        boxShadow: [ // ✨ NOUVEAU: Aura dorée
-                                            "0 0 0px rgba(251, 191, 36, 0)",
-                                            "0 0 15px rgba(251, 191, 36, 0.6)",
-                                            "0 0 25px rgba(251, 191, 36, 0.4)",
-                                            "0 0 15px rgba(251, 191, 36, 0.6)",
-                                            "0 0 0px rgba(251, 191, 36, 0)",
-                                        ]
-                                    } : {}}
-                                    transition={hasClaimableReward ? {
-                                        duration: 2,
-                                        repeat: Infinity,
-                                        ease: "easeInOut"
-                                    } : {}}
-                                >
-                                    <div className="flex justify-between items-center text-xs mb-1">
-                                        <span className={`font-bold ${isDevilMode ? 'text-red-300' : 'text-purple-300'}`}>{`Niv. ${playerLevel} - ${getLevelTitle(playerLevel)}`}</span>
-                                        <span className="text-gray-400">{`${formatMoney(playerXp)} / ${formatMoney(xpForNextLevel)} XP`}</span>
-                                    </div>
-                                    <div className={`w-full bg-black/30 rounded-full h-2.5 border ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'}`}>
-                                        <motion.div
-                                            className={`h-full rounded-full ${isDevilMode ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-purple-500 to-fuchsia-500'}`}
-                                            initial={{ width: '0%' }}
-                                            animate={{ width: `${(playerXp / xpForNextLevel) * 100}%` }}
-                                            transition={{ duration: 1, ease: 'easeOut' }}
-                                        />
-                                    </div>
-                                    {/* ✨ NOUVEAU: Message si une récompense est disponible */}
-                                    {hasClaimableReward && (
-                                        <motion.div
-                                            className="text-center text-xs font-bold text-yellow-400 mt-2"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.5, duration: 0.5 }}
-                                        >
-                                            Une récompense t'attend !
-                                        </motion.div>
-                                    )}
-                                </motion.div>
                             </motion.div>
                         </div>
                     </motion.div>
@@ -2407,11 +2145,10 @@ export default function CasinoSlotPage() {
                                     <input
                                         type="number"
                                         min={1}
-                                        max={Math.min(100000, Math.max(1, jetonsBalance))}
                                         value={bet}
                                         onChange={(e) => {
                                         if (spinning) return;
-                                        
+
                                         const value = e.target.value;
                                         if (value === '') {
                                             setBet(0);
@@ -2419,21 +2156,17 @@ export default function CasinoSlotPage() {
                                         }
                                         const numValue = Number(value);
                                         if (!isNaN(numValue)) {
-                                            // ✨ MODIFICATION: Limiter à 100K maximum
-                                            const limitedValue = Math.min(numValue, 100000);
-                                            setBet(limitedValue);
+                                            setBet(numValue);
                                         }
                                     }}
                                         onBlur={(e) => {
                                         if (spinning) return;
-                                        
+
                                         const numValue = Number(e.target.value);
                                         if (isNaN(numValue) || numValue < 1) {
                                             setBet(1);
                                         } else {
-                                            // ✨ MODIFICATION: Limiter à 100K maximum
-                                            const limitedValue = Math.min(numValue, 100000, Math.max(1, jetonsBalance));
-                                            setBet(limitedValue);
+                                            setBet(Math.max(1, numValue));
                                         }
                                     }}
                                         disabled={spinning || loadingBalance || isFreeSpinMode || freeSpins > 0}
@@ -2454,19 +2187,19 @@ export default function CasinoSlotPage() {
                                 >
                                     {['/2', 'x2', 'MIN', 'MAX'].map((action) => {
                                         const handleQuickBet = () => {
-                                            if (spinning || isFreeSpinMode) return;
-                                            let newBet = bet;
-                                            if (action === '/2') newBet = Math.max(1, Math.floor(bet / 2));
-                                            if (action === 'x2') newBet = Math.min(100000, bet * 2, jetonsBalance);
-                                            if (action === 'MIN') newBet = 1;
-                                            if (action === 'MAX') newBet = Math.min(100000, jetonsBalance);
-                                            setBet(newBet);
-                                        };
+                                             if (spinning || isFreeSpinMode) return;
+                                             let newBet = bet;
+                                             if (action === '/2') newBet = Math.max(1, Math.floor(bet / 2));
+                                             if (action === 'x2') newBet = Math.min(bet * 2, jetonsBalance);
+                                             if (action === 'MIN') newBet = 1;
+                                             if (action === 'MAX') newBet = jetonsBalance;
+                                             setBet(newBet);
+                                         };
 
-                                        const isDisabled = spinning || isFreeSpinMode || 
-                                            (action === 'x2' && (bet * 2 > 100000 || bet * 2 > jetonsBalance)) ||
+                                        const isDisabled = spinning || isFreeSpinMode ||
+                                            (action === 'x2' && bet * 2 > jetonsBalance) ||
                                             (action === '/2' && bet <= 1) ||
-                                            (action === 'MAX' && (jetonsBalance === 0 || jetonsBalance > 100000))
+                                            (action === 'MAX' && jetonsBalance === 0)
 
                                         return (
                                             <motion.button
@@ -2485,17 +2218,6 @@ export default function CasinoSlotPage() {
                                             </motion.button>
                                         );
                                     })}
-                                </motion.div>
-                                    {/* Message limite de mise */}
-                                <motion.div
-                                    className="text-center mt-2"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.7 }}
-                                >
-                                    <p className="text-xs text-gray-500 font-semibold">
-                                        Mise maximale: 100 000 jetons
-                                    </p>
                                 </motion.div>
                                 <motion.button
                                     onClick={handleSpin}
@@ -3033,202 +2755,3 @@ export default function CasinoSlotPage() {
         </WithMaintenanceCheck>
     );
 }
-
-// ✨ NOUVEAU: Modale pour afficher la frise des niveaux et les récompenses
-const LEVEL_REWARDS: { [level: number]: number } = {
-    5: 5000,
-    10: 10000,
-    15: 15000,
-    20: 20000,
-    25: 25000,
-    30: 30000,
-    35: 35000,
-    40: 40000,
-    45: 45000,
-    50: 50000,  
-    55: 55000,
-    60: 60000,
-    65: 65000,
-    70: 70000,
-    75: 75000,
-    80: 80000,
-    85: 85000,
-    90: 90000,
-    95: 95000,
-    100: 100000,
-    105: 105000,
-    110: 110000,
-    115: 115000,
-    120: 120000,
-    125: 125000,
-    130: 130000,
-    135: 135000,
-    140: 140000,
-    150: 150000,
-    160: 160000,
-    170: 170000,
-    180: 180000,
-    190: 190000,
-    200: 200000,
-    210: 210000,
-    220: 220000,
-    230: 230000,
-    240: 240000,
-    250: 250000,
-    260: 260000,
-    270: 270000,    
-    280: 280000,
-    290: 290000,
-    300: 300000,        
-    310: 310000,    
-    320: 320000,
-    330: 330000,
-    340: 340000,
-    350: 350000,
-    360: 360000,
-    370: 370000,
-    380: 380000,
-    390: 390000,
-    400: 400000,
-    410: 410000,
-    420: 420000,
-    430: 430000,
-    440: 440000,
-    450: 450000,
-    460: 460000,
-    470: 470000,
-    480: 480000,
-    490: 490000,
-    500: 500000,
-};
-
-const LevelModal = ({ onClose, currentLevel, claimedRewards, onClaim }: { onClose: () => void; currentLevel: number; claimedRewards: number[]; onClaim: (level: number, amount: number) => void; }) => {
-    // ✨ NOUVEAU: Affichage progressif des niveaux
-    const levels = useMemo(() => {
-        const allLevels = Object.keys(LEVEL_REWARDS).map(Number);
-        // Trouver le premier niveau de récompense non atteint
-        const nextRewardIndex = allLevels.findIndex(l => l > currentLevel);
-
-        // Si toutes les récompenses sont atteintes, tout afficher
-        if (nextRewardIndex === -1) return allLevels;
-
-        // Afficher les niveaux atteints + les 4 prochains paliers
-        const levelsToShow = Math.min(allLevels.length, nextRewardIndex + 4);
-        return allLevels.slice(0, levelsToShow);
-    }, [currentLevel]);
-
-    return (
-        <motion.div
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4"
-            onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-        >
-            <motion.div
-                className="bg-gradient-to-br from-slate-900 to-black rounded-2xl p-8 border-2 border-purple-500/50 w-full max-w-4xl max-h-[90vh] flex flex-col"
-                onClick={(e) => e.stopPropagation()}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-            >
-                <h2 className="text-3xl font-black text-center mb-2 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-fuchsia-400">
-                    Récompenses de Niveau
-                </h2>
-                <p className="text-center text-gray-400 mb-8">Montez de niveau en misant pour débloquer des récompenses exclusives !</p>
-
-                <div className="flex-1 overflow-visible custom-scrollbar pr-4 -mr-4">
-                    <div className="relative flex items-center justify-between h-full py-8">
-                        {/* Ligne de progression */}
-                        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-700/50 rounded-full" style={{ transform: 'translateY(-50%)' }}>
-                            <motion.div
-                                className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full"
-                                initial={{ width: '0%' }}
-                                animate={{ width: `${Math.min(100, (currentLevel / Math.max(...levels)) * 100)}%` }}
-                                transition={{ duration: 1, ease: 'easeOut' }}
-                            />
-                        </div>
-
-                        {/* Points de niveau */}
-                        {levels.map((level, i) => {
-                            const isUnlocked = currentLevel >= level;
-                            const isClaimed = claimedRewards.includes(level);
-                            const canClaim = isUnlocked && !isClaimed;
-
-                            return (
-                                <motion.div
-                                    key={level} // ✨ MODIFIÉ: Ajout de padding pour agrandir la zone de survol
-                                    className="relative flex flex-col items-center group pt-48 -mt-48"
-                                    initial={{ scale: 0, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ delay: i * 0.1, type: 'spring', stiffness: 200 }}
-                                >
-                                    {/* Point sur la ligne */}
-                                    <motion.div
-                                        className={`relative w-8 h-8 rounded-full border-4 flex items-center justify-center font-bold transition-all duration-300 ${
-                                            isUnlocked ? (canClaim ? 'bg-yellow-500 border-yellow-300 text-black' : 'bg-purple-600 border-purple-400 text-white') : 'bg-gray-800 border-gray-600 text-gray-500'
-                                        }`}
-                                        animate={currentLevel === level ? { scale: [1, 1.3, 1], boxShadow: '0 0 20px rgba(168, 85, 247, 0.8)' } : {}}
-                                        transition={currentLevel === level ? { duration: 1.5, repeat: Infinity } : {}}
-                                    >
-                                        {/* ✨ NOUVEAU: Lueur dorée pour les récompenses à récupérer */}
-                                        {canClaim && (
-                                            <motion.div
-                                                className="absolute -inset-1 rounded-full bg-yellow-400"
-                                                animate={{
-                                                    opacity: [0, 0.7, 0],
-                                                    scale: [1, 1.5, 1],
-                                                }}
-                                                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                                            />
-                                        )}
-                                        {isClaimed ? '✓' : <Star size={16} />}
-                                    </motion.div>
-
-                                    {/* Label du niveau */}
-                                    <div className={`mt-3 text-sm font-bold ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>
-                                        Niv. {level}
-                                    </div>
-
-                                    {/* Tooltip/Popup de récompense */}
-                                    <div className="absolute top-0 w-48 p-3 bg-slate-800 rounded-lg border border-slate-700 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-20">
-                                        <p className="text-lg font-bold text-yellow-400 mb-1">
-                                            +{LEVEL_REWARDS[level].toLocaleString()} 💎
-                                        </p>
-                                        <p className="text-xs text-gray-400">Récompense du niveau {level}</p>
-                                        {canClaim && (
-                                            <motion.button
-                                                onClick={() => onClaim(level, LEVEL_REWARDS[level])}
-                                                className="mt-3 w-full px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-md hover:bg-green-500 transition-colors"
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                Récupérer
-                                            </motion.button>
-                                        )}
-                                        {isClaimed && (
-                                            <div className="mt-3 text-xs text-green-400 font-semibold">Récupéré</div>
-                                        )}
-                                        {!isUnlocked && (
-                                            <div className="mt-3 text-xs text-gray-500 font-semibold">Verrouillé</div>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div className="mt-auto pt-6 text-center">
-                    <motion.button
-                        onClick={onClose}
-                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-bold text-white shadow-lg hover:shadow-purple-500/30 transition-all"
-                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    >
-                        Fermer
-                    </motion.button>
-                </div>
-            </motion.div>
-        </motion.div>
-    );
-};
