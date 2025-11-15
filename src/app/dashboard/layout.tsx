@@ -7,6 +7,7 @@ import FeedbackWidget from '@/components/FeedbackWidget';
 import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
+import WarningModal from '@/components/WarningModal';
 import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User, Store } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -131,6 +132,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-gradient-nyx">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
+      <WarningModal />
       
       {/* Sidebar */}
       <motion.aside 
