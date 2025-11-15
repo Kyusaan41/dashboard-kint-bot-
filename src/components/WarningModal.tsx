@@ -27,13 +27,22 @@ export default function WarningModal() {
         if (data.warning) {
           setWarning(data.warning)
           setIsVisible(true)
+        } else {
+          setWarning(null)
+          setIsVisible(false)
         }
       } catch (error) {
         console.error('Error checking warning:', error)
       }
     }
 
+    // Initial check
     checkWarning()
+
+    // Check every 3 seconds like bans
+    const interval = setInterval(checkWarning, 3000)
+
+    return () => clearInterval(interval)
   }, [session])
 
   const handleAcknowledge = async () => {
