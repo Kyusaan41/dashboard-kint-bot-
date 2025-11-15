@@ -74,17 +74,18 @@ export async function PATCH(request: NextRequest) {
       addAuditLog({
         adminId: 'system',
         adminName: 'Système Casino',
-        action: 'jackpot_force_used',
+        action: forceEntry.type === 'jackpot' ? 'jackpot_force_used' : 'jackpot_test_used',
         targetId: userId,
         targetName: forceEntry.username,
-        details: `Utilisateur a gagné le jackpot forcé`,
+        details: `Utilisateur a gagné ${forceEntry.type === 'jackpot' ? 'le jackpot forcé' : 'le test avec 3 trèfles'}`,
         status: 'success'
       });
 
       return NextResponse.json({
         forceWin: true,
+        type: forceEntry.type,
         username: forceEntry.username,
-        message: 'Cet utilisateur doit gagner le jackpot'
+        message: `Cet utilisateur doit gagner ${forceEntry.type === 'jackpot' ? 'le jackpot' : 'le test avec 3 trèfles'}`
       });
     }
 
@@ -104,9 +105,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
     }
 
-    const { userId, username, action } = await request.json();
+    const { userId, username, action, type = 'jackpot' } = await request.json();
 
-    if (!userId || !username || !['mark', 'unmark'].includes(action)) {
+    if (!userId || !username || !['mark', 'unmark'].includes(action) || !['jackpot', 'test'].includes(type)) {
       return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
     }
 
@@ -137,7 +138,8 @@ export async function POST(request: NextRequest) {
         username,
         markedAt: new Date().toISOString(),
         markedBy: session.user.id,
-        active: true
+        active: true,
+        type: type as 'jackpot' | 'test'
       };
 
       forces.push(newForce);

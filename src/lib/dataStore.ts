@@ -57,6 +57,7 @@ export interface JackpotForce {
   markedAt: string
   markedBy: string
   active: boolean
+  type: 'jackpot' | 'test' // jackpot = 7️⃣, test = 🍀
 }
 
 export const store = {
