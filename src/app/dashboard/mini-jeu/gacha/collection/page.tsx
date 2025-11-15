@@ -31,11 +31,11 @@ interface UserCollection {
 }
 
 const RARITY_STYLES: { [key: string]: string } = {
-    'Commun': 'border-gray-500 bg-gray-800/50 shadow-gray-500/10', // Gris
-    'Rare': 'border-blue-500 bg-blue-800/50 shadow-blue-500/30', // Bleu
-    'Épique': 'border-purple-500 bg-purple-800/50 shadow-purple-500/40', // Violet
-    'Légendaire': 'border-orange-500 bg-orange-800/50 shadow-orange-500/50', // Orange 
-    'Mythique': 'bg-red-800/50 shadow-red-500/60', // Rouge - bordure gérée par la classe holographic-border
+    'Commun': 'border-gray-500 bg-gray-800/50 shadow-gray-500/20 shadow-lg', // Gris
+    'Rare': 'border-blue-500 bg-blue-800/50 shadow-blue-500/50 shadow-lg', // Bleu
+    'Épique': 'border-purple-500 bg-purple-800/50 shadow-purple-500/60 shadow-lg', // Violet
+    'Légendaire': 'border-orange-500 bg-orange-800/50 shadow-orange-500/70 shadow-lg', // Orange
+    'Mythique': 'bg-red-800/50 shadow-red-500/80 shadow-lg', // Rouge - bordure gérée par la classe holographic-border
 };
 
 const StatCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: number | string }) => (
@@ -835,17 +835,19 @@ export default function CollectionPage() {
                                                         key={card.id}
                                                         layout
                                                         data-card-id={card.id}
-                                                        className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[card.rarity] || RARITY_STYLES['Commun']} ${card.rarity === 'Mythique' ? 'holographic-border' : ''}`}
+                                                        className={`group relative rounded-xl overflow-hidden flex flex-col h-72 border-2 ${RARITY_STYLES[card.rarity] || RARITY_STYLES['Commun']} ${card.rarity === 'Mythique' ? 'holographic-border' : ''}`}
                                                         style={card.rarity === 'Mythique' ? { animation: 'mythic-aura-pulse 4s ease-in-out infinite' } : {}}
                                                         initial={{ opacity: 0, y: 20 }}
                                                         animate={{ opacity: 1, y: 0 }}
                                                         transition={{ duration: 0.3, ease: "easeOut" }}
-                                                        whileHover={{ 
-                                                            y: -8, 
-                                                            scale: 1.05, 
-                                                            boxShadow: card.rarity !== 'Mythique' ? `0 0 25px -5px ${RARITY_STYLES[card.rarity]?.split(' ')[2]?.replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}` : undefined,
-                                                            transition: { duration: 0.2, ease: "circOut" }
-                                                        }}> 
+                                                        whileHover={{
+                                                            y: -12,
+                                                            scale: 1.08,
+                                                            rotateX: 5,
+                                                            rotateY: 5,
+                                                            boxShadow: card.rarity !== 'Mythique' ? `0 0 40px -5px ${RARITY_STYLES[card.rarity]?.split(' ')[2]?.replace('shadow-', 'rgba(').replace('/10', ', 0.6)').replace('/30', ', 0.7)').replace('/40', ', 0.8)').replace('/50', ', 0.9)').replace('/60', ', 1.0)') || 'rgba(255,255,255,0.2)'}` : undefined,
+                                                            transition: { duration: 0.3, ease: "easeOut" }
+                                                        }}>
                                                         <div className="absolute top-1 left-1 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-br-lg rounded-tl-md z-10">
                                                             #{card.id.split('_')[1]}
                                                         </div>
@@ -880,7 +882,12 @@ export default function CollectionPage() {
                                                         initial={{ opacity: 0, y: 20 }}
                                                         animate={{ opacity: 1, y: 0 }}
                                                         transition={{ duration: 0.3, ease: "easeOut" }}
-                                                        className="group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 border-dashed border-white/20 bg-black/30"
+                                                        className="group relative rounded-xl overflow-hidden flex flex-col h-72 border-2 border-dashed border-white/20 bg-black/30"
+                                                        whileHover={{
+                                                            y: -8,
+                                                            scale: 1.05,
+                                                            transition: { duration: 0.2, ease: "easeOut" }
+                                                        }}
                                                     >
                                                         <div className="absolute top-1 left-1 bg-black/50 text-white/50 text-xs font-bold px-2 py-1 rounded-br-lg rounded-tl-md z-10">
                                                             #{card.id.split('_')[1]}
@@ -917,17 +924,19 @@ export default function CollectionPage() {
                                         key={card.id}
                                         layout
                                         data-card-id={card.id}
-                                        className={`group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 ${RARITY_STYLES[card.rarity] || RARITY_STYLES['Commun']} ${card.rarity === 'Mythique' ? 'holographic-border' : ''}`}
+                                        className={`group relative rounded-xl overflow-hidden flex flex-col h-72 border-2 ${RARITY_STYLES[card.rarity] || RARITY_STYLES['Commun']} ${card.rarity === 'Mythique' ? 'holographic-border' : ''}`}
                                         style={card.rarity === 'Mythique' ? { animation: 'mythic-aura-pulse 4s ease-in-out infinite' } : {}}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.3, ease: "easeOut" }}
-                                        whileHover={{ 
-                                            y: -8,
-                                            scale: 1.05, 
-                                            boxShadow: card.rarity !== 'Mythique' ? `0 0 25px -5px ${RARITY_STYLES[card.rarity]?.split(' ')[2]?.replace('shadow-', 'rgba(').replace('/10', ', 0.4)').replace('/30', ', 0.5)').replace('/40', ', 0.6)').replace('/50', ', 0.7)').replace('/60', ', 0.8)') || 'rgba(255,255,255,0.1)'}` : undefined,
-                                            transition: { duration: 0.2, ease: "circOut" }
-                                        }}> 
+                                        whileHover={{
+                                            y: -12,
+                                            scale: 1.08,
+                                            rotateX: 5,
+                                            rotateY: 5,
+                                            boxShadow: card.rarity !== 'Mythique' ? `0 0 40px -5px ${RARITY_STYLES[card.rarity]?.split(' ')[2]?.replace('shadow-', 'rgba(').replace('/10', ', 0.6)').replace('/30', ', 0.7)').replace('/40', ', 0.8)').replace('/50', ', 0.9)').replace('/60', ', 1.0)') || 'rgba(255,255,255,0.2)'}` : undefined,
+                                            transition: { duration: 0.3, ease: "easeOut" }
+                                        }}>
                                         <div className="absolute top-1 left-1 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-br-lg rounded-tl-md z-10">
                                             #{card.id.split('_')[1]}
                                         </div>
@@ -962,7 +971,12 @@ export default function CollectionPage() {
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3, ease: "easeOut" }}
-                                            className="group relative rounded-xl overflow-hidden flex flex-col h-64 border-2 border-dashed border-white/20 bg-black/30"
+                                            className="group relative rounded-xl overflow-hidden flex flex-col h-72 border-2 border-dashed border-white/20 bg-black/30"
+                                            whileHover={{
+                                                y: -8,
+                                                scale: 1.05,
+                                                transition: { duration: 0.2, ease: "easeOut" }
+                                            }}
                                         >
                                             <div className="absolute top-1 left-1 bg-black/50 text-white/50 text-xs font-bold px-2 py-1 rounded-br-lg rounded-tl-md z-10">
                                                 #{card.id.split('_')[1]}

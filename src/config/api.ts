@@ -14,6 +14,8 @@ export const CASINO_ENDPOINTS = {
     topWins: '/api/casino/top-wins',
     stats: '/api/casino/stats',
     xp: '/api/casino/xp',
+
+    //GACHA
     marketplaceListings: `/api/gacha/marketplace`,
     marketplaceBuy: `/api/gacha/marketplace/buy`,
     marketplaceSell: `/api/gacha/marketplace/sell`
