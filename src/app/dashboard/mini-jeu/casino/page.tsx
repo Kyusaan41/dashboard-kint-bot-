@@ -216,7 +216,7 @@ const PAYOUTS: { [symbol: string]: number } = {
 
 // ✨ NOUVEAU: Multiplicateurs spécifiques pour 2 symboles identiques
 const PAYOUTS_TWO_SYMBOLS: { [symbol: string]: number } = {
-    '7️⃣': 6,   // Gain spécial élevé
+    '7️⃣': 7,   // Gain spécial élevé
     '💎': 4,     // Maintien d'un gain correct
     '💰': 3,     // Maintien d'un gain correct
     '🍀': 2,     // Maintien d'un gain correct
