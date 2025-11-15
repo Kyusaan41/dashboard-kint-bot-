@@ -1270,17 +1270,32 @@ export default function CasinoSlotPage() {
         let forceType: 'jackpot' | 'test' = 'jackpot';
         if (session?.user?.id) {
             try {
-                const forceCheck = await fetch('/api/super-admin/jackpot-force/check', {
-                    method: 'PATCH',
+                const forceCheck = await fetch('/api/super-admin/jackpot-force', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: session.user.id })
+                    body: JSON.stringify({ userId: session.user.id, action: 'check' })
                 });
-                const forceData = await forceCheck.json();
-                forceJackpot = forceData.forceWin || false;
-                forceType = forceData.type || 'jackpot';
+
+                if (forceCheck.ok) {
+                    const forceData = await forceCheck.json();
+                    forceJackpot = forceData.forceWin || false;
+                    forceType = forceData.type || 'jackpot';
+                    console.log('[JACKPOT FORCE] Vérification réussie:', forceData);
+                } else {
+                    console.warn('[JACKPOT FORCE] Erreur API:', forceCheck.status, forceCheck.statusText);
+                    // Essayer de lire le body d'erreur si possible
+                    try {
+                        const errorData = await forceCheck.text();
+                        console.warn('[JACKPOT FORCE] Body erreur:', errorData);
+                    } catch (e) {
+                        console.warn('[JACKPOT FORCE] Impossible de lire le body d\'erreur');
+                    }
+                }
             } catch (error) {
-                console.warn('Erreur vérification jackpot forcé:', error);
+                console.error('[JACKPOT FORCE] Erreur réseau:', error);
             }
+        } else {
+            console.log('[JACKPOT FORCE] Utilisateur non connecté, pas de vérification');
         }
 
     // ✨ NOUVEAU: Événement aléatoire (1 chance sur 50)

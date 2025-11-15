@@ -7,6 +7,7 @@ import redisClient, { ensureRedisConnection } from '@/lib/redis';
 const SUPER_ADMIN_IDS = (process.env.NEXT_PUBLIC_SUPER_ADMIN_IDS ?? '').split(',').map(id => id.trim());
 
 // GET /api/super-admin/jackpot-force - Récupérer la liste des utilisateurs marqués pour le jackpot
+// POST /api/super-admin/jackpot-force - Marquer/démarquer ou vérifier un utilisateur pour le jackpot
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -34,80 +35,76 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/super-admin/jackpot-force/check - Vérifier si un utilisateur est marqué pour gagner le jackpot (pour le bot)
-export async function PATCH(request: NextRequest) {
+
+// POST /api/super-admin/jackpot-force - Marquer/démarquer ou vérifier un utilisateur pour le jackpot
+export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json();
+    const body = await request.json();
+    const { userId, action, username, type = 'jackpot' } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'userId requis' }, { status: 400 });
     }
 
-    // Récupérer depuis Redis si disponible, sinon depuis le store en mémoire
-    let forces = store.jackpotForces;
-    try {
-      await ensureRedisConnection();
-      const redisData = await redisClient.get('jackpot_forces');
-      if (redisData) {
-        forces = JSON.parse(redisData);
-      }
-    } catch (redisError) {
-      console.warn('Redis non disponible');
-    }
-
-    // Chercher si l'utilisateur est marqué et actif
-    const forceEntry = forces.find(f => f.userId === userId && f.active);
-
-    if (forceEntry) {
-      // Marquer comme utilisé (désactiver après utilisation)
-      forceEntry.active = false;
-
-      // Sauvegarder dans Redis
+    // Action 'check' ne nécessite pas d'authentification (pour le casino)
+    if (action === 'check') {
+      // Récupérer depuis Redis si disponible, sinon depuis le store en mémoire
+      let forces = store.jackpotForces;
       try {
         await ensureRedisConnection();
-        await redisClient.set('jackpot_forces', JSON.stringify(forces));
+        const redisData = await redisClient.get('jackpot_forces');
+        if (redisData) {
+          forces = JSON.parse(redisData);
+        }
       } catch (redisError) {
-        console.warn('Impossible de sauvegarder dans Redis');
+        console.warn('Redis non disponible pour check');
       }
 
-      // Ajouter au log d'audit
-      addAuditLog({
-        adminId: 'system',
-        adminName: 'Système Casino',
-        action: forceEntry.type === 'jackpot' ? 'jackpot_force_used' : 'jackpot_test_used',
-        targetId: userId,
-        targetName: forceEntry.username,
-        details: `Utilisateur a gagné ${forceEntry.type === 'jackpot' ? 'le jackpot forcé' : 'le test avec 3 trèfles'}`,
-        status: 'success'
-      });
+      // Chercher si l'utilisateur est marqué et actif
+      const forceEntry = forces.find(f => f.userId === userId && f.active);
 
-      return NextResponse.json({
-        forceWin: true,
-        type: forceEntry.type,
-        username: forceEntry.username,
-        message: `Cet utilisateur doit gagner ${forceEntry.type === 'jackpot' ? 'le jackpot' : 'le test avec 3 trèfles'}`
-      });
+      if (forceEntry) {
+        // Marquer comme utilisé (désactiver après utilisation)
+        forceEntry.active = false;
+
+        // Sauvegarder dans Redis
+        try {
+          await ensureRedisConnection();
+          await redisClient.set('jackpot_forces', JSON.stringify(forces));
+        } catch (redisError) {
+          console.warn('Impossible de sauvegarder dans Redis après check');
+        }
+
+        // Ajouter au log d'audit
+        addAuditLog({
+          adminId: 'system',
+          adminName: 'Système Casino',
+          action: forceEntry.type === 'jackpot' ? 'jackpot_force_used' : 'jackpot_test_used',
+          targetId: userId,
+          targetName: forceEntry.username,
+          details: `Utilisateur a gagné ${forceEntry.type === 'jackpot' ? 'le jackpot forcé' : 'le test avec 3 trèfles'}`,
+          status: 'success'
+        });
+
+        return NextResponse.json({
+          forceWin: true,
+          type: forceEntry.type,
+          username: forceEntry.username,
+          message: `Cet utilisateur doit gagner ${forceEntry.type === 'jackpot' ? 'le jackpot' : 'le test avec 3 trèfles'}`
+        });
+      }
+
+      return NextResponse.json({ forceWin: false });
     }
 
-    return NextResponse.json({ forceWin: false });
-  } catch (error) {
-    console.error('Erreur PATCH jackpot-force:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
-  }
-}
-
-// POST /api/super-admin/jackpot-force - Marquer ou démarquer un utilisateur pour le jackpot
-export async function POST(request: NextRequest) {
-  try {
+    // Actions 'mark' et 'unmark' nécessitent l'authentification admin
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id || !SUPER_ADMIN_IDS.includes(session.user.id)) {
       return NextResponse.json({ error: 'Accès non autorisé' }, { status: 403 });
     }
 
-    const { userId, username, action, type = 'jackpot' } = await request.json();
-
-    if (!userId || !username || !['mark', 'unmark'].includes(action) || !['jackpot', 'test'].includes(type)) {
+    if (!username || !['mark', 'unmark'].includes(action) || !['jackpot', 'test'].includes(type)) {
       return NextResponse.json({ error: 'Paramètres invalides' }, { status: 400 });
     }
 
