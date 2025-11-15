@@ -200,27 +200,37 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
   },
 };
 
-// Fonction pour détecter automatiquement la saison
+// Fonction pour détecter automatiquement la saison selon les périodes spéciales
 export function getCurrentSeason(): ThemeType {
   const now = new Date();
   const month = now.getMonth() + 1; // getMonth() retourne 0-11
   const day = now.getDate();
 
-  // Halloween (31 octobre)
-  if (month === 10 && day >= 25) return 'halloween';
+  // Noël : 20 décembre au 1er janvier
+  if ((month === 12 && day >= 20) || (month === 1 && day <= 1)) {
+    return 'christmas';
+  }
 
-  // Noël (20 décembre - 5 janvier)
-  if ((month === 12 && day >= 20) || (month === 1 && day <= 5)) return 'christmas';
+  // Halloween : 30 octobre au 1er novembre
+  if ((month === 10 && day >= 30) || (month === 11 && day <= 1)) {
+    return 'halloween';
+  }
 
-  // Nouvel An Chinois (variable selon le calendrier lunaire, approximé)
-  if (month === 2 && day >= 1 && day <= 15) return 'chinese-new-year';
+  // Nouvel An Chinois : période approximative (fin janvier à mi-février)
+  if ((month === 1 && day >= 25) || (month === 2 && day <= 15)) {
+    return 'chinese-new-year';
+  }
 
-  // Saisons météorologiques
-  if (month >= 3 && month <= 5) return 'spring';
-  if (month >= 6 && month <= 8) return 'summer';
-  if (month >= 9 && month <= 11) return 'autumn';
-
-  return 'winter'; // Décembre-Januier-Février
+  // Détection des saisons régulières
+  if (month >= 3 && month <= 5) {
+    return 'spring'; // Mars à Mai
+  } else if (month >= 6 && month <= 8) {
+    return 'summer'; // Juin à Août
+  } else if (month >= 9 && month <= 11) {
+    return 'autumn'; // Septembre à Novembre
+  } else {
+    return 'winter'; // Décembre à Février
+  }
 }
 
 // Fonction pour obtenir le thème actuel (manuel ou automatique)

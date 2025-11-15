@@ -2,9 +2,16 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Palette, Sparkles, Snowflake, Flame, TreePine, Cherry, Sun, Leaf } from 'lucide-react';
+import { Palette, Sparkles, Flame, TreePine, Cherry } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { THEMES, ThemeType } from '@/config/themes';
+
+import { getCurrentSeason } from '@/config/themes';
+
+// Fonction pour déterminer le thème saisonnier automatique
+const getSeasonalTheme = (): ThemeType => {
+  return getCurrentSeason();
+};
 
 const THEME_ICONS: Record<ThemeType, React.ComponentType<any>> = {
   default: Palette,
@@ -12,29 +19,54 @@ const THEME_ICONS: Record<ThemeType, React.ComponentType<any>> = {
   christmas: TreePine,
   'chinese-new-year': Cherry,
   spring: Cherry,
-  summer: Sun,
-  autumn: Leaf,
-  winter: Snowflake,
+  summer: () => <span>☀️</span>,
+  autumn: () => <span>🍂</span>,
+  winter: () => <span>❄️</span>,
 };
 
 export function ThemeSelector() {
   const { currentTheme, setTheme, isAutoTheme } = useTheme();
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const handleThemeSelect = (theme: ThemeType | null) => {
-    setTheme(theme);
+  const handleThemeSelect = (isSeasonal: boolean) => {
+    if (isSeasonal) {
+      // Mode saisonnier automatique
+      setTheme(null); // null = automatique
+    } else {
+      // Mode classique
+      setTheme('default');
+    }
     setIsOpen(false);
   };
 
-  const currentThemeConfig = THEMES[currentTheme];
-  const CurrentIcon = THEME_ICONS[currentTheme];
+  // Déterminer l'icône et le nom à afficher
+  const getCurrentDisplay = () => {
+    if (isAutoTheme) {
+      const seasonalTheme = getSeasonalTheme();
+      const seasonalConfig = THEMES[seasonalTheme];
+      const SeasonalIcon = THEME_ICONS[seasonalTheme];
+      return {
+        icon: SeasonalIcon,
+        name: `Saisonnier (${seasonalConfig.displayName})`,
+        isSeasonal: true
+      };
+    } else {
+      return {
+        icon: Palette,
+        name: 'Classique',
+        isSeasonal: false
+      };
+    }
+  };
+
+  const { icon: CurrentIcon, name: currentName, isSeasonal: currentIsSeasonal } = getCurrentDisplay();
 
   return (
     <div className="relative">
       {/* Bouton principal */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-black/30 backdrop-blur-sm rounded-lg border border-purple-500/30 hover:border-purple-500/50 transition-all duration-200"
+        className="btn-nyx-secondary flex items-center gap-2"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -42,12 +74,13 @@ export function ThemeSelector() {
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <CurrentIcon size={16} className="text-purple-400" />
+          <CurrentIcon size={18} className="text-white" />
         </motion.div>
-        <span className="text-sm text-white font-medium">
-          {currentThemeConfig.displayName}
+        <span className="text-sm text-white font-semibold">
+          {currentName}
         </span>
-        {isAutoTheme && (
+
+        {currentIsSeasonal && (
           <motion.div
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
@@ -72,83 +105,78 @@ export function ThemeSelector() {
 
             {/* Menu */}
             <motion.div
-              className="absolute top-full mt-2 right-0 w-64 bg-gray-900/95 backdrop-blur-xl rounded-xl border border-purple-500/30 shadow-2xl z-50 overflow-hidden"
-              initial={{ opacity: 0, scale: 0.9, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -10 }}
+              className="fixed w-80 max-w-[calc(100vw-2rem)] bg-gray-950/95 backdrop-blur-xl rounded-xl border border-purple-400/60 shadow-2xl shadow-purple-900/70 z-[60] overflow-hidden"
+              style={{
+                top: 'auto',
+                left: 'auto',
+                right: '1rem',
+                bottom: '1rem'
+              }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.2 }}
             >
               <div className="p-4">
                 <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
                   <Palette size={18} className="text-purple-400" />
-                  Thèmes Saisonniers
+                  Choix du thème
                 </h3>
 
                 <div className="space-y-2">
-                  {/* Option automatique */}
+                  {/* Option Classique */}
                   <motion.button
-                    onClick={() => handleThemeSelect(null)}
+                    onClick={() => handleThemeSelect(false)}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                      isAutoTheme
-                        ? 'bg-purple-500/20 border border-purple-500/50 text-purple-300'
-                        : 'bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 hover:text-white'
+                      !isAutoTheme
+                        ? 'bg-purple-600/30 border border-purple-300 text-purple-100 shadow-inner'
+                        : 'bg-gray-800/80 hover:bg-gray-700 border border-gray-600 text-gray-200 hover:text-white'
                     }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <Sparkles size={16} className={isAutoTheme ? 'text-purple-400' : 'text-gray-400'} />
+                    <Palette size={18} className={!isAutoTheme ? 'text-purple-200' : 'text-gray-300'} />
                     <div className="text-left">
-                      <div className="font-medium">Automatique</div>
-                      <div className="text-xs opacity-75">Change selon la saison</div>
+                      <div className="font-semibold">Classique</div>
+                      <div className="text-xs opacity-80">Thème par défaut stable</div>
                     </div>
-                    {isAutoTheme && (
-                      <div className="ml-auto w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+                    {!isAutoTheme && (
+                      <div className="ml-auto w-2.5 h-2.5 bg-purple-300 rounded-full animate-pulse" />
                     )}
                   </motion.button>
 
-                  {/* Séparateur */}
-                  <div className="border-t border-gray-700/50 my-3" />
-
-                  {/* Thèmes manuels */}
-                  {Object.entries(THEMES).map(([themeKey, themeConfig]) => {
-                    const Icon = THEME_ICONS[themeKey as ThemeType];
-                    const isSelected = !isAutoTheme && currentTheme === themeKey;
-
-                    return (
-                      <motion.button
-                        key={themeKey}
-                        onClick={() => handleThemeSelect(themeKey as ThemeType)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                          isSelected
-                            ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/20 border border-purple-500/50 text-purple-300'
-                            : 'bg-gray-800/50 hover:bg-gray-700/50 text-gray-300 hover:text-white'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Icon size={16} className={isSelected ? 'text-purple-400' : 'text-gray-400'} />
-                        <div className="text-left">
-                          <div className="font-medium">{themeConfig.displayName}</div>
-                          {themeConfig.effects && (
-                            <div className="text-xs opacity-75 flex gap-1">
-                              {themeConfig.effects.snow && <Snowflake size={10} />}
-                              {themeConfig.effects.particles && <Sparkles size={10} />}
-                              {themeConfig.effects.animatedBg && <div className="w-1 h-1 bg-current rounded-full animate-pulse" />}
-                            </div>
-                          )}
-                        </div>
-                        {isSelected && (
-                          <div className="ml-auto w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-                        )}
-                      </motion.button>
-                    );
-                  })}
+                  {/* Option Saisonnier */}
+                  <motion.button
+                    onClick={() => handleThemeSelect(true)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
+                      isAutoTheme
+                        ? 'bg-purple-600/30 border border-purple-300 text-purple-100 shadow-inner'
+                        : 'bg-gray-800/80 hover:bg-gray-700 border border-gray-600 text-gray-200 hover:text-white'
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Sparkles size={18} className={isAutoTheme ? 'text-yellow-300' : 'text-gray-300'} />
+                    <div className="text-left">
+                      <div className="font-semibold">Saisonnier</div>
+                      <div className="text-xs opacity-80">Change automatiquement selon la période</div>
+                    </div>
+                    {isAutoTheme && (
+                      <div className="ml-auto w-2.5 h-2.5 bg-purple-300 rounded-full animate-pulse" />
+                    )}
+                  </motion.button>
                 </div>
 
-                {/* Footer */}
+                {/* Informations sur les périodes */}
                 <div className="mt-4 pt-3 border-t border-gray-700/50">
+                  <p className="text-xs text-gray-400 text-center mb-2">
+                    Noël : 20 déc - 1 jan
+                  </p>
+                  <p className="text-xs text-gray-400 text-center mb-2">
+                    🎃 Halloween: 30 oct - 1 nov
+                  </p>
                   <p className="text-xs text-gray-400 text-center">
-                    🎨 Tous les thèmes sont gratuits !
+                    🧧 Nouvel An Chinois: Jan-Fév
                   </p>
                 </div>
               </div>
