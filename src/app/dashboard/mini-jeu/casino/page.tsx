@@ -992,6 +992,30 @@ export default function CasinoSlotPage() {
         }
     }, [session?.user?.id, updateJetonsBalance]);
 
+    // Fonction pour charger le niveau et XP du joueur depuis l'API
+    const loadPlayerLevel = async () => {
+        if (!session?.user?.name) return;
+
+        try {
+            // On peut utiliser l'API XP pour récupérer le niveau actuel
+            const res = await fetch(CASINO_ENDPOINTS.xp, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: session.user.name, xpToAdd: 0 }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setPlayerLevel(data.level);
+                setPlayerXp(data.xp);
+                setXpForNextLevel(data.xpForNextLevel);
+                console.log('[LEVEL] Chargé depuis l\'API:', data.level, 'XP:', data.xp);
+            }
+        } catch (e) {
+            console.error('Erreur fetch level', e);
+        }
+    };
+
     // Fonction pour charger le jackpot depuis l'API
     const loadJackpot = async () => {
         try {
@@ -1085,6 +1109,9 @@ export default function CasinoSlotPage() {
     useEffect(() => {
         // ✨ CORRECTION: Appeler fetchUserBalances pour charger les soldes ET le niveau/XP au démarrage.
         fetchUserBalances();
+
+        // Charger le niveau et XP du joueur
+        loadPlayerLevel();
 
         // Charger le jackpot initial
         setJackpotLoading(true);
@@ -2123,9 +2150,26 @@ export default function CasinoSlotPage() {
                                     {formatMoney(piecesBalance)} 💰
                                 </p>
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Vos Jetons</p>
-                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent">
+                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent mb-2">
                                     {loadingBalance ? '...' : formatMoney(displayJetonsBalance)} 💎
                                 </p>
+                                <p className="text-sm text-gray-400 font-semibold mb-1">Niveau</p>
+                                <p className="text-xl md:text-2xl font-black bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent">
+                                    {playerLevel} - {getLevelTitle(playerLevel)}
+                                </p>
+                                <div className="mt-2">
+                                    <div className="w-full bg-gray-700 rounded-full h-2">
+                                        <motion.div
+                                            className="bg-gradient-to-r from-purple-500 to-purple-400 h-2 rounded-full"
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${(playerXp / xpForNextLevel) * 100}%` }}
+                                            transition={{ duration: 0.5 }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-purple-300 mt-1">
+                                        XP: {formatMoney(playerXp)} / {formatMoney(xpForNextLevel)}
+                                    </p>
+                                </div>
 
                             </motion.div>
                         </div>
