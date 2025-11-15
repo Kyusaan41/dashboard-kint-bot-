@@ -191,6 +191,19 @@ const useAnimatedBalance = (initialBalance: number) => {
     return { displayBalance, updateBalance };
 };
 
+// ✨ NOUVEAU: Titres de niveaux
+const getLevelTitle = (level: number) => {
+    if (level >= 50) return "Roi du Casino";
+    if (level >= 40) return "Prince du Casino";
+    if (level >= 30) return "Duc du Jackpot";
+    if (level >= 25) return "Baron du Spin";
+    if (level >= 20) return "Maître des Risques";
+    if (level >= 15) return "Flambeur";
+    if (level >= 10) return "Parieur Agile";
+    if (level >= 5) return "Joueur Régulier";
+    return "Novice";
+};
+
 // Symboles de base et symboles "Devil Mode"
 const NORMAL_SYMBOLS = ['🍒', '🍇', '🍓', '🍋', '💎', '💰', '7️⃣', '🍀'];
 const DEVIL_SYMBOLS = ['🔥', '🔱', '😈', '💀', '💎', '💰', '7️⃣', '🍀']; // 💎, 💰, 7️⃣, 🍀 restent
@@ -655,6 +668,68 @@ const FreeSpinUnlockAnimation = () => {
     );
 };
 
+// ✨ NOUVEAU: Animation de Level Up
+const LevelUpAnimation = ({ level, title }: { level: number, title: string }) => {
+    return (
+        <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center">
+            <motion.div
+                className="absolute inset-0 bg-black"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 0.8, 0.6, 0] }}
+                transition={{ duration: 3, ease: "easeInOut" }}
+            />
+            <Confetti />
+            <motion.div
+                className="relative text-center p-8 bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl border-4 border-purple-500 shadow-2xl shadow-purple-500/50"
+                initial={{ scale: 0, opacity: 0, rotate: -45 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                exit={{ scale: 0, opacity: 0, rotate: 45 }}
+                transition={{ duration: 0.8, type: "spring", stiffness: 150 }}
+            >
+                <motion.div
+                    className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-3xl blur-xl opacity-75"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <div className="relative z-10">
+                    <motion.h2
+                        className="text-2xl font-bold text-gray-300 mb-2"
+                        initial={{ y: -20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                    >
+                        NIVEAU SUPÉRIEUR !
+                    </motion.h2>
+                    <motion.div
+                        className="text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-fuchsia-400 mb-4"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.7, type: "spring", damping: 10 }}
+                    >
+                        {level}
+                    </motion.div>
+                    <motion.h3
+                        className="text-3xl font-bold text-white mb-6"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 1 }}
+                    >
+                        {title}
+                    </motion.h3>
+                    <motion.div
+                        className="text-sm text-purple-300 bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/30"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.3 }}
+                    >
+
+                    </motion.div>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
 // Winning line component - connects the 3 winning symbols
 const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'two-right' }) => {
     // Calculate line position based on win type
@@ -858,6 +933,13 @@ export default function CasinoSlotPage() {
     const [spinHistory, setSpinHistory] = useState<SpinHistoryEntry[]>([]);
     const [isHistoryVisible, setIsHistoryVisible] = useState(false);
 
+    // ✨ NOUVEAU: Système de niveaux
+    const [playerLevel, setPlayerLevel] = useState(1);
+    const [playerXp, setPlayerXp] = useState(0);
+    const [xpForNextLevel, setXpForNextLevel] = useState(1000);
+    const [showLevelUpAnimation, setShowLevelUpAnimation] = useState(false);
+    const [lastLevelUpInfo, setLastLevelUpInfo] = useState({ level: 0, title: '' });
+
 
 
 
@@ -969,6 +1051,36 @@ export default function CasinoSlotPage() {
         }
     };
 
+    // ✨ NOUVEAU: Fonction pour ajouter de l'XP
+    const addXp = async (amount: number) => {
+        if (!session?.user?.name || amount <= 0) return;
+
+        try {
+            const res = await fetch(CASINO_ENDPOINTS.xp, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: session.user.name, xpToAdd: amount }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setPlayerLevel(data.level);
+                setPlayerXp(data.xp);
+                setXpForNextLevel(data.xpForNextLevel);
+
+                if (data.leveledUp) {
+                    console.log(`[LEVEL UP] Niveau ${data.level} atteint !`);
+                    setLastLevelUpInfo({ level: data.level, title: getLevelTitle(data.level) });
+                    setShowLevelUpAnimation(true); // @ts-ignore
+                    playSound('levelUp'); // ✨ NOUVEAU: Jouer le son de montée de niveau
+                    setTimeout(() => setShowLevelUpAnimation(false), 3000);
+                }
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'ajout d'XP:", error);
+        }
+    };
+
     // Load balance and jackpot from API on mount
     useEffect(() => {
         // ✨ CORRECTION: Appeler fetchUserBalances pour charger les soldes ET le niveau/XP au démarrage.
@@ -977,7 +1089,7 @@ export default function CasinoSlotPage() {
         // Charger le jackpot initial
         setJackpotLoading(true);
         loadJackpot();
-        
+
         // Charger les top wins initial
         loadTopWins();
     }, [fetchUserBalances]); // fetchUserBalances est mémorisé avec useCallback, donc cela ne se déclenchera qu'une fois.
@@ -1166,6 +1278,11 @@ export default function CasinoSlotPage() {
                 // Garder seulement les 3 dernières mises
                 return updated.slice(-3);
             });
+
+            // ✨ NOUVEAU: Ajouter de l'XP pour la mise (uniquement pour les spins payants)
+            if (!isUsingFreeSpin) {
+                addXp(lockedBet); // @ts-ignore
+            }
         }
 
         // Reserve funds server-side: deduct bet before spinning (sauf en free spin)
