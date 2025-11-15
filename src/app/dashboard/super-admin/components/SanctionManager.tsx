@@ -59,17 +59,31 @@ export function SanctionManager() {
     }
   }, [])
 
-  const loadBans = async () => {
+  const loadAllSanctions = async () => {
     try {
-      const res = await fetch('/api/admin/bans')
-      const data = await res.json()
-      setSanctions(data.bans || [])
+      // Load bans from Redis
+      const bansRes = await fetch('/api/admin/bans')
+      const bansData = await bansRes.json()
+
+      // Load sanctions from store (warnings, mutes)
+      const sanctionsRes = await fetch('/api/super-admin/sanctions?active=true')
+      const sanctionsData = await sanctionsRes.json()
+
+      // Combine both
+      const allSanctions = [
+        ...(bansData.bans || []).map((ban: any) => ({ ...ban, type: 'ban' })),
+        ...(sanctionsData.sanctions || [])
+      ]
+
+      setSanctions(allSanctions)
     } catch (error) {
-      console.error('Error loading bans:', error)
+      console.error('Error loading sanctions:', error)
     } finally {
       setLoading(false)
     }
   }
+
+  const loadBans = loadAllSanctions // Alias for backward compatibility
 
   // Fonction de recherche d'utilisateurs avec debounce
   const searchUsers = async (query: string) => {
@@ -128,40 +142,74 @@ export function SanctionManager() {
     setShowSuggestions(false)
   }
 
-  const handleAddBan = async (e: React.FormEvent) => {
+  const handleAddSanction = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newSanction.userId || !newSanction.reason) return
 
     try {
-      const res = await fetch('/api/admin/bans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: newSanction.userId,
-          reason: newSanction.reason,
-          duration: newSanction.duration || null
-        }),
-      })
+      let res: Response
+      let data: any
+
+      if (newSanction.type === 'ban') {
+        // Use admin/bans API for bans
+        res = await fetch('/api/admin/bans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: newSanction.userId,
+            reason: newSanction.reason,
+            duration: newSanction.duration || null
+          }),
+        })
+        data = await res.json()
+        if (res.ok) {
+          setSanctions([data.ban, ...sanctions])
+        }
+      } else {
+        // Use super-admin/sanctions API for warnings and mutes
+        res = await fetch('/api/super-admin/sanctions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: newSanction.userId,
+            username: newSanction.username,
+            type: newSanction.type,
+            reason: newSanction.reason,
+            duration: newSanction.duration || undefined
+          }),
+        })
+        data = await res.json()
+        if (res.ok) {
+          // For warnings, we need to reload all sanctions since they come from different sources
+          await loadAllSanctions()
+        }
+      }
 
       if (res.ok) {
-        const data = await res.json()
-        setSanctions([data.ban, ...sanctions])
         setNewSanction({ userId: '', username: '', type: 'ban', reason: '', duration: 60 })
         setShowForm(false)
       }
     } catch (error) {
-      console.error('Error adding ban:', error)
+      console.error('Error adding sanction:', error)
     }
   }
 
-  const handleRemoveBan = async (userId: string) => {
+  const handleRemoveSanction = async (sanction: Sanction) => {
     try {
-      await fetch(`/api/admin/bans?userId=${userId}`, {
-        method: 'DELETE',
-      })
-      setSanctions(sanctions.filter(s => s.userId !== userId))
+      if (sanction.type === 'ban') {
+        // Remove ban from Redis
+        await fetch(`/api/admin/bans?userId=${sanction.userId}`, {
+          method: 'DELETE',
+        })
+      } else {
+        // Remove warning/mute from store
+        await fetch(`/api/super-admin/sanctions?id=${sanction.id}`, {
+          method: 'DELETE',
+        })
+      }
+      setSanctions(sanctions.filter(s => s.id !== sanction.id))
     } catch (error) {
-      console.error('Error removing ban:', error)
+      console.error('Error removing sanction:', error)
     }
   }
 
@@ -289,7 +337,7 @@ export function SanctionManager() {
           initial={{ opacity: 0, height: 0, y: 20 }}
           animate={{ opacity: 1, height: 'auto', y: 0 }}
           exit={{ opacity: 0, height: 0, y: -20 }}
-          onSubmit={handleAddBan}
+          onSubmit={handleAddSanction}
           className="relative overflow-hidden bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-gray-700/50 rounded-3xl p-8 shadow-2xl"
         >
           {/* Background effects */}
@@ -501,10 +549,10 @@ export function SanctionManager() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => handleRemoveBan(ban.userId)}
+                    onClick={() => handleRemoveSanction(ban)}
                     className="flex-shrink-0 ml-6 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
                   >
-                    <span>Unban</span>
+                    <span>{ban.type === 'ban' ? 'Unban' : 'Supprimer'}</span>
                   </motion.button>
                 </div>
 
