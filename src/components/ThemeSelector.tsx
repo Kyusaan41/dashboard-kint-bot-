@@ -167,18 +167,6 @@ export function ThemeSelector() {
                   </motion.button>
                 </div>
 
-                {/* Informations sur les périodes */}
-                <div className="mt-4 pt-3 border-t border-gray-700/50">
-                  <p className="text-xs text-gray-400 text-center mb-2">
-                    Noël : 20 déc - 1 jan
-                  </p>
-                  <p className="text-xs text-gray-400 text-center mb-2">
-                    🎃 Halloween: 30 oct - 1 nov
-                  </p>
-                  <p className="text-xs text-gray-400 text-center">
-                    🧧 Nouvel An Chinois: Jan-Fév
-                  </p>
-                </div>
               </div>
             </motion.div>
           </>
