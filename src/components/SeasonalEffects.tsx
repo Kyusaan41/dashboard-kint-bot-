@@ -47,9 +47,10 @@ const SnowEffect = () => {
 };
 
 // Composant pour les particules colorées
-const ParticlesEffect = ({ colors }: { colors: string[] }) => {
+const ParticlesEffect = ({ colors, theme }: { colors: string[]; theme: string }) => {
+  const particleCount = theme === 'chinese-new-year' ? 10 : 20;
   const particles = useMemo(() =>
-    Array.from({ length: 30 }).map((_, i) => ({
+    Array.from({ length: particleCount }).map((_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -57,7 +58,7 @@ const ParticlesEffect = ({ colors }: { colors: string[] }) => {
       duration: 8 + Math.random() * 8,
       size: 1 + Math.random() * 3,
       color: colors[Math.floor(Math.random() * colors.length)],
-    })), [colors]
+    })), [colors, particleCount]
   );
 
   return (
@@ -117,7 +118,7 @@ const AnimatedBackground = ({ colors }: { colors: string[] }) => {
 };
 
 export function SeasonalEffects() {
-  const { themeConfig } = useTheme();
+  const { themeConfig, currentTheme } = useTheme();
 
   const effects = themeConfig.effects || {};
   const colors = [
@@ -129,7 +130,7 @@ export function SeasonalEffects() {
   return (
     <>
       {effects.snow && <SnowEffect />}
-      {effects.particles && <ParticlesEffect colors={colors} />}
+      {effects.particles && <ParticlesEffect colors={colors} theme={currentTheme} />}
       {effects.animatedBg && <AnimatedBackground colors={colors} />}
     </>
   );

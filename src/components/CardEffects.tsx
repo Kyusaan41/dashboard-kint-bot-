@@ -265,7 +265,7 @@ const FirefliesEffect = () => {
 // Composant pour les étincelles (Nouvel An Chinois)
 const SparklesEffect = () => {
   const sparkles = useMemo(() =>
-    Array.from({ length: 6 }).map((_, i) => ({
+    Array.from({ length: 3 }).map((_, i) => ({
       id: `sparkle-${i}`,
       x: Math.random() * 100,
       y: Math.random() * 100,

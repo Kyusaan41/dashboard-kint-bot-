@@ -465,34 +465,34 @@ export default function DashboardHomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats ? (
                     <>
-                        <StatCard 
-                            icon={<Coins size={24} className="text-white" />} 
-                            title="Pièces" 
-                            value={stats.currency} 
+                        <StatCard
+                            icon={<Coins size={24} className="text-white" />}
+                            title="Pièces"
+                            value={stats.currency}
                             rank={stats.currencyRank}
                             trend={previousWeekStats ? calculateTrend(stats.currency, previousWeekStats.currency) : undefined}
                             delay={0}
                         />
-                        <StatCard 
-                            icon={<Star size={24} className="text-white" />} 
-                            title="Expérience" 
-                            value={stats.xp} 
+                        <StatCard
+                            icon={<Star size={24} className="text-white" />}
+                            title="Expérience"
+                            value={stats.xp}
                             rank={stats.xpRank}
                             trend={previousWeekStats ? calculateTrend(stats.xp, previousWeekStats.xp) : undefined}
                             delay={0.1}
                         />
-                        <StatCard 
-                            icon={<Zap size={24} className="text-white" />} 
-                            title="Points KIP" 
-                            value={stats.points} 
+                        <StatCard
+                            icon={<Zap size={24} className="text-white" />}
+                            title="Points KIP"
+                            value={stats.points}
                             rank={stats.pointsRank}
                             trend={previousWeekStats ? calculateTrend(stats.points, previousWeekStats.points) : undefined}
                             delay={0.2}
                         />
-                        <StatCard 
-                            icon={<Trophy size={24} className="text-white" />} 
-                            title="Succès" 
-                            value={unlockedSuccesses.length} 
+                        <StatCard
+                            icon={<Trophy size={24} className="text-white" />}
+                            title="Succès"
+                            value={unlockedSuccesses.length}
                             rank={null}
                             trend={unlockedSuccesses.length > 0 ? Math.floor(Math.random() * 10 + 5) : undefined}
                             delay={0.3}

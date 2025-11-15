@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
 import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User, Store } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const { currentTheme, themeConfig } = useTheme();
 
   const [interactionEvent, setInteractionEvent] = useState<ItemUsedEvent | null>(null);
   const [hasNewEvents, setHasNewEvents] = useState(false);
@@ -135,19 +137,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         className="fixed left-0 top-0 z-40 w-20 hover:w-80 h-screen transition-all duration-300 group"
         initial={false}
       >
-        <div className="h-full nyx-card-glass backdrop-blur-xl border-r border-purple-primary/20">
+        <div className="h-full nyx-card-glass backdrop-blur-xl border-r" style={{ borderColor: 'var(--theme-primary)' }}>
           {/* Header avec logo NyxBot */}
-          <div className="p-4 border-b border-purple-primary/10">
+          <div className="p-4 border-b" style={{ borderColor: 'var(--theme-primary)' }}>
             <div className="flex items-center gap-3">
-              <motion.div 
-                className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-400 rounded-xl flex items-center justify-center flex-shrink-0"
+              <motion.div
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                style={{
+                  background: 'var(--theme-gradient)',
+                  boxShadow: '0 0 15px var(--theme-primary)40'
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <Bot size={24} className="text-white" />
               </motion.div>
               <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden">
-                <h1 className="text-lg font-bold text-gradient-purple">NyxBot</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-bold text-gradient-purple">NyxBot</h1>
+                  {themeConfig.icons?.mascot && (
+                    <span className="text-sm animate-pulse" style={{ color: 'var(--theme-accent)' }}>
+                      {themeConfig.icons.mascot}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-400">Dashboard</p>
               </div>
             </div>
@@ -158,16 +171,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {session && (
               <div className="flex items-center gap-3">
                 <div className="relative flex-shrink-0">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-400 p-[2px]">
-                    <Image 
-                      src={getAvatarUrl()} 
-                      alt="Avatar" 
-                      width={44} 
-                      height={44} 
-                      className="rounded-[10px] object-cover" 
+                  <div
+                    className="w-12 h-12 rounded-xl p-[2px] transition-all duration-300"
+                    style={{
+                      background: 'var(--theme-gradient)',
+                      boxShadow: '0 0 10px var(--theme-primary)30'
+                    }}
+                  >
+                    <Image
+                      src={getAvatarUrl()}
+                      alt="Avatar"
+                      width={44}
+                      height={44}
+                      className="rounded-[10px] object-cover"
                     />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-bg-primary"></div>
+                  <div
+                    className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 transition-all duration-300"
+                    style={{
+                      backgroundColor: 'var(--success)',
+                      borderColor: 'var(--theme-surface)'
+                    }}
+                  ></div>
                 </div>
                 <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden flex-1 min-w-0">
                   <p className="font-semibold text-white truncate">{session.user.name}</p>
@@ -197,10 +222,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={page.id}
                   onClick={() => router.push(`/dashboard/${page.id}`)}
                   className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative group/item
-                    ${isActive 
-                      ? 'bg-gradient-to-br from-purple-500 to-purple-400 text-white shadow-lg shadow-purple-primary/20'
-                      : 'text-gray-400 hover:bg-purple-primary/10 hover:text-white'
+                    ${isActive
+                      ? 'text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white'
                     }`}
+                  style={{
+                    background: isActive ? 'var(--theme-gradient)' : undefined,
+                    boxShadow: isActive ? '0 0 20px var(--theme-primary)40' : undefined,
+                  }}
                   whileHover={{ x: isActive ? 0 : 4 }}
                   whileTap={{ scale: 0.98 }}
                   initial={{ opacity: 0, x: -20 }}
@@ -224,8 +253,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     />
                   )}
                   {isActive && (
-                    <motion.div 
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-full"
+                    <motion.div
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-full"
+                      style={{ backgroundColor: 'var(--theme-accent)' }}
                       layoutId="activeIndicator"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
@@ -236,7 +266,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-purple-primary/10">
+          <div className="p-4 border-t" style={{ borderColor: 'var(--theme-primary)' }}>
             <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
               <div className="text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-br from-purple-500/10 to-purple-400/10">
