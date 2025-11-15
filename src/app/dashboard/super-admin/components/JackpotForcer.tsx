@@ -12,6 +12,7 @@ interface JackpotForce {
   markedAt: string
   markedBy: string
   active: boolean
+  type: 'jackpot' | 'test'
 }
 
 interface User {
@@ -60,7 +61,7 @@ export function JackpotForcer({ users, onNotification }: Props) {
     loadJackpotForces()
   }, [])
 
-  const handleMarkUser = async (user: User) => {
+  const handleMarkUser = async (user: User, type: 'jackpot' | 'test' = 'jackpot') => {
     setActionLoading(user.id)
     try {
       const res = await fetch('/api/super-admin/jackpot-force', {
@@ -221,29 +222,54 @@ export function JackpotForcer({ users, onNotification }: Props) {
             )}
           </div>
 
-          {/* Action Button */}
+          {/* Action Buttons */}
           {selectedUser && (
-            <motion.button
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleMarkUser(selectedUser)}
-              disabled={actionLoading === selectedUser.id}
-              className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {actionLoading === selectedUser.id ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="animate-spin h-5 w-5" />
-                  Marquage...
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <Crown className="h-5 w-5" />
-                  Marquer {selectedUser.username} pour le Jackpot
-                </div>
-              )}
-            </motion.button>
+            <div className="space-y-3">
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleMarkUser(selectedUser, 'jackpot')}
+                disabled={actionLoading === selectedUser.id}
+                className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading === selectedUser.id ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin h-5 w-5" />
+                    Marquage...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <Crown className="h-5 w-5" />
+                    Marquer {selectedUser.username} pour le Jackpot
+                  </div>
+                )}
+              </motion.button>
+
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleMarkUser(selectedUser, 'test')}
+                disabled={actionLoading === selectedUser.id}
+                className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {actionLoading === selectedUser.id ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin h-5 w-5" />
+                    Test...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    🍀
+                    Tester avec 3 Trèfles pour {selectedUser.username}
+                  </div>
+                )}
+              </motion.button>
+            </div>
           )}
         </motion.div>
 
@@ -287,15 +313,23 @@ export function JackpotForcer({ users, onNotification }: Props) {
                   <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
-                          <Crown className="h-6 w-6 text-white" />
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                          force.type === 'jackpot'
+                            ? 'bg-gradient-to-br from-yellow-500 to-orange-500'
+                            : 'bg-gradient-to-br from-green-500 to-emerald-500'
+                        }`}>
+                          {force.type === 'jackpot' ? (
+                            <Crown className="h-6 w-6 text-white" />
+                          ) : (
+                            <span className="text-2xl">🍀</span>
+                          )}
                         </div>
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse" />
                       </div>
                       <div>
                         <p className="font-bold text-white text-lg">{force.username}</p>
                         <p className="text-sm text-gray-400">
-                          Marqué le {new Date(force.markedAt).toLocaleDateString('fr-FR')}
+                          Marqué le {new Date(force.markedAt).toLocaleDateString('fr-FR')} • {force.type === 'jackpot' ? 'Jackpot' : 'Test 3 Trèfles'}
                         </p>
                       </div>
                     </div>
@@ -316,10 +350,23 @@ export function JackpotForcer({ users, onNotification }: Props) {
                   </div>
 
                   {/* Warning */}
-                  <div className="relative mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-400 text-sm">
+                  <div className={`relative mt-4 p-3 border rounded-lg ${
+                    force.type === 'jackpot'
+                      ? 'bg-red-500/10 border-red-500/20'
+                      : 'bg-green-500/10 border-green-500/20'
+                  }`}>
+                    <div className={`flex items-center gap-2 text-sm ${
+                      force.type === 'jackpot'
+                        ? 'text-red-400'
+                        : 'text-green-400'
+                    }`}>
                       <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                      <span>Cet utilisateur gagnera automatiquement le prochain jackpot</span>
+                      <span>
+                        {force.type === 'jackpot'
+                          ? 'Cet utilisateur gagnera automatiquement le prochain jackpot'
+                          : 'Cet utilisateur gagnera automatiquement 3 trèfles (test)'
+                        }
+                      </span>
                     </div>
                   </div>
                 </motion.div>

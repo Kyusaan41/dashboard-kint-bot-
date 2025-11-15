@@ -1267,6 +1267,7 @@ export default function CasinoSlotPage() {
 
         // 🎰 JACKPOT FORCE: Vérifier si l'utilisateur est marqué pour gagner le jackpot
         let forceJackpot = false;
+        let forceType: 'jackpot' | 'test' = 'jackpot';
         if (session?.user?.id) {
             try {
                 const forceCheck = await fetch('/api/super-admin/jackpot-force/check', {
@@ -1276,6 +1277,7 @@ export default function CasinoSlotPage() {
                 });
                 const forceData = await forceCheck.json();
                 forceJackpot = forceData.forceWin || false;
+                forceType = forceData.type || 'jackpot';
             } catch (error) {
                 console.warn('Erreur vérification jackpot forcé:', error);
             }
@@ -1432,15 +1434,16 @@ export default function CasinoSlotPage() {
 
 
 
-        // 🎰 JACKPOT FORCE: Si l'utilisateur est marqué, forcer les 7️⃣
+        // 🎰 JACKPOT FORCE: Si l'utilisateur est marqué, forcer les symboles
         let newReels;
         if (forceJackpot) {
-            console.log('[JACKPOT FORCÉ] Forçage des 7️⃣ pour l\'utilisateur marqué!');
-            // Créer des reels avec les 7️⃣ forcés
+            const forcedSymbol = forceType === 'jackpot' ? '7️⃣' : '🍀';
+            console.log(`[JACKPOT FORCÉ] Forçage des ${forcedSymbol} pour l'utilisateur marqué (${forceType})!`);
+            // Créer des reels avec les symboles forcés
             const forcedReel = () => {
                 const reel = makeWeightedReel();
-                // Forcer le symbole gagnant (index -13) à être 7️⃣
-                reel[reel.length - 13] = '7️⃣';
+                // Forcer le symbole gagnant (index -13) à être le symbole forcé
+                reel[reel.length - 13] = forcedSymbol;
                 return reel;
             };
             newReels = [forcedReel(), forcedReel(), forcedReel()];
