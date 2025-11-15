@@ -37,32 +37,32 @@ type ChristmasDecoration = TreeDecoration | LightDecoration | BaubleDecoration;
 // Composant pour les décorations de Noël
 const ChristmasDecorations = () => {
   const decorations: ChristmasDecoration[] = useMemo(() => [
-    // Sapins
+    // Sapins en arrière-plan (plus grands et subtils)
     ...Array.from({ length: 3 }).map((_, i): TreeDecoration => ({
-      id: `tree-${i}`,
+      id: `bg-tree-${i}`,
       type: 'tree',
-      x: 10 + (i * 25) + Math.random() * 10,
-      y: 70 + Math.random() * 20,
-      size: 40 + Math.random() * 20,
-      rotation: -5 + Math.random() * 10,
+      x: 10 + (i * 30) + Math.random() * 20,
+      y: 60 + Math.random() * 30,
+      size: 60 + Math.random() * 30,
+      rotation: -3 + Math.random() * 6,
     })),
-    // Guirlandes lumineuses
-    ...Array.from({ length: 8 }).map((_, i): LightDecoration => ({
+    // Guirlandes lumineuses colorées
+    ...Array.from({ length: 6 }).map((_, i): LightDecoration => ({
       id: `light-${i}`,
       type: 'light',
       x: Math.random() * 100,
-      y: 20 + Math.random() * 60,
-      size: 3 + Math.random() * 4,
-      color: ['#ff0000', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'][Math.floor(Math.random() * 6)],
+      y: 15 + Math.random() * 70,
+      size: 4 + Math.random() * 6,
+      color: ['#ff0000', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#ff8800'][Math.floor(Math.random() * 7)],
     })),
-    // Boules de Noël
-    ...Array.from({ length: 5 }).map((_, i): BaubleDecoration => ({
+    // Boules de Noël décoratives
+    ...Array.from({ length: 4 }).map((_, i): BaubleDecoration => ({
       id: `bauble-${i}`,
       type: 'bauble',
       x: Math.random() * 100,
-      y: 30 + Math.random() * 50,
-      size: 8 + Math.random() * 6,
-      color: ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff'][Math.floor(Math.random() * 5)],
+      y: 25 + Math.random() * 60,
+      size: 10 + Math.random() * 8,
+      color: ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#ff8844'][Math.floor(Math.random() * 6)],
     })),
   ], []);
 
@@ -218,31 +218,31 @@ type HalloweenDecoration = PumpkinDecoration | BatDecoration | WebDecoration;
 // Composant pour les décorations d'Halloween
 const HalloweenDecorations = () => {
   const decorations: HalloweenDecoration[] = useMemo(() => [
-    // Citrouilles
+    // Citrouilles avec effets de lueur
     ...Array.from({ length: 4 }).map((_, i): PumpkinDecoration => ({
       id: `pumpkin-${i}`,
       type: 'pumpkin',
-      x: 15 + (i * 20) + Math.random() * 15,
-      y: 75 + Math.random() * 15,
-      size: 35 + Math.random() * 15,
-      flickerDelay: Math.random() * 3,
+      x: 15 + (i * 20) + Math.random() * 20,
+      y: 70 + Math.random() * 20,
+      size: 40 + Math.random() * 20,
+      flickerDelay: Math.random() * 4,
     })),
-    // Chauves-souris
-    ...Array.from({ length: 6 }).map((_, i): BatDecoration => ({
+    // Chauves-souris animées
+    ...Array.from({ length: 5 }).map((_, i): BatDecoration => ({
       id: `bat-${i}`,
       type: 'bat',
       x: Math.random() * 100,
-      y: 10 + Math.random() * 30,
-      size: 20 + Math.random() * 10,
-      speed: 8 + Math.random() * 8,
+      y: 5 + Math.random() * 35,
+      size: 18 + Math.random() * 12,
+      speed: 10 + Math.random() * 10,
     })),
-    // Toiles d'araignée
+    // Toiles d'araignée décoratives
     ...Array.from({ length: 3 }).map((_, i): WebDecoration => ({
       id: `web-${i}`,
       type: 'web',
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: 40 + Math.random() * 20,
+      size: 35 + Math.random() * 25,
       rotation: Math.random() * 360,
     })),
   ], []);
@@ -372,32 +372,32 @@ type ChineseNewYearDecoration = LanternDecoration | DragonDecoration | FireworkD
 // Composant pour les décorations du Nouvel An Chinois
 const ChineseNewYearDecorations = () => {
   const decorations: ChineseNewYearDecoration[] = useMemo(() => [
-    // Lanternes rouges
-    ...Array.from({ length: 5 }).map((_, i): LanternDecoration => ({
+    // Lanternes rouges décoratives
+    ...Array.from({ length: 4 }).map((_, i): LanternDecoration => ({
       id: `lantern-${i}`,
       type: 'lantern',
-      x: 10 + (i * 18) + Math.random() * 10,
-      y: 20 + Math.random() * 40,
-      size: 25 + Math.random() * 15,
-      swayDelay: Math.random() * 2,
+      x: 12 + (i * 20) + Math.random() * 18,
+      y: 15 + Math.random() * 50,
+      size: 28 + Math.random() * 18,
+      swayDelay: Math.random() * 3,
     })),
-    // Dragons
+    // Dragons majestueux
     ...Array.from({ length: 3 }).map((_, i): DragonDecoration => ({
       id: `dragon-${i}`,
       type: 'dragon',
       x: Math.random() * 100,
-      y: 15 + Math.random() * 20,
-      size: 30 + Math.random() * 20,
-      speed: 12 + Math.random() * 8,
+      y: 10 + Math.random() * 25,
+      size: 35 + Math.random() * 25,
+      speed: 14 + Math.random() * 10,
     })),
-    // Feux d'artifice
+    // Feux d'artifice spectaculaires
     ...Array.from({ length: 4 }).map((_, i): FireworkDecoration => ({
       id: `firework-${i}`,
       type: 'firework',
       x: Math.random() * 100,
-      y: 60 + Math.random() * 30,
-      size: 20 + Math.random() * 10,
-      burstDelay: Math.random() * 10,
+      y: 50 + Math.random() * 40,
+      size: 22 + Math.random() * 12,
+      burstDelay: Math.random() * 12,
     })),
   ], []);
 
