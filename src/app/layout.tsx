@@ -6,6 +6,9 @@ import Providers from "./providers";
 import BanGuard from "@/components/BanGuard";
 import { Analytics } from "@vercel/analytics/react";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { SeasonalEffects } from "@/components/SeasonalEffects";
+import { SeasonalDecorations } from "@/components/SeasonalDecorations";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,10 +30,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
-          <FavoritesProvider>
-            <BanGuard />
-            {children}
-          </FavoritesProvider>
+          <ThemeProvider>
+            <FavoritesProvider>
+              <SeasonalEffects />
+              <SeasonalDecorations />
+              <BanGuard />
+              {children}
+            </FavoritesProvider>
+          </ThemeProvider>
         </Providers>
         <Analytics />
       </body>

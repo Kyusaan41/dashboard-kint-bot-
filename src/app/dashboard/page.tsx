@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { FavoritesBar } from '@/components/FavoritesBar';
 import { NyxCard } from '@/components/ui/NyxCard';
+import { ThemeSelector } from '@/components/ThemeSelector';
 
 // --- Types (inchangÃ©s) ---
 type UserStats = {
@@ -48,40 +49,53 @@ type Article = {
 // --- NYXBOT COMPONENTS ---
 
 const SectionHeader: FC<{ icon: ReactNode; title: string; badgeText?: string; badgeClassName?: string }>
- = ({ icon, title, badgeText, badgeClassName }) => (
+  = ({ icon, title, badgeText, badgeClassName }) => (
     <div className="flex items-center gap-3 mb-6">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center"
+             style={{
+               background: 'var(--theme-gradient)',
+               boxShadow: '0 0 10px var(--theme-primary)30'
+             }}>
             {icon}
         </div>
-        <h3 className="text-xl font-bold text-white">{title}</h3>
+        <h3 className="text-xl font-bold text-white" style={{ color: 'var(--theme-text)' }}>{title}</h3>
         {badgeText && (
-            <div className={`ml-auto px-3 py-1 rounded-lg text-xs font-medium ${badgeClassName || 'bg-purple-primary/20 text-purple-secondary'}`}>
+            <div className={`ml-auto px-3 py-1 rounded-lg text-xs font-medium ${badgeClassName || 'bg-purple-primary/20 text-purple-secondary'}`}
+                 style={{
+                   backgroundColor: 'var(--theme-primary)20',
+                   color: 'var(--theme-secondary)'
+                 }}>
                 {badgeText}
             </div>
         )}
     </div>
 );
 
-const StatCard: FC<{ 
-    icon: ReactNode; 
-    title: string; 
-    value: number; 
-    rank: number | null; 
+const StatCard: FC<{
+    icon: ReactNode;
+    title: string;
+    value: number;
+    rank: number | null;
     trend?: number;
     delay?: number;
 }> = ({ icon, title, value, rank, trend, delay = 0 }) => {
     const formatRank = (r: number | null) => {
-        if (!r) return <span className="text-gray-500">(Non classe)</span>;
-        const rankColor = r <= 3 ? "text-purple-secondary" : "text-gray-400";
-        return <span className={`font-semibold ${rankColor}`}>#{r}</span>;
+        if (!r) return <span className="text-gray-500" style={{ color: 'var(--theme-text-secondary)' }}>(Non classe)</span>;
+        const rankColor = r <= 3 ? "var(--theme-secondary)" : "var(--theme-text-secondary)";
+        return <span className="font-semibold" style={{ color: rankColor }}>#{r}</span>;
     };
-    
+
     return (
         <NyxCard delay={delay} className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500 to-purple-400 opacity-10 rounded-full blur-2xl transform translate-x-8 -translate-y-8"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 opacity-10 rounded-full blur-2xl transform translate-x-8 -translate-y-8"
+                 style={{ background: 'var(--theme-gradient)' }}></div>
             <div className="relative">
                 <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-400 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+                         style={{
+                           background: 'var(--theme-gradient)',
+                           boxShadow: '0 0 15px var(--theme-primary)40'
+                         }}>
                         {icon}
                     </div>
                     {trend && (
@@ -94,9 +108,9 @@ const StatCard: FC<{
                     )}
                 </div>
                 <div>
-                    <p className="text-3xl font-bold text-white mb-1">{value.toLocaleString()}</p>
+                    <p className="text-3xl font-bold mb-1" style={{ color: 'var(--theme-text)' }}>{value.toLocaleString()}</p>
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-400">{title}</span>
+                        <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{title}</span>
                         {formatRank(rank)}
                     </div>
                 </div>
@@ -108,12 +122,12 @@ const StatCard: FC<{
 const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, server }) => {
     const hasMounted = useHasMounted();
     const [time, setTime] = useState<string>('');
-    
+
     useEffect(() => {
         if (hasMounted) {
             const updateTime = () => {
-                setTime(new Date().toLocaleTimeString('fr-FR', { 
-                    hour: '2-digit', 
+                setTime(new Date().toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
                     minute: '2-digit'
                 }));
             };
@@ -122,30 +136,39 @@ const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, ser
             return () => clearInterval(interval);
         }
     }, [hasMounted]);
-    
+
     return (
         <NyxCard className="relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500 to-purple-400 opacity-5 rounded-full blur-3xl"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 opacity-5 rounded-full blur-3xl"
+                 style={{ background: 'var(--theme-gradient)' }}></div>
             <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-6">
                     <div className="relative">
-                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-400 p-[2px]">
-                            <Image 
-                                src={user?.image || '/default-avatar.png'} 
-                                alt="Avatar" 
-                                width={76} 
-                                height={76} 
-                                className="rounded-[14px] object-cover" 
+                        <div className="w-20 h-20 rounded-2xl p-[2px]"
+                             style={{
+                               background: 'var(--theme-gradient)',
+                               boxShadow: '0 0 20px var(--theme-primary)40'
+                             }}>
+                            <Image
+                                src={user?.image || '/default-avatar.png'}
+                                alt="Avatar"
+                                width={76}
+                                height={76}
+                                className="rounded-[14px] object-cover"
                             />
                         </div>
-                        <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-purple-500 to-purple-400 rounded-xl p-2">
+                        <div className="absolute -bottom-2 -right-2 rounded-xl p-2"
+                             style={{
+                               background: 'var(--theme-gradient)',
+                               boxShadow: '0 0 10px var(--theme-primary)60'
+                             }}>
                             <Crown size={16} className="text-white" />
                         </div>
                     </div>
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-3xl font-bold text-white">
-                                Salut, 
+                            <h1 className="text-3xl font-bold" style={{ color: 'var(--theme-text)' }}>
+                                Salut,
                             </h1>
                             <span className="text-3xl font-bold text-gradient-purple">
                                 {user?.name || 'Utilisateur'}
@@ -157,18 +180,18 @@ const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, ser
                                 👋
                             </motion.div>
                         </div>
-                        <p className="text-gray-400 flex items-center gap-2">
-                            <Bot size={16} className="text-purple-secondary" />
+                        <p className="flex items-center gap-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                            <Bot size={16} style={{ color: 'var(--theme-secondary)' }} />
                             NyxBot Dashboard • {server?.name || 'Serveur'}
                             {hasMounted && (
-                                <span className="text-purple-secondary ml-2">{time}</span>
+                                <span style={{ color: 'var(--theme-secondary)' }} className="ml-2">{time}</span>
                             )}
                         </p>
                     </div>
                 </div>
                 <div className="hidden md:flex items-center gap-4">
                     <div className="text-right">
-                        <p className="text-sm text-gray-400">Statut</p>
+                        <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>Statut</p>
                         <div className="flex items-center gap-2 text-green-400">
                             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                             <span className="text-sm font-medium">En ligne</span>
@@ -501,16 +524,17 @@ export default function DashboardHomePage() {
                 <div className="lg:col-span-2 space-y-8">
                     {/* Activity Chart */}
                     <NyxCard delay={0.4} className="relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-500 to-purple-400 opacity-5 rounded-full blur-3xl transform translate-x-8 -translate-y-8"></div>
+                        <div className="absolute top-0 right-0 w-40 h-40 opacity-5 rounded-full blur-3xl transform translate-x-8 -translate-y-8"
+                             style={{ background: 'var(--theme-gradient)' }}></div>
                         <div className="relative">
                             {(() => {
                                 const activityTrend = calculateActivityTrend(kintHistoryData);
                                 const badge = activityTrend !== 0 ? `${activityTrend > 0 ? '+' : ''}${activityTrend}% cette semaine` : undefined;
                                 const badgeClass = activityTrend > 0 ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10';
                                 return (
-                                    <SectionHeader 
-                                        icon={<Activity size={18} className="text-white" />} 
-                                        title="Activité NyxBot (7 derniers jours)" 
+                                    <SectionHeader
+                                        icon={<Activity size={18} className="text-white" />}
+                                        title="Activité NyxBot (7 derniers jours)"
                                         badgeText={badge}
                                         badgeClassName={badge ? badgeClass : undefined}
                                     />
@@ -518,45 +542,45 @@ export default function DashboardHomePage() {
                             })()}
                             <ResponsiveContainer width="100%" height={280}>
                                 <AreaChart data={kintHistoryData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
-                                    <XAxis 
-                                        dataKey="day" 
-                                        stroke="var(--text-tertiary)" 
-                                        fontSize={12} 
-                                        axisLine={false} 
-                                        tickLine={false} 
+                                    <CartesianGrid strokeDasharray="3 3" style={{ stroke: 'var(--theme-primary)20' }} />
+                                    <XAxis
+                                        dataKey="day"
+                                        stroke="var(--theme-text-secondary)"
+                                        fontSize={12}
+                                        axisLine={false}
+                                        tickLine={false}
                                     />
-                                    <YAxis 
-                                        stroke="var(--text-tertiary)" 
-                                        fontSize={12} 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        allowDecimals={false} 
+                                    <YAxis
+                                        stroke="var(--theme-text-secondary)"
+                                        fontSize={12}
+                                        axisLine={false}
+                                        tickLine={false}
+                                        allowDecimals={false}
                                     />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: 'rgba(26, 26, 34, 0.9)', 
-                                            border: '1px solid var(--purple-primary)', 
-                                            borderRadius: '12px', 
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'var(--theme-surface)',
+                                            border: '1px solid var(--theme-primary)',
+                                            borderRadius: '12px',
                                             backdropFilter: 'blur(20px)',
-                                            boxShadow: 'var(--shadow-purple)'
-                                        }} 
-                                        labelStyle={{ color: 'var(--text-secondary)' }} 
-                                        itemStyle={{ color: 'var(--purple-secondary)' }} 
+                                            boxShadow: 'var(--theme-primary)40 0 20px'
+                                        }}
+                                        labelStyle={{ color: 'var(--theme-text-secondary)' }}
+                                        itemStyle={{ color: 'var(--theme-secondary)' }}
                                     />
                                     <defs>
                                         <linearGradient id="PointsGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="var(--purple-primary)" stopOpacity={0.6} />
-                                            <stop offset="95%" stopColor="var(--purple-primary)" stopOpacity={0} />
+                                            <stop offset="5%" style={{ stopColor: 'var(--theme-primary)', stopOpacity: 0.6 }} />
+                                            <stop offset="95%" style={{ stopColor: 'var(--theme-primary)', stopOpacity: 0 }} />
                                         </linearGradient>
                                     </defs>
-                                    <Area 
-                                        type="monotone" 
-                                        dataKey="points" 
-                                        name="Points NyxBot" 
-                                        stroke="var(--purple-primary)" 
-                                        strokeWidth={3} 
-                                        fill="url(#PointsGradient)" 
+                                    <Area
+                                        type="monotone"
+                                        dataKey="points"
+                                        name="Points NyxBot"
+                                        stroke="var(--theme-primary)"
+                                        strokeWidth={3}
+                                        fill="url(#PointsGradient)"
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -566,22 +590,22 @@ export default function DashboardHomePage() {
                     {/* Update Notes */}
                     {patchNotes && (
                         <NyxCard delay={0.5}>
-                            <SectionHeader 
-                                icon={<BookOpen size={18} className="text-white" />} 
-                                title={patchNotes.title} 
-                                badgeText="Nouveautés" 
+                            <SectionHeader
+                                icon={<BookOpen size={18} className="text-white" />}
+                                title={patchNotes.title}
+                                badgeText="Nouveautés"
                             />
                             <div className="space-y-4">
                                 {patchNotes.ajouts?.length > 0 && (
                                     <div>
-                                        <h4 className="font-semibold text-purple-secondary mb-3 flex items-center gap-2">
+                                        <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--theme-secondary)' }}>
                                             <Sparkles size={16} />
                                             Nouveautés
                                         </h4>
                                         <ul className="space-y-2">
                                             {patchNotes.ajouts.map((note, i) => (
-                                                <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
-                                                    <div className="w-1.5 h-1.5 bg-purple-primary rounded-full mt-2 flex-shrink-0"></div>
+                                                <li key={i} className="flex items-start gap-3 text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
+                                                    <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: 'var(--theme-primary)' }}></div>
                                                     {note}
                                                 </li>
                                             ))}
@@ -596,7 +620,7 @@ export default function DashboardHomePage() {
                                         </h4>
                                         <ul className="space-y-2">
                                             {patchNotes.ajustements.map((note, i) => (
-                                                <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
+                                                <li key={i} className="flex items-start gap-3 text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
                                                     <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
                                                     {note}
                                                 </li>
@@ -613,19 +637,20 @@ export default function DashboardHomePage() {
                 <div className="space-y-6">
                     {/* Daily Bonus */}
                     <NyxCard delay={0.6} className="relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500 to-purple-400 opacity-10 rounded-full blur-2xl"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 opacity-10 rounded-full blur-2xl"
+                             style={{ background: 'var(--theme-gradient)' }}></div>
                         <div className="relative">
-                            <SectionHeader 
-                                icon={<Gift size={18} className="text-white" />} 
-                                title="Récompense Quotidienne" 
+                            <SectionHeader
+                                icon={<Gift size={18} className="text-white" />}
+                                title="Récompense Quotidienne"
                                 badgeText={!claimStatus.canClaim ? `Disponible dans ${claimStatus.timeLeft}` : undefined}
                             />
-                            <motion.button 
-                                onClick={handleClaimReward} 
+                            <motion.button
+                                onClick={handleClaimReward}
                                 disabled={!claimStatus.canClaim || isClaiming}
                                 className={`w-full py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 ${
-                                    !claimStatus.canClaim || isClaiming 
-                                        ? 'bg-gray-700/50 cursor-not-allowed text-gray-400' 
+                                    !claimStatus.canClaim || isClaiming
+                                        ? 'bg-gray-700/50 cursor-not-allowed text-gray-400'
                                         : 'btn-nyx-primary'
                                 }`}
                                 whileHover={claimStatus.canClaim ? { scale: 1.02 } : {}}
@@ -643,28 +668,33 @@ export default function DashboardHomePage() {
                         <div className="relative min-h-[100px] flex items-center">
                             <AnimatePresence mode="wait">
                                 {articles.length > 0 ? (
-                                    <motion.div 
-                                        key={articles[currentArticleIndex].id} 
-                                        initial={{ opacity: 0, x: 20 }} 
-                                        animate={{ opacity: 1, x: 0 }} 
-                                        exit={{ opacity: 0, x: -20 }} 
+                                    <motion.div
+                                        key={articles[currentArticleIndex].id}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
                                         transition={{ duration: 0.4 }}
                                         className="w-full"
                                     >
-                                        <div className="flex items-start gap-3 p-4 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
+                                        <div className="flex items-start gap-3 p-4 rounded-lg border"
+                                             style={{
+                                               backgroundColor: 'var(--theme-primary)10',
+                                               borderColor: 'var(--theme-primary)30'
+                                             }}>
                                             <span className="text-2xl">{articles[currentArticleIndex].icon}</span>
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-white mb-1">{articles[currentArticleIndex].title}</h4>
-                                                <p className="text-sm text-gray-400">{articles[currentArticleIndex].content}</p>
+                                                <h4 className="font-semibold mb-1" style={{ color: 'var(--theme-text)' }}>{articles[currentArticleIndex].title}</h4>
+                                                <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{articles[currentArticleIndex].content}</p>
                                             </div>
                                         </div>
                                     </motion.div>
                                 ) : (
                                     <div className="w-full text-center py-8">
-                                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
-                                            <Newspaper size={24} className="text-gray-500" />
+                                        <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                                             style={{ backgroundColor: 'var(--theme-surface)' }}>
+                                            <Newspaper size={24} style={{ color: 'var(--theme-text-secondary)' }} />
                                         </div>
-                                        <p className="text-gray-500">Aucune actualité pour le moment</p>
+                                        <p style={{ color: 'var(--theme-text-secondary)' }}>Aucune actualité pour le moment</p>
                                     </div>
                                 )}
                             </AnimatePresence>
@@ -674,20 +704,42 @@ export default function DashboardHomePage() {
                     {/* Customization */}
                     <NyxCard delay={0.8}>
                         <SectionHeader icon={<Crown size={18} className="text-white" />} title="Personnalisation" />
-                        <div className="p-4 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
-                            <div className="flex items-center justify-between mb-3">
-                                <div>
-                                    <p className="text-sm text-gray-400">Titre actuel</p>
-                                    <p className="font-semibold text-white">{stats?.equippedTitle || 'Aucun titre'}</p>
+                        <div className="space-y-4">
+                            {/* Theme Selector */}
+                            <div className="p-4 rounded-lg border"
+                                 style={{
+                                   backgroundColor: 'var(--theme-primary)10',
+                                   borderColor: 'var(--theme-primary)30'
+                                 }}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>Thème saisonnier</p>
+                                        <p className="font-semibold" style={{ color: 'var(--theme-text)' }}>Change l'ambiance du dashboard</p>
+                                    </div>
+                                    <ThemeSelector />
                                 </div>
-                                <motion.button 
-                                    onClick={() => setIsTitleModalOpen(true)} 
-                                    className="btn-nyx-secondary"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    Modifier
-                                </motion.button>
+                            </div>
+
+                            {/* Title Customization */}
+                            <div className="p-4 rounded-lg border"
+                                 style={{
+                                   backgroundColor: 'var(--theme-primary)10',
+                                   borderColor: 'var(--theme-primary)30'
+                                 }}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>Titre actuel</p>
+                                        <p className="font-semibold" style={{ color: 'var(--theme-text)' }}>{stats?.equippedTitle || 'Aucun titre'}</p>
+                                    </div>
+                                    <motion.button
+                                        onClick={() => setIsTitleModalOpen(true)}
+                                        className="btn-nyx-secondary"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        Modifier
+                                    </motion.button>
+                                </div>
                             </div>
                         </div>
                     </NyxCard>
@@ -695,26 +747,36 @@ export default function DashboardHomePage() {
                     {/* Quick Inventory */}
                     <NyxCard delay={0.9}>
                         <SectionHeader icon={<Package size={18} className="text-white" />} title="Inventaire" badgeText={`${inventory.length} objets`} />
-                        <div className="space-y-3 max-h-48 overflow-y-auto">
+                        <div className="space-y-3 max-h-48 overflow-y-auto custom-scrollbar">
                             {inventory.length > 0 ? inventory.slice(0, 5).map(item => (
-                                <div key={item.id} className="flex items-center gap-3 p-3 bg-purple-primary/5 rounded-lg border border-purple-primary/20">
-                                    {item.icon ? 
-                                        <Image src={item.icon} alt={item.name} width={24} height={24} className="rounded" /> : 
-                                        <div className="w-6 h-6 rounded bg-purple-primary/20 flex items-center justify-center">
-                                            <Gem size={14} className="text-purple-secondary" />
+                                <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border"
+                                     style={{
+                                       backgroundColor: 'var(--theme-primary)10',
+                                       borderColor: 'var(--theme-primary)30'
+                                     }}>
+                                    {item.icon ?
+                                        <Image src={item.icon} alt={item.name} width={24} height={24} className="rounded" /> :
+                                        <div className="w-6 h-6 rounded flex items-center justify-center"
+                                             style={{ backgroundColor: 'var(--theme-primary)20' }}>
+                                            <Gem size={14} style={{ color: 'var(--theme-secondary)' }} />
                                         </div>
                                     }
-                                    <span className="flex-1 font-medium text-white truncate">{item.name}</span>
-                                    <span className="text-xs font-bold bg-purple-primary/20 text-purple-secondary px-2 py-1 rounded-lg">
+                                    <span className="flex-1 font-medium truncate" style={{ color: 'var(--theme-text)' }}>{item.name}</span>
+                                    <span className="text-xs font-bold px-2 py-1 rounded-lg"
+                                          style={{
+                                            backgroundColor: 'var(--theme-primary)20',
+                                            color: 'var(--theme-secondary)'
+                                          }}>
                                         x{item.quantity}
                                     </span>
                                 </div>
                             )) : (
                                 <div className="text-center py-6">
-                                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-800/50 flex items-center justify-center">
-                                        <Package size={20} className="text-gray-500" />
+                                    <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center"
+                                         style={{ backgroundColor: 'var(--theme-surface)' }}>
+                                        <Package size={20} style={{ color: 'var(--theme-text-secondary)' }} />
                                     </div>
-                                    <p className="text-sm text-gray-500">Inventaire vide</p>
+                                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>Inventaire vide</p>
                                 </div>
                             )}
                         </div>
@@ -723,41 +785,50 @@ export default function DashboardHomePage() {
             </div>
 
             {/* Achievements Section */}
-            <NyxCard delay={1.0}>
-                <SectionHeader 
-                    icon={<Trophy size={18} className="text-white" />} 
-                    title="Succès Débloqués" 
-                    badgeText={`${unlockedSuccesses.length}/${totalAchievementsCount}`}
-                />
-                {unlockedSuccesses.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                        {unlockedSuccesses.map((successId, index) => (
-                            <motion.div 
-                                key={successId} 
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: index * 0.05 }}
-                                className="p-4 bg-purple-primary/5 rounded-lg border border-purple-primary/20 text-center group hover:bg-purple-primary/10 transition-all duration-300 cursor-pointer" 
-                                title={allAchievements[successId]?.description || 'Succès secret'}
-                            >
-                                <div className="w-8 h-8 mx-auto mb-2 bg-gradient-to-br from-purple-500 to-purple-400 rounded-lg flex items-center justify-center">
-                                    <Trophy size={16} className="text-white" />
-                                </div>
-                                <p className="text-xs font-medium text-white truncate">
-                                    {allAchievements[successId]?.name || successId}
-                                </p>
-                            </motion.div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-12">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800/50 flex items-center justify-center">
-                            <Trophy size={32} className="text-gray-500" />
+    <NyxCard delay={1.0}>
+        <SectionHeader
+            icon={<Trophy size={18} className="text-white" />}
+            title="Succès Débloqués"
+            badgeText={`${unlockedSuccesses.length}/${totalAchievementsCount}`}
+        />
+        {unlockedSuccesses.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {unlockedSuccesses.map((successId, index) => (
+                    <motion.div
+                        key={successId}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="p-4 rounded-lg border text-center group transition-all duration-300 cursor-pointer"
+                        style={{
+                          backgroundColor: 'var(--theme-primary)10',
+                          borderColor: 'var(--theme-primary)30'
+                        }}
+                        title={allAchievements[successId]?.description || 'Succès secret'}
+                    >
+                        <div className="w-8 h-8 mx-auto mb-2 rounded-lg flex items-center justify-center"
+                             style={{
+                               background: 'var(--theme-gradient)',
+                               boxShadow: '0 0 10px var(--theme-primary)40'
+                             }}>
+                            <Trophy size={16} className="text-white" />
                         </div>
-                        <p className="text-gray-500 text-sm">Aucun succès débloqué pour le moment</p>
-                    </div>
-                )}
-            </NyxCard>
+                        <p className="text-xs font-medium truncate" style={{ color: 'var(--theme-text)' }}>
+                            {allAchievements[successId]?.name || successId}
+                        </p>
+                    </motion.div>
+                ))}
+            </div>
+        ) : (
+            <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                     style={{ backgroundColor: 'var(--theme-surface)' }}>
+                    <Trophy size={32} style={{ color: 'var(--theme-text-secondary)' }} />
+                </div>
+                <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>Aucun succès débloqué pour le moment</p>
+            </div>
+        )}
+    </NyxCard>
 
             {/* Title Modal */}
             <AnimatePresence>

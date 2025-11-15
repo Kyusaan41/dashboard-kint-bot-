@@ -16,6 +16,7 @@ import { SanctionManager } from './components/SanctionManager'
 import { BroadcastManager } from './components/BroadcastManager'
 import { PermissionManager } from './components/PermissionManager'
 import { AdvancedAnalytics } from './components/AdvancedAnalytics'
+import { ThemeTester } from './components/ThemeTester'
 
 type UserRole = 'user' | 'moderator' | 'administrator' | 'super_admin'
 type Tab = 'overview' | 'users' | 'pages' | 'advanced'
@@ -262,6 +263,8 @@ export default function SuperAdminPage() {
                 moderatorCount={moderatorCount}
                 superAdminCount={superAdminCount}
               />
+
+              <ThemeTester />
 
               <motion.div
                 className="nyx-card p-8 rounded-2xl border border-purple-primary/20"

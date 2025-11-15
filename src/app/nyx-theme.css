@@ -295,3 +295,388 @@ html, body {
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
   pointer-events: none;
 }
+
+/* === THÈMES SAISONNIERS === */
+
+/* Variables CSS dynamiques pour les thèmes */
+:root {
+  --theme-primary: var(--purple-primary);
+  --theme-secondary: var(--purple-secondary);
+  --theme-accent: var(--purple-tertiary);
+  --theme-background: var(--bg-primary);
+  --theme-surface: var(--bg-tertiary);
+  --theme-text: var(--text-primary);
+  --theme-text-secondary: var(--text-secondary);
+  --theme-border: var(--border-primary);
+  --theme-gradient: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+}
+
+/* Styles de base pour tous les thèmes */
+.nyx-card {
+  background: var(--theme-surface);
+  border-color: var(--theme-primary);
+  transition: all 0.3s ease;
+}
+
+.nyx-card:hover {
+  border-color: var(--theme-secondary);
+  box-shadow: 0 0 20px var(--theme-primary)40;
+}
+
+.btn-nyx-primary {
+  background: var(--theme-gradient);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-nyx-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--theme-primary)40;
+}
+
+.btn-nyx-secondary {
+  border-color: var(--theme-primary);
+  color: var(--theme-secondary);
+  transition: all 0.3s ease;
+}
+
+.btn-nyx-secondary:hover {
+  background: var(--theme-primary);
+  color: white;
+}
+
+.text-gradient-purple {
+  background: var(--theme-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Classes de thème pour les effets spéciaux */
+.theme-halloween {
+  --halloween-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.theme-halloween .nyx-card {
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: var(--halloween-shadow);
+}
+
+.theme-halloween .nyx-card:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+}
+
+.theme-christmas {
+  --christmas-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.theme-christmas .nyx-card {
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: var(--christmas-shadow);
+}
+
+.theme-christmas .nyx-card:hover {
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+}
+
+.theme-chinese-new-year {
+  --chinese-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.theme-chinese-new-year .nyx-card {
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: var(--chinese-shadow);
+}
+
+.theme-chinese-new-year .nyx-card:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+}
+
+/* Animations saisonnières */
+@keyframes pan-bg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes devil-vignette-pulse {
+  0%, 100% { box-shadow: inset 0 0 150px 50px rgba(0, 0, 0, 0.9); }
+  50% { box-shadow: inset 0 0 200px 80px rgba(0, 0, 0, 0.95); }
+}
+
+@keyframes devil-scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+.devil-vignette-pulse {
+  animation: devil-vignette-pulse 3s ease-in-out infinite;
+}
+
+.devil-scanlines {
+  animation: devil-scanlines 0.1s linear infinite;
+}
+
+/* Aberration chromatique pour le Devil Mode */
+.devil-chromatic-aberration {
+  position: relative;
+}
+
+.devil-chromatic-aberration::before,
+.devil-chromatic-aberration::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: inherit;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.devil-chromatic-aberration::before {
+  background: rgba(239, 68, 68, 0.1);
+  transform: translateX(-2px);
+  filter: blur(1px);
+}
+
+.devil-chromatic-aberration::after {
+  background: rgba(59, 130, 246, 0.1);
+  transform: translateX(2px);
+  filter: blur(1px);
+}
+
+/* Scrollbar personnalisée pour les thèmes */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-primary) var(--theme-surface);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--theme-surface);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--theme-primary);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-secondary);
+}
+
+.custom-scrollbar-devil {
+  scrollbar-width: thin;
+  scrollbar-color: #ef4444 #1a0f0a;
+}
+
+.custom-scrollbar-devil::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar-devil::-webkit-scrollbar-track {
+  background: #1a0f0a;
+  border-radius: 3px;
+}
+
+.custom-scrollbar-devil::-webkit-scrollbar-thumb {
+  background: #ef4444;
+  border-radius: 3px;
+}
+
+.custom-scrollbar-devil::-webkit-scrollbar-thumb:hover {
+  background: #f87171;
+}
+
+/* === STYLES SPÉCIFIQUES PAR THÈME === */
+
+/* Halloween - Rouge/orange avec effets de flammes */
+.theme-halloween {
+  --halloween-glow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.theme-halloween .nyx-card {
+  background: linear-gradient(135deg, rgba(42, 24, 16, 0.9), rgba(26, 15, 10, 0.8));
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  box-shadow: var(--halloween-glow);
+}
+
+.theme-halloween .btn-nyx-primary {
+  background: linear-gradient(135deg, #ef4444, #f7931e, #000000);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.theme-halloween .text-gradient-purple {
+  background: linear-gradient(135deg, #ef4444, #f7931e, #000000);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Noël - Rouge/vert avec effets neigeux */
+.theme-christmas {
+  --christmas-glow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.theme-christmas .nyx-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+  border: 2px solid rgba(34, 197, 94, 0.4);
+  box-shadow: var(--christmas-glow);
+}
+
+.theme-christmas .btn-nyx-primary {
+  background: linear-gradient(135deg, #dc2626, #16a34a, #fbbf24);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+.theme-christmas .text-gradient-purple {
+  background: linear-gradient(135deg, #dc2626, #16a34a, #fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Nouvel An Chinois - Rouge/orange festif */
+.theme-chinese-new-year {
+  --chinese-glow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.theme-chinese-new-year .nyx-card {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(15, 15, 10, 0.8));
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  box-shadow: var(--chinese-glow);
+}
+
+.theme-chinese-new-year .btn-nyx-primary {
+  background: linear-gradient(135deg, #dc2626, #ea580c, #fbbf24);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.theme-chinese-new-year .text-gradient-purple {
+  background: linear-gradient(135deg, #dc2626, #ea580c, #fbbf24);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Printemps - Vert/rose doux */
+.theme-spring {
+  --spring-glow: 0 0 20px rgba(22, 163, 74, 0.3);
+}
+
+.theme-spring .nyx-card {
+  background: linear-gradient(135deg, rgba(30, 46, 30, 0.9), rgba(15, 27, 15, 0.8));
+  border: 2px solid rgba(22, 163, 74, 0.4);
+  box-shadow: var(--spring-glow);
+}
+
+.theme-spring .btn-nyx-primary {
+  background: linear-gradient(135deg, #16a34a, #84cc16, #eab308);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+}
+
+.theme-spring .text-gradient-purple {
+  background: linear-gradient(135deg, #16a34a, #84cc16, #eab308);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Été - Bleu/jaune énergique */
+.theme-summer {
+  --summer-glow: 0 0 20px rgba(28, 100, 151, 0.3);
+}
+
+.theme-summer .nyx-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+  border: 2px solid rgba(28, 100, 151, 0.4);
+  box-shadow: var(--summer-glow);
+}
+
+.theme-summer .btn-nyx-primary {
+  background: linear-gradient(135deg, #1c64c7, #0891b2, #f59e0b);
+  box-shadow: 0 4px 12px rgba(28, 100, 151, 0.4);
+}
+
+.theme-summer .text-gradient-purple {
+  background: linear-gradient(135deg, #1c64c7, #0891b2, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Automne - Orange/rouge chaleureux */
+.theme-autumn {
+  --autumn-glow: 0 0 20px rgba(234, 88, 12, 0.3);
+}
+
+.theme-autumn .nyx-card {
+  background: linear-gradient(135deg, rgba(46, 28, 15, 0.9), rgba(30, 18, 10, 0.8));
+  border: 2px solid rgba(234, 88, 12, 0.4);
+  box-shadow: var(--autumn-glow);
+}
+
+.theme-autumn .btn-nyx-primary {
+  background: linear-gradient(135deg, #ea580c, #dc2626, #d97706);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
+}
+
+.theme-autumn .text-gradient-purple {
+  background: linear-gradient(135deg, #ea580c, #dc2626, #d97706);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hiver - Bleu/blanc froid */
+.theme-winter {
+  --winter-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.theme-winter .nyx-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.8));
+  border: 2px solid rgba(59, 130, 246, 0.4);
+  box-shadow: var(--winter-glow);
+}
+
+.theme-winter .btn-nyx-primary {
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #e5e7eb);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.theme-winter .text-gradient-purple {
+  background: linear-gradient(135deg, #3b82f6, #6366f1, #e5e7eb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Classique - Violet original */
+.theme-default .nyx-card {
+  background: rgba(26, 26, 34, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: var(--shadow-lg);
+}
+
+.theme-default .btn-nyx-primary {
+  background: linear-gradient(135deg, var(--purple-primary), var(--purple-dark));
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.theme-default .text-gradient-purple {
+  background: linear-gradient(135deg, var(--purple-primary), var(--purple-tertiary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

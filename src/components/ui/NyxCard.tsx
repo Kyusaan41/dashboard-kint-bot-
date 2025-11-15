@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
+import { CardEffects } from '../CardEffects';
 
 interface NyxCardProps {
     children: ReactNode;
@@ -44,7 +45,10 @@ export const NyxCard = ({ children, delay = 0, className = "", onClick }: NyxCar
         >
             {/* Background glow effect */}
             <div className="absolute inset-0 bg-gradient-to-br from-purple-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            
+
+            {/* Seasonal card effects */}
+            <CardEffects />
+
             {/* Card content */}
             <div className="relative z-10 p-6">
                 {children}
