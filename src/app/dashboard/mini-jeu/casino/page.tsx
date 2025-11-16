@@ -2096,7 +2096,7 @@ export default function CasinoSlotPage() {
                                 {isDevilMode ? <Flame size={32} className="text-white relative z-10" /> : <Zap size={32} className="text-white relative z-10" />}
                             </motion.div>
                             <div>
-                                <motion.h1 className={`text-3xl md:text-4xl font-black bg-clip-text text-transparent transition-all duration-500 ${
+                                <motion.h1 className={`text-2xl md:text-3xl lg:text-4xl font-black bg-clip-text text-transparent transition-all duration-500 ${
                                     isDevilMode
                                         ? 'bg-gradient-to-r from-red-500 via-orange-400 to-red-500'
                                         : 'bg-gradient-to-r from-purple-400 via-purple-300 to-purple-400'
@@ -2194,15 +2194,15 @@ export default function CasinoSlotPage() {
                                 transition={{ duration: 1, repeat: Infinity }}
                             >
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Vos Pièces</p>
-                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent mb-4">
+                                <p className="text-xl md:text-2xl lg:text-3xl font-black bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent mb-4">
                                     {formatMoney(piecesBalance)} 💰
                                 </p>
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Vos Jetons</p>
-                                <p className="text-2xl md:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent mb-2">
+                                <p className="text-xl md:text-2xl lg:text-3xl font-black bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent mb-2">
                                     {loadingBalance ? '...' : formatMoney(displayJetonsBalance)} 💎
                                 </p>
                                 <p className="text-sm text-gray-400 font-semibold mb-1">Niveau</p>
-                                <p className="text-xl md:text-2xl font-black bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent">
+                                <p className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent">
                                     {playerLevel} - {getLevelTitle(playerLevel)}
                                 </p>
                                 <div className="mt-2">
@@ -2313,7 +2313,7 @@ export default function CasinoSlotPage() {
                                 transition={{ type: "spring", stiffness: 200 }}
                             >
                                 <motion.div
-                                    className={`inline-block px-8 py-4 rounded-2xl font-black text-xl md:text-2xl shadow-lg backdrop-blur-sm ${
+                                    className={`inline-block px-6 md:px-8 py-3 md:py-4 rounded-2xl font-black text-lg md:text-xl lg:text-2xl shadow-lg backdrop-blur-sm ${
                                         winAnimation
                                             ? 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500 text-white' 
                                             : loseAnimation ? 'bg-gradient-to-r from-red-500 via-red-400 to-red-500 text-white'
@@ -2335,22 +2335,22 @@ export default function CasinoSlotPage() {
                             {/* Controls */}
                             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
                                 <motion.div
-                                    className={`flex items-center gap-3 bg-black/50 px-6 py-4 rounded-2xl border-2 ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'} shadow-lg backdrop-blur-sm transition-colors duration-500`}
+                                    className={`flex items-center gap-2 md:gap-3 bg-black/50 px-4 md:px-6 py-3 md:py-4 rounded-2xl border-2 ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'} shadow-lg backdrop-blur-sm transition-colors duration-500`}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.5 }}
                                     whileHover={{ scale: 1.03, borderColor: isDevilMode ? 'rgba(239, 68, 68, 0.6)' : 'rgba(139, 92, 246, 0.6)' }}
                                 >
                                     <motion.div
-                                        animate={{ 
+                                        animate={{
                                             rotate: [0, 15, -15, 0],
                                             scale: [1, 1.1, 1],
                                         }}
                                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                                     >
-                                        <Target size={24} className={isDevilMode ? 'text-red-400' : 'text-purple-400'} />
+                                        <Target size={20} className={`md:w-6 md:h-6 ${isDevilMode ? 'text-red-400' : 'text-purple-400'}`} />
                                     </motion.div>
-                                    <label className="text-sm text-gray-300 font-bold">Mise</label>
+                                    <label className="text-xs md:text-sm text-gray-300 font-bold">Mise</label>
                                     <input
                                         type="number"
                                         min={1}
@@ -2379,7 +2379,7 @@ export default function CasinoSlotPage() {
                                         }
                                     }}
                                         disabled={spinning || loadingBalance || isFreeSpinMode || freeSpins > 0}
-                                        className={`nyx-input w-32 text-center font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed ${
+                                        className={`nyx-input w-24 md:w-32 text-center font-bold text-lg md:text-xl disabled:opacity-50 disabled:cursor-not-allowed ${
                                             isDevilMode
                                                 ? 'focus:border-red-500 focus:ring-red-500'
                                                 : 'focus:border-purple-500 focus:ring-purple-500'
@@ -2431,7 +2431,7 @@ export default function CasinoSlotPage() {
                                 <motion.button
                                     onClick={handleSpin}
                                     disabled={spinning || loadingBalance || bet > jetonsBalance}
-                                    className={`relative px-12 py-5 rounded-2xl font-black text-xl shadow-2xl flex items-center gap-3 overflow-hidden transition-all duration-300 ${
+                                    className={`relative px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-lg md:text-xl shadow-2xl flex items-center gap-2 md:gap-3 overflow-hidden transition-all duration-300 ${
                                         spinning
                                             ? 'bg-gray-700 cursor-not-allowed'
                                             : bet > jetonsBalance
@@ -2645,8 +2645,8 @@ export default function CasinoSlotPage() {
                                     </motion.div>
                                     <div>
                                         <p className="text-sm text-emerald-300 font-bold mb-1">Plus Gros Gain</p>
-                                        <motion.p 
-                                            className="text-2xl font-black text-emerald-400"
+                                        <motion.p
+                                            className="text-xl md:text-2xl font-black text-emerald-400"
                                             key={biggestWin}
                                             initial={{ scale: 1.3, opacity: 0 }}
                                             animate={{ scale: 1, opacity: 1 }}
@@ -2697,8 +2697,8 @@ export default function CasinoSlotPage() {
                                     </motion.div>
                                     <div>
                                         <p className="text-sm text-red-300 font-bold mb-1">Plus Grosse Perte</p>
-                                        <motion.p 
-                                            className="text-2xl font-black text-red-400"
+                                        <motion.p
+                                            className="text-xl md:text-2xl font-black text-red-400"
                                             key={biggestLoss}
                                             initial={{ scale: 1.3, opacity: 0 }}
                                             animate={{ scale: 1, opacity: 1 }}
@@ -2760,8 +2760,8 @@ export default function CasinoSlotPage() {
                                 </motion.div>
                                 <h3 className={`text-xl font-black ${isDevilMode ? 'text-red-400' : 'text-yellow-400'} transition-colors duration-500`}>JACKPOT GLOBAL</h3>
                             </div>
-                            <motion.p 
-                                className={`text-3xl font-black bg-clip-text text-transparent ${isDevilMode ? 'bg-gradient-to-r from-red-400 via-orange-400 to-red-400' : 'bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400'} transition-all duration-500`}
+                            <motion.p
+                                className={`text-2xl md:text-3xl font-black bg-clip-text text-transparent ${isDevilMode ? 'bg-gradient-to-r from-red-400 via-orange-400 to-red-400' : 'bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400'} transition-all duration-500`}
                                 key={jackpot}
                                 initial={{ scale: 1.2, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}

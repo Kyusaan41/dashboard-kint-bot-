@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
 import WarningModal from '@/components/WarningModal';
-import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User, Store } from 'lucide-react';
+import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User, Store, Menu, X } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -48,6 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const [interactionEvent, setInteractionEvent] = useState<ItemUsedEvent | null>(null);
   const [hasNewEvents, setHasNewEvents] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -133,10 +134,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-gradient-nyx">
       <InteractionPopup event={interactionEvent} onResponse={handleInteractionResponse} />
       <WarningModal />
-      
+
+      {/* Mobile Menu Button */}
+      <motion.button
+        onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+        className="fixed top-4 left-4 z-50 md:hidden w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-xl border transition-all duration-300"
+        style={{
+          backgroundColor: 'var(--theme-surface)',
+          borderColor: 'var(--theme-primary)',
+          boxShadow: '0 0 10px var(--theme-primary)30'
+        }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <AnimatePresence mode="wait">
+          {isMobileSidebarOpen ? (
+            <motion.div
+              key="close"
+              initial={{ opacity: 0, rotate: -90 }}
+              animate={{ opacity: 1, rotate: 0 }}
+              exit={{ opacity: 0, rotate: 90 }}
+              transition={{ duration: 0.2 }}
+            >
+              <X size={20} style={{ color: 'var(--theme-text)' }} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="menu"
+              initial={{ opacity: 0, rotate: 90 }}
+              animate={{ opacity: 1, rotate: 0 }}
+              exit={{ opacity: 0, rotate: -90 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Menu size={20} style={{ color: 'var(--theme-text)' }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
+
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isMobileSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <motion.aside 
-        className="fixed left-0 top-0 z-40 w-20 hover:w-80 h-screen transition-all duration-300 group"
+      <motion.aside
+        className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 group
+          ${isMobileSidebarOpen ? 'w-80' : 'w-20 hover:w-80'}
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
         initial={false}
       >
         <div className="h-full nyx-card-glass backdrop-blur-xl border-r" style={{ borderColor: 'var(--theme-primary)' }}>
@@ -222,7 +276,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               return (
                 <motion.button
                   key={page.id}
-                  onClick={() => router.push(`/dashboard/${page.id}`)}
+                  onClick={() => {
+                    router.push(`/dashboard/${page.id}`);
+                    setIsMobileSidebarOpen(false);
+                  }}
                   className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative group/item
                     ${isActive
                       ? 'text-white shadow-lg'
@@ -287,7 +344,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </motion.aside>
 
       {/* Main Content */}
-      <div className="pl-20">
+      <div className="md:pl-20">
         <motion.main 
           className="min-h-screen p-6 lg:p-8"
           initial={{ opacity: 0, y: 20 }}

@@ -141,10 +141,10 @@ const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, ser
         <NyxCard className="relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 opacity-5 rounded-full blur-3xl"
                  style={{ background: 'var(--theme-gradient)' }}></div>
-            <div className="relative flex items-center justify-between">
+            <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0">
                 <div className="flex items-center gap-6">
                     <div className="relative">
-                        <div className="w-20 h-20 rounded-2xl p-[2px]"
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl p-[2px]"
                              style={{
                                background: 'var(--theme-gradient)',
                                boxShadow: '0 0 20px var(--theme-primary)40'
@@ -152,9 +152,9 @@ const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, ser
                             <Image
                                 src={user?.image || '/default-avatar.png'}
                                 alt="Avatar"
-                                width={76}
-                                height={76}
-                                className="rounded-[14px] object-cover"
+                                width={60}
+                                height={60}
+                                className="md:w-[76px] md:h-[76px] rounded-[14px] object-cover"
                             />
                         </div>
                         <div className="absolute -bottom-2 -right-2 rounded-xl p-2"
@@ -167,10 +167,10 @@ const WelcomeHeader: FC<{ user: any; server: ServerInfo | null }> = ({ user, ser
                     </div>
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-3xl font-bold" style={{ color: 'var(--theme-text)' }}>
+                            <h1 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--theme-text)' }}>
                                 Salut,
                             </h1>
-                            <span className="text-3xl font-bold text-gradient-purple">
+                            <span className="text-2xl md:text-3xl font-bold text-gradient-purple">
                                 {user?.name || 'Utilisateur'}
                             </span>
                             <motion.div
@@ -792,7 +792,7 @@ export default function DashboardHomePage() {
             badgeText={`${unlockedSuccesses.length}/${totalAchievementsCount}`}
         />
         {unlockedSuccesses.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 {unlockedSuccesses.map((successId, index) => (
                     <motion.div
                         key={successId}

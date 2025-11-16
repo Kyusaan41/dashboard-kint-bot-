@@ -60,7 +60,7 @@ export const FavoritesBar: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex flex-col items-center gap-2 transition-colors cursor-pointer w-20 text-center relative"
+              className="flex flex-col items-center gap-2 transition-colors cursor-pointer w-16 sm:w-20 text-center relative"
               style={{
                 color: 'var(--theme-text-secondary)'
               }}
@@ -68,14 +68,14 @@ export const FavoritesBar: React.FC = () => {
                 color: 'var(--theme-text)'
               }}
             >
-              <div className="w-14 h-14 rounded-lg flex items-center justify-center border transition-all relative"
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg flex items-center justify-center border transition-all relative"
                 style={{
                   backgroundColor: 'var(--theme-secondary)15',
                   borderColor: 'var(--theme-secondary)',
                   boxShadow: '0 0 10px var(--theme-secondary)40'
                 }}
               >
-                <page.Icon className="w-6 h-6" style={{ color: 'var(--theme-text)' }} />
+                <page.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'var(--theme-text)' }} />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
                   <span className="text-xs text-black font-bold">★</span>
                 </div>
