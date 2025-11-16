@@ -11,14 +11,14 @@ import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 // Slot Machine page using real currency via /api/currency/me
 
-// ✨ NOUVEAU: Effet d'aurore boréale en arrière-plan
+// ✨ NOUVEAU: Effet d'aurore boréale en arrière-plan (désactivé sur mobile)
 const AuroraBackground = ({ isDevilMode }: { isDevilMode: boolean }) => {
     const devilColors = ['rgba(239, 68, 68, 0.2)', 'rgba(159, 18, 57, 0.2)', 'rgba(255, 100, 0, 0.15)'];
     const normalColors = ['rgba(139, 92, 246, 0.15)', 'rgba(99, 102, 241, 0.15)', 'rgba(59, 130, 246, 0.1)'];
     const colors = isDevilMode ? devilColors : normalColors;
 
     return (
-        <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
+        <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none md:block hidden">
             {colors.map((color, i) => (
                 <AuroraParticle key={i} color={color} index={i} />
             ))}
@@ -417,7 +417,7 @@ const LaughingEmojis = () => {
     );
 };
 
-// 🔥 Effet de "vraies" flammes stylisées pour le Devil Mode
+// 🔥 Effet de "vraies" flammes stylisées pour le Devil Mode (désactivé sur mobile)
 const CssFlameEffect = () => {
     const particleCount = 40;
     const { width, height } = useWindowSizeLocal();
@@ -430,7 +430,7 @@ const CssFlameEffect = () => {
     }, [width, height]);
 
     return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden md:block hidden">
             {/* Conteneur 1 */}
             <motion.div
                 className="absolute top-0 left-0 w-full"
@@ -519,11 +519,11 @@ const DemonicSigil = () => {
     );
 };
 
-// ✨ NOUVEAU: Rayons lumineux pour le Devil Mode
+// ✨ NOUVEAU: Rayons lumineux pour le Devil Mode (désactivés sur mobile)
 const DevilGodRays = () => {
     const rayCount = 8;
     return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden md:block hidden">
             {Array.from({ length: rayCount }).map((_, i) => (
                 <motion.div
                     key={`ray-${i}`}
@@ -1747,8 +1747,8 @@ export default function CasinoSlotPage() {
         }
         
         return (
-            <motion.div 
-                className="relative w-36 h-48 rounded-3xl overflow-hidden"
+            <motion.div
+                className="relative w-28 h-36 md:w-36 md:h-48 rounded-3xl overflow-hidden"
                 animate={isStopped ? {
                     scale: [1, 1.05, 1],
                 } : {}}
@@ -1822,9 +1822,9 @@ export default function CasinoSlotPage() {
                             duration: 0.5,
                             ease: "easeOut"
                         }}
-                        // ✨ NOUVEAU: Effet de flou pendant le spin
+                        // ✨ Effet de flou pendant le spin (désactivé sur mobile)
                         style={{
-                            filter: spinning && !isStopped ? 'blur(2px)' : 'blur(0px)',
+                            filter: spinning && !isStopped ? 'blur(2px) md:blur(2px)' : 'blur(0px)',
                             transition: 'filter 0.3s ease-out',
                         }}
                     >
@@ -1866,8 +1866,8 @@ export default function CasinoSlotPage() {
                                     </>
                                 )}
                                 
-                                <motion.div 
-                                    className="text-5xl relative z-10 flex items-center justify-center"
+                                <motion.div
+                                    className="text-4xl md:text-5xl relative z-10 flex items-center justify-center"
                                     animate={i === 2 && !spinning ? {
                                         scale: [1, 1.2, 1],
                                         rotate: [0, 5, -5, 0],
@@ -1877,8 +1877,8 @@ export default function CasinoSlotPage() {
                                         delay: index * 0.1
                                     }}
                                     style={{
-                                        filter: i === 2 && !spinning 
-                                            ? `drop-shadow(0 0 10px ${isDevilMode ? 'rgba(239, 68, 68, 0.8)' : 'rgba(139, 92, 246, 0.8)'})` 
+                                        filter: i === 2 && !spinning
+                                            ? `drop-shadow(0 0 10px ${isDevilMode ? 'rgba(239, 68, 68, 0.8)' : 'rgba(139, 92, 246, 0.8)'})`
                                             : 'none'
                                     }}
                                 >
@@ -1892,11 +1892,11 @@ export default function CasinoSlotPage() {
                     <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/90 via-black/60 to-transparent pointer-events-none z-20" />
                     <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-20" />
                     
-                    {/* Corner sparkles */}
+                    {/* Corner sparkles (désactivés sur mobile) */}
                     {!spinning && (
                         <>
                             <motion.div
-                                className={`absolute top-2 left-2 ${isDevilMode ? 'text-red-400' : 'text-purple-400'}`}
+                                className={`absolute top-2 left-2 ${isDevilMode ? 'text-red-400' : 'text-purple-400'} md:block hidden`}
                                 animate={{
                                     opacity: [0, 1, 0],
                                     scale: [0, 1, 0],
@@ -1911,7 +1911,7 @@ export default function CasinoSlotPage() {
                                 <Sparkles size={16} />
                             </motion.div>
                             <motion.div
-                                className={`absolute top-2 right-2 ${isDevilMode ? 'text-red-400' : 'text-purple-400'}`}
+                                className={`absolute top-2 right-2 ${isDevilMode ? 'text-red-400' : 'text-purple-400'} md:block hidden`}
                                 animate={{
                                     opacity: [0, 1, 0],
                                     scale: [0, 1, 0],
@@ -1938,7 +1938,7 @@ export default function CasinoSlotPage() {
 
     return (
         <WithMaintenanceCheck pageId="casino">
-            <div className="w-full text-white p-4 md:p-8 relative overflow-hidden">
+            <div className="w-full text-white p-2 md:p-4 lg:p-8 relative overflow-hidden">
             <AuroraBackground isDevilMode={isDevilMode} />
             {/* Confetti effect */}
             <AnimatePresence>
@@ -2012,7 +2012,7 @@ export default function CasinoSlotPage() {
                 {/* Main Slot Machine */}
                 <motion.div 
                     // Effet d'aberration chromatique en Devil Mode
-                    className={`lg:col-span-3 bg-black/40 backdrop-blur-xl rounded-3xl p-6 md:p-8 ${isDevilMode ? 'devil-chromatic-aberration' : ''} relative overflow-hidden border ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/20'} shadow-2xl`}
+                    className={`lg:col-span-3 bg-black/40 backdrop-blur-xl rounded-3xl p-4 md:p-6 lg:p-8 ${isDevilMode ? 'devil-chromatic-aberration' : ''} relative overflow-hidden border ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/20'} shadow-2xl`}
                     animate={isDevilMode ? {
                         x: spinning ? [0, -1, 1, -2, 2, -1, 1, 0] : 0, // @ts-ignore
                         y: spinning ? [0, 1, -1, 2, -2, 1, -1, 0] : 0,
@@ -2231,7 +2231,7 @@ export default function CasinoSlotPage() {
                         className="relative mb-8"
                     >
                         {/* Slot machine frame */}
-                        <motion.div className={`relative bg-black/50 rounded-3xl p-8 border-4 ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'} shadow-2xl transition-colors duration-500`}>
+                        <motion.div className={`relative bg-black/50 rounded-3xl p-4 md:p-6 lg:p-8 border-4 ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'} shadow-2xl transition-colors duration-500`}>
                             {/* Top decorative bar */}
                             <motion.div
                                 className={`absolute -top-6 left-1/2 transform -translate-x-1/2 ${isDevilMode ? 'bg-gradient-to-r from-red-600 via-red-500 to-red-600 border-red-400/50 shadow-red-500/50' : 'bg-gradient-to-r from-purple-600 via-purple-500 to-purple-600 border-purple-400/50 shadow-purple-500/50'} px-8 py-3 rounded-full border-4 shadow-lg transition-all duration-500 backdrop-blur-sm`}
@@ -2265,8 +2265,8 @@ export default function CasinoSlotPage() {
                                 </motion.div>
                             </motion.div>
                             
-                            {/* Reels - ✨ NOUVEAU: Indicateur de Free Spin amélioré */}
-                            <div className="flex justify-center items-center gap-6 mb-6 relative">
+                            {/* Reels - ✨ Indicateur de Free Spin amélioré */}
+                            <div className="flex justify-center items-center gap-3 md:gap-6 mb-6 relative">
                                 {/* 🎁 FREE SPIN MODE INDICATOR */}
                                 {isFreeSpinMode && (
                                     <motion.div
@@ -2284,7 +2284,7 @@ export default function CasinoSlotPage() {
                                             opacity: { duration: 0.3 }
                                         }}
                                     >
-                                        <div className="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 text-white px-6 py-2 rounded-full font-black text-lg shadow-2xl border-2 border-yellow-300">
+                                        <div className="bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 text-white px-4 md:px-6 py-2 rounded-full font-black text-sm md:text-lg shadow-2xl border-2 border-yellow-300">
                                             🎁 MODE FREE SPIN 🎁
                                         </div>
                                     </motion.div>
@@ -2333,7 +2333,7 @@ export default function CasinoSlotPage() {
                             </motion.div>
 
                             {/* Controls */}
-                            <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-8">
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mt-6 md:mt-8">
                                 <motion.div
                                     className={`flex items-center gap-2 md:gap-3 bg-black/50 px-4 md:px-6 py-3 md:py-4 rounded-2xl border-2 ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'} shadow-lg backdrop-blur-sm transition-colors duration-500`}
                                     initial={{ opacity: 0, y: 20 }}
@@ -2457,10 +2457,10 @@ export default function CasinoSlotPage() {
                                     whileHover={{ scale: spinning ? 1 : 1.1 }}
                                     whileTap={{ scale: spinning ? 1 : 0.95 }}
                                 >
-                                    {/* ✨ NOUVEAU: Effet de reflet sur le bouton */}
+                                    {/* ✨ Effet de reflet sur le bouton (désactivé sur mobile) */}
                                     {!spinning && !isDevilMode && (
                                         <motion.div
-                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent md:block hidden"
                                             animate={{
                                                 x: ['-100%', '200%'],
                                             }}
@@ -2471,10 +2471,10 @@ export default function CasinoSlotPage() {
                                             }}
                                         />
                                     )}
-                                    {/* ✨ NOUVEAU: Effet de lueur pulsante en Devil Mode */}
+                                    {/* ✨ Effet de lueur pulsante en Devil Mode (désactivé sur mobile) */}
                                     {isDevilMode && !spinning && (
                                         <motion.div
-                                            className="absolute inset-0"
+                                            className="absolute inset-0 md:block hidden"
                                             style={{
                                                 boxShadow: '0 0 20px 5px rgba(239, 68, 68, 0.7)',
                                             }}
@@ -2493,11 +2493,11 @@ export default function CasinoSlotPage() {
                                         } : {}}
                                         transition={{
                                             duration: 1,
-                                            repeat: Infinity,
+                                            repeat: spinning ? Infinity : 0,
                                             ease: "linear"
                                         }}
                                     >
-                                        {isDevilMode ? <Flame size={24} /> : <Zap size={24} />}
+                                        {isDevilMode ? <Flame size={20} className="md:w-6 md:h-6" /> : <Zap size={20} className="md:w-6 md:h-6" />}
                                     </motion.div>
                                     <span className="relative z-10">
                                         {spinning ? 'SPINNING...' : isDevilMode ? 'RISK IT ALL' : 'SPIN'}
@@ -2613,11 +2613,11 @@ export default function CasinoSlotPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.8 }} // @ts-ignore
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                        className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
                     >
                         {/* Biggest Win */}
                         <motion.div
-                            className="relative bg-gradient-to-br from-emerald-900/50 via-black/30 to-emerald-900/50 rounded-2xl p-6 border-2 border-emerald-500/30 shadow-lg overflow-hidden"
+                            className="relative bg-gradient-to-br from-emerald-900/50 via-black/30 to-emerald-900/50 rounded-2xl p-4 md:p-6 border-2 border-emerald-500/30 shadow-lg overflow-hidden"
                             whileHover={{ scale: 1.02, borderColor: 'rgba(16, 185, 129, 0.5)' }}
                             animate={biggestWin > 0 ? {
                                 boxShadow: [
@@ -2669,7 +2669,7 @@ export default function CasinoSlotPage() {
 
                         {/* Biggest Loss */}
                         <motion.div
-                            className="relative bg-gradient-to-br from-red-900/50 via-black/30 to-red-900/50 rounded-2xl p-6 border-2 border-red-500/30 shadow-lg overflow-hidden"
+                            className="relative bg-gradient-to-br from-red-900/50 via-black/30 to-red-900/50 rounded-2xl p-4 md:p-6 border-2 border-red-500/30 shadow-lg overflow-hidden"
                             whileHover={{ scale: 1.02, borderColor: 'rgba(239, 68, 68, 0.5)' }}
                             animate={biggestLoss > 0 ? {
                                 boxShadow: [
