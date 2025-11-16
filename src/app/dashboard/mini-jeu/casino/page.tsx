@@ -1682,8 +1682,8 @@ export default function CasinoSlotPage() {
                             
                             setMessage('💔 Perdu...');
                             
-                            // Augmenter le jackpot global via l'API NyxNode (100% de la mise en jetons convertie en pièces)
-                            const jackpotIncreaseAmount = Math.max(1, Math.floor(lockedBet * 80)); // Convert jetons to pieces
+                            // Augmenter le jackpot global via l'API NyxNode (100% de la mise perdue en jetons)
+                            const jackpotIncreaseAmount = Math.max(1, Math.floor(lockedBet)); // Mise perdue directement en jetons
                             try {
                                 const increaseRes = await fetch(CASINO_ENDPOINTS.jackpotIncrease, {
                                     method: 'POST',
