@@ -896,6 +896,7 @@ export default function CasinoSlotPage() {
     const [reelsStopped, setReelsStopped] = useState([false, false, false]);
     const [winningLineType, setWinningLineType] = useState<'three' | 'two-left' | 'two-middle' | 'two-right' | null>(null);
     const { width, height } = useWindowSizeLocal();
+    const isMobile = width < 768;
     const spinTimeouts = useRef<any[]>([]);
     
     // 🎰 FREE SPINS SYSTEM
@@ -2012,17 +2013,17 @@ export default function CasinoSlotPage() {
                 {/* Main Slot Machine */}
                 <motion.div 
                     // Effet d'aberration chromatique en Devil Mode
-                    className={`lg:col-span-3 bg-black/40 backdrop-blur-xl rounded-3xl p-4 md:p-6 lg:p-8 ${isDevilMode ? 'devil-chromatic-aberration' : ''} relative overflow-hidden border ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/20'} shadow-2xl`}
-                    animate={isDevilMode ? {
+                    className={`lg:col-span-3 bg-black/40 backdrop-blur-xl rounded-3xl p-4 md:p-6 lg:p-8 ${isDevilMode && !isMobile ? 'devil-chromatic-aberration' : ''} relative overflow-hidden border ${isDevilMode ? 'border-red-500/30' : 'border-purple-500/20'} shadow-2xl`}
+                    animate={isDevilMode && !isMobile ? {
                         x: spinning ? [0, -1, 1, -2, 2, -1, 1, 0] : 0, // @ts-ignore
                         y: spinning ? [0, 1, -1, 2, -2, 1, -1, 0] : 0,
                         rotate: spinning ? [0, 0.1, -0.1, 0.2, -0.2, 0.1, -0.1, 0] : 0,
                         '--glitch-x': spinning ? `${Math.random() * 4 - 2}px` : '0px',
                         '--glitch-y': spinning ? `${Math.random() * 4 - 2}px` : '0px',
                         boxShadow: "0 0 60px rgba(239, 68, 68, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.3)"
-                    } : { 
+                    } : {
                         x: 0, y: 0, rotate: 0,
-                        boxShadow: "0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.15)" 
+                        boxShadow: isDevilMode ? "0 0 60px rgba(239, 68, 68, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.3)" : "0 0 40px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.15)"
                     }}
                     transition={{
                         x: { duration: 0.4, repeat: Infinity },
