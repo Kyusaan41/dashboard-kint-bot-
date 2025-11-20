@@ -155,7 +155,7 @@ export default function FragmentsShopPage() {
         setRevealItem(item);
       }
     } catch (e) {
-      console.error("[FRAGMENTS SHOP] Erreur achat:", e);
+      console.error("[FRAGMENTS SHOP] Erreur d'achat:", e);
       toast.error("Erreur lors de l'achat.");
     } finally {
       setBuyingId(null);
