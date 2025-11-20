@@ -33,13 +33,14 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Normalize to { balance, tokens, level?, xp?, xpForNextLevel? }
+        // Normalize à un format commun et propager aussi fragments_etoiles si présent côté bot
         return NextResponse.json({
             balance: Number(data.balance ?? data.coins ?? 0),
             tokens: Number(tokensValue ?? 0),
             level: data.level ?? undefined,
             xp: data.xp ?? undefined,
             xpForNextLevel: data.xpForNextLevel ?? undefined,
+            fragments_etoiles: typeof data.fragments_etoiles === 'number' ? data.fragments_etoiles : undefined,
         });
     } catch (error) {
         console.error('Erreur /api/currency/me GET:', error);

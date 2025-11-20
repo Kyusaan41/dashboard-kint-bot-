@@ -38,6 +38,15 @@ const RARITY_STYLES: { [key: string]: string } = {
     'Mythique': 'bg-red-800/50 shadow-red-500/80 shadow-lg', // Rouge - bordure gérée par la classe holographic-border
 };
 
+// Estimation locale du nombre de fragments gagnés par rareté (doit rester cohérent avec le backend)
+const FRAGMENTS_PER_RARITY: { [key: string]: number } = {
+    'Commun': 5,
+    'Rare': 15,
+    'Épique': 45,
+    'Légendaire': 135,
+    'Mythique': 400,
+};
+
 const StatCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: number | string }) => (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 flex items-center gap-4">
         <div className="bg-purple-500/20 text-purple-300 p-3 rounded-lg">{icon}</div>
@@ -86,15 +95,14 @@ const SellSuccessToast = ({ message, onComplete }: { message: string; onComplete
     );
 };
 
-// --- NOUVEAU: MODALE DE VENTE DE CARTE ---
+// --- NOUVEAU: MODALE DE DESTRUCTION DE CARTE (FRAGMENTS) ---
 const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCard, onSell: (cardId: string, quantity: number) => void, onAuction: () => void, onClose: () => void }) => {
     const [quantity, setQuantity] = useState(1);
-    const INSTANT_SELL_DISABLED = true; // Mettre à false pour activer la vente instantanée
+    const INSTANT_SELL_DISABLED = false; // Désormais utilisée pour détruire contre des fragments d'étoiles
 
     if (!card?.cardInfo) return null;
 
-    const sellPrices: { [key: string]: number } = { 'Commun': 100, 'Rare': 200, 'Épique': 500, 'Légendaire': 1500, 'Mythique': 4500 };
-    const sellPrice = sellPrices[card.cardInfo.rarity] || 20;
+    const estimatedFragmentsPerCard = FRAGMENTS_PER_RARITY[card.cardInfo.rarity] || 0;
     const maxQuantity = card.count - 1;
 
     const handleQuantityChange = (amount: number) => {
@@ -132,7 +140,7 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
                             <Tag className="w-5 h-5 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                            Vendre la carte
+                            Détruire la carte
                         </h3>
                     </div>
                     <button
@@ -180,7 +188,7 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
                         <div className="flex items-center justify-between mb-4">
                             <label className="text-lg font-semibold text-white flex items-center gap-2">
                                 <Hash className="w-5 h-5 text-purple-400" />
-                                Quantité à vendre
+                                Quantité à détruire
                             </label>
                             <span className="text-sm text-gray-400">Maximum: {maxQuantity}</span>
                         </div>
@@ -227,9 +235,9 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
 
                         <div className="mt-4 text-center">
                             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 rounded-lg px-4 py-2">
-                                <Coins className="w-5 h-5 text-yellow-400" />
+                                <Star className="w-5 h-5 text-yellow-400" />
                                 <span className="text-yellow-300 font-semibold">
-                                    Valeur totale: {sellPrice * quantity} pièces
+                                    Fragments estimés: ~{estimatedFragmentsPerCard * quantity} fragments d'étoiles
                                 </span>
                             </div>
                         </div>
@@ -238,7 +246,7 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
 
                 {/* Section options de vente avec design amélioré */}
                 <div className="relative z-10 space-y-4">
-                    {/* Option 1: Vente à la banque */}
+                    {/* Option 1: Destruction de carte contre fragments d'étoiles */}
                     <motion.button
                         onClick={() => onSell(card.cardId, quantity)}
                         disabled={INSTANT_SELL_DISABLED || quantity <= 0 || quantity > maxQuantity}
@@ -256,20 +264,20 @@ const SellCardModal = ({ card, onSell, onAuction, onClose }: { card: CollectedCa
                                     ? 'bg-gray-600/50'
                                     : 'bg-gradient-to-br from-green-500 to-emerald-500 group-hover:scale-110 shadow-lg'
                             }`}>
-                                <Coins className={`w-6 h-6 ${
+                                <Star className={`w-6 h-6 ${
                                     INSTANT_SELL_DISABLED ? 'text-gray-400' : 'text-white'
                                 }`} />
                             </div>
                             <div className="text-left flex-1">
                                 <p className={`text-lg font-bold mb-1 ${
                                     INSTANT_SELL_DISABLED ? 'text-gray-400' : 'text-white'
-                                }`}>Vente Instantanée</p>
+                                }`}>Détruire pour des fragments</p>
                                 <p className={`text-sm ${
                                     INSTANT_SELL_DISABLED ? 'text-gray-500' : 'text-green-300'
                                 }`}>
                                     {INSTANT_SELL_DISABLED
                                         ? 'Temporairement indisponible'
-                                        : `Recevez immédiatement ${sellPrice * quantity} pièces`
+                                        : `Transformez ces cartes en fragments d'étoiles`
                                     }
                                 </p>
                             </div>
@@ -486,6 +494,14 @@ export default function CollectionPage() {
     const [showUserSuggestions, setShowUserSuggestions] = useState(false);
     const [cardQuery, setCardQuery] = useState('');
 
+    // Solde local de fragments d'étoiles (optionnel)
+    const [fragmentsBalance, setFragmentsBalance] = useState<number | null>(null);
+
+    // Mode fusion et cartes sélectionnées pour la fusion
+    const [fusionMode, setFusionMode] = useState(false);
+    const [selectedForFusion, setSelectedForFusion] = useState<string[]>([]);
+    const [fusionResultCard, setFusionResultCard] = useState<AnimeCard | null>(null);
+
     // ✨ CORRECTION: On définit fetchCollection ici avec useCallback
     const fetchCollection = useCallback(async (userIdToFetch: string) => {
         if (!userIdToFetch) return;
@@ -519,6 +535,97 @@ export default function CollectionPage() {
             setLoading(false);
         }
     }, []);
+
+    // Récupérer le solde de fragments pour l'utilisateur courant
+    useEffect(() => {
+        const fetchFragments = async () => {
+            if (!session?.user?.id) return;
+            try {
+                const res = await fetch('/api/currency/me', { cache: 'no-store' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (typeof data.fragments_etoiles === 'number') {
+                    setFragmentsBalance(data.fragments_etoiles);
+                }
+            } catch {
+                // silencieux : le manque de fragments n'empêche pas la page de fonctionner
+            }
+        };
+
+        fetchFragments();
+    }, [session]);
+
+    // Gestion du mode fusion
+    const toggleFusionMode = () => {
+        setFusionMode((prev) => {
+            const next = !prev;
+            if (!next) {
+                setSelectedForFusion([]);
+            }
+            return next;
+        });
+    };
+
+    const toggleCardForFusion = (cardId: string) => {
+        setSelectedForFusion((current) => {
+            // Si déjà sélectionnée → on la retire
+            if (current.includes(cardId)) {
+                return current.filter((id) => id !== cardId);
+            }
+            // Limiter à 3 cartes
+            if (current.length >= 3) return current;
+            return [...current, cardId];
+        });
+    };
+
+    const handleFusion = async () => {
+        if (!session?.user?.id) return;
+        if (selectedForFusion.length !== 3) {
+            toast.error('Vous devez sélectionner exactement 3 cartes pour fusionner.');
+            return;
+        }
+
+        const payload = {
+            userId: session.user.id,
+            cardIds: selectedForFusion,
+        };
+
+        toast.promise(
+            fetch(API_ENDPOINTS.gachaFusion, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            }).then(async (res) => {
+                const data = await res.json();
+                if (!res.ok || data.success === false) {
+                    throw new Error(data.message || 'La fusion a échoué.');
+                }
+                // Préparer les données pour le reveal (chercher la carte complète par id)
+                const gained = data?.gainedCard;
+                if (gained?.cardId || gained?.id) {
+                    const cardInfo = getCardById(gained.cardId || gained.id);
+                    if (cardInfo) {
+                        setFusionResultCard(cardInfo);
+                    }
+                }
+                return data;
+            }),
+            {
+                loading: 'Fusion en cours...',
+                success: (data: any) => {
+                    setSelectedForFusion([]);
+                    setFusionMode(false);
+                    if (viewedUserId) fetchCollection(viewedUserId);
+                    const gained = data?.gainedCard;
+                    if (gained?.name && gained?.rarity) {
+                        return `Fusion réussie ! Vous obtenez ${gained.name} (${gained.rarity}).`;
+                    }
+                    return 'Fusion réussie !';
+                },
+                error: (err) => err.message || 'La fusion a échoué.',
+            }
+        );
+    };
 
     // ✨ NOUVEAU: Logique de filtrage et de tri avec useMemo pour la performance
         const processedCollections = useMemo(() => {
@@ -707,30 +814,35 @@ export default function CollectionPage() {
             }
         };
     
-        // ✨ NOUVEAU: Logique de vente
+        // ✨ NOUVEAU: Logique de destruction → fragments d'étoiles
         const handleSellCard = async (cardId: string, quantity: number) => {
             if (!session?.user?.id) return;
-    
+
             toast.promise(
-                fetch(API_ENDPOINTS.gachaSellCard, {
+                fetch(API_ENDPOINTS.gachaDestroyCard, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId: session.user.id, cardId, quantity }),
                 }).then(async (res) => {
-                    if (!res.ok) {
-                        const errorData = await res.json();
-                        throw new Error(errorData.message || "Une erreur est survenue lors de la vente.");
+                    const data = await res.json();
+                    if (!res.ok || data.success === false) {
+                        throw new Error(data.message || 'Une erreur est survenue lors de la destruction.');
                     }
-                    return res.json();
+                    return data;
                 }),
                 {
-                    loading: 'Vente en cours...',
-                    success: (data) => {
+                    loading: 'Destruction en cours...',
+                    success: (data: any) => {
                         setSellModalInfo({ show: false, card: null }); // Fermer la modale
                         if (viewedUserId) fetchCollection(viewedUserId); // Recharger la collection
-                        return data.message || "Carte vendue avec succès ! Elle apparaîtra sur le marché dans quelques instants.";
+
+                        const gained = typeof data?.fragmentsGained === 'number' ? data.fragmentsGained : undefined;
+                        if (gained && gained > 0) {
+                            return `Carte détruite avec succès ! +${gained} fragments d'étoiles obtenus.`;
+                        }
+                        return data.message || 'Carte détruite avec succès !';
                     },
-                    error: (err) => err.message || "La vente a échoué.",
+                    error: (err) => err.message || 'La destruction a échoué.',
                 }
             );
         };
@@ -829,6 +941,55 @@ export default function CollectionPage() {
                         <SellSuccessToast message={sellNotification.message} onComplete={() => setSellNotification({ show: false, message: '' })} />
                     )}
                 </AnimatePresence>
+                {/* Reveal de fusion */}
+                <AnimatePresence>
+                    {fusionResultCard && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[120] flex items-center justify-center p-4"
+                            onClick={() => setFusionResultCard(null)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 10 }}
+                                transition={{ type: 'spring', damping: 25, stiffness: 260 }}
+                                className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 border border-purple-500/50 shadow-2xl max-w-md w-full overflow-hidden"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 via-transparent to-amber-400/10" />
+                                <div className="relative z-10 flex flex-col items-center gap-4">
+                                    <h3 className="text-xl font-bold text-white mb-2">Carte obtenue par fusion</h3>
+                                    <motion.div
+                                        initial={{ rotateY: -90 }}
+                                        animate={{ rotateY: 0 }}
+                                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                                        className={`relative w-48 h-64 rounded-xl overflow-hidden border-2 ${RARITY_STYLES[fusionResultCard.rarity] || RARITY_STYLES['Commun']} ${fusionResultCard.rarity === 'Mythique' ? 'holographic-border' : ''}`}
+                                    >
+                                        <CardImage card={fusionResultCard} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                                    </motion.div>
+                                    <div className="text-center">
+                                        <p className="text-lg font-bold text-white">{fusionResultCard.name}</p>
+                                        <p className="text-sm text-purple-200">{fusionResultCard.anime}</p>
+                                        <div className="mt-2 flex justify-center gap-1">
+                                            {getRarityStars(fusionResultCard.rarity)}
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFusionResultCard(null)}
+                                        className="mt-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/30 text-sm text-white font-semibold"
+                                    >
+                                        Fermer
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
     
                 {/* ✨ NOUVEAU: Modale de vente */}
                 <AnimatePresence>
@@ -863,10 +1024,33 @@ export default function CollectionPage() {
                                 </button>
                             )}
                         </div>
-                        <Link href="/dashboard/mini-jeu/gacha" className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
-                            <ArrowLeft size={16} />
-                            Retour
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            {fragmentsBalance !== null && (
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/30 border border-white/10 text-sm">
+                                    <Star className="w-4 h-4 text-yellow-300" />
+                                    <span className="text-white font-semibold">{fragmentsBalance} fragments</span>
+                                </div>
+                            )}
+                            {viewedUserId === session?.user?.id && (
+                                <button
+                                    type="button"
+                                    onClick={toggleFusionMode}
+                                    className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                                        fusionMode
+                                            ? 'bg-purple-600 border-purple-400 text-white'
+                                            : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                                    }`}
+                                >
+                                    {fusionMode
+                                        ? `Mode Fusion actif (${selectedForFusion.length}/3)`
+                                        : 'Activer le mode Fusion'}
+                                </button>
+                            )}
+                            <Link href="/dashboard/mini-jeu/gacha" className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <ArrowLeft size={16} />
+                                Retour
+                            </Link>
+                        </div>
                     </div>
     
                     {/* ✨ NOUVEAU: Barre de recherche d'utilisateur avec suggestions */}
@@ -1030,10 +1214,18 @@ export default function CollectionPage() {
                                                         <div className="absolute top-1 left-1 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-br-lg rounded-tl-md z-10">
                                                             #{card.id.split('_')[1]}
                                                         </div>
-                                                        <div className="flex-grow relative overflow-hidden">
-                                                            <CardImage card={card} className="absolute inset-0 w-full h-full object-cover" />
-                                                        </div>
-                                                        <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
+                                                        <div
+                                            className={`flex-grow relative overflow-hidden cursor-${fusionMode ? 'pointer' : 'default'}`}
+                                            onClick={fusionMode ? () => toggleCardForFusion(card.id) : undefined}
+                                        >
+                                            <CardImage card={card} className="absolute inset-0 w-full h-full object-cover" />
+                                            {fusionMode && selectedForFusion.includes(card.id) && (
+                                                <div className="absolute inset-0 bg-purple-600/40 border-4 border-purple-400 flex items-center justify-center">
+                                                    <span className="text-white font-bold text-sm">Sélectionnée</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
                                                             <p className="font-bold text-sm truncate text-white">{card.name}</p>
                                                             <div className="flex justify-center items-center gap-1 mt-1">
                                                                 {getRarityStars(card.rarity)}
@@ -1119,8 +1311,16 @@ export default function CollectionPage() {
                                         <div className="absolute top-1 left-1 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded-br-lg rounded-tl-md z-10">
                                             #{card.id.split('_')[1]}
                                         </div>
-                                        <div className="flex-grow relative overflow-hidden">
+                                        <div
+                                            className={`flex-grow relative overflow-hidden cursor-${fusionMode ? 'pointer' : 'default'}`}
+                                            onClick={fusionMode ? () => toggleCardForFusion(card.id) : undefined}
+                                        >
                                             <CardImage card={card.cardInfo} className="absolute inset-0 w-full h-full object-cover" />
+                                            {fusionMode && selectedForFusion.includes(card.id) && (
+                                                <div className="absolute inset-0 bg-purple-600/40 border-4 border-purple-400 flex items-center justify-center">
+                                                    <span className="text-white font-bold text-sm">Sélectionnée</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="p-2 bg-black/40 backdrop-blur-sm flex-shrink-0">
                                             <p className="font-bold text-sm truncate text-white">{card.name}</p>
@@ -1190,8 +1390,25 @@ export default function CollectionPage() {
                             </Link>
                                                 </div>
                     )} 
+
+                    {/* Bouton global de fusion, visible uniquement en mode Fusion */}
+                    {fusionMode && viewedUserId === session?.user?.id && (
+                        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+                            <button
+                                type="button"
+                                onClick={handleFusion}
+                                disabled={selectedForFusion.length !== 3}
+                                className={`px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-colors border ${
+                                    selectedForFusion.length === 3
+                                        ? 'bg-purple-600 hover:bg-purple-700 border-purple-400 text-white'
+                                        : 'bg-white/10 border-white/20 text-white/60 cursor-not-allowed'
+                                }`}
+                            >
+                                Fusionner ({selectedForFusion.length}/3)
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );
     }
-    

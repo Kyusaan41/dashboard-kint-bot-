@@ -623,10 +623,17 @@ function GachaPageContent() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            {/* Collection button ajouté */}
+                            {/* Collection button */}
                             <Link href="/dashboard/mini-jeu/gacha/collection">
                                 <button className="px-3 py-1 rounded-full bg-gradient-to-r from-slate-700 to-slate-600 text-sm text-white font-medium hover:opacity-90 border border-white/10">
                                     Collection
+                                </button>
+                            </Link>
+
+                            {/* Boutique Fragments d'étoiles */}
+                            <Link href="/dashboard/mini-jeu/gacha/fragments-shop">
+                                <button className="px-3 py-1 rounded-full bg-gradient-to-r from-purple-600 to-amber-400 text-sm text-black font-semibold hover:opacity-90 border border-white/10">
+                                    Boutique Fragments
                                 </button>
                             </Link>
 

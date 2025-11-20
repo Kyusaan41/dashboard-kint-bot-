@@ -9,10 +9,16 @@ export const API_ENDPOINTS = {
   gachaWishes: (userId) => `/api/gacha/wishes/${userId}`, // Pour récupérer le solde
   gachaBuyWishes: `/api/gacha/wishes/buy`,           // Pour acheter des vœux
   gachaSpendWishes: (userId) => `/api/gacha/wishes/${userId}`, // Utilise la route dynamique
-  gachaSellCard: `/api/gacha/collection/sell`,       // ✨ CORRECTION: Pointe vers la bonne route proxy
+  gachaSellCard: `/api/gacha/collection/sell`,       // ✨ CORRECTION: Pointe vers la bonne route proxy (legacy, non utilisé pour les fragments)
   // --- Nouveaux endpoints pour le Marché ---
   marketplaceListings: `/api/gacha/marketplace`,
   marketplaceBuy: `/api/gacha/marketplace/buy`, // Cette route devra être créée dans le dashboard
   marketplaceSell: `/api/gacha/marketplace`, // Pointe maintenant vers la route POST principale
-  marketplaceRemove: `/api/gacha/marketplace/remove`
+  marketplaceRemove: `/api/gacha/marketplace/remove`,
+
+  // --- Endpoints pour le système de fragments d'étoiles ---
+  gachaFusion: `/api/gacha/fusion`,
+  gachaDestroyCard: `/api/gacha/cards/destroy`,
+  gachaFragmentsShop: `/api/gacha/fragments-shop`,
+  gachaFragmentsShopBuy: `/api/gacha/fragments-shop/buy`,
 };
