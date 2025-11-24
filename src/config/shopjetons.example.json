@@ -1,0 +1,29 @@
+[
+  {
+    "id": "orbs-starter",
+    "label": "Starter Orb",
+    "priceInTokens": 250000,
+    "orbsReceived": 0.25,
+    "description": "Une petite orbe pour débloquer quelques avantages premium.",
+    "highlight": "Idéal pour tester la boutique orbs",
+    "icon": "/icons/orb_starter.png"
+  },
+  {
+    "id": "orbs-standard",
+    "label": "Orb Standard",
+    "priceInTokens": 1000000,
+    "orbsReceived": 1,
+    "description": "1 orbe complète contre 1 000 000 jetons, parfait pour un usage régulier.",
+    "highlight": "1 orbe pour 1 000 000 jetons",
+    "icon": "/icons/orb_standard.png"
+  },
+  {
+    "id": "orbs-highroller",
+    "label": "Pack High Roller",
+    "priceInTokens": 5000000,
+    "orbsReceived": 5,
+    "description": "Pour les joueurs qui veulent plusieurs orbs d’un coup à partir de leurs gains casino.",
+    "highlight": "Gros volume d’orbs",
+    "icon": "/icons/orb_highroller.png"
+  }
+]

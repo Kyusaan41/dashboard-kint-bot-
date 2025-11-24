@@ -221,6 +221,10 @@ export async function getShopItems(): Promise<any[]> {
     return handleApiResponse(await fetch('/api/shop'));
 }
 
+export async function getTokenShopItems(): Promise<any[]> {
+    return handleApiResponse(await fetch('/api/token-shop'));
+}
+
 export async function buyItem(itemIds: string[]) {
     return handleApiResponse(await fetch('/api/shop/buy', {
         method: 'POST',
