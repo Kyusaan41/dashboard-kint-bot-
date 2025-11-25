@@ -76,6 +76,7 @@ export const store = {
 
     // Sous-pages du dashboard protégées par le wrapper de maintenance
     { id: 'inventory', name: 'Inventaire', path: '/dashboard/inventory', status: 'online', lastChecked: new Date().toISOString() },
+    { id: 'season-pass', name: 'Season Pass', path: '/dashboard/season-pass', status: 'online', lastChecked: new Date().toISOString() },
     { id: 'admin', name: 'Admin Panel', path: '/dashboard/admin', status: 'online', lastChecked: new Date().toISOString() },
     { id: 'boutique', name: 'Boutique', path: '/dashboard/boutique', status: 'online', lastChecked: new Date().toISOString() },
     { id: 'classement', name: 'Classement', path: '/dashboard/classement', status: 'online', lastChecked: new Date().toISOString() },

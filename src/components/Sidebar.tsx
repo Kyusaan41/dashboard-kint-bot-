@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, User, ShoppingCart, BarChart2, Shield, Settings, Gem, Store } from 'lucide-react';
+import { Home, User, ShoppingCart, BarChart2, Shield, Settings, Gem, Store, Trophy } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 
 
 const navLinks = [
     { name: 'Accueil', href: '/dashboard', icon: Home },
     { name: 'Inventaire', href: '/dashboard/inventory', icon: ShoppingCart },
+    { name: 'Season Pass', href: '/dashboard/season-pass', icon: Trophy },
     { name: 'Classement', href: '/dashboard/classement', icon: BarChart2 },
     { name: 'Magasin', href: '/dashboard/shop', icon: Gem },
     { name: 'Marché', href: '/dashboard/market', icon: Store },

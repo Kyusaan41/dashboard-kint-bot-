@@ -995,7 +995,13 @@ export default function CasinoSlotPage() {
 
     // Fonction pour charger le niveau et XP du joueur depuis l'API
     const loadPlayerLevel = async () => {
-        if (!session?.user?.name) return;
+        if (!session?.user?.name) {
+            // Valeurs par défaut si pas de session
+            setPlayerLevel(1);
+            setPlayerXp(0);
+            setXpForNextLevel(1000);
+            return;
+        }
 
         try {
             // On peut utiliser l'API XP pour récupérer le niveau actuel
@@ -1007,13 +1013,23 @@ export default function CasinoSlotPage() {
 
             if (res.ok) {
                 const data = await res.json();
-                setPlayerLevel(data.level);
-                setPlayerXp(data.xp);
-                setXpForNextLevel(data.xpForNextLevel);
+                setPlayerLevel(data.level || 1);
+                setPlayerXp(data.xp || 0);
+                setXpForNextLevel(data.xpForNextLevel || 1000);
                 console.log('[LEVEL] Chargé depuis l\'API:', data.level, 'XP:', data.xp);
+            } else {
+                // Valeurs par défaut si l'API échoue
+                console.warn('[LEVEL] API échouée, utilisation des valeurs par défaut');
+                setPlayerLevel(1);
+                setPlayerXp(0);
+                setXpForNextLevel(1000);
             }
         } catch (e) {
             console.error('Erreur fetch level', e);
+            // Valeurs par défaut en cas d'erreur
+            setPlayerLevel(1);
+            setPlayerXp(0);
+            setXpForNextLevel(1000);
         }
     };
 
@@ -1340,9 +1356,28 @@ export default function CasinoSlotPage() {
                 return updated.slice(-3);
             });
 
-            // ✨ NOUVEAU: Ajouter de l'XP pour la mise (uniquement pour les spins payants)
-            if (!isUsingFreeSpin) {
-                addXp(lockedBet); // @ts-ignore
+            // 🎯 DISTRIBUER DES POINTS AU SEASON PASS (très peu comme demandé)
+            // NOTE: Points drastiquement réduits pour rendre le season pass progressif
+            if (!isUsingFreeSpin && session?.user?.id) {
+                try {
+                    // Distribuer 0.1 à 1 point par spin (aléatoire pour varier)
+                    const seasonPassPoints = Math.random() * 0.9 + 0.1; // 0.1 à 1.0 point
+
+                    await fetch('/api/season-pass', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'add_points',
+                            userId: session.user.id,
+                            amount: seasonPassPoints,
+                            source: 'casino_spin'
+                        })
+                    });
+
+                    console.log(`[SEASON-PASS] ${session.user.name} gagne ${seasonPassPoints.toFixed(1)} points du casino`);
+                } catch (error) {
+                    console.error('[SEASON-PASS] Erreur distribution points casino:', error);
+                }
             }
         }
 
@@ -1666,43 +1701,68 @@ export default function CasinoSlotPage() {
                                 updateJetonsBalance(jetonsBalance + spinResult.amount);
                             }
                         } else {
-                            // Jouer le son de défaite
-                            playSound('lose');
-                            
-                            // 🎰 FREE SPIN: Reset le win streak en cas de défaite (sauf si on est en freespin)
-                            if (!isUsingFreeSpin) {
-                                setWinStreak(0);
-                                // Reset aussi l'historique des mises en cas de défaite
-                                setLastThreeBets([]);
-                            }
-                            
-                            if (lockedBet > biggestLoss) {
-                                setBiggestLoss(lockedBet);
-                            }
-                            
-                            setMessage('💔 Perdu...');
-                            
-                            // Augmenter le jackpot global via l'API NyxNode (100% de la mise perdue en jetons)
-                            const jackpotIncreaseAmount = Math.max(1, Math.floor(lockedBet)); // Mise perdue directement en jetons
-                            try {
-                                const increaseRes = await fetch(CASINO_ENDPOINTS.jackpotIncrease, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ amount: jackpotIncreaseAmount })
-                                });
-                                if (increaseRes.ok) {
-                                    const data = await increaseRes.json();
-                                    setJackpot(data.newAmount);
-                                } else {
-                                    setJackpot((j) => j + jackpotIncreaseAmount); // Fallback
-                                }
-                            } catch (e) {
-                                console.error('Erreur augmentation jackpot:', e);
-                                setJackpot((j) => j + jackpotIncreaseAmount); // Fallback
-                            }
-                            
-                            triggerLoseAnimation();
-                        }
+                             // Jouer le son de défaite
+                             playSound('lose');
+
+                             // 🎰 FREE SPIN: Reset le win streak en cas de défaite (sauf si on est en freespin)
+                             if (!isUsingFreeSpin) {
+                                 setWinStreak(0);
+                                 // Reset aussi l'historique des mises en cas de défaite
+                                 setLastThreeBets([]);
+                             }
+
+                             if (lockedBet > biggestLoss) {
+                                 setBiggestLoss(lockedBet);
+                             }
+
+                             setMessage('💔 Perdu...');
+
+                             // Augmenter le jackpot global via l'API NyxNode (100% de la mise perdue en jetons)
+                             const jackpotIncreaseAmount = Math.max(1, Math.floor(lockedBet)); // Mise perdue directement en jetons
+                             try {
+                                 const increaseRes = await fetch(CASINO_ENDPOINTS.jackpotIncrease, {
+                                     method: 'POST',
+                                     headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ amount: jackpotIncreaseAmount })
+                                 });
+                                 if (increaseRes.ok) {
+                                     const data = await increaseRes.json();
+                                     setJackpot(data.newAmount);
+                                 } else {
+                                     setJackpot((j) => j + jackpotIncreaseAmount); // Fallback
+                                 }
+                             } catch (e) {
+                                 console.error('Erreur augmentation jackpot:', e);
+                                 setJackpot((j) => j + jackpotIncreaseAmount); // Fallback
+                             }
+
+                             triggerLoseAnimation();
+                         }
+
+                         // 🎯 BONUS POINTS SEASON PASS POUR LES VICTOIRES
+                         if (spinResult.win && !isUsingFreeSpin && session?.user?.id) {
+                             try {
+                                 // Bonus de 1-3 points pour les victoires selon le multiplicateur
+                                 let victoryBonus = 1;
+                                 if (spinResult.amount >= lockedBet * 5) victoryBonus = 3; // Gros gains
+                                 else if (spinResult.amount >= lockedBet * 2) victoryBonus = 2; // Gains moyens
+
+                                 await fetch('/api/season-pass', {
+                                     method: 'POST',
+                                     headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({
+                                         action: 'add_points',
+                                         userId: session.user.id,
+                                         amount: victoryBonus,
+                                         source: 'casino_win'
+                                     })
+                                 });
+
+                                 console.log(`[SEASON-PASS] ${session.user.name} bonus victoire: +${victoryBonus} points`);
+                             } catch (error) {
+                                 console.error('[SEASON-PASS] Erreur bonus victoire:', error);
+                             }
+                         }
                     }, 600);
                 }
             }, d);

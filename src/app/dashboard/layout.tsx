@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
 import WarningModal from '@/components/WarningModal';
-import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User, Store, Menu, X } from 'lucide-react';
+import { LogOut, Home, CalendarRange, BarChart2, ShoppingCart, Shield, GamepadIcon, Bot, Sparkles, Settings, User, Store, Menu, X, Trophy } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -33,6 +33,7 @@ const pages: PageType[] = [
   { id: '', label: 'Dashboard', icon: Home },
   { id: 'events', label: 'Événements', icon: CalendarRange },
   { id: 'mini-jeu', label: 'Mini-Jeux', icon: GamepadIcon },
+  { id: 'season-pass', label: 'Season Pass', icon: Trophy },
   { id: 'classement', label: 'Classements', icon: BarChart2 },
   { id: 'boutique', label: 'Boutique', icon: ShoppingCart },
   { id: 'market', label: 'Marché', icon: Store },
