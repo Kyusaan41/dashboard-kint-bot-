@@ -9,23 +9,52 @@ const BOT_API_URL = 'http://193.70.34.25:20007/api'
 // Fonction pour vérifier si l'utilisateur est VIP (possède vip_access)
 async function checkUserIsVip(userId: string): Promise<boolean> {
   try {
-    // Essayer de récupérer l'inventaire depuis le bot API
-    const response = await fetch(`${BOT_API_URL}/user/${userId}/inventory`)
-    if (response.ok) {
-      const inventory = await response.json()
-      // Vérifier si l'inventaire contient vip_access (peut être un array d'objets ou de strings)
-      const items = inventory.items || inventory
-      if (Array.isArray(items)) {
-        return items.some((item: any) =>
-          typeof item === 'string' ? item === 'vip_access' : item.id === 'vip_access'
-        )
+    // Essayer plusieurs endpoints possibles pour l'inventaire
+    const endpoints = [
+      `${BOT_API_URL}/user/${userId}/inventory`,
+      `${BOT_API_URL}/inventaire/${userId}`
+    ]
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`[SEASON-PASS] Trying endpoint: ${endpoint}`)
+        const response = await fetch(endpoint)
+        console.log(`[SEASON-PASS] Response status: ${response.status}`)
+
+        if (response.ok) {
+          const inventory = await response.json()
+          console.log(`[SEASON-PASS] Inventory response:`, inventory)
+
+          // Vérifier différents formats possibles
+          let hasVip = false
+
+          if (Array.isArray(inventory)) {
+            // Format array: ["vip_access"]
+            hasVip = inventory.includes('vip_access')
+            console.log(`[SEASON-PASS] Array format, has VIP: ${hasVip}`)
+          } else if (typeof inventory === 'object' && inventory !== null) {
+            // Format object: {"vip_access": {quantity: 1}}
+            hasVip = 'vip_access' in inventory
+            console.log(`[SEASON-PASS] Object format, has VIP: ${hasVip}`)
+          }
+
+          if (hasVip) {
+            console.log(`[SEASON-PASS] Found VIP access via ${endpoint}`)
+            return true
+          }
+        }
+      } catch (error) {
+        console.warn(`[SEASON-PASS] Error with endpoint ${endpoint}:`, error)
       }
     }
+
+    console.log(`[SEASON-PASS] No VIP access found in any endpoint`)
   } catch (error) {
     console.warn('[SEASON-PASS] Error checking VIP status:', error)
   }
 
   // Fallback: mock pour le développement
+  console.log(`[SEASON-PASS] Using fallback for user ${userId}`)
   return userId === '1206053705149841428' // Admin user est VIP pour les tests
 }
 
