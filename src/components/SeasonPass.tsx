@@ -467,50 +467,48 @@ export default function SeasonPass({ className }: SeasonPassProps) {
       </motion.div>
 
       {/* Section Récompenses VIP */}
-      {isVip && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-        >
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
-              <Crown className="w-4 h-4 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              RÉCOMPENSES VIP
-            </h2>
-            <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
-              <Crown className="w-4 h-4 text-white" />
-            </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+      >
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+            <Crown className="w-4 h-4 text-white" />
           </div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+            RÉCOMPENSES VIP
+          </h2>
+          <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+            <Crown className="w-4 h-4 text-white" />
+          </div>
+        </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`vip-${currentPage}`}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
-            >
-              {currentTiers.filter(tier => tier.vipReward).map((tier, index) => (
-                <RewardCard
-                  key={`vip-${tier.id}`}
-                  tier={tier}
-                  reward={tier.vipReward!}
-                  isVip={true}
-                  currentPoints={seasonPass.userProgress.currentPoints}
-                  isVipUser={isVip}
-                  onClaim={() => claimReward(tier, true, `vip-${tier.id}`)}
-                  claiming={claiming === `vip-${tier.id}`}
-                  onSelect={() => setSelectedTier(tier)}
-                  delay={index * 0.1}
-                />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
-      )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`vip-${currentPage}`}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+          >
+            {currentTiers.filter(tier => tier.vipReward).map((tier, index) => (
+              <RewardCard
+                key={`vip-${tier.id}`}
+                tier={tier}
+                reward={tier.vipReward!}
+                isVip={true}
+                currentPoints={seasonPass.userProgress.currentPoints}
+                isVipUser={isVip}
+                onClaim={() => claimReward(tier, true, `vip-${tier.id}`)}
+                claiming={claiming === `vip-${tier.id}`}
+                onSelect={() => setSelectedTier(tier)}
+                delay={index * 0.1}
+              />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
 
       {/* Modal de détail du palier */}
       <AnimatePresence>
@@ -701,15 +699,25 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
     }
   }
 
-  const colors = isVip ? {
-    bg: 'from-yellow-500/20 to-orange-500/20',
-    border: 'border-yellow-400/30',
-    text: 'text-yellow-200',
-    claimedBg: 'bg-green-500/20',
-    claimedText: 'text-green-300',
-    claimedBorder: 'border-green-400/50',
-    iconBg: 'from-yellow-400 to-orange-500'
-  } : {
+  const colors = isVip ? (
+    isVipUser ? {
+      bg: 'from-yellow-500/20 to-orange-500/20',
+      border: 'border-yellow-400/30',
+      text: 'text-yellow-200',
+      claimedBg: 'bg-green-500/20',
+      claimedText: 'text-green-300',
+      claimedBorder: 'border-green-400/50',
+      iconBg: 'from-yellow-400 to-orange-500'
+    } : {
+      bg: 'from-gray-500/20 to-gray-600/20',
+      border: 'border-gray-400/30',
+      text: 'text-gray-300',
+      claimedBg: 'bg-green-500/20',
+      claimedText: 'text-green-300',
+      claimedBorder: 'border-green-400/50',
+      iconBg: 'from-gray-400 to-gray-500'
+    }
+  ) : {
     bg: 'from-purple-500/20 to-blue-500/20',
     border: 'border-purple-400/30',
     text: 'text-purple-200',
@@ -778,7 +786,7 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
         <div className="flex justify-center mb-3 relative">
           <motion.div
             className={`w-12 h-12 rounded-full bg-gradient-to-br ${colors.iconBg} flex items-center justify-center shadow-lg relative z-10`}
-            animate={isVip && !isClaimed ? {
+            animate={isVip && !isClaimed && isVipUser ? {
               boxShadow: [
                 '0 0 15px rgba(251, 191, 36, 0.6)',
                 '0 0 25px rgba(249, 115, 22, 0.8)',
@@ -791,7 +799,7 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
           </motion.div>
 
           {/* Couronne flottante pour VIP */}
-          {isVip && !isClaimed && (
+          {isVip && !isClaimed && isVipUser && (
             <motion.div
               className="absolute -top-1 -right-1 w-5 h-5 text-yellow-400"
               animate={{
@@ -808,7 +816,7 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
         {/* Nom récompense avec effets lumineux pour VIP */}
         <motion.div
           className={`text-center font-semibold mb-2 ${colors.text} relative z-10`}
-          animate={isVip && !isClaimed ? {
+          animate={isVip && !isClaimed && isVipUser ? {
             textShadow: [
               '0 0 8px rgba(251, 191, 36, 0.5)',
               '0 0 15px rgba(249, 115, 22, 0.7)',
@@ -841,7 +849,7 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
               ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
               : 'bg-gray-600/20 text-gray-400 cursor-not-allowed'
           } ${claiming ? 'opacity-75 cursor-wait' : ''}`}
-          animate={isVip && canClaim ? {
+          animate={isVip && canClaim && isVipUser ? {
             boxShadow: [
               '0 0 10px rgba(34, 197, 94, 0.5)',
               '0 0 20px rgba(34, 197, 94, 0.8)',
@@ -850,7 +858,7 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
           } : {}}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
-          {isClaimed ? '✅ Obtenue' : claiming ? '⏳ Réclamation...' : '🎁 Réclamer'}
+          {isClaimed ? '✅ Obtenue' : claiming ? '⏳ Réclamation...' : isVip && !isVipUser ? '🔒 VIP requis' : '🎁 Réclamer'}
         </motion.button>
       </div>
     </motion.div>
