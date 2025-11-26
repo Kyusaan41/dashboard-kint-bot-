@@ -53,9 +53,7 @@ async function checkUserIsVip(userId: string): Promise<boolean> {
     console.warn('[SEASON-PASS] Error checking VIP status:', error)
   }
 
-  // Fallback: mock pour le développement
-  console.log(`[SEASON-PASS] Using fallback for user ${userId}`)
-  return userId === '1206053705149841428' // Admin user est VIP pour les tests
+  return false
 }
 
 // Fonction pour obtenir les points du season pass (depuis le bot)
