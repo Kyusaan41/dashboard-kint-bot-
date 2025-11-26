@@ -428,6 +428,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
   const [claiming, setClaiming] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const [selectedTier, setSelectedTier] = useState<SeasonPassTier | null>(null)
+  const [showPointsTooltip, setShowPointsTooltip] = useState(false)
 
   const tiersPerPage = 5
   const totalPages = data ? Math.ceil(data.seasonPass.tiers.length / tiersPerPage) : 0
@@ -435,6 +436,21 @@ export default function SeasonPass({ className }: SeasonPassProps) {
   useEffect(() => {
     fetchSeasonPassData()
   }, [])
+
+  // Fermer la tooltip des points quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('[data-tooltip-points]')) {
+        setShowPointsTooltip(false)
+      }
+    }
+
+    if (showPointsTooltip) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showPointsTooltip])
 
   const fetchSeasonPassData = async () => {
     try {
@@ -727,11 +743,19 @@ export default function SeasonPass({ className }: SeasonPassProps) {
                 <div className="absolute top-2 right-2">
                   <Sparkles className="w-4 h-4 text-purple-300 animate-pulse" />
                 </div>
-                <div className="text-center">
-                  <div className="text-sm text-purple-300 font-semibold mb-2 uppercase tracking-wide">Points Actuels</div>
-                  <div className="text-3xl font-black text-purple-200 mb-1">{seasonPass.userProgress.currentPoints.toFixed(1)}</div>
-                  <div className="text-xs text-purple-400">XP accumulé</div>
-                </div>
+                <div className="text-center relative">
+                   <div className="flex items-center justify-center gap-2 mb-2">
+                     <div className="text-sm text-purple-300 font-semibold uppercase tracking-wide">Points Actuels</div>
+                     <button
+                       onClick={() => setShowPointsTooltip(!showPointsTooltip)}
+                       className="w-5 h-5 rounded-full bg-purple-500/20 hover:bg-purple-500/40 border border-purple-400/30 flex items-center justify-center text-purple-300 text-xs font-bold transition-colors"
+                     >
+                       ?
+                     </button>
+                   </div>
+                   <div className="text-3xl font-black text-purple-200 mb-1">{seasonPass.userProgress.currentPoints.toFixed(1)}</div>
+                   <div className="text-xs text-purple-400">XP accumulé</div>
+                 </div>
               </motion.div>
 
               {/* Prochain palier */}
@@ -1033,6 +1057,91 @@ export default function SeasonPass({ className }: SeasonPassProps) {
                 }}
               >
                 Fermer
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal explicative des points */}
+      <AnimatePresence>
+        {showPointsTooltip && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPointsTooltip(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="backdrop-blur-xl rounded-3xl p-8 max-w-md w-full relative"
+              style={{
+                background: `linear-gradient(135deg, rgba(0, 0, 0, 0.9), ${themeConfig.colors.surface}80, ${themeConfig.colors.primary}20)`,
+                border: `1px solid ${themeConfig.colors.primary}30`
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowPointsTooltip(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-700/50 hover:bg-gray-600/50 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Comment gagner des points ?</h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/30">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <div className="text-sm text-gray-300">
+                      <span className="text-white font-semibold">Quêtes journalières :</span> Utilisez la commande <code className="bg-gray-700 px-2 py-1 rounded text-purple-300 font-mono">/jobs</code> sur le bot pour valider vos quêtes.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/30">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <div className="text-sm text-gray-300">
+                      <span className="text-white font-semibold">Gagner des KINTS :</span> Accumulez des KINTS pour progresser dans le Season Pass.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/30">
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <div className="text-sm text-gray-300">
+                      <span className="text-white font-semibold">Mini-jeux Dashboard :</span> Jouez aux jeux comme le casino, blackjack et autres pour gagner des points.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowPointsTooltip(false)}
+                className="w-full mt-6 py-3 rounded-xl transition-colors"
+                style={{
+                  backgroundColor: `${themeConfig.colors.primary}20`,
+                  border: `1px solid ${themeConfig.colors.primary}30`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = `${themeConfig.colors.primary}30`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = `${themeConfig.colors.primary}20`;
+                }}
+              >
+                Compris !
               </button>
             </motion.div>
           </motion.div>

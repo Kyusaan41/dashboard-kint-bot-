@@ -64,8 +64,8 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
         id: `normal_wishes_5`,
         type: 'orbs',
         amount: 5,
-        name: '5 Wishes',
-        description: '5 tickets gacha'
+        name: '5 Orbes',
+        description: '5 Orbes pour le Gacha'
       })
       continue
     }
@@ -115,8 +115,8 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
         id: `vip_wishes_10`,
         type: 'orbs',
         amount: 10,
-        name: '10 Wishes',
-        description: '10 tickets gacha (VIP)'
+        name: '10 Orbes (VIP)',
+        description: '10 orbes pour le Gacha (VIP)'
       })
       continue
     }
