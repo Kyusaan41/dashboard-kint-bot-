@@ -13,7 +13,13 @@ async function checkUserIsVip(userId: string): Promise<boolean> {
     const response = await fetch(`${BOT_API_URL}/user/${userId}/inventory`)
     if (response.ok) {
       const inventory = await response.json()
-      return inventory.items?.some((item: any) => item.id === 'vip_access') || false
+      // Vérifier si l'inventaire contient vip_access (peut être un array d'objets ou de strings)
+      const items = inventory.items || inventory
+      if (Array.isArray(items)) {
+        return items.some((item: any) =>
+          typeof item === 'string' ? item === 'vip_access' : item.id === 'vip_access'
+        )
+      }
     }
   } catch (error) {
     console.warn('[SEASON-PASS] Error checking VIP status:', error)
