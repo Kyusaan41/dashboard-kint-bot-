@@ -8,9 +8,9 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
   // Patterns de récompenses pour plus de variété
   const rewardPatterns = [
     // Jetons variés
-    { type: 'tokens', amounts: [25, 50, 75, 100, 150, 200, 300, 400, 500] },
+    { type: 'tokens', amounts: [100, 150, 200, 250, 300, 350, 400, 450, 500] },
     // Pièces variées
-    { type: 'currency', amounts: [10, 25, 50, 75, 100, 150, 200, 300, 400, 500] },
+    { type: 'currency', amounts: [100, 150, 200, 250, 300, 350, 400, 450, 500] },
     // Orbes variés
     { type: 'orbs', amounts: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
   ]
@@ -18,24 +18,30 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
   // Fonction pour créer une récompense avec un montant spécifique
   const createReward = (type: string, amount: number, isVip: boolean = false): SeasonPassReward => {
     const suffix = isVip ? ' VIP' : ''
-    const multiplier = isVip ? 2 : 1
+    const multiplier = isVip ? 5 : 1
 
     switch (type) {
       case 'tokens':
+        const tokensMin = isVip ? 1000 : 100
+        const tokensMax = isVip ? 2500 : 500
+        const tokensAmount = Math.floor(Math.random() * (tokensMax - tokensMin + 1)) + tokensMin
         return {
-          id: `${isVip ? 'vip' : 'normal'}_tokens_${amount * multiplier}`,
+          id: `${isVip ? 'vip' : 'normal'}_tokens_${tokensAmount}`,
           type: 'tokens',
-          amount: Math.min(amount * multiplier, isVip ? 10000 : 500),
-          name: `${Math.min(amount * multiplier, isVip ? 10000 : 500)} Jetons${suffix}`,
-          description: `${Math.min(amount * multiplier, isVip ? 10000 : 500)} jetons de casino${suffix ? ` (${suffix.trim()})` : ''}`
+          amount: tokensAmount,
+          name: `${tokensAmount} Jetons${suffix}`,
+          description: `${tokensAmount} jetons de casino${suffix ? ` (${suffix.trim()})` : ''}`
         }
       case 'currency':
+        const currencyMin = isVip ? 1000 : 100
+        const currencyMax = isVip ? 2500 : 500
+        const currencyAmount = Math.floor(Math.random() * (currencyMax - currencyMin + 1)) + currencyMin
         return {
-          id: `${isVip ? 'vip' : 'normal'}_currency_${amount * multiplier}`,
+          id: `${isVip ? 'vip' : 'normal'}_currency_${currencyAmount}`,
           type: 'currency',
-          amount: Math.min(amount * multiplier, isVip ? 1000 : 500),
-          name: `${Math.min(amount * multiplier, isVip ? 1000 : 500)} Pièces${suffix}`,
-          description: `${Math.min(amount * multiplier, isVip ? 1000 : 500)} pièces d'or${suffix ? ` (${suffix.trim()})` : ''}`
+          amount: currencyAmount,
+          name: `${currencyAmount} Pièces${suffix}`,
+          description: `${currencyAmount} pièces d'or${suffix ? ` (${suffix.trim()})` : ''}`
         }
       case 'orbs':
         return {
@@ -58,8 +64,8 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
 
   // Générer les récompenses normales avec variété
   for (let i = 1; i <= 100; i++) {
-    // Paliers multiples de 5 = 5 orbes
-    if (i % 5 === 0) {
+    // Paliers multiples de 10 = 5 orbes
+    if (i % 10 === 0) {
       normalRewards.push({
         id: `normal_wishes_5`,
         type: 'orbs',
@@ -109,8 +115,8 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
 
   // Générer les récompenses VIP avec beaucoup plus de générosité
   for (let i = 1; i <= 100; i++) {
-    // Paliers multiples de 5 = 10 wishes
-    if (i % 5 === 0) {
+    // Paliers multiples de 10 = 10 wishes
+    if (i % 10 === 0) {
       vipRewards.push({
         id: `vip_wishes_10`,
         type: 'orbs',
