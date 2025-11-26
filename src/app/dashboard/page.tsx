@@ -534,7 +534,7 @@ export default function DashboardHomePage() {
                                 return (
                                     <SectionHeader
                                         icon={<Activity size={18} className="text-white" />}
-                                        title="Activité NyxBot (7 derniers jours)"
+                                        title="Activité KINT (7 derniers jours)"
                                         badgeText={badge}
                                         badgeClassName={badge ? badgeClass : undefined}
                                     />
