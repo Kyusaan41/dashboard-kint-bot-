@@ -371,7 +371,23 @@ export default function KintMiniGamePage() {
             await updateKintStats(session.user.id, statsUpdateType);
             const updatedPointsData = await fetchPoints(session.user.id);
             const newCurrentBalance = updatedPointsData.points;
-            
+
+            // Ajouter des points au Season Pass (montant/2) si c'est une victoire
+            if (actionType === 'add') {
+                const seasonPassPoints = Math.floor(Number(manualPointsAmount) / 2);
+                if (seasonPassPoints > 0) {
+                    await fetch('/api/season-pass', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'add_points',
+                            amount: seasonPassPoints,
+                            source: 'kint_victory'
+                        })
+                    });
+                }
+            }
+
             await sendKintLogToDiscord({
                 userId: session.user.id, username: session.user.name,
                 avatar: session.user.image, actionType: actionText,
