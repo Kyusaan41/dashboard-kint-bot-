@@ -686,7 +686,7 @@ interface RewardCardProps {
 
 function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, claiming, onSelect, delay }: RewardCardProps) {
   const { themeConfig } = useTheme()
-  const canClaim = currentPoints >= tier.requiredPoints && !tier.claimed && !tier.vipClaimed && (!isVip || isVipUser)
+  const canClaim = currentPoints >= tier.requiredPoints && (isVip ? !tier.vipClaimed && isVipUser : !tier.claimed)
   const isClaimed = isVip ? tier.vipClaimed : tier.claimed
 
   const getRewardIcon = (type: string) => {
