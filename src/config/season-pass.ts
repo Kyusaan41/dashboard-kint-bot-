@@ -18,13 +18,11 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
   // Fonction pour créer une récompense avec un montant spécifique
   const createReward = (type: string, amount: number, isVip: boolean = false): SeasonPassReward => {
     const suffix = isVip ? ' VIP' : ''
-    const multiplier = isVip ? 5 : 1
 
     switch (type) {
       case 'tokens':
-        const tokensMin = isVip ? 1000 : 100
-        const tokensMax = isVip ? 2500 : 500
-        const tokensAmount = Math.floor(Math.random() * (tokensMax - tokensMin + 1)) + tokensMin
+        // Utiliser des montants fixes progressifs au lieu de random
+        const tokensAmount = isVip ? amount * 5 : amount
         return {
           id: `${isVip ? 'vip' : 'normal'}_tokens_${tokensAmount}`,
           type: 'tokens',
@@ -33,9 +31,8 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
           description: `${tokensAmount} jetons de casino${suffix ? ` (${suffix.trim()})` : ''}`
         }
       case 'currency':
-        const currencyMin = isVip ? 1000 : 100
-        const currencyMax = isVip ? 2500 : 500
-        const currencyAmount = Math.floor(Math.random() * (currencyMax - currencyMin + 1)) + currencyMin
+        // Utiliser des montants fixes progressifs au lieu de random
+        const currencyAmount = isVip ? amount * 5 : amount
         return {
           id: `${isVip ? 'vip' : 'normal'}_currency_${currencyAmount}`,
           type: 'currency',
