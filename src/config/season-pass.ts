@@ -1,18 +1,24 @@
 import { SeasonPass, SeasonPassTier, SeasonPassReward } from '@/types/season-pass'
 
+// Fonction pour générer un nombre aléatoire déterministe basé sur une graine
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed * 9999) * 10000
+  return x - Math.floor(x)
+}
+
 // Fonction pour générer les récompenses progressives avec plus de variété
 function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: SeasonPassReward[] } {
   const normalRewards: SeasonPassReward[] = []
   const vipRewards: SeasonPassReward[] = []
 
-  // Patterns de récompenses pour plus de variété
+  // Patterns de récompenses avec min/max fixes
   const rewardPatterns = [
-    // Jetons variés
-    { type: 'tokens', amounts: [100, 150, 200, 250, 300, 350, 400, 450, 500] },
-    // Pièces variées
-    { type: 'currency', amounts: [100, 150, 200, 250, 300, 350, 400, 450, 500] },
-    // Orbes variés
-    { type: 'orbs', amounts: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
+    // Jetons avec montants aléatoires
+    { type: 'tokens', min: 100, max: 110 },
+    // Pièces avec montants aléatoires
+    { type: 'currency', min: 100, max: 110 },
+    // Orbes avec montants aléatoires
+    { type: 'orbs', min: 1, max: 10 }
   ]
 
   // Fonction pour créer une récompense avec un montant spécifique
@@ -21,24 +27,22 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
 
     switch (type) {
       case 'tokens':
-        // Utiliser des montants fixes progressifs au lieu de random
-        const tokensAmount = isVip ? amount * 5 : amount
+        // Utiliser des montants aléatoires exponentiels
         return {
-          id: `${isVip ? 'vip' : 'normal'}_tokens_${tokensAmount}`,
+          id: `${isVip ? 'vip' : 'normal'}_tokens_${amount}`,
           type: 'tokens',
-          amount: tokensAmount,
-          name: `${tokensAmount} Jetons${suffix}`,
-          description: `${tokensAmount} jetons de casino${suffix ? ` (${suffix.trim()})` : ''}`
+          amount: amount,
+          name: `${amount} Jetons${suffix}`,
+          description: `${amount} jetons de casino${suffix ? ` (${suffix.trim()})` : ''}`
         }
       case 'currency':
-        // Utiliser des montants fixes progressifs au lieu de random
-        const currencyAmount = isVip ? amount * 5 : amount
+        // Utiliser des montants aléatoires exponentiels
         return {
-          id: `${isVip ? 'vip' : 'normal'}_currency_${currencyAmount}`,
+          id: `${isVip ? 'vip' : 'normal'}_currency_${amount}`,
           type: 'currency',
-          amount: currencyAmount,
-          name: `${currencyAmount} Pièces${suffix}`,
-          description: `${currencyAmount} pièces d'or${suffix ? ` (${suffix.trim()})` : ''}`
+          amount: amount,
+          name: `${amount} Pièces${suffix}`,
+          description: `${amount} pièces d'or${suffix ? ` (${suffix.trim()})` : ''}`
         }
       case 'orbs':
         return {
@@ -58,6 +62,9 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
         }
     }
   }
+
+  // Calculer l'index maximum pour la progression exponentielle
+  const maxAmountIndex = 22 // Calculé d'après la logique des paliers
 
   // Générer les récompenses normales avec variété
   for (let i = 1; i <= 100; i++) {
@@ -99,11 +106,28 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
       amountIndex = Math.floor((i - 1) / types.length) + 6
     }
 
-    // S'assurer que l'index ne dépasse pas la longueur du tableau
+    // Calculer les montants aléatoires avec progression exponentielle
     const pattern = rewardPatterns.find(p => p.type === rewardType)
     if (pattern) {
-      amountIndex = Math.min(amountIndex, pattern.amounts.length - 1)
-      const amount = pattern.amounts[amountIndex]
+      let min = pattern.min
+      let max = pattern.max
+
+      // Appliquer la progression exponentielle pour jetons et pièces
+      if (rewardType !== 'orbs') {
+        const multiplier = Math.pow(10, amountIndex / maxAmountIndex)
+        min *= multiplier
+        max *= multiplier
+        // Respecter les limites
+        min = Math.max(min, 100)
+        max = Math.min(max, 1000)
+      }
+
+      // Générer montant aléatoire déterministe
+      const typeCode = rewardType === 'tokens' ? 1 : rewardType === 'currency' ? 2 : 3
+      const seed = i * 100 + typeCode
+      const randomValue = seededRandom(seed)
+      let amount = Math.floor(min + (max - min + 1) * randomValue)
+
       normalRewards.push(createReward(rewardType, amount, false))
     } else {
       normalRewards.push(createReward('tokens', 50, false))
@@ -149,11 +173,33 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
       amountIndex = Math.floor((i - 1) / types.length) + 8
     }
 
-    // S'assurer que l'index ne dépasse pas la longueur du tableau
+    // Calculer les montants aléatoires avec progression exponentielle
     const pattern = rewardPatterns.find(p => p.type === rewardType)
     if (pattern) {
-      amountIndex = Math.min(amountIndex, pattern.amounts.length - 1)
-      const amount = pattern.amounts[amountIndex]
+      let min = pattern.min
+      let max = pattern.max
+
+      // Ajuster pour VIP
+      if (rewardType === 'orbs') {
+        max = 20
+      } else {
+        min *= 10
+        max *= 10
+        // Appliquer la progression exponentielle
+        const multiplier = Math.pow(10, amountIndex / maxAmountIndex)
+        min *= multiplier
+        max *= multiplier
+        // Respecter les limites
+        min = Math.max(min, 1000)
+        max = Math.min(max, 10000)
+      }
+
+      // Générer montant aléatoire déterministe
+      const typeCode = rewardType === 'tokens' ? 1 : rewardType === 'currency' ? 2 : 3
+      const seed = (i + 100) * 100 + typeCode
+      const randomValue = seededRandom(seed)
+      let amount = Math.floor(min + (max - min + 1) * randomValue)
+
       vipRewards.push(createReward(rewardType, amount, true))
     } else {
       vipRewards.push(createReward('tokens', 500, true))
