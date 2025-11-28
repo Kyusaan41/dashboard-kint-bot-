@@ -92,12 +92,19 @@ export default function SeasonPass({ className }: SeasonPassProps) {
   const [data, setData] = useState<SeasonPassData | null>(null)
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(0)
   const [selectedTier, setSelectedTier] = useState<SeasonPassTier | null>(null)
   const [showPointsTooltip, setShowPointsTooltip] = useState(false)
 
   const tiersPerPage = 5
   const totalPages = data ? Math.ceil(data.seasonPass.tiers.length / tiersPerPage) : 0
+
+  // Calculate current tier and initial page
+  const currentTierLevel = data ? Math.max(0, ...data.seasonPass.tiers
+    .filter(tier => tier.claimed || (data.isVip && tier.vipClaimed))
+    .map(tier => tier.level)) : 0
+
+  const initialPage = data ? Math.floor((currentTierLevel - 1) / tiersPerPage) : 0
+  const [currentPage, setCurrentPage] = useState(initialPage)
 
   useEffect(() => {
     fetchSeasonPassData()
@@ -168,10 +175,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
     return data.seasonPass.tiers.slice(start, start + tiersPerPage)
   }, [data, currentPage])
 
-  const progressPercentage = data ? Math.min(
-    (data.seasonPass.userProgress.currentPoints / Math.max(...data.seasonPass.tiers.map(t => t.requiredPoints))) * 100,
-    100
-  ) : 0
+  const progressPercentage = data ? Math.min((currentTierLevel / 100) * 100, 100) : 0
 
   if (loading) {
     return (
@@ -215,10 +219,11 @@ export default function SeasonPass({ className }: SeasonPassProps) {
         className="relative overflow-hidden"
       >
         <div
-          className="relative backdrop-blur-xl rounded-2xl p-6 m-2"
+          className="relative backdrop-blur-2xl rounded-3xl p-8 m-2 shadow-2xl"
           style={{
-            background: `linear-gradient(135deg, rgba(0, 0, 0, 0.8), ${themeConfig.colors.surface}30, ${themeConfig.colors.primary}20)`,
-            border: `1px solid ${themeConfig.colors.primary}30`
+            background: `linear-gradient(135deg, rgba(0, 0, 0, 0.9), ${themeConfig.colors.surface}40, ${themeConfig.colors.primary}25)`,
+            border: `2px solid ${themeConfig.colors.primary}40`,
+            boxShadow: `0 0 50px ${themeConfig.colors.primary}20, inset 0 1px 0 rgba(255, 255, 255, 0.1)`
           }}
         >
           {/* Décorations saisonnières réduites */}
@@ -270,58 +275,120 @@ export default function SeasonPass({ className }: SeasonPassProps) {
 
             {/* Stats principales simplifiées */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-4xl mx-auto">
-              {/* Points actuels */}
-              <div className="bg-purple-900/30 backdrop-blur-sm border border-purple-400/30 rounded-xl p-4">
+              {/* Points actuels avec style gaming */}
+              <motion.div
+                className="bg-gradient-to-br from-purple-900/40 to-blue-900/40 backdrop-blur-xl border border-purple-400/50 rounded-2xl p-5 shadow-xl"
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="text-sm text-purple-300 font-medium uppercase tracking-wide">Points Actuels</div>
-                    <button
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <div className="text-sm text-purple-200 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      Points Actuels
+                      <Sparkles className="w-3 h-3" />
+                    </div>
+                    <motion.button
                       onClick={() => setShowPointsTooltip(!showPointsTooltip)}
-                      className="w-5 h-5 rounded-full bg-purple-500/20 hover:bg-purple-500/40 border border-purple-400/30 flex items-center justify-center text-purple-300 text-xs font-bold transition-colors"
+                      className="w-6 h-6 rounded-full bg-purple-500/30 hover:bg-purple-500/50 border border-purple-400/40 flex items-center justify-center text-purple-200 text-xs font-bold transition-all duration-200 hover:scale-110"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.5 }}
                     >
                       ?
-                    </button>
+                    </motion.button>
                   </div>
-                  <div className="text-2xl font-bold text-purple-200 mb-1">{seasonPass.userProgress.currentPoints.toFixed(1)}</div>
-                  <div className="text-xs text-purple-400">XP accumulé</div>
+                  <motion.div
+                    className="text-3xl font-black text-transparent bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text mb-2"
+                    animate={{
+                      textShadow: [
+                        '0 0 10px rgba(147, 51, 234, 0.5)',
+                        '0 0 20px rgba(59, 130, 246, 0.5)',
+                        '0 0 10px rgba(147, 51, 234, 0.5)',
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    {seasonPass.userProgress.currentPoints.toFixed(1)}
+                  </motion.div>
+                  <div className="text-xs text-purple-300 font-semibold uppercase tracking-wide">XP Accumulé</div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Prochain palier */}
-              <div className="bg-blue-900/30 backdrop-blur-sm border border-blue-400/30 rounded-xl p-4">
+              {/* Prochain palier avec style gaming */}
+              <motion.div
+                className="bg-gradient-to-br from-blue-900/40 to-cyan-900/40 backdrop-blur-xl border border-blue-400/50 rounded-2xl p-5 shadow-xl"
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 <div className="text-center">
-                  <div className="text-sm text-blue-300 font-medium mb-2 uppercase tracking-wide">Prochain Palier</div>
-                  <div className="text-2xl font-bold text-blue-200 mb-1">
+                  <div className="text-sm text-blue-200 font-bold mb-3 uppercase tracking-wider flex items-center justify-center gap-1">
+                    <Target className="w-3 h-3" />
+                    Prochain Palier
+                    <Target className="w-3 h-3" />
+                  </div>
+                  <motion.div
+                    className="text-3xl font-black text-transparent bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text mb-2"
+                    animate={{
+                      textShadow: [
+                        '0 0 10px rgba(59, 130, 246, 0.5)',
+                        '0 0 20px rgba(6, 182, 212, 0.5)',
+                        '0 0 10px rgba(59, 130, 246, 0.5)',
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
                     {currentTiers.length > 0 ? currentTiers[0].requiredPoints.toLocaleString() : 'N/A'}
-                  </div>
-                  <div className="text-xs text-blue-400">Points requis</div>
+                  </motion.div>
+                  <div className="text-xs text-blue-300 font-semibold uppercase tracking-wide">Points Requis</div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Statut VIP */}
-              <div className={`backdrop-blur-sm border rounded-xl p-4 ${
-                isVip
-                  ? 'bg-yellow-900/30 border-yellow-400/30'
-                  : 'bg-gray-900/30 border-gray-400/30'
-              }`}>
+              {/* Statut VIP avec luxe */}
+              <motion.div
+                className={`backdrop-blur-xl border rounded-2xl p-5 shadow-xl ${
+                  isVip
+                    ? 'bg-gradient-to-br from-yellow-900/40 via-orange-900/35 to-red-900/40 border-yellow-400/50'
+                    : 'bg-gradient-to-br from-gray-800/40 to-gray-900/45 border-gray-500/50'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 300 }}
+                animate={isVip ? {
+                  boxShadow: [
+                    '0 0 20px rgba(251, 191, 36, 0.3)',
+                    '0 0 35px rgba(249, 115, 22, 0.4)',
+                  ]
+                } : {}}
+              >
                 <div className="text-center">
-                  <div className={`text-sm font-medium mb-2 uppercase tracking-wide ${
-                    isVip ? 'text-yellow-300' : 'text-gray-400'
-                  }`}>
-                    Statut
-                  </div>
-                  <div className={`text-xl font-bold mb-1 ${
+                  <div className={`text-sm font-bold mb-3 uppercase tracking-wider flex items-center justify-center gap-1 ${
                     isVip ? 'text-yellow-200' : 'text-gray-300'
                   }`}>
-                    {isVip ? 'VIP' : 'Standard'}
+                    {isVip ? <Crown className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                    Statut
+                    {isVip ? <Crown className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
                   </div>
-                  <div className={`text-xs ${
-                    isVip ? 'text-yellow-400' : 'text-gray-500'
+                  <motion.div
+                    className={`text-2xl font-black mb-2 ${
+                      isVip ? 'text-transparent bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text' : 'text-gray-200'
+                    }`}
+                    animate={isVip ? {
+                      textShadow: [
+                        '0 0 15px rgba(251, 191, 36, 0.6)',
+                        '0 0 25px rgba(249, 115, 22, 0.6)',
+                        '0 0 15px rgba(251, 191, 36, 0.6)',
+                      ]
+                    } : {}}
+                    transition={{ duration: 2.5, repeat: Infinity }}
+                  >
+                    {isVip ? 'VIP' : 'Standard'}
+                  </motion.div>
+                  <div className={`text-xs font-semibold uppercase tracking-wide ${
+                    isVip ? 'text-yellow-300' : 'text-gray-400'
                   }`}>
-                    {isVip ? 'Avantages exclusifs' : 'Passez VIP'}
+                    {isVip ? 'Avantages Exclusifs' : 'Passez VIP'}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Barre de progression simplifiée */}
@@ -338,22 +405,66 @@ export default function SeasonPass({ className }: SeasonPassProps) {
               </div>
 
               <div className="relative">
-                {/* Fond de la barre */}
-                <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden border border-purple-500/20">
-                  {/* Barre de progression */}
+                {/* Fond de la barre avec effets gaming */}
+                <div className="w-full bg-gradient-to-r from-gray-800 to-gray-700 rounded-full h-5 overflow-hidden border-2 border-purple-500/30 shadow-inner">
+                  {/* Barre de progression avec effets lumineux */}
                   <motion.div
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 h-full rounded-full"
+                    className="bg-gradient-to-r from-purple-400 via-blue-500 to-indigo-500 h-full rounded-full relative overflow-hidden"
                     initial={{ width: 0 }}
                     animate={{ width: `${progressPercentage}%` }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                  />
+                    transition={{ duration: 2, ease: "easeOut" }}
+                  >
+                    {/* Effets de brillance */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-300/30 to-blue-300/30"></div>
+                  </motion.div>
+
+                  {/* Particules de progression */}
+                  {progressPercentage > 0 && (
+                    <div className="absolute inset-0 pointer-events-none">
+                      {Array.from({ length: Math.floor(progressPercentage / 10) }).map((_, i) => (
+                        <motion.div
+                          key={`progress-spark-${i}`}
+                          className="absolute w-1 h-1 bg-yellow-400 rounded-full"
+                          style={{
+                            left: `${(i * 10) + 5}%`,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                          }}
+                          animate={{
+                            opacity: [0.6, 1, 0.6],
+                            scale: [0.5, 1.5, 0.5],
+                          }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            delay: i * 0.1,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Indicateur de niveau */}
-                <div className="flex justify-center mt-2">
-                  <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    Niveau {Math.floor(progressPercentage / (100 / 100))} / 100
-                  </div>
+                {/* Indicateur de niveau gaming */}
+                <div className="flex justify-center mt-3">
+                  <motion.div
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg border border-purple-400/50"
+                    animate={{
+                      boxShadow: [
+                        '0 0 10px rgba(147, 51, 234, 0.5)',
+                        '0 0 20px rgba(59, 130, 246, 0.5)',
+                        '0 0 10px rgba(147, 51, 234, 0.5)',
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      NIVEAU {Math.floor(progressPercentage / (100 / 100))} / 100
+                      <Target className="w-4 h-4" />
+                    </span>
+                  </motion.div>
                 </div>
               </div>
             </div>
@@ -428,16 +539,46 @@ export default function SeasonPass({ className }: SeasonPassProps) {
         transition={{ delay: 0.5 }}
         className="mb-8"
       >
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-            <Award className="w-4 h-4 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-300 to-blue-300 bg-clip-text text-transparent">
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <motion.div
+            className="w-10 h-10 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-lg border-2 border-purple-400/50"
+            animate={{
+              boxShadow: [
+                '0 0 15px rgba(147, 51, 234, 0.5)',
+                '0 0 25px rgba(59, 130, 246, 0.5)',
+                '0 0 15px rgba(147, 51, 234, 0.5)',
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Award className="w-5 h-5 text-white" />
+          </motion.div>
+          <motion.h2
+            className="text-3xl font-black bg-gradient-to-r from-purple-300 via-blue-300 to-indigo-300 bg-clip-text text-transparent uppercase tracking-wider"
+            animate={{
+              textShadow: [
+                '0 0 10px rgba(147, 51, 234, 0.5)',
+                '0 0 20px rgba(59, 130, 246, 0.5)',
+                '0 0 10px rgba(147, 51, 234, 0.5)',
+              ]
+            }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+          >
             RÉCOMPENSES STANDARD
-          </h2>
-          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-            <Award className="w-4 h-4 text-white" />
-          </div>
+          </motion.h2>
+          <motion.div
+            className="w-10 h-10 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-lg border-2 border-purple-400/50"
+            animate={{
+              boxShadow: [
+                '0 0 15px rgba(147, 51, 234, 0.5)',
+                '0 0 25px rgba(59, 130, 246, 0.5)',
+                '0 0 15px rgba(147, 51, 234, 0.5)',
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <Award className="w-5 h-5 text-white" />
+          </motion.div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -472,16 +613,59 @@ export default function SeasonPass({ className }: SeasonPassProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
       >
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
-            <Crown className="w-4 h-4 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-            RÉCOMPENSES VIP
-          </h2>
-          <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
-            <Crown className="w-4 h-4 text-white" />
-          </div>
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <motion.div
+            className="w-12 h-12 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-2xl border-2 border-yellow-400/60"
+            animate={{
+              boxShadow: [
+                '0 0 20px rgba(251, 191, 36, 0.8)',
+                '0 0 35px rgba(249, 115, 22, 0.8)',
+                '0 0 20px rgba(251, 191, 36, 0.8)',
+              ],
+              rotate: [0, 5, -5, 0],
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            <Crown className="w-6 h-6 text-white filter drop-shadow-lg" />
+          </motion.div>
+          <motion.div className="text-center">
+            <motion.h2
+              className="text-4xl font-black bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent uppercase tracking-wider mb-1"
+              animate={{
+                textShadow: [
+                  '0 0 15px rgba(251, 191, 36, 0.8)',
+                  '0 0 30px rgba(249, 115, 22, 0.8)',
+                  '0 0 15px rgba(251, 191, 36, 0.8)',
+                ]
+              }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+            >
+              RÉCOMPENSES VIP
+            </motion.h2>
+            <motion.div
+              className="text-sm text-yellow-200 font-semibold uppercase tracking-widest"
+              animate={{
+                opacity: [0.7, 1, 0.7],
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              ✨ LUXE & EXCLUSIVITÉ ✨
+            </motion.div>
+          </motion.div>
+          <motion.div
+            className="w-12 h-12 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-2xl border-2 border-yellow-400/60"
+            animate={{
+              boxShadow: [
+                '0 0 20px rgba(251, 191, 36, 0.8)',
+                '0 0 35px rgba(249, 115, 22, 0.8)',
+                '0 0 20px rgba(251, 191, 36, 0.8)',
+              ],
+              rotate: [0, -5, 5, 0],
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            <Crown className="w-6 h-6 text-white filter drop-shadow-lg" />
+          </motion.div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -701,30 +885,33 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
 
   const colors = isVip ? (
     isVipUser ? {
-      bg: 'from-yellow-500/20 to-orange-500/20',
-      border: 'border-yellow-400/30',
-      text: 'text-yellow-200',
-      claimedBg: 'bg-green-500/20',
-      claimedText: 'text-green-300',
-      claimedBorder: 'border-green-400/50',
-      iconBg: 'from-yellow-400 to-orange-500'
+      bg: 'from-yellow-500/30 via-orange-500/25 to-red-500/30',
+      border: 'border-yellow-400/50 shadow-yellow-400/20',
+      text: 'text-yellow-100',
+      claimedBg: 'bg-emerald-500/30',
+      claimedText: 'text-emerald-200',
+      claimedBorder: 'border-emerald-400/60 shadow-emerald-400/30',
+      iconBg: 'from-yellow-300 via-orange-400 to-red-400',
+      glow: 'shadow-2xl shadow-yellow-400/40'
     } : {
-      bg: 'from-gray-500/20 to-gray-600/20',
-      border: 'border-gray-400/30',
+      bg: 'from-gray-600/20 to-gray-700/25',
+      border: 'border-gray-500/40',
       text: 'text-gray-300',
-      claimedBg: 'bg-green-500/20',
-      claimedText: 'text-green-300',
-      claimedBorder: 'border-green-400/50',
-      iconBg: 'from-gray-400 to-gray-500'
+      claimedBg: 'bg-emerald-500/30',
+      claimedText: 'text-emerald-200',
+      claimedBorder: 'border-emerald-400/60',
+      iconBg: 'from-gray-500 to-gray-600',
+      glow: 'shadow-lg'
     }
   ) : {
-    bg: 'from-purple-500/20 to-blue-500/20',
-    border: 'border-purple-400/30',
-    text: 'text-purple-200',
-    claimedBg: 'bg-green-500/20',
-    claimedText: 'text-green-300',
-    claimedBorder: 'border-green-400/50',
-    iconBg: 'from-purple-400 to-blue-500'
+    bg: 'from-purple-500/25 via-blue-500/20 to-indigo-500/25',
+    border: 'border-purple-400/40 shadow-purple-400/20',
+    text: 'text-purple-100',
+    claimedBg: 'bg-emerald-500/30',
+    claimedText: 'text-emerald-200',
+    claimedBorder: 'border-emerald-400/60 shadow-emerald-400/30',
+    iconBg: 'from-purple-400 via-blue-400 to-indigo-400',
+    glow: 'shadow-xl shadow-purple-400/30'
   }
 
   return (
@@ -735,46 +922,84 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
       className="cursor-pointer"
       onClick={onSelect}
     >
-      <div className={`relative bg-gradient-to-br ${colors.bg} backdrop-blur-sm border ${colors.border} rounded-xl p-4 transition-all duration-300 hover:scale-105 shadow-lg overflow-hidden`}>
+      <div className={`relative bg-gradient-to-br ${colors.bg} backdrop-blur-xl border ${colors.border} rounded-2xl p-5 transition-all duration-500 hover:scale-105 ${colors.glow} overflow-hidden group`}>
 
-        {/* Effets de particules flottantes pour VIP */}
-        {isVip && !isClaimed && (
+        {/* Effets de particules luxueuses pour VIP */}
+        {isVip && !isClaimed && isVipUser && (
           <div className="absolute inset-0 pointer-events-none">
-            {Array.from({ length: 6 }).map((_, i) => (
+            {/* Particules dorées principales */}
+            {Array.from({ length: 8 }).map((_, i) => (
               <motion.div
                 key={`vip-particle-${i}`}
-                className="absolute w-1.5 h-1.5 bg-gradient-to-r from-yellow-300 to-orange-300 rounded-full"
+                className="absolute w-2 h-2 bg-gradient-to-r from-yellow-200 via-orange-300 to-red-300 rounded-full shadow-lg"
                 style={{
-                  left: `${15 + Math.random() * 70}%`,
-                  top: `${15 + Math.random() * 70}%`,
+                  left: `${10 + Math.random() * 80}%`,
+                  top: `${10 + Math.random() * 80}%`,
                 }}
                 animate={{
-                  y: [0, -30, 0],
-                  x: [0, Math.random() * 20 - 10, 0],
-                  opacity: [0.7, 1, 0.7],
-                  scale: [0.8, 1.5, 0.8],
+                  y: [0, -40, 0],
+                  x: [0, Math.random() * 25 - 12.5, 0],
+                  opacity: [0.8, 1, 0.8],
+                  scale: [0.5, 2, 0.5],
                   rotate: [0, 180, 360],
+                  boxShadow: [
+                    '0 0 10px rgba(251, 191, 36, 0.8)',
+                    '0 0 20px rgba(249, 115, 22, 1)',
+                    '0 0 10px rgba(251, 191, 36, 0.8)',
+                  ],
                 }}
                 transition={{
-                  duration: 3 + Math.random(),
+                  duration: 4 + Math.random(),
                   repeat: Infinity,
                   delay: Math.random() * 2,
+                }}
+              />
+            ))}
+            {/* Particules de luxe supplémentaires */}
+            {Array.from({ length: 4 }).map((_, i) => (
+              <motion.div
+                key={`luxury-particle-${i}`}
+                className="absolute w-1 h-1 bg-gradient-to-r from-amber-200 to-yellow-400 rounded-full"
+                style={{
+                  left: `${20 + Math.random() * 60}%`,
+                  top: `${20 + Math.random() * 60}%`,
+                }}
+                animate={{
+                  y: [0, -25, 0],
+                  opacity: [0.6, 1, 0.6],
+                  scale: [0.3, 1.5, 0.3],
+                }}
+                transition={{
+                  duration: 2.5,
+                  repeat: Infinity,
+                  delay: i * 0.7,
                 }}
               />
             ))}
           </div>
         )}
 
-        {/* Halo lumineux animé pour VIP */}
-        {isVip && !isClaimed && (
-          <motion.div
-            className="absolute -inset-2 bg-gradient-to-r from-yellow-400/30 via-orange-500/30 to-red-500/30 rounded-xl blur-lg"
-            animate={{
-              opacity: [0.4, 0.8, 0.4],
-              scale: [1, 1.05, 1],
-            }}
-            transition={{ duration: 2.5, repeat: Infinity }}
-          />
+        {/* Halo lumineux luxueux pour VIP */}
+        {isVip && !isClaimed && isVipUser && (
+          <>
+            <motion.div
+              className="absolute -inset-3 bg-gradient-to-r from-yellow-400/40 via-orange-500/35 to-red-500/40 rounded-2xl blur-xl"
+              animate={{
+                opacity: [0.5, 1, 0.5],
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0],
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
+            <motion.div
+              className="absolute -inset-4 bg-gradient-to-r from-amber-300/20 via-yellow-400/25 to-orange-400/20 rounded-2xl blur-2xl"
+              animate={{
+                opacity: [0.3, 0.7, 0.3],
+                scale: [1.05, 1.15, 1.05],
+              }}
+              transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+            />
+          </>
         )}
 
         {/* Badge niveau */}
@@ -782,18 +1007,20 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
           {tier.level}
         </div>
 
-        {/* Icône récompense avec effets pour VIP */}
-        <div className="flex justify-center mb-3 relative">
+        {/* Icône récompense avec effets luxueux pour VIP */}
+        <div className="flex justify-center mb-4 relative">
           <motion.div
-            className={`w-12 h-12 rounded-full bg-gradient-to-br ${colors.iconBg} flex items-center justify-center shadow-lg relative z-10`}
+            className={`w-14 h-14 rounded-full bg-gradient-to-br ${colors.iconBg} flex items-center justify-center shadow-2xl relative z-10 border-2 border-white/20`}
             animate={isVip && !isClaimed && isVipUser ? {
               boxShadow: [
-                '0 0 15px rgba(251, 191, 36, 0.6)',
-                '0 0 25px rgba(249, 115, 22, 0.8)',
-                '0 0 15px rgba(251, 191, 36, 0.6)',
-              ]
-            } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
+                '0 0 20px rgba(251, 191, 36, 0.8)',
+                '0 0 35px rgba(249, 115, 22, 1)',
+                '0 0 20px rgba(251, 191, 36, 0.8)',
+              ],
+              scale: [1, 1.1, 1],
+            } : { scale: [1, 1.05, 1] }}
+            transition={{ duration: 2.5, repeat: Infinity }}
+            whileHover={{ scale: 1.15 }}
           >
             {getRewardIcon(reward.type)}
           </motion.div>
@@ -838,27 +1065,87 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
           {tier.requiredPoints.toLocaleString()} XP requis
         </div>
 
-        {/* Bouton réclamer avec effets pour VIP */}
+        {/* Bouton réclamer avec effets luxueux pour VIP */}
         <motion.button
           onClick={(e) => { e.stopPropagation(); onClaim(); }}
           disabled={!canClaim || claiming}
-          className={`w-full py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 relative z-10 ${
+          className={`w-full py-3 px-4 rounded-xl font-bold text-sm transition-all duration-300 relative z-10 overflow-hidden ${
             isClaimed
               ? `${colors.claimedBg} ${colors.claimedText} ${colors.claimedBorder} cursor-default`
               : canClaim
-              ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
+              ? isVip && isVipUser
+                ? 'bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 text-white hover:from-yellow-600 hover:via-orange-600 hover:to-red-600 shadow-lg'
+                : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 shadow-lg'
               : 'bg-gray-600/20 text-gray-400 cursor-not-allowed'
           } ${claiming ? 'opacity-75 cursor-wait' : ''}`}
           animate={isVip && canClaim && isVipUser ? {
+            boxShadow: [
+              '0 0 15px rgba(251, 191, 36, 0.6)',
+              '0 0 30px rgba(249, 115, 22, 1)',
+              '0 0 15px rgba(251, 191, 36, 0.6)',
+            ]
+          } : canClaim ? {
             boxShadow: [
               '0 0 10px rgba(34, 197, 94, 0.5)',
               '0 0 20px rgba(34, 197, 94, 0.8)',
               '0 0 10px rgba(34, 197, 94, 0.5)',
             ]
           } : {}}
-          transition={{ duration: 1.5, repeat: Infinity }}
+          transition={{ duration: 2, repeat: Infinity }}
+          whileHover={canClaim ? { scale: 1.02 } : {}}
+          whileTap={canClaim ? { scale: 0.98 } : {}}
         >
-          {isClaimed ? '✅ Obtenue' : claiming ? '⏳ Réclamation...' : isVip && !isVipUser ? '🔒 VIP requis' : '🎁 Réclamer'}
+          {/* Effets de particules dans le bouton pour VIP */}
+          {isVip && canClaim && isVipUser && !claiming && (
+            <div className="absolute inset-0 pointer-events-none">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <motion.div
+                  key={`button-sparkle-${i}`}
+                  className="absolute w-1 h-1 bg-yellow-200 rounded-full"
+                  style={{
+                    left: `${20 + i * 25}%`,
+                    top: '50%',
+                  }}
+                  animate={{
+                    y: [0, -8, 0],
+                    opacity: [0.8, 1, 0.8],
+                    scale: [0.5, 1.5, 0.5],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.3,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            {isClaimed ? (
+              <>
+                <div className="w-4 h-4 bg-emerald-400 rounded-full flex items-center justify-center">
+                  <span className="text-xs">✓</span>
+                </div>
+                ✅ OBTENUE
+              </>
+            ) : claiming ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ⏳ RÉCLAMATION...
+              </>
+            ) : isVip && !isVipUser ? (
+              <>
+                <Shield className="w-4 h-4" />
+                🔒 VIP REQUIS
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                {isVip && isVipUser ? '👑 RÉCLAMER VIP' : '🎁 RÉCLAMER'}
+              </>
+            )}
+          </span>
         </motion.button>
       </div>
     </motion.div>
@@ -994,13 +1281,11 @@ function TierCard({ tier, currentPoints, isVip, onClaim, claiming, onSelect, del
                       boxShadow: [
                         '0 0 20px rgba(34, 197, 94, 0.8)',
                         '0 0 30px rgba(34, 197, 94, 1)',
-                        '0 0 20px rgba(34, 197, 94, 0.8)',
                       ]
                     } : isAccessible ? {
                       boxShadow: [
                         '0 0 15px rgba(147, 51, 234, 0.6)',
                         '0 0 25px rgba(59, 130, 246, 0.6)',
-                        '0 0 15px rgba(147, 51, 234, 0.6)',
                       ]
                     } : {}}
                     transition={{ duration: 2, repeat: Infinity }}
@@ -1135,7 +1420,6 @@ function TierCard({ tier, currentPoints, isVip, onClaim, claiming, onSelect, del
                   textShadow: [
                     '0 0 8px rgba(34, 197, 94, 0.6)',
                     '0 0 15px rgba(34, 197, 94, 0.9)',
-                    '0 0 8px rgba(34, 197, 94, 0.6)',
                   ]
                 } : {}}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -1191,13 +1475,11 @@ function TierCard({ tier, currentPoints, isVip, onClaim, claiming, onSelect, del
                         boxShadow: [
                           '0 0 25px rgba(34, 197, 94, 1)',
                           '0 0 35px rgba(34, 197, 94, 1.2)',
-                          '0 0 25px rgba(34, 197, 94, 1)',
                         ]
                       } : {
                         boxShadow: [
                           '0 0 20px rgba(251, 191, 36, 0.8)',
                           '0 0 30px rgba(249, 115, 22, 0.8)',
-                          '0 0 20px rgba(251, 191, 36, 0.8)',
                         ]
                       }}
                       transition={{ duration: 2.5, repeat: Infinity }}
@@ -1357,13 +1639,11 @@ function TierCard({ tier, currentPoints, isVip, onClaim, claiming, onSelect, del
                     textShadow: [
                       '0 0 20px rgba(34, 197, 94, 1)',
                       '0 0 30px rgba(34, 197, 94, 1.2)',
-                      '0 0 20px rgba(34, 197, 94, 1)',
                     ]
                   } : {
                     textShadow: [
                       '0 0 15px rgba(251, 191, 36, 0.8)',
                       '0 0 25px rgba(249, 115, 22, 0.8)',
-                      '0 0 15px rgba(251, 191, 36, 0.8)',
                     ]
                   }}
                   transition={{ duration: 3, repeat: Infinity }}
