@@ -11,14 +11,14 @@ import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 // Slot Machine page using real currency via /api/currency/me
 
-// ✨ NOUVEAU: Effet d'aurore boréale en arrière-plan (désactivé sur mobile)
+// ✨ Effet d'aurore boréale en arrière-plan (simplifié pour performance)
 const AuroraBackground = ({ isDevilMode }: { isDevilMode: boolean }) => {
-    const devilColors = ['rgba(239, 68, 68, 0.2)', 'rgba(159, 18, 57, 0.2)', 'rgba(255, 100, 0, 0.15)'];
-    const normalColors = ['rgba(139, 92, 246, 0.15)', 'rgba(99, 102, 241, 0.15)', 'rgba(59, 130, 246, 0.1)'];
+    const devilColors = ['rgba(239, 68, 68, 0.1)'];
+    const normalColors = ['rgba(139, 92, 246, 0.08)'];
     const colors = isDevilMode ? devilColors : normalColors;
 
     return (
-        <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none md:block hidden">
+        <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none lg:block hidden">
             {colors.map((color, i) => (
                 <AuroraParticle key={i} color={color} index={i} />
             ))}
@@ -26,20 +26,18 @@ const AuroraBackground = ({ isDevilMode }: { isDevilMode: boolean }) => {
     );
 };
 
-// ✨ NOUVEAU: Particule individuelle pour l'aurore, optimisée pour la performance
+// Particule individuelle pour l'aurore, simplifiée pour performance
 const AuroraParticle = ({ color, index }: { color: string, index: number }) => {
     const properties = useMemo(() => {
-        const size = Math.random() * 50 + 40; // vw
-        const duration = Math.random() * 30 + 30; // 30-60s
-        const delay = Math.random() * 10;
-        
-        // Créer une trajectoire en boucle
-        const x1 = `${Math.random() * 100 - 50}vw`;
-        const y1 = `${Math.random() * 100 - 50}vh`;
-        const x2 = `${Math.random() * 100 - 50}vw`;
-        const y2 = `${Math.random() * 100 - 50}vh`;
+        const size = Math.random() * 30 + 30; // vw réduit
+        const duration = Math.random() * 20 + 40; // 40-60s, plus lent
+        const delay = Math.random() * 5;
 
-        return { size, duration, delay, x1, y1, x2, y2 };
+        // Trajectoire simplifiée
+        const x1 = `${Math.random() * 80 - 40}vw`;
+        const y1 = `${Math.random() * 80 - 40}vh`;
+
+        return { size, duration, delay, x1, y1 };
     }, []);
 
     return (
@@ -49,10 +47,10 @@ const AuroraParticle = ({ color, index }: { color: string, index: number }) => {
                 backgroundColor: color,
                 width: `${properties.size}vw`,
                 height: `${properties.size}vw`,
-                filter: 'blur(120px)',
+                filter: 'blur(80px)', // blur réduit
             }}
-            initial={{ x: properties.x1, y: properties.y1, opacity: 0, scale: 0.8 }}
-            animate={{ x: [properties.x1, properties.x2, properties.x1], y: [properties.y1, properties.y2, properties.y1], opacity: [0, 1, 0.8, 1, 0], scale: [0.9, 1.1, 0.9] }}
+            initial={{ x: properties.x1, y: properties.y1, opacity: 0 }}
+            animate={{ opacity: [0, 0.5, 0.3, 0.5, 0], scale: [0.8, 1, 0.8] }}
             transition={{ duration: properties.duration, repeat: Infinity, ease: 'linear', delay: properties.delay }}
         />
     );
@@ -251,15 +249,15 @@ function useWindowSizeLocal() {
     return size;
 }
 
-// Confetti component
+// Confetti component (réduit pour performance)
 const Confetti = () => {
     const colors = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
     return (
         <div className="fixed inset-0 pointer-events-none z-50">
-            {Array.from({ length: 100 }).map((_, i) => (
+            {Array.from({ length: 30 }).map((_, i) => ( // Réduit de 100 à 30
                 <motion.div
                     key={i}
-                    className="absolute w-3 h-3 rounded-full"
+                    className="absolute w-2 h-2 rounded-full" // Taille réduite
                     style={{
                         backgroundColor: colors[Math.floor(Math.random() * colors.length)],
                         left: `${Math.random() * 100}%`,
@@ -269,13 +267,13 @@ const Confetti = () => {
                     animate={{
                         y: window.innerHeight + 100,
                         opacity: [1, 1, 0],
-                        rotate: Math.random() * 720,
-                        x: (Math.random() - 0.5) * 200,
+                        rotate: Math.random() * 360, // Rotation réduite
+                        x: (Math.random() - 0.5) * 100, // Mouvement latéral réduit
                     }}
                     transition={{
-                        duration: Math.random() * 2 + 2,
+                        duration: Math.random() * 1.5 + 1.5, // Durée réduite
                         ease: 'easeOut',
-                        delay: Math.random() * 0.5,
+                        delay: Math.random() * 0.3, // Délai réduit
                     }}
                 />
             ))}
@@ -283,19 +281,19 @@ const Confetti = () => {
     );
 };
 
-// ✨ NOUVEAU: Composant pour une seule pièce, pour une animation stable
+// Composant pour une seule pièce, simplifié pour performance
 const Coin = () => {
     const properties = useMemo(() => ({
         left: `${Math.random() * 100}%`,
-        duration: Math.random() * 3 + 3, // Ralenti : dure maintenant entre 3 et 6 secondes
-        delay: Math.random() * 1, // Délai légèrement augmenté pour un effet plus étalé
-        rotate: Math.random() * 720,
-        x: (Math.random() - 0.5) * 100,
+        duration: Math.random() * 2 + 2, // Durée réduite: 2-4s au lieu de 3-6s
+        delay: Math.random() * 0.5, // Délai réduit
+        rotate: Math.random() * 360, // Rotation réduite
+        x: (Math.random() - 0.5) * 50, // Mouvement latéral réduit
     }), []);
 
     return (
         <motion.div
-            className="absolute text-3xl"
+            className="absolute text-2xl" // Taille réduite
             style={{
                 left: properties.left,
                 top: '-10%',
@@ -303,9 +301,9 @@ const Coin = () => {
             initial={{ y: 0, opacity: 1, rotate: 0, scale: 0 }}
             animate={{
                 y: window.innerHeight + 100,
-                opacity: [0, 1, 1, 0],
+                opacity: [0, 1, 0], // Animation simplifiée
                 rotate: properties.rotate,
-                scale: [0, 1, 1, 0],
+                scale: [0, 1, 0],
                 x: properties.x,
             }}
             transition={{
@@ -319,9 +317,9 @@ const Coin = () => {
     );
 };
 
-// Coin rain effect
+// Coin rain effect (réduit pour performance)
 const CoinRain = ({ amount }: { amount: number }) => {
-    const coinCount = Math.min(Math.floor(amount / 10), 50);
+    const coinCount = Math.min(Math.floor(amount / 25), 20); // Réduit: /25 au lieu de /10, max 20 au lieu de 50
     return (
         <div className="fixed inset-0 pointer-events-none z-50">
             {Array.from({ length: coinCount }).map((_, i) => <Coin key={i} />)}
@@ -329,7 +327,7 @@ const CoinRain = ({ amount }: { amount: number }) => {
     );
 };
 
-// Laughing emojis effect when losing
+// Laughing emojis effect when losing (simplifié)
 const LaughingEmojis = () => {
     const mockingPhrases = [
         "Souris, je garde la pièce moi perso..",
@@ -341,8 +339,8 @@ const LaughingEmojis = () => {
         "Dommage, c'était pas la bonne ! 😆",
         "Le casino te remercie ! 🎰"
     ];
-    
-    const emojiCount = 15;
+
+    const emojiCount = 8; // Réduit de 15 à 8
     
     // Choisir UNE phrase aléatoire et la mémoriser pour éviter qu'elle change
     const randomPhrase = useMemo(
@@ -354,10 +352,10 @@ const LaughingEmojis = () => {
     const emojiProperties = useMemo(
         () => Array.from({ length: emojiCount }).map((_, i: number) => ({
             left: Math.random() * 100,
-            rotation: Math.random() * 720 - 360,
-            xOffset: (Math.random() - 0.5) * 150,
-            duration: Math.random() * 2 + 2,
-            delay: Math.random() * 0.5,
+            rotation: Math.random() * 360 - 180, // Rotation réduite
+            xOffset: (Math.random() - 0.5) * 80, // Mouvement latéral réduit
+            duration: Math.random() * 1.5 + 1.5, // Durée réduite
+            delay: Math.random() * 0.3, // Délai réduit
         })),
         [] // eslint-disable-line react-hooks/exhaustive-deps
     );
@@ -417,9 +415,9 @@ const LaughingEmojis = () => {
     );
 };
 
-// 🔥 Effet de "vraies" flammes stylisées pour le Devil Mode (désactivé sur mobile)
+// 🔥 Effet de flammes simplifié pour le Devil Mode (désactivé sur mobile)
 const CssFlameEffect = () => {
-    const particleCount = 40;
+    const particleCount = 15; // Réduit de 40 à 15
     const { width, height } = useWindowSizeLocal();
 
     // Un seul groupe de particules, généré une fois et réutilisé
@@ -430,27 +428,14 @@ const CssFlameEffect = () => {
     }, [width, height]);
 
     return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden md:block hidden">
-            {/* Conteneur 1 */}
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden lg:block hidden">
+            {/* Conteneur unique, animation simplifiée */}
             <motion.div
                 className="absolute top-0 left-0 w-full"
                 style={{ height: `${height}px` }}
-                animate={{ y: [height, -height] }} // Monte de tout en bas à tout en haut
+                animate={{ y: [height, -height] }}
                 transition={{
-                    duration: 25,
-                    repeat: Infinity,
-                    ease: 'linear',
-                }}
-            >
-                {particleGroup}
-            </motion.div>
-            {/* Conteneur 2 (la copie, pour une boucle parfaite) */}
-            <motion.div
-                className="absolute top-0 left-0 w-full"
-                style={{ height: `${height}px` }}
-                animate={{ y: [height * 2, 0] }} // Suit le premier conteneur
-                transition={{
-                    duration: 25,
+                    duration: 40, // Plus lent: 40s au lieu de 25s
                     repeat: Infinity,
                     ease: 'linear',
                 }}
@@ -462,22 +447,20 @@ const CssFlameEffect = () => {
 };
 
 const FlameParticle = ({ width, height }: { width: number, height: number }) => {
-    const size = useMemo(() => Math.random() * 40 + 20, []);
+    const size = useMemo(() => Math.random() * 25 + 15, []); // Taille réduite
     const x = useMemo(() => Math.random() * width, [width]);
     const y = useMemo(() => Math.random() * height, [height]);
-    const danceDuration = useMemo(() => Math.random() * 2 + 2, []);
 
     return (
         <motion.div
             className="absolute will-change-transform"
-            style={{ left: x, top: y, width: size, height: size, filter: 'blur(8px) contrast(15)' }}
-            animate={{ x: [0, (Math.random() - 0.5) * 30, 0], scale: [1, 1.2, 0.9, 1] }}
-            transition={{ duration: danceDuration, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
+            style={{ left: x, top: y, width: size, height: size, filter: 'blur(4px) contrast(10)' }} // blur réduit
+            animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.3, 0.7, 0.3] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} // Animation plus lente et simple
         >
             <div className="relative w-full h-full">
-                <motion.div className="absolute inset-0 bg-red-500 rounded-full" />
-                <motion.div className="absolute inset-0 bg-orange-400 rounded-full" style={{ transform: 'scale(0.7)' }} />
-                <motion.div className="absolute inset-0 bg-yellow-300 rounded-full" style={{ transform: 'scale(0.4)' }} />
+                <div className="absolute inset-0 bg-red-500 rounded-full" />
+                <div className="absolute inset-0 bg-orange-400 rounded-full" style={{ transform: 'scale(0.7)' }} />
             </div>
         </motion.div>
     );
@@ -523,7 +506,7 @@ const DemonicSigil = () => {
 const DevilGodRays = () => {
     const rayCount = 8;
     return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden md:block hidden">
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden lg:block hidden">
             {Array.from({ length: rayCount }).map((_, i) => (
                 <motion.div
                     key={`ray-${i}`}
@@ -1870,12 +1853,12 @@ export default function CasinoSlotPage() {
                     <motion.div 
                         className="flex flex-col relative z-10"
                         animate={spinning && !isStopped ? {
-                            y: [-64, -832],  // Animation de -64px à -832px (768px de défilement = 12 symboles)
+                            y: [-64, -832],  // Animation simplifiée
                         } : {
-                            y: -64  // Position de repos : décalage de -64px pour centrer le symbole 2
+                            y: -64
                         }}
                         transition={spinning && !isStopped ? {
-                            duration: 0.6,
+                            duration: 0.8, // Durée légèrement augmentée pour moins de calculs
                             repeat: Infinity,
                             ease: "linear",
                             repeatType: "loop"
@@ -1883,9 +1866,9 @@ export default function CasinoSlotPage() {
                             duration: 0.5,
                             ease: "easeOut"
                         }}
-                        // ✨ Effet de flou pendant le spin (désactivé sur mobile)
+                        // Flou réduit pour performance
                         style={{
-                            filter: spinning && !isStopped ? 'blur(2px) md:blur(2px)' : 'blur(0px)',
+                            filter: spinning && !isStopped ? 'blur(1px)' : 'blur(0px)', // Blur réduit et simplifié
                             transition: 'filter 0.3s ease-out',
                         }}
                     >
@@ -2093,34 +2076,18 @@ export default function CasinoSlotPage() {
                         '--glitch-x': { duration: 0.1, repeat: Infinity }, '--glitch-y': { duration: 0.1, repeat: Infinity }
                     }}
                 >
-                    {/* Animated corner elements */}
-                    <motion.div
+                    {/* Corner elements statiques pour performance */}
+                    <div
                         className={`absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 ${isDevilMode ? 'border-red-500/40' : 'border-purple-500/40'} rounded-tl-3xl transition-colors duration-500`}
-                        animate={{
-                            borderColor: isDevilMode ? ['rgba(239, 68, 68, 0.4)', 'rgba(239, 68, 68, 0.8)', 'rgba(239, 68, 68, 0.4)'] : ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
                     />
-                    <motion.div
+                    <div
                         className={`absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 ${isDevilMode ? 'border-red-500/40' : 'border-purple-500/40'} rounded-tr-3xl transition-colors duration-500`}
-                        animate={{
-                            borderColor: isDevilMode ? ['rgba(239, 68, 68, 0.4)', 'rgba(239, 68, 68, 0.8)', 'rgba(239, 68, 68, 0.4)'] : ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                     />
-                    <motion.div
+                    <div
                         className={`absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 ${isDevilMode ? 'border-red-500/40' : 'border-purple-500/40'} rounded-bl-3xl transition-colors duration-500`}
-                        animate={{
-                            borderColor: isDevilMode ? ['rgba(239, 68, 68, 0.4)', 'rgba(239, 68, 68, 0.8)', 'rgba(239, 68, 68, 0.4)'] : ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                     />
-                    <motion.div
+                    <div
                         className={`absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 ${isDevilMode ? 'border-red-500/40' : 'border-purple-500/40'} rounded-br-3xl transition-colors duration-500`}
-                        animate={{
-                            borderColor: isDevilMode ? ['rgba(239, 68, 68, 0.4)', 'rgba(239, 68, 68, 0.8)', 'rgba(239, 68, 68, 0.4)'] : ['rgba(139, 92, 246, 0.4)', 'rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.4)'],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
                     />
                     
                     {/* Header */}
@@ -2792,20 +2759,10 @@ export default function CasinoSlotPage() {
                         className={`relative bg-black/30 backdrop-blur-2xl rounded-2xl p-1 border-2 border-transparent overflow-hidden transition-all duration-300 ${isDevilMode ? 'shadow-red-500/40' : 'shadow-yellow-500/30'}`}
                         whileHover={{ scale: 1.02, boxShadow: isDevilMode ? '0 0 30px rgba(239, 68, 68, 0.4)' : '0 0 30px rgba(139, 92, 246, 0.3)' }}
                     >
-                        {/* ✨ NOUVEAU: Bordure animée */}
-                        <motion.div className="absolute inset-0 rounded-xl pointer-events-none"
-                            style={{
-                                border: '2px solid transparent',
-                                background: isDevilMode 
-                                    ? 'conic-gradient(from var(--angle), rgba(239, 68, 68, 0.5), rgba(255, 165, 0, 0.3), rgba(239, 68, 68, 0.5)) border-box'
-                                    : 'conic-gradient(from var(--angle), rgba(234, 179, 8, 0.5), rgba(249, 115, 22, 0.3), rgba(234, 179, 8, 0.5)) border-box',
-                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                maskComposite: 'exclude',
-                                '--angle': '0deg',
-                            } as any}
-                            animate={{ '--angle': '360deg' } as any}
-                            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                        />
+                        {/* Bordure statique pour performance */}
+                        <div className={`absolute inset-0 rounded-xl pointer-events-none border-2 ${
+                            isDevilMode ? 'border-red-500/30' : 'border-yellow-500/30'
+                        }`} />
                         <div className={`relative z-10 p-5 rounded-lg h-full ${isDevilMode ? 'bg-gradient-to-br from-red-900/20 to-black/30' : 'bg-gradient-to-br from-yellow-900/20 to-black/30'}`}>
 
                             <div className="flex items-center gap-3 mb-4">
@@ -2954,20 +2911,10 @@ export default function CasinoSlotPage() {
                         transition={{ delay: 0.4 }}
                         className={`relative bg-black/30 backdrop-blur-2xl rounded-2xl p-1 border-2 border-transparent transition-shadow duration-500 overflow-hidden ${isDevilMode ? 'shadow-red-500/40' : 'shadow-purple-500/30'}`}
                     >
-                        {/* ✨ NOUVEAU: Bordure animée */}
-                        <motion.div className="absolute inset-0 rounded-xl pointer-events-none"
-                            style={{
-                                border: '2px solid transparent',
-                                background: isDevilMode 
-                                    ? 'conic-gradient(from var(--angle), rgba(239, 68, 68, 0.5), rgba(159, 18, 57, 0.3), rgba(239, 68, 68, 0.5)) border-box'
-                                    : 'conic-gradient(from var(--angle), rgba(139, 92, 246, 0.5), rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.5)) border-box',
-                                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                maskComposite: 'exclude',
-                                '--angle': '0deg',
-                            } as any}
-                            animate={{ '--angle': '360deg' } as any}
-                            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                        />
+                        {/* Bordure statique pour performance */}
+                        <div className={`absolute inset-0 rounded-xl pointer-events-none border-2 ${
+                            isDevilMode ? 'border-red-500/30' : 'border-purple-500/30'
+                        }`} />
                         <div className={`relative z-10 p-5 rounded-lg h-full ${isDevilMode ? 'bg-gradient-to-br from-red-900/20 to-black/30' : 'bg-gradient-to-br from-purple-900/20 to-black/30'}`}>
 
                             <div className="flex items-center gap-3 mb-4">
