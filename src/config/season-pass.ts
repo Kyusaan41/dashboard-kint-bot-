@@ -257,12 +257,9 @@ function generateTiers(): SeasonPassTier[] {
   const tiers: SeasonPassTier[] = []
   const currentSeason = getCurrentSeason()
 
-  // Points requis progressifs (de plus en plus difficiles)
-  const basePoints = 500 // Points de base pour le premier palier
-  const pointMultiplier = 1.15 // Augmentation de 15% par palier
-
+  // Points requis linéaires : palier n nécessite n * 800 XP
   for (let i = 1; i <= 100; i++) {
-    const requiredPoints = Math.floor(basePoints * Math.pow(pointMultiplier, i - 1))
+    const requiredPoints = i * 800
 
     tiers.push({
       id: `tier_${i}`,
