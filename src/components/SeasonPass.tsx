@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { SeasonPassData, SeasonPassTier } from '@/types/season-pass'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trophy, Crown, Star, ChevronLeft, ChevronRight, Sparkles, Coins, Gem, Zap, Award, Target, Flame, Diamond, Heart, Shield } from 'lucide-react'
+import { Trophy, Crown, Star, ChevronLeft, ChevronRight, Sparkles, Coins, Gem, Zap, Award, Target, Flame, Diamond, Heart, Shield, Medal, TrendingUp } from 'lucide-react'
 import { useTheme } from '@/context/ThemeContext'
 
 // Composant de décorations saisonnières simplifiées pour le Season Pass
@@ -81,6 +81,161 @@ const SeasonPassDecorations = () => {
   }
 
   return null
+}
+
+// Composant Leaderboard compact pour afficher les meilleurs joueurs du Season Pass
+const SeasonPassLeaderboard = () => {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  useEffect(() => {
+    fetchLeaderboard()
+  }, [])
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await fetch('/api/season-pass/leaderboard')
+      if (response.ok) {
+        const data = await response.json()
+        setLeaderboard(data.leaderboard || [])
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1: return <Crown className="w-4 h-4 text-yellow-400" />
+      case 2: return <Medal className="w-4 h-4 text-gray-400" />
+      case 3: return <Award className="w-4 h-4 text-amber-600" />
+      default: return <span className="text-xs font-bold text-gray-400">#{rank}</span>
+    }
+  }
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="bg-gray-800/30 backdrop-blur-sm border border-gray-600/20 rounded-lg p-3 mb-6"
+      >
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-4 h-4 border border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+          <span className="text-xs text-gray-400">Chargement...</span>
+        </div>
+      </motion.div>
+    )
+  }
+
+  const top3 = leaderboard.slice(0, 3)
+  const others = leaderboard.slice(3, 5) // Montrer seulement 2 autres
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-gray-800/30 backdrop-blur-sm border border-gray-600/20 rounded-lg p-3 mb-6"
+    >
+      {/* Header compact */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between text-left hover:bg-gray-700/20 rounded-md p-2 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-purple-400" />
+          <span className="text-sm font-medium text-gray-300">Top joueurs</span>
+        </div>
+        <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+      </button>
+
+      {/* Top 3 toujours visible */}
+      <div className="mt-2 space-y-2">
+        {top3.map((entry, index) => (
+          <motion.div
+            key={entry.id}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className="flex items-center gap-3 p-2 rounded-md bg-gray-700/20 hover:bg-gray-700/30 transition-colors"
+          >
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-600/50">
+              {getRankIcon(index + 1)}
+            </div>
+            <img
+              src={entry.avatar}
+              alt={entry.username}
+              className="w-8 h-8 rounded-full border border-purple-400/30"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-white truncate">{entry.username}</div>
+              <div className="text-xs text-gray-400">Niv. {entry.level}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-bold text-purple-300">{entry.points.toLocaleString()}</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Section extensible */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 pt-3 border-t border-gray-600/20 space-y-2">
+              {others.map((entry, index) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: (index + 3) * 0.05 }}
+                  className="flex items-center gap-3 p-2 rounded-md bg-gray-700/10 hover:bg-gray-700/20 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-600/30">
+                    {getRankIcon(index + 4)}
+                  </div>
+                  <img
+                    src={entry.avatar}
+                    alt={entry.username}
+                    className="w-7 h-7 rounded-full border border-gray-500/30"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-300 truncate">{entry.username}</div>
+                    <div className="text-xs text-gray-500">Niv. {entry.level}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-gray-400">{entry.points.toLocaleString()}</div>
+                  </div>
+                </motion.div>
+              ))}
+
+              {leaderboard.length === 0 && (
+                <div className="text-center py-4 text-gray-500 text-sm">
+                  Aucun joueur
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+interface LeaderboardEntry {
+  id: string
+  username: string
+  avatar: string
+  points: number
+  level: number
 }
 
 interface SeasonPassProps {
@@ -471,6 +626,9 @@ export default function SeasonPass({ className }: SeasonPassProps) {
           </div>
         </div>
       </motion.div>
+
+      {/* Leaderboard */}
+      <SeasonPassLeaderboard />
 
       {/* Navigation par pages */}
       <motion.div
