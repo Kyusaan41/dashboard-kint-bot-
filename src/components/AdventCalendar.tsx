@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Gift, Sparkles, Coins, Star, Snowflake, TreePine, CandyCane, CheckCircle } from 'lucide-react'
+import { Gift, Sparkles, Coins, Star, Snowflake, TreePine, CandyCane, CheckCircle, Heart, Zap, Crown } from 'lucide-react'
 
 interface AdventDay {
   day: number
@@ -104,21 +104,88 @@ export default function AdventCalendar() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-red-900/20 via-green-900/20 to-blue-900/20 backdrop-blur-xl border border-red-400/30 rounded-3xl p-8 mb-8"
+        className="relative bg-gradient-to-br from-red-900/30 via-green-900/25 to-blue-900/30 backdrop-blur-xl border border-red-400/40 rounded-3xl p-8 mb-8 overflow-hidden"
       >
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <Snowflake className="w-8 h-8 text-blue-400 animate-spin" />
+        {/* Fond subtil avec quelques éléments */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Quelques flocons discrets */}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <motion.div
+              key={`snowflake-${i}`}
+              className="absolute text-blue-200/40"
+              style={{
+                left: `${20 + Math.random() * 60}%`,
+                top: `${Math.random() * 100}%`,
+                fontSize: `${10 + Math.random() * 4}px`,
+              }}
+              animate={{
+                y: [0, 50, 0],
+                opacity: [0.2, 0.6, 0.2],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                delay: Math.random() * 3,
+              }}
+            >
+              ❄️
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="relative z-10 flex items-center justify-center gap-6 mb-8">
+          <Snowflake className="w-10 h-10 text-blue-400" />
+
           <div className="text-center">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-red-400 via-green-400 to-blue-400 bg-clip-text text-transparent mb-2">
-              🎄 Calendrier de l'Avent 🎄
-            </h2>
-            <p className="text-gray-300">Préparation des surprises...</p>
+            <motion.h2
+              className="text-3xl font-bold bg-gradient-to-r from-red-400 via-green-400 to-blue-400 bg-clip-text text-transparent mb-3"
+              animate={{
+                textShadow: [
+                  '0 0 10px rgba(239, 68, 68, 0.5)',
+                  '0 0 20px rgba(34, 197, 94, 0.5)',
+                  '0 0 10px rgba(239, 68, 68, 0.5)',
+                ]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              🎄 CALENDRIER DE L'AVENT 🎄
+            </motion.h2>
+            <p className="text-gray-300 text-lg">
+              Préparation des surprises magiques...
+            </p>
           </div>
-          <CandyCane className="w-8 h-8 text-red-400 animate-bounce" />
+
+          <CandyCane className="w-10 h-10 text-red-400" />
         </div>
-        <div className="flex justify-center">
-          <div className="w-12 h-12 border-4 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
+
+        <div className="relative z-10 flex justify-center">
+          <motion.div
+            className="relative"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <div className="w-16 h-16 border-4 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Gift className="w-8 h-8 text-red-400 animate-pulse" />
+            </div>
+          </motion.div>
         </div>
+
+        {/* Guirlande décorative */}
+        <motion.div
+          className="absolute bottom-4 left-4 right-4 h-2 bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 rounded-full opacity-60"
+          animate={{
+            boxShadow: [
+              '0 0 10px rgba(239, 68, 68, 0.5)',
+              '0 0 10px rgba(251, 191, 36, 0.5)',
+              '0 0 10px rgba(34, 197, 94, 0.5)',
+              '0 0 10px rgba(59, 130, 246, 0.5)',
+              '0 0 10px rgba(147, 51, 234, 0.5)',
+              '0 0 10px rgba(239, 68, 68, 0.5)',
+            ]
+          }}
+          transition={{ duration: 4, repeat: Infinity }}
+        />
       </motion.div>
     )
   }
@@ -143,118 +210,282 @@ export default function AdventCalendar() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-red-900/20 via-green-900/20 to-blue-900/20 backdrop-blur-xl border border-red-400/30 rounded-3xl p-8 mb-8"
+        className="relative bg-gradient-to-br from-red-900/30 via-green-900/25 to-blue-900/30 backdrop-blur-xl border border-red-400/40 rounded-3xl p-8 mb-8 overflow-hidden"
       >
-        {/* Header festif */}
-        <div className="text-center mb-8">
+        {/* Fond magique avec effets spéciaux */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Aurore boréale subtile */}
           <motion.div
-            className="flex items-center justify-center gap-4 mb-4"
+            className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-blue-500/5 to-green-500/5 rounded-3xl"
             animate={{
-              y: [0, -5, 0],
+              opacity: [0.3, 0.6, 0.3],
+              background: [
+                'linear-gradient(45deg, rgba(147, 51, 234, 0.05), rgba(59, 130, 246, 0.05), rgba(34, 197, 94, 0.05))',
+                'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(251, 191, 36, 0.05), rgba(147, 51, 234, 0.05))',
+                'linear-gradient(45deg, rgba(147, 51, 234, 0.05), rgba(59, 130, 246, 0.05), rgba(34, 197, 94, 0.05))',
+              ]
             }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <Snowflake className="w-8 h-8 text-blue-400 animate-spin" />
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-red-400 via-green-400 to-blue-400 bg-clip-text text-transparent">
-              🎄 CALENDRIER DE L'AVENT 🎄
-            </h2>
-            <CandyCane className="w-8 h-8 text-red-400 animate-bounce" />
-          </motion.div>
+            transition={{ duration: 8, repeat: Infinity }}
+          />
 
-          <p className="text-gray-300 text-lg mb-4">
-            Cliquez sur les cadeaux pour découvrir vos surprises !
-          </p>
+          {/* Particules magiques flottantes */}
+          {Array.from({ length: 25 }).map((_, i) => (
+            <motion.div
+              key={`magic-particle-${i}`}
+              className="absolute w-1 h-1 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                background: `hsl(${Math.random() * 360}, 70%, 60%)`,
+              }}
+              animate={{
+                y: [0, -30, 0],
+                x: [0, Math.random() * 20 - 10, 0],
+                opacity: [0, 1, 0],
+                scale: [0, 1.5, 0],
+              }}
+              transition={{
+                duration: 4 + Math.random() * 3,
+                repeat: Infinity,
+                delay: Math.random() * 4,
+              }}
+            />
+          ))}
 
-          <div className="inline-flex items-center gap-3 bg-gradient-to-r from-red-500/20 to-green-500/20 border border-red-400/30 rounded-full px-6 py-3">
-            <Gift className="w-5 h-5 text-red-400" />
-            <span className="text-white font-medium">Jour {data.currentDay} • {data.calendar.filter(d => d.unlocked && !d.claimed).length} cadeaux disponibles</span>
-            <TreePine className="w-5 h-5 text-green-400" />
+          {/* Guirlandes lumineuses */}
+          <div className="absolute top-4 left-4 right-4 h-1 flex justify-between">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <motion.div
+                key={`light-${i}`}
+                className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-red-400"
+                animate={{
+                  opacity: [0.3, 1, 0.3],
+                  scale: [0.5, 1.2, 0.5],
+                  boxShadow: [
+                    '0 0 5px rgba(251, 191, 36, 0.5)',
+                    '0 0 15px rgba(239, 68, 68, 0.8)',
+                    '0 0 5px rgba(251, 191, 36, 0.5)',
+                  ]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.1,
+                }}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Grille des cadeaux */}
-        <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-3">
+        {/* Header festif simplifié */}
+        <div className="relative z-10 text-center mb-10">
+          <div className="flex items-center justify-center gap-6 mb-6">
+            <Snowflake className="w-12 h-12 text-blue-300 drop-shadow-lg" />
+
+            <div className="relative">
+              <motion.h2
+                className="text-3xl md:text-4xl font-black bg-gradient-to-r from-red-400 via-green-400 to-blue-400 bg-clip-text text-transparent whitespace-nowrap"
+                animate={{
+                  textShadow: [
+                    '0 0 20px rgba(239, 68, 68, 0.8)',
+                    '0 0 30px rgba(34, 197, 94, 0.8)',
+                    '0 0 20px rgba(239, 68, 68, 0.8)',
+                  ]
+                }}
+                transition={{ duration: 5, repeat: Infinity }}
+              >
+                🎄 CALENDRIER DE L'AVENT 🎄
+              </motion.h2>
+            </div>
+
+            <CandyCane className="w-12 h-12 text-red-400 drop-shadow-lg" />
+          </div>
+
+          <p className="text-gray-200 text-xl mb-6 font-medium">
+            Cliquez sur les cadeaux pour découvrir vos surprises !
+          </p>
+
+          <div className="inline-flex items-center gap-4 bg-gradient-to-r from-red-500/30 via-green-500/30 to-blue-500/30 backdrop-blur-sm border-2 border-red-400/50 rounded-full px-8 py-4 shadow-2xl">
+            <Gift className="w-6 h-6 text-red-400" />
+            <span className="text-white font-bold text-lg">
+              Jour {data.currentDay} • {data.calendar.filter(d => d.unlocked && !d.claimed).length} surprises disponibles
+            </span>
+            <TreePine className="w-6 h-6 text-green-400" />
+          </div>
+        </div>
+
+        {/* Grille des cadeaux magiques */}
+        <div className="relative z-10 grid grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-4">
           {data.calendar.map((day, index) => (
             <motion.div
               key={day.day}
-              initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+              initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ delay: index * 0.03 }}
-              className="relative"
+              transition={{
+                delay: index * 0.05,
+                type: "spring",
+                stiffness: 200,
+                damping: 10
+              }}
+              className="relative group"
             >
               <motion.button
                 onClick={() => openGift(day)}
                 disabled={!day.unlocked}
-                className={`w-full aspect-square rounded-xl border-2 transition-all duration-300 relative overflow-hidden group ${
+                className={`w-full aspect-square rounded-2xl border-3 transition-all duration-500 relative overflow-hidden ${
                   day.claimed
-                    ? 'bg-green-500/20 border-green-400/50 cursor-pointer hover:bg-green-500/30'
+                    ? 'bg-gradient-to-br from-green-500/40 via-emerald-500/30 to-green-600/40 border-green-400/70 shadow-2xl'
                     : day.unlocked
-                    ? 'bg-gradient-to-br from-red-500/30 via-gold-500/25 to-green-500/30 border-red-400/50 hover:border-red-300/70 cursor-pointer'
-                    : 'bg-gray-600/20 border-gray-500/30 cursor-not-allowed'
+                    ? 'bg-gradient-to-br from-red-500/40 via-yellow-500/35 via-green-500/30 to-blue-500/40 border-red-400/60 hover:border-yellow-400/80 shadow-2xl'
+                    : 'bg-gradient-to-br from-gray-600/30 to-gray-700/40 border-gray-500/40'
                 }`}
                 whileHover={day.unlocked ? {
-                  scale: 1.1,
+                  scale: 1.15,
+                  rotate: [0, -2, 2, 0],
                   boxShadow: day.claimed
-                    ? '0 0 25px rgba(34, 197, 94, 0.5)'
-                    : '0 0 25px rgba(239, 68, 68, 0.5)'
+                    ? '0 0 40px rgba(34, 197, 94, 0.8), 0 0 80px rgba(34, 197, 94, 0.4)'
+                    : '0 0 40px rgba(239, 68, 68, 0.8), 0 0 80px rgba(251, 191, 36, 0.4), 0 0 120px rgba(34, 197, 94, 0.2)'
                 } : {}}
-                whileTap={day.unlocked ? { scale: 0.95 } : {}}
+                whileTap={day.unlocked ? { scale: 0.9 } : {}}
               >
-                {/* Numéro du jour */}
-                <div className="absolute top-1 left-1 text-xs font-bold text-white bg-black/60 rounded px-1 z-10">
+                {/* Halo lumineux pour les cadeaux disponibles */}
+                {day.unlocked && !day.claimed && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-red-400/20 via-yellow-400/20 to-green-400/20 rounded-2xl blur-xl"
+                    animate={{
+                      opacity: [0.3, 0.8, 0.3],
+                      scale: [1, 1.2, 1],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  />
+                )}
+
+                {/* Numéro du jour avec effet magique */}
+                <motion.div
+                  className="absolute top-2 left-2 text-sm font-black text-white z-20 drop-shadow-lg"
+                  animate={day.unlocked && !day.claimed ? {
+                    textShadow: [
+                      '0 0 5px rgba(255,255,255,0.8)',
+                      '0 0 10px rgba(255,255,255,1)',
+                      '0 0 5px rgba(255,255,255,0.8)',
+                    ]
+                  } : {}}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
                   {day.day}
-                </div>
+                </motion.div>
 
                 {/* Contenu selon l'état */}
                 {day.claimed ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <CheckCircle className="w-6 h-6 text-green-400 mb-1" />
-                    <div className="text-xs text-green-300 font-medium">Obtenu</div>
+                  <div className="flex flex-col items-center justify-center h-full relative z-10">
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.3, 1],
+                        rotate: [0, 360],
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <CheckCircle className="w-8 h-8 text-green-300 mb-2 drop-shadow-lg" />
+                    </motion.div>
+                    <div className="text-xs text-green-200 font-bold drop-shadow">MAGIE OBTENUE</div>
+
+                    {/* Particules de succès */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <motion.div
+                          key={`success-${i}`}
+                          className="absolute w-1.5 h-1.5 bg-green-400 rounded-full"
+                          style={{
+                            left: `${20 + Math.random() * 60}%`,
+                            top: `${20 + Math.random() * 60}%`,
+                          }}
+                          animate={{
+                            y: [0, -15, 0],
+                            opacity: [0.6, 1, 0.6],
+                            scale: [0.5, 1.5, 0.5],
+                          }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            delay: i * 0.2,
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 ) : day.unlocked ? (
-                  <div className="flex flex-col items-center justify-center h-full relative">
-                    {/* Cadeau fermé avec ruban */}
+                  <div className="flex flex-col items-center justify-center h-full relative z-10">
+                    {/* Cadeau simple avec quelques effets */}
                     <motion.div
-                      className="relative"
+                      className="relative mb-2"
                       animate={{
                         rotate: [0, 2, -2, 0],
                       }}
                       transition={{ duration: 4, repeat: Infinity }}
                     >
-                      <Gift className="w-8 h-8 text-red-400 mb-1" />
-                      {/* Ruban */}
-                      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-6 h-1 bg-yellow-400 rounded-full"></div>
-                      <div className="absolute left-2 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-yellow-400 rounded-full"></div>
+                      {/* Boîte du cadeau */}
+                      <div className="relative w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-lg border-2 border-red-300 shadow-lg">
+                        {/* Rubans simples */}
+                        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-8 h-1.5 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-full shadow-md" />
+                        <div className="absolute left-1 top-1/2 transform -translate-y-1/2 w-1.5 h-8 bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-full shadow-md" />
+
+                        {/* Nœud simple */}
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full shadow-lg" />
+                      </div>
                     </motion.div>
 
-                    {/* Particules scintillantes */}
+                    <div className="text-xs text-yellow-200 font-bold drop-shadow">MAGIE</div>
+
+                    {/* Quelques particules discrètes */}
                     <div className="absolute inset-0 pointer-events-none">
                       {Array.from({ length: 3 }).map((_, i) => (
                         <motion.div
-                          key={`gift-sparkle-${i}`}
+                          key={`magic-${i}`}
                           className="absolute w-1 h-1 bg-yellow-400 rounded-full"
                           style={{
                             left: `${25 + Math.random() * 50}%`,
                             top: `${25 + Math.random() * 50}%`,
                           }}
                           animate={{
-                            opacity: [0.4, 1, 0.4],
-                            scale: [0.5, 1.2, 0.5],
+                            opacity: [0.3, 0.8, 0.3],
+                            scale: [0.5, 1, 0.5],
                           }}
                           transition={{
                             duration: 2,
                             repeat: Infinity,
-                            delay: Math.random() * 1.5,
+                            delay: i * 0.5,
                           }}
                         />
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <Gift className="w-6 h-6 text-gray-500 mb-1" />
-                    <div className="text-xs text-gray-500">🔒</div>
+                  <div className="flex flex-col items-center justify-center h-full relative z-10">
+                    <motion.div
+                      animate={{ opacity: [0.3, 0.6, 0.3] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Gift className="w-7 h-7 text-gray-500 mb-2 drop-shadow" />
+                    </motion.div>
+                    <div className="text-xs text-gray-400 font-medium drop-shadow">🔒 MYSTÈRE</div>
                   </div>
+                )}
+
+                {/* Bordure animée pour les cadeaux disponibles */}
+                {day.unlocked && !day.claimed && (
+                  <motion.div
+                    className="absolute inset-0 rounded-2xl border-2 border-transparent"
+                    animate={{
+                      borderColor: [
+                        'rgba(239, 68, 68, 0.6)',
+                        'rgba(251, 191, 36, 0.6)',
+                        'rgba(34, 197, 94, 0.6)',
+                        'rgba(59, 130, 246, 0.6)',
+                        'rgba(239, 68, 68, 0.6)',
+                      ]
+                    }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  />
                 )}
               </motion.button>
             </motion.div>
@@ -262,172 +493,274 @@ export default function AdventCalendar() {
         </div>
       </motion.div>
 
-      {/* Animation d'ouverture du cadeau */}
+      {/* Animation d'ouverture magique du cadeau */}
       <AnimatePresence>
         {isOpening && selectedDay && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-gradient-to-br from-purple-900/80 via-blue-900/80 to-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.5, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0.5, rotate: 180 }}
-              className="text-center"
+              initial={{ scale: 0.3, rotate: -45, y: 100 }}
+              animate={{ scale: 1, rotate: 0, y: 0 }}
+              exit={{ scale: 0.3, rotate: 45, y: 100 }}
+              transition={{
+                type: "spring",
+                stiffness: 200,
+                damping: 15
+              }}
+              className="text-center relative"
             >
-              {/* Cadeau qui s'ouvre */}
+              {/* Aura magique de fond */}
               <motion.div
-                className="relative mb-8"
+                className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-yellow-500/20 to-green-500/20 rounded-full blur-3xl"
                 animate={{
-                  scale: [1, 1.2, 1],
+                  scale: [1, 1.5, 1],
+                  opacity: [0.3, 0.7, 0.3],
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+              />
+
+              {/* Cadeau qui s'ouvre simplement */}
+              <motion.div
+                className="relative mb-10"
+                animate={{
+                  scale: [1, 1.1, 1],
                   rotate: [0, 5, -5, 0],
                 }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                }}
               >
-                <div className="w-24 h-24 bg-gradient-to-br from-red-500 to-green-500 rounded-2xl flex items-center justify-center border-4 border-yellow-400 shadow-2xl">
-                  <Gift className="w-12 h-12 text-white" />
+                <div className="relative w-32 h-32 bg-gradient-to-br from-red-500 via-red-600 to-red-700 rounded-2xl border-4 border-yellow-400 shadow-2xl flex items-center justify-center">
+                  <Gift className="w-16 h-16 text-white drop-shadow-2xl" />
                 </div>
 
-                {/* Particules d'ouverture */}
-                {Array.from({ length: 12 }).map((_, i) => (
+                {/* Quelques particules simples */}
+                {Array.from({ length: 8 }).map((_, i) => (
                   <motion.div
-                    key={`open-particle-${i}`}
+                    key={`magic-explosion-${i}`}
                     className="absolute w-2 h-2 bg-yellow-400 rounded-full"
                     style={{
                       left: '50%',
                       top: '50%',
                     }}
                     animate={{
-                      x: Math.cos(i * 30 * Math.PI / 180) * 80,
-                      y: Math.sin(i * 30 * Math.PI / 180) * 80,
+                      x: Math.cos(i * 45 * Math.PI / 180) * 60,
+                      y: Math.sin(i * 45 * Math.PI / 180) * 60,
                       opacity: [1, 0],
                       scale: [1, 0],
                     }}
                     transition={{
                       duration: 1.5,
                       delay: 0.5,
+                      ease: "easeOut"
                     }}
                   />
                 ))}
               </motion.div>
 
               <motion.h3
-                className="text-2xl font-bold text-white mb-4"
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
+                className="text-3xl font-bold text-white mb-6 relative z-10"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  textShadow: [
+                    '0 0 10px rgba(255,255,255,0.8)',
+                    '0 0 20px rgba(255,255,255,1)',
+                    '0 0 10px rgba(255,255,255,0.8)',
+                  ]
+                }}
+                transition={{ duration: 1.5, repeat: Infinity }}
               >
-                🎁 Ouverture du cadeau...
+                ✨ MAGIE EN COURS... ✨
               </motion.h3>
 
-              <div className="text-gray-300">Découvrez votre surprise du jour {selectedDay.day} !</div>
+              <motion.div
+                className="text-gray-200 text-xl font-medium relative z-10"
+                animate={{ opacity: [0.7, 1, 0.7] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                Découvrez la surprise enchantée du jour {selectedDay.day} !
+              </motion.div>
+
+              {/* Indicateur de chargement magique */}
+              <motion.div
+                className="mt-8 flex justify-center space-x-2 relative z-10"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <motion.div
+                    key={`loading-${i}`}
+                    className="w-3 h-3 bg-gradient-to-r from-red-400 to-yellow-400 rounded-full"
+                    animate={{
+                      y: [0, -15, 0],
+                      opacity: [0.3, 1, 0.3],
+                      scale: [0.5, 1.5, 0.5],
+                    }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      delay: i * 0.1,
+                    }}
+                  />
+                ))}
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Modal de récompense */}
+      {/* Modal de récompense magique */}
       <AnimatePresence>
         {showReward && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-gradient-to-br from-purple-900/90 via-red-900/85 to-black/95 backdrop-blur-lg z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 50 }}
-              className="bg-gradient-to-br from-red-900/95 via-green-900/95 to-blue-900/95 backdrop-blur-xl border-2 border-red-400/60 rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl"
+              initial={{ scale: 0.5, rotate: -15, y: 100 }}
+              animate={{ scale: 1, rotate: 0, y: 0 }}
+              exit={{ scale: 0.5, rotate: 15, y: 100 }}
+              transition={{
+                type: "spring",
+                stiffness: 150,
+                damping: 20
+              }}
+              className="relative bg-gradient-to-br from-red-900/98 via-yellow-900/95 via-green-900/98 to-blue-900/98 backdrop-blur-2xl border-3 border-yellow-400/70 rounded-3xl p-10 max-w-2xl w-full text-center shadow-2xl overflow-hidden"
             >
-              {/* Étoiles et particules de fond */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
-                {Array.from({ length: 20 }).map((_, i) => (
+              {/* Fond magique avec effets spéciaux */}
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Aurore boréale animée */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-yellow-500/10 via-green-500/10 to-blue-500/10 rounded-3xl"
+                  animate={{
+                    opacity: [0.2, 0.5, 0.2],
+                    background: [
+                      'linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(251, 191, 36, 0.1), rgba(34, 197, 94, 0.1))',
+                      'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1), rgba(239, 68, 68, 0.1))',
+                      'linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(251, 191, 36, 0.1), rgba(34, 197, 94, 0.1))',
+                    ]
+                  }}
+                  transition={{ duration: 6, repeat: Infinity }}
+                />
+
+                {/* Particules magiques volantes */}
+                {Array.from({ length: 30 }).map((_, i) => (
                   <motion.div
-                    key={`reward-star-${i}`}
-                    className="absolute w-1 h-1 bg-yellow-400 rounded-full"
+                    key={`modal-magic-${i}`}
+                    className="absolute w-2 h-2 rounded-full"
                     style={{
+                      background: `hsl(${Math.random() * 60 + 15}, 100%, 70%)`,
                       left: `${Math.random() * 100}%`,
                       top: `${Math.random() * 100}%`,
                     }}
                     animate={{
-                      opacity: [0.3, 1, 0.3],
-                      scale: [0.5, 1.5, 0.5],
-                      y: [0, -20, 0],
+                      y: [0, -40, 0],
+                      x: [0, Math.random() * 30 - 15, 0],
+                      opacity: [0, 1, 0],
+                      scale: [0, 1.5, 0],
+                      rotate: [0, 360],
+                    }}
+                    transition={{
+                      duration: 4 + Math.random() * 2,
+                      repeat: Infinity,
+                      delay: Math.random() * 3,
+                    }}
+                  />
+                ))}
+
+                {/* Cercles d'énergie concentriques */}
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <motion.div
+                    key={`energy-ring-${i}`}
+                    className="absolute inset-4 border-2 border-yellow-400/30 rounded-3xl"
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.3, 0.8, 0.3],
                     }}
                     transition={{
                       duration: 3,
                       repeat: Infinity,
-                      delay: Math.random() * 2,
+                      delay: i * 0.5,
                     }}
                   />
                 ))}
               </div>
 
-              <motion.div
-                animate={{
-                  rotate: [0, 5, -5, 0],
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="relative z-10"
-              >
-                <div className="w-20 h-20 bg-gradient-to-r from-yellow-400 via-red-400 to-green-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl border-4 border-white/20">
-                  {getRewardIcon(showReward.type, 'w-10 h-10')}
+              <div className="relative z-10">
+                {/* Icône de récompense simple */}
+                <div className="relative mb-8">
+                  <div className="w-28 h-28 bg-gradient-to-r from-yellow-400 via-red-400 to-green-400 rounded-full flex items-center justify-center mx-auto shadow-2xl border-6 border-white/30">
+                    {getRewardIcon(showReward.type, 'w-14 h-14')}
+                  </div>
                 </div>
 
                 <motion.h3
-                  className="text-3xl font-bold text-white mb-4"
-                  animate={{ textShadow: [
-                    '0 0 10px rgba(255,255,255,0.5)',
-                    '0 0 20px rgba(255,255,255,0.8)',
-                    '0 0 10px rgba(255,255,255,0.5)',
-                  ]}}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-4xl font-black text-white mb-6"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                    textShadow: [
+                      '0 0 15px rgba(255,255,255,0.8)',
+                      '0 0 25px rgba(255,255,255,1)',
+                      '0 0 35px rgba(251, 191, 36, 0.8)',
+                      '0 0 15px rgba(255,255,255,0.8)',
+                    ]
+                  }}
+                  transition={{ duration: 2.5, repeat: Infinity }}
                 >
-                  {showReward.claimed ? '🎄 Cadeau déjà ouvert ! 🎄' : '🎉 Surprise ! 🎉'}
+                  {showReward.claimed ? '🎄 MAGIE DÉJÀ LIBÉRÉE ! 🎄' : '✨ MAGIE DÉCOUVERTE ! ✨'}
                 </motion.h3>
 
-                <p className="text-gray-300 mb-6 text-lg">
+                <p className="text-gray-200 mb-8 text-xl font-medium">
                   {showReward.claimed
-                    ? `Vous avez déjà ouvert le cadeau du jour ${showReward.day} !`
-                    : `Vous avez découvert le cadeau du jour ${showReward.day} !`
+                    ? `Vous avez déjà libéré la magie du jour ${showReward.day} !`
+                    : `Vous venez de découvrir la magie du jour ${showReward.day} !`
                   }
                 </p>
 
-                <motion.div
-                  className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-white/20"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <div className="flex items-center justify-center gap-4 mb-3">
-                    {getRewardIcon(showReward.type, 'w-8 h-8')}
-                    <div>
-                      <div className="text-2xl font-bold text-white">{showReward.name}</div>
-                      <div className="text-lg text-yellow-300 font-semibold">{showReward.amount} unités</div>
+                {/* Carte de récompense simple */}
+                <div className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl p-8 mb-10 border-2 border-white/30 shadow-2xl relative overflow-hidden">
+                  <div className="flex items-center justify-center gap-6 mb-4 relative z-10">
+                    {getRewardIcon(showReward.type, 'w-12 h-12')}
+                    <div className="text-left">
+                      <div className="text-3xl font-black text-white mb-1">
+                        {showReward.name}
+                      </div>
+                      <div className="text-2xl text-yellow-300 font-bold">{showReward.amount} unités</div>
                     </div>
                   </div>
-                  <p className="text-gray-300">{showReward.description}</p>
-                </motion.div>
+                  <p className="text-gray-200 text-lg relative z-10">
+                    {showReward.description}
+                  </p>
+                </div>
 
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-4 justify-center">
                   {showReward.claimed ? (
                     <motion.button
                       onClick={() => setShowReward(null)}
-                      className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-xl font-bold shadow-lg"
-                      whileHover={{ scale: 1.05 }}
+                      className="px-10 py-4 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 hover:from-green-600 hover:via-emerald-600 hover:to-green-700 text-white rounded-2xl font-black text-xl shadow-2xl border-2 border-green-400/50"
+                      whileHover={{
+                        scale: 1.05,
+                        boxShadow: '0 0 30px rgba(34, 197, 94, 0.8)'
+                      }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      ✅ DÉJÀ RÉCLAMÉ
+                      <span className="flex items-center gap-3">
+                        <CheckCircle className="w-6 h-6" />
+                        MAGIE OBTENUE
+                      </span>
                     </motion.button>
                   ) : (
                     <>
                       <motion.button
                         onClick={() => setShowReward(null)}
-                        className="px-6 py-3 bg-gray-600/50 hover:bg-gray-600/70 text-white rounded-xl font-medium transition-colors"
+                        className="px-8 py-4 bg-gray-600/60 hover:bg-gray-600/80 text-white rounded-2xl font-bold text-lg transition-all duration-300 border border-gray-500/50"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
@@ -437,23 +770,29 @@ export default function AdventCalendar() {
                       <motion.button
                         onClick={claimReward}
                         disabled={claiming}
-                        className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        whileHover={{ scale: 1.05 }}
+                        className="px-10 py-4 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:via-orange-600 hover:to-red-600 text-white rounded-2xl font-black text-xl shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed border-2 border-yellow-400/50"
+                        whileHover={{
+                          scale: 1.05,
+                          boxShadow: '0 0 30px rgba(251, 191, 36, 0.8)'
+                        }}
                         whileTap={{ scale: 0.95 }}
                       >
                         {claiming ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Récupération...
+                          <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                            LIBÉRATION...
                           </div>
                         ) : (
-                          '🎁 RÉCLAMER !'
+                          <span className="flex items-center gap-3">
+                            <Sparkles className="w-6 h-6" />
+                            LIBÉRER LA MAGIE !
+                          </span>
                         )}
                       </motion.button>
                     </>
                   )}
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           </motion.div>
         )}
