@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import fs from 'fs'
+import path from 'path'
 
 const BOT_API_URL = 'http://193.70.34.25:20007/api'
+const ADVENT_DATA_FILE = path.join(process.cwd(), 'data', 'advent-calendar.json')
 
 // Configuration des récompenses du calendrier de l'Avent
 const ADVENT_REWARDS = [
@@ -48,21 +51,51 @@ function getCurrentDay(): number {
   return Math.min(24, Math.max(1, now.getDate()))
 }
 
-// Stockage temporaire des récompenses réclamées (en mémoire pour cette session)
-const claimedRewardsStore: { [userId: string]: number[] } = {}
+// Fonction pour lire les données du calendrier depuis le fichier
+async function readAdventData(): Promise<{ [userId: string]: number[] }> {
+  try {
+    if (!fs.existsSync(ADVENT_DATA_FILE)) {
+      // Créer le fichier s'il n'existe pas
+      await fs.promises.writeFile(ADVENT_DATA_FILE, JSON.stringify({}, null, 2))
+      return {}
+    }
+    const data = await fs.promises.readFile(ADVENT_DATA_FILE, 'utf-8')
+    return JSON.parse(data)
+  } catch (error) {
+    console.error('[ADVENT-CALENDAR] Error reading advent data:', error)
+    return {}
+  }
+}
+
+// Fonction pour écrire les données du calendrier dans le fichier
+async function writeAdventData(data: { [userId: string]: number[] }): Promise<void> {
+  try {
+    // Créer le dossier data s'il n'existe pas
+    const dataDir = path.dirname(ADVENT_DATA_FILE)
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true })
+    }
+    await fs.promises.writeFile(ADVENT_DATA_FILE, JSON.stringify(data, null, 2))
+  } catch (error) {
+    console.error('[ADVENT-CALENDAR] Error writing advent data:', error)
+  }
+}
 
 // Fonction pour obtenir les récompenses réclamées
 async function getClaimedRewards(userId: string): Promise<number[]> {
-  return claimedRewardsStore[userId] || []
+  const data = await readAdventData()
+  return data[userId] || []
 }
 
 // Fonction pour marquer une récompense comme réclamée
 async function markRewardAsClaimed(userId: string, day: number): Promise<void> {
-  if (!claimedRewardsStore[userId]) {
-    claimedRewardsStore[userId] = []
+  const data = await readAdventData()
+  if (!data[userId]) {
+    data[userId] = []
   }
-  if (!claimedRewardsStore[userId].includes(day)) {
-    claimedRewardsStore[userId].push(day)
+  if (!data[userId].includes(day)) {
+    data[userId].push(day)
+    await writeAdventData(data)
   }
 }
 
