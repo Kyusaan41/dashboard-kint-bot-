@@ -171,7 +171,16 @@ const SeasonPassLeaderboard = () => {
               className="w-8 h-8 rounded-full border border-purple-400/30"
             />
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-white truncate">{entry.username}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-white truncate">{entry.username}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded text-center font-medium ${
+                  entry.isVip
+                    ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-300 border border-yellow-500/30'
+                    : 'bg-gray-600/30 text-gray-400 border border-gray-500/30'
+                }`}>
+                  {entry.isVip ? 'VIP' : 'STD'}
+                </span>
+              </div>
               <div className="text-xs text-gray-400">Niv. {entry.level}</div>
             </div>
             <div className="text-right">
@@ -208,7 +217,16 @@ const SeasonPassLeaderboard = () => {
                     className="w-7 h-7 rounded-full border border-gray-500/30"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-gray-300 truncate">{entry.username}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-300 truncate">{entry.username}</span>
+                      <span className={`text-xs px-1 py-0.5 rounded text-center font-medium ${
+                        entry.isVip
+                          ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-300 border border-yellow-500/30'
+                          : 'bg-gray-600/30 text-gray-400 border border-gray-500/30'
+                      }`}>
+                        {entry.isVip ? 'VIP' : 'STD'}
+                      </span>
+                    </div>
                     <div className="text-xs text-gray-500">Niv. {entry.level}</div>
                   </div>
                   <div className="text-right">
@@ -236,6 +254,7 @@ interface LeaderboardEntry {
   avatar: string
   points: number
   level: number
+  isVip: boolean
 }
 
 interface SeasonPassProps {
