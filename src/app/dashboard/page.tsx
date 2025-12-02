@@ -16,6 +16,7 @@ import {
 import { FavoritesBar } from '@/components/FavoritesBar';
 import { NyxCard } from '@/components/ui/NyxCard';
 import { ThemeSelector } from '@/components/ThemeSelector';
+import AdventCalendar from '@/components/AdventCalendar';
 
 // --- Types (inchangÃ©s) ---
 type UserStats = {
@@ -522,6 +523,9 @@ export default function DashboardHomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column - Analytics */}
                 <div className="lg:col-span-2 space-y-8">
+                    {/* Advent Calendar - Only show during Christmas period */}
+                    <AdventCalendar />
+
                     {/* Activity Chart */}
                     <NyxCard delay={0.4} className="relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-40 h-40 opacity-5 rounded-full blur-3xl transform translate-x-8 -translate-y-8"
@@ -781,8 +785,10 @@ export default function DashboardHomePage() {
                             )}
                         </div>
                     </NyxCard>
+
                 </div>
             </div>
+
 
             {/* Achievements Section */}
     <NyxCard delay={1.0}>
