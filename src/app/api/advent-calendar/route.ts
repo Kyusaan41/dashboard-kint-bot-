@@ -81,104 +81,12 @@ async function writeAdventData(data: { [userId: string]: number[] }): Promise<vo
   }
 }
 
-// Fonction pour obtenir les récompenses réclamées
+// Fonction de fallback pour obtenir les récompenses réclamées (si le bot n'est pas disponible)
 async function getClaimedRewards(userId: string): Promise<number[]> {
   const data = await readAdventData()
   return data[userId] || []
 }
 
-// Fonction pour marquer une récompense comme réclamée
-async function markRewardAsClaimed(userId: string, day: number): Promise<void> {
-  const data = await readAdventData()
-  if (!data[userId]) {
-    data[userId] = []
-  }
-  if (!data[userId].includes(day)) {
-    data[userId].push(day)
-    await writeAdventData(data)
-  }
-}
-
-// Fonction pour marquer une récompense comme réclamée
-async function claimReward(userId: string, day: number, reward: any): Promise<boolean> {
-  try {
-    console.log(`[ADVENT-CALENDAR] Claiming reward for day ${day}:`, reward)
-
-    // Distribuer la récompense selon son type
-    switch (reward.type) {
-      case 'currency':
-        if (reward.amount) {
-          const currentResponse = await fetch(`${BOT_API_URL}/currency/${userId}`)
-          let currentCoins = 0
-          if (currentResponse.ok) {
-            const currentData = await currentResponse.json()
-            currentCoins = currentData.balance || currentData.coins || 0
-          }
-
-          const newTotal = currentCoins + reward.amount
-          const response = await fetch(`${BOT_API_URL}/currency/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coins: newTotal, balance: newTotal })
-          })
-          if (!response.ok) {
-            console.error('[ADVENT-CALENDAR] Failed to add currency:', response.status)
-            return false
-          }
-        }
-        break
-
-      case 'tokens':
-        if (reward.amount) {
-          const currentResponse = await fetch(`${BOT_API_URL}/currency/${userId}`)
-          let currentTokens = 0
-          if (currentResponse.ok) {
-            const currentData = await currentResponse.json()
-            currentTokens = currentData.tokens || currentData.tokkens || 0
-          }
-
-          const newTotal = currentTokens + reward.amount
-          const response = await fetch(`${BOT_API_URL}/currency/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tokens: newTotal, tokkens: newTotal })
-          })
-          if (!response.ok) {
-            console.error('[ADVENT-CALENDAR] Failed to add tokens:', response.status)
-            return false
-          }
-        }
-        break
-
-      case 'orbs':
-        if (reward.amount) {
-          const response = await fetch(`${BOT_API_URL}/gacha/wishes/buy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: userId,
-              amount: reward.amount
-            })
-          })
-          if (!response.ok) {
-            console.error('[ADVENT-CALENDAR] Failed to add wishes:', response.status)
-            return false
-          }
-        }
-        break
-
-      default:
-        console.warn(`[ADVENT-CALENDAR] Unknown reward type: ${reward.type}`)
-        return false
-    }
-
-    console.log(`[ADVENT-CALENDAR] Successfully claimed reward for day ${day}`)
-    return true
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR] Error claiming reward:', error)
-    return false
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -199,7 +107,19 @@ export async function GET(request: NextRequest) {
     }
 
     const currentDay = getCurrentDay()
-    const claimedRewards = await getClaimedRewards(userId)
+
+    // Obtenir les récompenses réclamées depuis le bot
+    let claimedRewards: number[] = []
+    try {
+      const response = await fetch(`${BOT_API_URL}/advent-calendar/${userId}/claimed`)
+      if (response.ok) {
+        const data = await response.json()
+        claimedRewards = data.claimed || []
+      }
+    } catch (error) {
+      console.warn('[ADVENT-CALENDAR] Could not fetch claimed rewards from bot, using local storage:', error)
+      claimedRewards = await getClaimedRewards(userId)
+    }
 
     // Préparer les données du calendrier
     const calendarData = ADVENT_REWARDS.map(reward => ({
@@ -250,34 +170,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ce jour n\'est pas encore débloqué' }, { status: 400 })
     }
 
-    const claimedRewards = await getClaimedRewards(userId)
+    // Utiliser l'API du bot pour réclamer la récompense
+    try {
+      const response = await fetch(`${BOT_API_URL}/advent-calendar/${userId}/claim`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          day: day,
+        }),
+      })
 
-    // Vérifier si déjà réclamé
-    if (claimedRewards.includes(day)) {
-      return NextResponse.json({ error: 'Récompense déjà réclamée' }, { status: 400 })
+      if (!response.ok) {
+        const errorData = await response.json()
+        return NextResponse.json({ error: errorData.error || 'Erreur lors de la réclamation' }, { status: response.status })
+      }
+
+      const result = await response.json()
+      return NextResponse.json(result)
+
+    } catch (error) {
+      console.error('[ADVENT-CALENDAR] Error claiming from bot:', error)
+      return NextResponse.json({ error: 'Erreur de connexion avec le bot' }, { status: 500 })
     }
-
-    // Trouver la récompense
-    const reward = ADVENT_REWARDS.find(r => r.day === day)
-    if (!reward) {
-      return NextResponse.json({ error: 'Récompense introuvable' }, { status: 404 })
-    }
-
-    // Réclamer la récompense
-    const success = await claimReward(userId, day, reward)
-
-    if (!success) {
-      return NextResponse.json({ error: 'Erreur lors de la réclamation' }, { status: 500 })
-    }
-
-    // Marquer la récompense comme réclamée
-    await markRewardAsClaimed(userId, day)
-
-    return NextResponse.json({
-      success: true,
-      message: `Récompense du jour ${day} réclamée avec succès !`,
-      reward
-    })
   } catch (error) {
     console.error('[ADVENT-CALENDAR] Error claiming reward:', error)
     return NextResponse.json(
