@@ -34,263 +34,138 @@ const ADVENT_REWARDS = [
   { day: 24, type: 'orbs', amount: 25, name: 'Orbes mystiques', description: '25 orbes pour les gachas + bonus spécial' },
 ];
 
-// Fichier de stockage des récompenses réclamées
 const ADVENT_DATA_FILE = path.join(__dirname, '..', 'data', 'advent-calendar-bot.json');
-
-// Fichiers de stockage des monnaies utilisateur
 const USER_TOKENS_FILE = path.join(__dirname, '..', 'data', 'user-tokens.json');
 const USER_JETONS_FILE = path.join(__dirname, '..', 'data', 'user-jetons.json');
 
-// Fonction pour vérifier si c'est la période de Noël
 function isChristmasPeriod() {
   const now = new Date();
   const year = now.getFullYear();
-  const start = new Date(year, 11, 1); // 1er décembre
-  const end = new Date(year, 11, 24, 23, 59, 59); // 24 décembre 23h59
-
-  return now >= start && now <= end;
+  return now >= new Date(year, 11, 1) && now <= new Date(year, 11, 24, 23, 59, 59);
 }
 
-// Fonction pour obtenir le jour actuel de décembre (1-24)
 function getCurrentDay() {
-  const now = new Date();
-  return Math.min(24, Math.max(1, now.getDate()));
+  return Math.min(24, Math.max(1, new Date().getDate()));
 }
 
-// Fonction pour lire les données du calendrier
-function readAdventData() {
+function readFileOrInit(file, defaultValue) {
   try {
-    if (!fs.existsSync(ADVENT_DATA_FILE)) {
-      // Créer le fichier s'il n'existe pas
-      const dataDir = path.dirname(ADVENT_DATA_FILE);
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
-      fs.writeFileSync(ADVENT_DATA_FILE, JSON.stringify({}, null, 2));
-      return {};
+    if (!fs.existsSync(file)) {
+      fs.writeFileSync(file, JSON.stringify(defaultValue, null, 2));
+      return defaultValue;
     }
-    const data = fs.readFileSync(ADVENT_DATA_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Error reading advent data:', error);
-    return {};
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  } catch {
+    return defaultValue;
   }
 }
 
-// Fonction pour écrire les données du calendrier
-function writeAdventData(data) {
-  try {
-    fs.writeFileSync(ADVENT_DATA_FILE, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Error writing advent data:', error);
-  }
-}
+const readAdventData = () => readFileOrInit(ADVENT_DATA_FILE, {});
+const writeAdventData = data => fs.writeFileSync(ADVENT_DATA_FILE, JSON.stringify(data, null, 2));
 
-// Fonction pour lire les données des jetons utilisateur
-function readUserTokensData() {
-  try {
-    if (!fs.existsSync(USER_TOKENS_FILE)) {
-      const defaultData = { users: {} };
-      fs.writeFileSync(USER_TOKENS_FILE, JSON.stringify(defaultData, null, 2));
-      return defaultData;
-    }
-    const data = fs.readFileSync(USER_TOKENS_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Error reading user tokens data:', error);
-    return { users: {} };
-  }
-}
+const readUserTokensData = () => readFileOrInit(USER_TOKENS_FILE, { users: {} });
+const writeUserTokensData = data => fs.writeFileSync(USER_TOKENS_FILE, JSON.stringify(data, null, 2));
 
-// Fonction pour écrire les données des jetons utilisateur
-function writeUserTokensData(data) {
-  try {
-    fs.writeFileSync(USER_TOKENS_FILE, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Error writing user tokens data:', error);
-  }
-}
+const readUserJetonsData = () => readFileOrInit(USER_JETONS_FILE, {});
+const writeUserJetonsData = data => fs.writeFileSync(USER_JETONS_FILE, JSON.stringify(data, null, 2));
 
-// Fonction pour lire les données des pièces utilisateur
-function readUserJetonsData() {
-  try {
-    if (!fs.existsSync(USER_JETONS_FILE)) {
-      const defaultData = {};
-      fs.writeFileSync(USER_JETONS_FILE, JSON.stringify(defaultData, null, 2));
-      return defaultData;
-    }
-    const data = fs.readFileSync(USER_JETONS_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Error reading user jetons data:', error);
-    return {};
-  }
-}
+// --- ROUTES ---
 
-// Fonction pour écrire les données des pièces utilisateur
-function writeUserJetonsData(data) {
-  try {
-    fs.writeFileSync(USER_JETONS_FILE, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Error writing user jetons data:', error);
-  }
-}
-
-// Route pour obtenir le statut du calendrier
 router.get('/advent-calendar/status', (req, res) => {
-  try {
-    if (!isChristmasPeriod()) {
-      return res.json({
-        active: false,
-        message: 'Le calendrier de l\'Avent n\'est disponible que du 1er au 24 décembre'
-      });
-    }
-
-    const currentDay = getCurrentDay();
-    const data = readAdventData();
-
-    // Préparer les données du calendrier
-    const calendarData = ADVENT_REWARDS.map(reward => ({
-      ...reward,
-      unlocked: reward.day <= currentDay,
-      claimed: false // Sera défini par utilisateur
-    }));
-
-    res.json({
-      active: true,
-      currentDay,
-      calendar: calendarData
-    });
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Status error:', error);
-    res.status(500).json({ error: 'Erreur interne du serveur' });
+  if (!isChristmasPeriod()) {
+    return res.json({ active: false, message: 'Le calendrier de l\'Avent n\'est disponible que du 1er au 24 décembre' });
   }
+  const currentDay = getCurrentDay();
+  res.json({
+    active: true,
+    currentDay,
+    calendar: ADVENT_REWARDS.map(r => ({ ...r, unlocked: r.day <= currentDay, claimed: false }))
+  });
 });
 
-// Route pour obtenir les récompenses réclamées d'un utilisateur
 router.get('/advent-calendar/:userId/claimed', (req, res) => {
-  try {
-    const { userId } = req.params;
-    const data = readAdventData();
-
-    res.json({
-      claimed: data[userId] || []
-    });
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR-BOT] Get claimed error:', error);
-    res.status(500).json({ error: 'Erreur interne du serveur' });
-  }
+  const { userId } = req.params;
+  const data = readAdventData();
+  res.json({ claimed: data[userId] || [] });
 });
 
-// Route pour réclamer une récompense
 router.post('/advent-calendar/:userId/claim', async (req, res) => {
   try {
     const { userId } = req.params;
     const { day } = req.body;
 
-    if (!day || typeof day !== 'number' || day < 1 || day > 24) {
+    if (!day || day < 1 || day > 24) {
       return res.status(400).json({ error: 'Jour invalide' });
     }
 
-    // Vérifier si c'est la période de Noël
     if (!isChristmasPeriod()) {
       return res.status(400).json({ error: 'Calendrier non disponible' });
     }
 
     const currentDay = getCurrentDay();
-
-    // Vérifier si le jour est débloqué
     if (day > currentDay) {
       return res.status(400).json({ error: 'Ce jour n\'est pas encore débloqué' });
     }
 
     const data = readAdventData();
-
-    // Vérifier si déjà réclamé
-    if (data[userId] && data[userId].includes(day)) {
+    if (data[userId]?.includes(day)) {
       return res.status(400).json({ error: 'Récompense déjà réclamée' });
     }
 
-    // Trouver la récompense
     const reward = ADVENT_REWARDS.find(r => r.day === day);
-    if (!reward) {
-      return res.status(404).json({ error: 'Récompense introuvable' });
-    }
+    if (!reward) return res.status(404).json({ error: 'Récompense introuvable' });
 
-    // Distribuer la récompense selon son type
     let success = false;
 
-    switch (reward.type) {
-      case 'currency':
-        // Ajouter des pièces d'or
-        try {
-          const userJetonsData = readUserJetonsData();
-          userJetonsData[userId] = (userJetonsData[userId] || 0) + reward.amount;
-          writeUserJetonsData(userJetonsData);
-          console.log(`[ADVENT-CALENDAR-BOT] Successfully added ${reward.amount} coins to user ${userId}. New balance: ${userJetonsData[userId]}`);
+    // --- APPLY REWARD ---
+    if (reward.type === 'currency') {
+      const jetons = readUserJetonsData();
+
+      // Correction: les pièces sont stockées directement comme nombre, pas dans un objet balance
+      jetons[userId] = (jetons[userId] || 0) + reward.amount;
+
+      writeUserJetonsData(jetons);
+      console.log(`[ADVENT-CALENDAR-BOT] Successfully added ${reward.amount} coins to user ${userId}. New balance: ${jetons[userId]}`);
+      success = true;
+    }
+
+    if (reward.type === 'tokens') {
+      const tokens = readUserTokensData();
+
+      if (!tokens.users[userId]) tokens.users[userId] = 0;
+      tokens.users[userId] += reward.amount;
+
+      writeUserTokensData(tokens);
+      console.log(`[ADVENT-CALENDAR-BOT] Successfully added ${reward.amount} tokens to user ${userId}. New balance: ${tokens.users[userId]}`);
+      success = true;
+    }
+
+    if (reward.type === 'orbs') {
+      try {
+        const response = await fetch('http://193.70.34.25:20007/api/gacha/wishes/buy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, amount: reward.amount })
+        });
+
+        if (response.ok) {
+          console.log(`[ADVENT-CALENDAR-BOT] Successfully added ${reward.amount} orbs to user ${userId}`);
           success = true;
-        } catch (error) {
-          console.error('[ADVENT-CALENDAR-BOT] Error adding coins:', error);
+        } else {
+          console.error(`[ADVENT-CALENDAR-BOT] Failed to add orbs via gacha API:`, response.status);
           success = false;
         }
-        break;
-
-      case 'tokens':
-        // Ajouter des jetons
-        try {
-          const userTokensData = readUserTokensData();
-          userTokensData.users[userId] = (userTokensData.users[userId] || 0) + reward.amount;
-          writeUserTokensData(userTokensData);
-          console.log(`[ADVENT-CALENDAR-BOT] Successfully added ${reward.amount} tokens to user ${userId}. New balance: ${userTokensData.users[userId]}`);
-          success = true;
-        } catch (error) {
-          console.error('[ADVENT-CALENDAR-BOT] Error adding tokens:', error);
-          success = false;
-        }
-        break;
-
-      case 'orbs':
-        // Ajouter des orbes via l'API gacha wishes
-        console.log(`[ADVENT-CALENDAR-BOT] Adding ${reward.amount} orbs to user ${userId}`);
-        try {
-          const gachaResponse = await fetch('http://193.70.34.25:20007/api/gacha/wishes/buy', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId: userId,
-              amount: reward.amount
-            }),
-          });
-
-          if (gachaResponse.ok) {
-            const gachaData = await gachaResponse.json();
-            console.log(`[ADVENT-CALENDAR-BOT] Successfully added orbs:`, gachaData);
-            success = true;
-          } else {
-            console.error(`[ADVENT-CALENDAR-BOT] Failed to add orbs via gacha API:`, gachaResponse.status);
-            success = false;
-          }
-        } catch (gachaError) {
-          console.error('[ADVENT-CALENDAR-BOT] Error adding orbs via gacha API:', gachaError);
-          success = false;
-        }
-        break;
-
-      default:
-        console.warn(`[ADVENT-CALENDAR-BOT] Unknown reward type: ${reward.type}`);
-        return res.status(400).json({ error: 'Type de récompense inconnu' });
+      } catch (error) {
+        console.error('[ADVENT-CALENDAR-BOT] Error adding orbs via gacha API:', error);
+        success = false;
+      }
     }
 
     if (!success) {
       return res.status(500).json({ error: 'Erreur lors de la distribution de la récompense' });
     }
 
-    // Marquer la récompense comme réclamée
-    if (!data[userId]) {
-      data[userId] = [];
-    }
+    if (!data[userId]) data[userId] = [];
     data[userId].push(day);
     writeAdventData(data);
 
@@ -304,6 +179,49 @@ router.post('/advent-calendar/:userId/claim', async (req, res) => {
 
   } catch (error) {
     console.error('[ADVENT-CALENDAR-BOT] Claim error:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+});
+
+// Route pour obtenir le solde de pièces d'un utilisateur
+router.get('/currency/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const jetons = readUserJetonsData();
+    const balance = jetons[userId] || 0;
+
+    res.json({
+      balance: balance,
+      lastBonus: null // Peut être ajouté plus tard si nécessaire
+    });
+  } catch (error) {
+    console.error('[CURRENCY-API] Error getting user balance:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+});
+
+// Route pour mettre à jour le solde de pièces d'un utilisateur
+router.post('/currency/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { coins } = req.body;
+
+    if (typeof coins !== 'number') {
+      return res.status(400).json({ error: 'Montant invalide' });
+    }
+
+    const jetons = readUserJetonsData();
+    jetons[userId] = coins; // Définit le solde exact
+    writeUserJetonsData(jetons);
+
+    console.log(`[CURRENCY-API] Updated balance for user ${userId} to ${coins}`);
+
+    res.json({
+      balance: coins,
+      lastBonus: null
+    });
+  } catch (error) {
+    console.error('[CURRENCY-API] Error updating user balance:', error);
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 });
