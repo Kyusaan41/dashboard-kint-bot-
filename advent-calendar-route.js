@@ -37,6 +37,10 @@ const ADVENT_REWARDS = [
 // Fichier de stockage des récompenses réclamées
 const ADVENT_DATA_FILE = path.join(__dirname, '..', 'data', 'advent-calendar-bot.json');
 
+// Fichiers de stockage des monnaies utilisateur
+const USER_TOKENS_FILE = path.join(__dirname, '..', 'data', 'user-tokens.json');
+const USER_JETONS_FILE = path.join(__dirname, '..', 'data', 'user-jetons.json');
+
 // Fonction pour vérifier si c'est la période de Noël
 function isChristmasPeriod() {
   const now = new Date();
@@ -79,6 +83,56 @@ function writeAdventData(data) {
     fs.writeFileSync(ADVENT_DATA_FILE, JSON.stringify(data, null, 2));
   } catch (error) {
     console.error('[ADVENT-CALENDAR-BOT] Error writing advent data:', error);
+  }
+}
+
+// Fonction pour lire les données des jetons utilisateur
+function readUserTokensData() {
+  try {
+    if (!fs.existsSync(USER_TOKENS_FILE)) {
+      const defaultData = { users: {} };
+      fs.writeFileSync(USER_TOKENS_FILE, JSON.stringify(defaultData, null, 2));
+      return defaultData;
+    }
+    const data = fs.readFileSync(USER_TOKENS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('[ADVENT-CALENDAR-BOT] Error reading user tokens data:', error);
+    return { users: {} };
+  }
+}
+
+// Fonction pour écrire les données des jetons utilisateur
+function writeUserTokensData(data) {
+  try {
+    fs.writeFileSync(USER_TOKENS_FILE, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('[ADVENT-CALENDAR-BOT] Error writing user tokens data:', error);
+  }
+}
+
+// Fonction pour lire les données des pièces utilisateur
+function readUserJetonsData() {
+  try {
+    if (!fs.existsSync(USER_JETONS_FILE)) {
+      const defaultData = {};
+      fs.writeFileSync(USER_JETONS_FILE, JSON.stringify(defaultData, null, 2));
+      return defaultData;
+    }
+    const data = fs.readFileSync(USER_JETONS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('[ADVENT-CALENDAR-BOT] Error reading user jetons data:', error);
+    return {};
+  }
+}
+
+// Fonction pour écrire les données des pièces utilisateur
+function writeUserJetonsData(data) {
+  try {
+    fs.writeFileSync(USER_JETONS_FILE, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('[ADVENT-CALENDAR-BOT] Error writing user jetons data:', error);
   }
 }
 
@@ -168,15 +222,31 @@ router.post('/advent-calendar/:userId/claim', async (req, res) => {
 
     switch (reward.type) {
       case 'currency':
-        // Ajouter des pièces (logique à adapter selon votre système)
-        console.log(`[ADVENT-CALENDAR-BOT] Adding ${reward.amount} coins to user ${userId}`);
-        success = true; // À remplacer par votre logique réelle
+        // Ajouter des pièces d'or
+        try {
+          const userJetonsData = readUserJetonsData();
+          userJetonsData[userId] = (userJetonsData[userId] || 0) + reward.amount;
+          writeUserJetonsData(userJetonsData);
+          console.log(`[ADVENT-CALENDAR-BOT] Successfully added ${reward.amount} coins to user ${userId}. New balance: ${userJetonsData[userId]}`);
+          success = true;
+        } catch (error) {
+          console.error('[ADVENT-CALENDAR-BOT] Error adding coins:', error);
+          success = false;
+        }
         break;
 
       case 'tokens':
-        // Ajouter des jetons (logique à adapter selon votre système)
-        console.log(`[ADVENT-CALENDAR-BOT] Adding ${reward.amount} tokens to user ${userId}`);
-        success = true; // À remplacer par votre logique réelle
+        // Ajouter des jetons
+        try {
+          const userTokensData = readUserTokensData();
+          userTokensData.users[userId] = (userTokensData.users[userId] || 0) + reward.amount;
+          writeUserTokensData(userTokensData);
+          console.log(`[ADVENT-CALENDAR-BOT] Successfully added ${reward.amount} tokens to user ${userId}. New balance: ${userTokensData.users[userId]}`);
+          success = true;
+        } catch (error) {
+          console.error('[ADVENT-CALENDAR-BOT] Error adding tokens:', error);
+          success = false;
+        }
         break;
 
       case 'orbs':

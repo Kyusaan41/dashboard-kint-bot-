@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import fs from 'fs'
-import path from 'path'
 
 const BOT_API_URL = 'http://193.70.34.25:20007/api'
-const ADVENT_DATA_FILE = path.join(process.cwd(), 'data', 'advent-calendar.json')
 
 // Configuration des récompenses du calendrier de l'Avent
 const ADVENT_REWARDS = [
@@ -51,41 +48,6 @@ function getCurrentDay(): number {
   return Math.min(24, Math.max(1, now.getDate()))
 }
 
-// Fonction pour lire les données du calendrier depuis le fichier
-async function readAdventData(): Promise<{ [userId: string]: number[] }> {
-  try {
-    if (!fs.existsSync(ADVENT_DATA_FILE)) {
-      // Créer le fichier s'il n'existe pas
-      await fs.promises.writeFile(ADVENT_DATA_FILE, JSON.stringify({}, null, 2))
-      return {}
-    }
-    const data = await fs.promises.readFile(ADVENT_DATA_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR] Error reading advent data:', error)
-    return {}
-  }
-}
-
-// Fonction pour écrire les données du calendrier dans le fichier
-async function writeAdventData(data: { [userId: string]: number[] }): Promise<void> {
-  try {
-    // Créer le dossier data s'il n'existe pas
-    const dataDir = path.dirname(ADVENT_DATA_FILE)
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true })
-    }
-    await fs.promises.writeFile(ADVENT_DATA_FILE, JSON.stringify(data, null, 2))
-  } catch (error) {
-    console.error('[ADVENT-CALENDAR] Error writing advent data:', error)
-  }
-}
-
-// Fonction de fallback pour obtenir les récompenses réclamées (si le bot n'est pas disponible)
-async function getClaimedRewards(userId: string): Promise<number[]> {
-  const data = await readAdventData()
-  return data[userId] || []
-}
 
 
 export async function GET(request: NextRequest) {
@@ -115,10 +77,13 @@ export async function GET(request: NextRequest) {
       if (response.ok) {
         const data = await response.json()
         claimedRewards = data.claimed || []
+      } else {
+        console.error('[ADVENT-CALENDAR] Bot API returned error status:', response.status)
+        return NextResponse.json({ error: 'Erreur de connexion avec le bot' }, { status: 500 })
       }
     } catch (error) {
-      console.warn('[ADVENT-CALENDAR] Could not fetch claimed rewards from bot, using local storage:', error)
-      claimedRewards = await getClaimedRewards(userId)
+      console.error('[ADVENT-CALENDAR] Could not fetch claimed rewards from bot:', error)
+      return NextResponse.json({ error: 'Erreur de connexion avec le bot' }, { status: 500 })
     }
 
     // Préparer les données du calendrier
