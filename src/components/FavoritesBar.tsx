@@ -12,9 +12,8 @@ export const FavoritesBar: React.FC = () => {
 
   const favoritePages = FAVORITABLE_PAGES.filter((page: FavoritePage) => favorites.includes(page.id));
 
-  if (favoritePages.length === 0) {
-    return null; // Ne rien afficher si aucun favori
-  }
+  // Afficher toujours la barre avec au moins quelques éléments par défaut si aucun favori
+  const displayPages = favoritePages.length > 0 ? favoritePages : FAVORITABLE_PAGES.slice(0, 3);
 
   return (
     <motion.div
@@ -52,38 +51,45 @@ export const FavoritesBar: React.FC = () => {
 
       {/* Card content */}
       <div className="relative z-10 p-6">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--theme-text-secondary)' }}>Raccourcis</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--theme-text-secondary)' }}>
+          {favoritePages.length > 0 ? 'Raccourcis' : 'Suggestions de raccourcis'}
+        </h3>
         <div className="flex flex-wrap gap-4">
-        {favoritePages.map((page: FavoritePage, index: number) => (
-          <Link href={page.path} key={page.id} passHref>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex flex-col items-center gap-2 transition-colors cursor-pointer w-16 sm:w-20 text-center relative"
-              style={{
-                color: 'var(--theme-text-secondary)'
-              }}
-              whileHover={{
-                color: 'var(--theme-text)'
-              }}
-            >
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg flex items-center justify-center border transition-all relative"
+        {displayPages.map((page: FavoritePage, index: number) => {
+          const isFavorite = favorites.includes(page.id);
+          return (
+            <Link href={page.path} key={page.id} passHref>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex flex-col items-center gap-2 transition-colors cursor-pointer w-16 sm:w-20 text-center relative"
                 style={{
-                  backgroundColor: 'var(--theme-secondary)15',
-                  borderColor: 'var(--theme-secondary)',
-                  boxShadow: '0 0 10px var(--theme-secondary)40'
+                  color: 'var(--theme-text-secondary)'
+                }}
+                whileHover={{
+                  color: 'var(--theme-text)'
                 }}
               >
-                <page.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'var(--theme-text)' }} />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <span className="text-xs text-black font-bold">★</span>
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg flex items-center justify-center border transition-all relative"
+                  style={{
+                    backgroundColor: 'var(--theme-secondary)15',
+                    borderColor: 'var(--theme-secondary)',
+                    boxShadow: '0 0 10px var(--theme-secondary)40'
+                  }}
+                >
+                  <page.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'var(--theme-text)' }} />
+                  {isFavorite && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs text-black font-bold">★</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <span className="text-xs font-medium truncate w-full" style={{ color: 'var(--theme-text)' }}>{page.name}</span>
-            </motion.div>
-          </Link>
-        ))}
+                <span className="text-xs font-medium truncate w-full" style={{ color: 'var(--theme-text)' }}>{page.name}</span>
+              </motion.div>
+            </Link>
+          );
+        })}
         </div>
       </div>
     </motion.div>
