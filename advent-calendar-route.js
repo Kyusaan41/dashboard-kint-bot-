@@ -129,7 +129,7 @@ router.get('/advent-calendar/:userId/claimed', (req, res) => {
 });
 
 // Route pour réclamer une récompense
-router.post('/advent-calendar/:userId/claim', (req, res) => {
+router.post('/advent-calendar/:userId/claim', async (req, res) => {
   try {
     const { userId } = req.params;
     const { day } = req.body;
@@ -183,7 +183,7 @@ router.post('/advent-calendar/:userId/claim', (req, res) => {
         // Ajouter des orbes via l'API gacha wishes
         console.log(`[ADVENT-CALENDAR-BOT] Adding ${reward.amount} orbs to user ${userId}`);
         try {
-          const gachaResponse = await fetch('http://localhost:20007/api/gacha/wishes/buy', {
+          const gachaResponse = await fetch('http://193.70.34.25:20007/api/gacha/wishes/buy', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
