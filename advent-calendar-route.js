@@ -180,9 +180,32 @@ router.post('/advent-calendar/:userId/claim', (req, res) => {
         break;
 
       case 'orbs':
-        // Ajouter des orbes (logique à adapter selon votre système)
+        // Ajouter des orbes via l'API gacha wishes
         console.log(`[ADVENT-CALENDAR-BOT] Adding ${reward.amount} orbs to user ${userId}`);
-        success = true; // À remplacer par votre logique réelle
+        try {
+          const gachaResponse = await fetch('http://localhost:20007/api/gacha/wishes/buy', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userId,
+              amount: reward.amount
+            }),
+          });
+
+          if (gachaResponse.ok) {
+            const gachaData = await gachaResponse.json();
+            console.log(`[ADVENT-CALENDAR-BOT] Successfully added orbs:`, gachaData);
+            success = true;
+          } else {
+            console.error(`[ADVENT-CALENDAR-BOT] Failed to add orbs via gacha API:`, gachaResponse.status);
+            success = false;
+          }
+        } catch (gachaError) {
+          console.error('[ADVENT-CALENDAR-BOT] Error adding orbs via gacha API:', gachaError);
+          success = false;
+        }
         break;
 
       default:
