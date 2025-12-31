@@ -5,10 +5,9 @@ import { authOptions } from '@/lib/auth';
 const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 // On utilise la signature simplifiée avec 'any' pour le contexte
-export async function GET(request: NextRequest, context: any) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
-        const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
 
         const res = await fetch(`${BOT_API_URL}/titres/${userId}`, { cache: 'no-store' });
         if (!res.ok) {
@@ -28,10 +27,9 @@ export async function GET(request: NextRequest, context: any) {
 }
 
 // On utilise aussi la signature simplifiée pour la fonction POST
-export async function POST(request: NextRequest, context: any) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     const session = await getServerSession(authOptions);
-    const { params } = context;
-    const { userId } = params;
+    const { userId } = await params;
 
     if (session?.user?.id !== userId) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });

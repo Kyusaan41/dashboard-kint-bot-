@@ -2,10 +2,9 @@ import { NextResponse, NextRequest } from 'next/server';
 
 const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
-export async function GET(request: NextRequest, context: any) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
-        const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
 
         if (!userId) {
             return NextResponse.json({ error: "User ID manquant" }, { status: 400 });

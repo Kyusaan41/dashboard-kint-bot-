@@ -1,10 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 
 // La seule signature qui passe le build Vercel dans votre cas
-export async function GET(request: NextRequest, context: any) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
-        const { params } = context;
-        const { userId } = params;
+        const { userId } = await params;
 
         if (!userId) {
             return NextResponse.json({ error: "User ID manquant dans l'URL" }, { status: 400 });

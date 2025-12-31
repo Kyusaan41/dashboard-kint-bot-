@@ -5,9 +5,8 @@ import { NextResponse, NextRequest } from 'next/server';
 const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 // GET : Récupère les points d'un utilisateur
-export async function GET(request: NextRequest, context: any) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
-        const { params } = context;
         const { userId } = await params;
 
         if (!userId) {
@@ -28,9 +27,8 @@ export async function GET(request: NextRequest, context: any) {
 
 // POST : Met à jour les points d'un utilisateur
 // Modification : Attend maintenant 'amount' (différence) et 'source'
-export async function POST(request: NextRequest, context: any) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
-        const { params } = context;
         const { userId } = await params;
         const { amount, source } = await request.json(); // <-- Récupère la différence (amount) et la source
 

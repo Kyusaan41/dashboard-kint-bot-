@@ -71,8 +71,8 @@ function writeAdventData(data: any) {
   writeFileSync(ADVENT_DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
-  const { userId } = params;
+export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = await params;
   const body = await request.json();
   const { day } = body;
 

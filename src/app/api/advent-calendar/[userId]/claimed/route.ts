@@ -16,8 +16,9 @@ function readAdventData() {
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = await params;
   const data = readAdventData();
-  const claimed = data[params.userId] || [];
+  const claimed = data[userId] || [];
   return NextResponse.json({ claimed });
 }

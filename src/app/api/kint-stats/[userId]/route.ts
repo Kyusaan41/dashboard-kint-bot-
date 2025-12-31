@@ -4,9 +4,8 @@ import { NextResponse, NextRequest } from 'next/server';
 const BOT_API_URL = 'http://193.70.34.25:20007/api';
 
 // On utilise la même signature que vos autres routes fonctionnelles
-export async function GET(request: NextRequest, context: any) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
-        const { params } = context;
         const { userId } = await params;
 
         if (!userId) {
@@ -23,9 +22,8 @@ export async function GET(request: NextRequest, context: any) {
 }
 
 // On applique aussi la correction à la fonction POST
-export async function POST(request: NextRequest, context: any) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
-        const { params } = context;
         const { userId } = await params;
         
         if (!userId) {

@@ -1,10 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
 
 // On utilise une signature simplifiée avec 'any' pour le contexte
-export async function GET(request: NextRequest, context: any) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
         // On récupère les paramètres à l'intérieur de la fonction
-        const { params } = context;
         const { userId } = await params;
 
         if (!userId) {
