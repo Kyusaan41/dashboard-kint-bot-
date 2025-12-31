@@ -119,19 +119,7 @@ export default function AdventCalendar() {
   }
 
   if (!data?.active) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-green-800 to-slate-800 rounded-2xl p-6 shadow-xl border border-green-600/50"
-      >
-        <div className="text-center py-8">
-          <TreePine className="w-12 h-12 text-green-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">🎄 Calendrier de l'Avent</h3>
-          <p className="text-green-200">Le calendrier sera disponible du 1er au 24 décembre !</p>
-        </div>
-      </motion.div>
-    )
+    return null
   }
 
   return (
