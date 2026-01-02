@@ -248,7 +248,7 @@ const SeasonPassLeaderboard = () => {
   )
 }
 
-interface LeaderboardEntry {
+export interface LeaderboardEntry {
   id: string
   username: string
   avatar: string
@@ -363,7 +363,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
             <div className="w-16 h-16 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
             <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-purple-400 animate-pulse" />
           </div>
-          <p className="text-gray-300 text-lg">Chargement du Season Pass...</p>
+          <p className="text-gray-300 text-lg">Chargement du Season Pass..</p>
         </motion.div>
       </div>
     )
