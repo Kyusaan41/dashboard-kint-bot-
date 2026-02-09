@@ -1,127 +1,86 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 
-// Types pour les décorations
-type TreeDecoration = {
-  id: string;
-  type: 'tree';
-  x: number;
-  y: number;
-  size: number;
-  rotation: number;
+// Hook pour détecter les performances
+const usePerformanceMode = () => {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return reducedMotion;
 };
 
-type LightDecoration = {
-  id: string;
-  type: 'light';
-  x: number;
-  y: number;
-  size: number;
-  color: string;
-};
-
-type BaubleDecoration = {
-  id: string;
-  type: 'bauble';
-  x: number;
-  y: number;
-  size: number;
-  color: string;
-};
-
-type ChristmasDecoration = TreeDecoration | LightDecoration | BaubleDecoration;
-
-// Composant pour les décorations de Noël
+// Composant pour les décorations de Noël - OPTIMISÉ
 const ChristmasDecorations = () => {
-  const decorations: ChristmasDecoration[] = useMemo(() => [
-    // Sapins en arrière-plan (plus grands et subtils)
-    ...Array.from({ length: 3 }).map((_, i): TreeDecoration => ({
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire drastiquement : 3 sapins -> 1, 6 lumières -> 2, 4 boules -> 1
+  const decorations = useMemo(() => [
+    // Un seul sapin
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `bg-tree-${i}`,
       type: 'tree',
-      x: 10 + (i * 30) + Math.random() * 20,
-      y: 60 + Math.random() * 30,
-      size: 60 + Math.random() * 30,
-      rotation: -3 + Math.random() * 6,
+      x: 50 + Math.random() * 20,
+      y: 70 + Math.random() * 20,
+      size: 50 + Math.random() * 20,
+      rotation: -2 + Math.random() * 4,
     })),
-    // Guirlandes lumineuses colorées
-    ...Array.from({ length: 6 }).map((_, i): LightDecoration => ({
+    // 2 lumières seulement
+    ...Array.from({ length: reducedMotion ? 0 : 2 }).map((_, i) => ({
       id: `light-${i}`,
       type: 'light',
-      x: Math.random() * 100,
-      y: 15 + Math.random() * 70,
-      size: 4 + Math.random() * 6,
-      color: ['#ff0000', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#ff8800'][Math.floor(Math.random() * 7)],
+      x: 20 + (i * 60) + Math.random() * 20,
+      y: 30 + Math.random() * 40,
+      size: 5 + Math.random() * 3,
+      color: ['#ff0000', '#00ff00', '#ffff00'][Math.floor(Math.random() * 3)],
     })),
-    // Boules de Noël décoratives
-    ...Array.from({ length: 4 }).map((_, i): BaubleDecoration => ({
+    // 1 boule seulement
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `bauble-${i}`,
       type: 'bauble',
-      x: Math.random() * 100,
-      y: 25 + Math.random() * 60,
-      size: 10 + Math.random() * 8,
-      color: ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#ff8844'][Math.floor(Math.random() * 6)],
+      x: 50 + Math.random() * 30,
+      y: 40 + Math.random() * 30,
+      size: 12 + Math.random() * 4,
+      color: ['#ff4444', '#44ff44', '#4444ff'][Math.floor(Math.random() * 3)],
     })),
-  ], []);
+  ], [reducedMotion]);
+
+  if (reducedMotion || decorations.length === 0) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {decorations.map((decoration) => {
         if (decoration.type === 'tree') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
-              className="absolute"
+              className="absolute text-green-600/40 drop-shadow-lg"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
+                fontSize: `${decoration.size}px`,
                 transform: `rotate(${decoration.rotation}deg)`,
-              }}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{
-                scale: [0, 1.1, 1],
-                opacity: [0, 0.8, 0.6],
-                rotate: [decoration.rotation, decoration.rotation + 2, decoration.rotation],
-              }}
-              transition={{
-                duration: 2,
-                delay: Math.random() * 2,
-                repeat: Infinity,
-                repeatType: 'reverse',
-                ease: 'easeInOut',
+                animation: 'treeSway 8s ease-in-out infinite',
+                willChange: 'transform',
               }}
             >
-              <div
-                className="text-green-600 drop-shadow-lg"
-                style={{ fontSize: `${decoration.size}px` }}
-              >
-                🎄
-              </div>
-              {/* Petite guirlande sur le sapin */}
-              <motion.div
-                className="absolute -top-1 -left-1 text-yellow-400"
-                style={{ fontSize: `${decoration.size * 0.3}px` }}
-                animate={{
-                  opacity: [0.3, 1, 0.3],
-                  scale: [0.9, 1.1, 0.9],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              >
-                ✨
-              </motion.div>
-            </motion.div>
+              🎄
+            </div>
           );
         }
 
         if (decoration.type === 'light') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
               className="absolute rounded-full"
               style={{
@@ -131,16 +90,9 @@ const ChristmasDecorations = () => {
                 height: `${decoration.size}px`,
                 backgroundColor: decoration.color,
                 boxShadow: `0 0 ${decoration.size * 2}px ${decoration.color}80`,
-              }}
-              animate={{
-                opacity: [0.3, 1, 0.3],
-                scale: [0.8, 1.2, 0.8],
-              }}
-              transition={{
-                duration: 2 + Math.random() * 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: Math.random() * 2,
+                animation: 'lightFlicker 3s ease-in-out infinite',
+                animationDelay: `${Math.random() * 2}s`,
+                willChange: 'opacity, transform',
               }}
             />
           );
@@ -148,9 +100,9 @@ const ChristmasDecorations = () => {
 
         if (decoration.type === 'bauble') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
-              className="absolute rounded-full border-2 border-white/50"
+              className="absolute rounded-full border-2 border-white/30"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
@@ -158,22 +110,8 @@ const ChristmasDecorations = () => {
                 height: `${decoration.size}px`,
                 backgroundColor: decoration.color,
                 boxShadow: `0 0 ${decoration.size}px ${decoration.color}60`,
-              }}
-              animate={{
-                rotate: [0, 360],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                rotate: {
-                  duration: 20 + Math.random() * 10,
-                  repeat: Infinity,
-                  ease: 'linear',
-                },
-                scale: {
-                  duration: 3 + Math.random() * 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                },
+                animation: 'baubleSwing 6s ease-in-out infinite',
+                willChange: 'transform',
               }}
             />
           );
@@ -181,335 +119,250 @@ const ChristmasDecorations = () => {
 
         return null;
       })}
+      <style jsx>{`
+        @keyframes treeSway {
+          0%, 100% { transform: rotate(-2deg); }
+          50% { transform: rotate(2deg); }
+        }
+        @keyframes lightFlicker {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes baubleSwing {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          50% { transform: rotate(10deg) scale(1.1); }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Types pour Halloween
-type PumpkinDecoration = {
-  id: string;
-  type: 'pumpkin';
-  x: number;
-  y: number;
-  size: number;
-  flickerDelay: number;
-};
-
-type BatDecoration = {
-  id: string;
-  type: 'bat';
-  x: number;
-  y: number;
-  size: number;
-  speed: number;
-};
-
-type WebDecoration = {
-  id: string;
-  type: 'web';
-  x: number;
-  y: number;
-  size: number;
-  rotation: number;
-};
-
-type HalloweenDecoration = PumpkinDecoration | BatDecoration | WebDecoration;
-
-// Composant pour les décorations d'Halloween
+// Composant pour les décorations d'Halloween - OPTIMISÉ
 const HalloweenDecorations = () => {
-  const decorations: HalloweenDecoration[] = useMemo(() => [
-    // Citrouilles avec effets de lueur
-    ...Array.from({ length: 2 }).map((_, i): PumpkinDecoration => ({
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire : 2 citrouilles -> 1, 3 chauves-souris -> 1, 2 toiles -> 1
+  const decorations = useMemo(() => [
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `pumpkin-${i}`,
       type: 'pumpkin',
-      x: 20 + (i * 40) + Math.random() * 20,
-      y: 70 + Math.random() * 20,
-      size: 40 + Math.random() * 20,
-      flickerDelay: Math.random() * 4,
+      x: 50 + Math.random() * 30,
+      y: 75 + Math.random() * 15,
+      size: 35 + Math.random() * 15,
     })),
-    // Chauves-souris animées
-    ...Array.from({ length: 3 }).map((_, i): BatDecoration => ({
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `bat-${i}`,
       type: 'bat',
       x: Math.random() * 100,
-      y: 5 + Math.random() * 35,
-      size: 18 + Math.random() * 12,
-      speed: 10 + Math.random() * 10,
+      y: 10 + Math.random() * 30,
+      size: 20 + Math.random() * 10,
     })),
-    // Toiles d'araignée décoratives
-    ...Array.from({ length: 2 }).map((_, i): WebDecoration => ({
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `web-${i}`,
       type: 'web',
       x: Math.random() * 100,
       y: Math.random() * 100,
-      size: 35 + Math.random() * 25,
+      size: 30 + Math.random() * 20,
       rotation: Math.random() * 360,
     })),
-  ], []);
+  ], [reducedMotion]);
+
+  if (reducedMotion || decorations.length === 0) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {decorations.map((decoration) => {
         if (decoration.type === 'pumpkin') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
               className="absolute"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
                 fontSize: `${decoration.size}px`,
-              }}
-              animate={{
-                scale: [1, 1.05, 1],
-                filter: [
-                  'drop-shadow(0 0 5px rgba(255, 140, 0, 0.5))',
-                  'drop-shadow(0 0 15px rgba(255, 140, 0, 0.8))',
-                  'drop-shadow(0 0 5px rgba(255, 140, 0, 0.5))',
-                ],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: decoration.flickerDelay,
+                animation: 'pumpkinGlow 4s ease-in-out infinite',
+                willChange: 'filter',
               }}
             >
               🎃
-            </motion.div>
+            </div>
           );
         }
 
         if (decoration.type === 'bat') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
-              className="absolute text-gray-800"
+              className="absolute text-gray-800/60"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
                 fontSize: `${decoration.size}px`,
-              }}
-              animate={{
-                x: [0, 100, 0],
-                y: [0, -20, 0],
-                rotate: [0, 10, -10, 0],
-              }}
-              transition={{
-                duration: decoration.speed,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: Math.random() * 5,
+                animation: 'batFly 12s ease-in-out infinite',
+                willChange: 'transform',
               }}
             >
               🦇
-            </motion.div>
+            </div>
           );
         }
 
         if (decoration.type === 'web') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
-              className="absolute text-gray-400/30"
+              className="absolute text-gray-400/20"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
                 fontSize: `${decoration.size}px`,
                 transform: `rotate(${decoration.rotation}deg)`,
-              }}
-              animate={{
-                opacity: [0.2, 0.4, 0.2],
-                scale: [0.9, 1.1, 0.9],
-              }}
-              transition={{
-                duration: 4 + Math.random() * 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
+                animation: 'webPulse 6s ease-in-out infinite',
+                willChange: 'opacity',
               }}
             >
               🕸️
-            </motion.div>
+            </div>
           );
         }
 
         return null;
       })}
+      <style jsx>{`
+        @keyframes pumpkinGlow {
+          0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 140, 0, 0.5)); }
+          50% { filter: drop-shadow(0 0 15px rgba(255, 140, 0, 0.8)); }
+        }
+        @keyframes batFly {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          50% { transform: translate(50px, -20px) rotate(10deg); }
+        }
+        @keyframes webPulse {
+          0%, 100% { opacity: 0.2; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Types pour le Nouvel An Chinois
-type LanternDecoration = {
-  id: string;
-  type: 'lantern';
-  x: number;
-  y: number;
-  size: number;
-  swayDelay: number;
-};
-
-type DragonDecoration = {
-  id: string;
-  type: 'dragon';
-  x: number;
-  y: number;
-  size: number;
-  speed: number;
-};
-
-type FireworkDecoration = {
-  id: string;
-  type: 'firework';
-  x: number;
-  y: number;
-  size: number;
-  burstDelay: number;
-};
-
-type ChineseNewYearDecoration = LanternDecoration | DragonDecoration | FireworkDecoration;
-
-// Composant pour les décorations du Nouvel An Chinois
+// Composant pour les décorations du Nouvel An Chinois - OPTIMISÉ
 const ChineseNewYearDecorations = () => {
-  const decorations: ChineseNewYearDecoration[] = useMemo(() => [
-    // Lanterne rouge décorative
-    ...Array.from({ length: 1 }).map((_, i): LanternDecoration => ({
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire : 1 de chaque seulement, ou rien si reducedMotion
+  const decorations = useMemo(() => [
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `lantern-${i}`,
       type: 'lantern',
-      x: 20 + Math.random() * 60,
-      y: 20 + Math.random() * 40,
-      size: 32 + Math.random() * 16,
-      swayDelay: Math.random() * 2,
+      x: 50 + Math.random() * 30,
+      y: 30 + Math.random() * 30,
+      size: 30 + Math.random() * 10,
     })),
-    // Dragon majestueux
-    ...Array.from({ length: 1 }).map((_, i): DragonDecoration => ({
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `dragon-${i}`,
       type: 'dragon',
       x: Math.random() * 100,
-      y: 15 + Math.random() * 20,
-      size: 40 + Math.random() * 20,
-      speed: 16 + Math.random() * 8,
+      y: 20 + Math.random() * 20,
+      size: 35 + Math.random() * 15,
     })),
-    // Feu d'artifice spectaculaire
-    ...Array.from({ length: 1 }).map((_, i): FireworkDecoration => ({
+    ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `firework-${i}`,
       type: 'firework',
       x: Math.random() * 100,
       y: 60 + Math.random() * 30,
-      size: 24 + Math.random() * 8,
-      burstDelay: Math.random() * 8,
+      size: 20 + Math.random() * 8,
     })),
-  ], []);
+  ], [reducedMotion]);
+
+  if (reducedMotion || decorations.length === 0) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       {decorations.map((decoration) => {
         if (decoration.type === 'lantern') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
               className="absolute"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
                 fontSize: `${decoration.size}px`,
-              }}
-              animate={{
-                y: [0, -5, 0],
-                rotate: [-2, 2, -2],
-                filter: [
-                  'drop-shadow(0 0 5px rgba(255, 0, 0, 0.5))',
-                  'drop-shadow(0 0 15px rgba(255, 0, 0, 0.8))',
-                  'drop-shadow(0 0 5px rgba(255, 0, 0, 0.5))',
-                ],
-              }}
-              transition={{
-                y: {
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                  delay: decoration.swayDelay,
-                },
-                rotate: {
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                  delay: decoration.swayDelay,
-                },
-                filter: {
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                  delay: decoration.swayDelay + 1,
-                },
+                animation: 'lanternSway 5s ease-in-out infinite',
+                willChange: 'transform',
               }}
             >
               🏮
-            </motion.div>
+            </div>
           );
         }
 
         if (decoration.type === 'dragon') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
-              className="absolute text-red-600"
+              className="absolute text-red-600/60"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
                 fontSize: `${decoration.size}px`,
-              }}
-              animate={{
-                x: [-50, 150, -50],
-                scale: [0.8, 1.2, 0.8],
-              }}
-              transition={{
-                duration: decoration.speed,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: Math.random() * 5,
+                animation: 'dragonMove 20s ease-in-out infinite',
+                willChange: 'transform',
               }}
             >
               🐉
-            </motion.div>
+            </div>
           );
         }
 
         if (decoration.type === 'firework') {
           return (
-            <motion.div
+            <div
               key={decoration.id}
               className="absolute"
               style={{
                 left: `${decoration.x}%`,
                 top: `${decoration.y}%`,
                 fontSize: `${decoration.size}px`,
-              }}
-              animate={{
-                scale: [0, 1.5, 0],
-                opacity: [0, 1, 0],
-                rotate: [0, 180, 360],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeOut',
-                delay: decoration.burstDelay,
+                animation: 'fireworkBurst 4s ease-out infinite',
+                willChange: 'transform, opacity',
               }}
             >
               🎆
-            </motion.div>
+            </div>
           );
         }
 
         return null;
       })}
+      <style jsx>{`
+        @keyframes lanternSway {
+          0%, 100% { transform: translateY(0) rotate(-2deg); }
+          50% { transform: translateY(-5px) rotate(2deg); }
+        }
+        @keyframes dragonMove {
+          0%, 100% { transform: translateX(0) scale(0.8); }
+          50% { transform: translateX(50px) scale(1.2); }
+        }
+        @keyframes fireworkBurst {
+          0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+          50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
 
 export function SeasonalDecorations() {
   const { currentTheme } = useTheme();
+  const reducedMotion = usePerformanceMode();
+
+  // Si l'utilisateur préfère réduire les animations, désactiver toutes les décorations
+  if (reducedMotion) {
+    return null;
+  }
 
   switch (currentTheme) {
     case 'christmas':

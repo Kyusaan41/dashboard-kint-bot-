@@ -56,8 +56,8 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
       gradient: 'linear-gradient(135deg, #ff6b35, #f7931e, #000000)',
     },
     effects: {
-      particles: true,
-      animatedBg: true,
+      particles: false, // Désactivé pour performance
+      animatedBg: false, // Désactivé pour performance
     },
     icons: {
       mascot: '🎃',
@@ -79,8 +79,8 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
       gradient: 'linear-gradient(135deg, #dc2626, #16a34a, #fbbf24)',
     },
     effects: {
-      snow: true,
-      animatedBg: true,
+      snow: false, // Désactivé pour performance
+      animatedBg: false, // Désactivé pour performance
     },
     icons: {
       mascot: '🎄',
@@ -102,8 +102,8 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
       gradient: 'linear-gradient(135deg, #dc2626, #ea580c, #fbbf24)',
     },
     effects: {
-      particles: true,
-      animatedBg: true,
+      particles: false, // Désactivé pour performance
+      animatedBg: false, // Désactivé pour performance
     },
     icons: {
       mascot: '🐉',
@@ -125,7 +125,7 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
       gradient: 'linear-gradient(135deg, #16a34a, #84cc16, #eab308)',
     },
     effects: {
-      particles: true,
+      particles: false, // Désactivé pour performance
     },
     icons: {
       mascot: '🌸',
@@ -147,7 +147,7 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
       gradient: 'linear-gradient(135deg, #0284c7, #0891b2, #f59e0b)',
     },
     effects: {
-      animatedBg: true,
+      animatedBg: false, // Désactivé pour performance
     },
     icons: {
       mascot: '☀️',
@@ -169,7 +169,7 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
       gradient: 'linear-gradient(135deg, #ea580c, #dc2626, #d97706)',
     },
     effects: {
-      particles: true,
+      particles: false, // Désactivé pour performance
     },
     icons: {
       mascot: '🍂',
@@ -191,7 +191,7 @@ export const THEMES: Record<ThemeType, ThemeConfig> = {
       gradient: 'linear-gradient(135deg, #3b82f6, #6366f1, #e5e7eb)',
     },
     effects: {
-      snow: true,
+      snow: false, // Désactivé pour performance
     },
     icons: {
       mascot: '❄️',

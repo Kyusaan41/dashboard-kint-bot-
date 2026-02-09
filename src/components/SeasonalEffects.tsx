@@ -1,70 +1,97 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 
-// Composant pour la neige
+// Hook pour détecter les performances et désactiver les effets si nécessaire
+const usePerformanceMode = () => {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    // Vérifier la préférence système pour réduire les animations
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return reducedMotion;
+};
+
+// Composant pour la neige - OPTIMISÉ avec CSS pur
 const SnowEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire drastiquement le nombre de flocons (de 50 à 15)
   const snowflakes = useMemo(() =>
-    Array.from({ length: 50 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 5 : 15 }).map((_, i) => ({
       id: i,
       x: Math.random() * 100,
       delay: Math.random() * 10,
-      duration: 10 + Math.random() * 10,
-      size: 2 + Math.random() * 4,
-    })), []
+      duration: 15 + Math.random() * 10,
+      size: 2 + Math.random() * 3,
+    })), [reducedMotion]
   );
 
+  if (reducedMotion) return null;
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" style={{ willChange: 'transform' }}>
       {snowflakes.map((flake) => (
-        <motion.div
+        <div
           key={flake.id}
-          className="absolute text-white opacity-70"
+          className="absolute text-white opacity-50"
           style={{
             left: `${flake.x}%`,
+            top: '-10px',
             fontSize: `${flake.size}px`,
-          }}
-          initial={{ y: -10, opacity: 0 }}
-          animate={{
-            y: '110vh',
-            opacity: [0, 0.7, 0.7, 0],
-            rotate: [0, 360],
-          }}
-          transition={{
-            duration: flake.duration,
-            repeat: Infinity,
-            delay: flake.delay,
-            ease: 'linear',
+            animation: `snowfall ${flake.duration}s linear infinite`,
+            animationDelay: `${flake.delay}s`,
+            willChange: 'transform',
           }}
         >
           ❄️
-        </motion.div>
+        </div>
       ))}
+      <style jsx>{`
+        @keyframes snowfall {
+          to {
+            transform: translateY(110vh) rotate(360deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour les particules colorées
+// Composant pour les particules colorées - OPTIMISÉ
 const ParticlesEffect = ({ colors, theme }: { colors: string[]; theme: string }) => {
-  const particleCount = theme === 'chinese-new-year' ? 10 : 20;
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire le nombre de particules (de 20 à 8)
+  const particleCount = reducedMotion ? 0 : (theme === 'chinese-new-year' ? 5 : 8);
+  
   const particles = useMemo(() =>
     Array.from({ length: particleCount }).map((_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
       delay: Math.random() * 5,
-      duration: 8 + Math.random() * 8,
-      size: 1 + Math.random() * 3,
+      duration: 12 + Math.random() * 8,
+      size: 2 + Math.random() * 2,
       color: colors[Math.floor(Math.random() * colors.length)],
     })), [colors, particleCount]
   );
 
+  if (reducedMotion || particleCount === 0) return null;
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" style={{ willChange: 'transform' }}>
       {particles.map((particle) => (
-        <motion.div
+        <div
           key={particle.id}
           className="absolute rounded-full"
           style={{
@@ -74,51 +101,77 @@ const ParticlesEffect = ({ colors, theme }: { colors: string[]; theme: string })
             height: `${particle.size}px`,
             backgroundColor: particle.color,
             boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
-          }}
-          animate={{
-            y: [0, -20, 0],
-            x: [0, Math.random() * 20 - 10, 0],
-            opacity: [0.3, 0.8, 0.3],
-            scale: [0.8, 1.2, 0.8],
-          }}
-          transition={{
-            duration: particle.duration,
-            repeat: Infinity,
-            delay: particle.delay,
-            ease: 'easeInOut',
+            animation: `particleFloat ${particle.duration}s ease-in-out infinite`,
+            animationDelay: `${particle.delay}s`,
+            willChange: 'transform, opacity',
           }}
         />
       ))}
+      <style jsx>{`
+        @keyframes particleFloat {
+          0%, 100% {
+            transform: translate(0, 0) scale(0.8);
+            opacity: 0.3;
+          }
+          50% {
+            transform: translate(10px, -20px) scale(1.2);
+            opacity: 0.8;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour l'arrière-plan animé
+// Composant pour l'arrière-plan animé - OPTIMISÉ avec CSS
 const AnimatedBackground = ({ colors }: { colors: string[] }) => {
-  return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      <motion.div
-        className="absolute inset-0 opacity-5"
-        animate={{
-          background: [
-            `radial-gradient(circle at 20% 50%, ${colors[0]} 0%, transparent 50%)`,
-            `radial-gradient(circle at 80% 20%, ${colors[1]} 0%, transparent 50%)`,
-            `radial-gradient(circle at 40% 80%, ${colors[2]} 0%, transparent 50%)`,
-            `radial-gradient(circle at 20% 50%, ${colors[0]} 0%, transparent 50%)`,
-          ],
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: 'linear',
+  const reducedMotion = usePerformanceMode();
+
+  if (reducedMotion) {
+    return (
+      <div 
+        className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-5"
+        style={{
+          background: `radial-gradient(circle at 20% 50%, ${colors[0]} 0%, transparent 50%)`,
         }}
       />
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-5">
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 20% 50%, ${colors[0]} 0%, transparent 50%),
+                       radial-gradient(circle at 80% 20%, ${colors[1]} 0%, transparent 50%),
+                       radial-gradient(circle at 40% 80%, ${colors[2]} 0%, transparent 50%)`,
+          animation: 'backgroundShift 30s ease infinite',
+          willChange: 'background-position',
+        }}
+      />
+      <style jsx>{`
+        @keyframes backgroundShift {
+          0%, 100% {
+            background-position: 0% 0%, 100% 0%, 50% 100%;
+          }
+          50% {
+            background-position: 100% 100%, 0% 100%, 50% 0%;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
 export function SeasonalEffects() {
   const { themeConfig, currentTheme } = useTheme();
+  const reducedMotion = usePerformanceMode();
+
+  // Si l'utilisateur préfère réduire les animations, désactiver tous les effets
+  if (reducedMotion) {
+    return null;
+  }
 
   const effects = themeConfig.effects || {};
   const colors = [

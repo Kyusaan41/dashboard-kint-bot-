@@ -1,311 +1,369 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 
-// Composant pour les effets de neige sur les cartes (Noël/Hiver)
+// Hook pour détecter les performances
+const usePerformanceMode = () => {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return reducedMotion;
+};
+
+// Composant pour les effets de neige sur les cartes - OPTIMISÉ
 const SnowEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire de 8 à 3 flocons
   const snowflakes = useMemo(() =>
-    Array.from({ length: 8 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 0 : 3 }).map((_, i) => ({
       id: `snow-${i}`,
       x: Math.random() * 100,
       delay: Math.random() * 3,
-      duration: 3 + Math.random() * 2,
-      size: 2 + Math.random() * 3,
-    })), []
+      duration: 4 + Math.random() * 2,
+      size: 2 + Math.random() * 2,
+    })), [reducedMotion]
   );
 
+  if (reducedMotion || snowflakes.length === 0) return null;
+
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl" style={{ willChange: 'transform' }}>
       {snowflakes.map((flake) => (
-        <motion.div
+        <div
           key={flake.id}
-          className="absolute text-white/60"
+          className="absolute text-white/40"
           style={{
             left: `${flake.x}%`,
             top: '-10px',
             fontSize: `${flake.size}px`,
-          }}
-          animate={{
-            y: [0, 120],
-            x: [0, Math.random() * 20 - 10],
-            opacity: [0, 0.8, 0],
-            rotate: [0, 360],
-          }}
-          transition={{
-            duration: flake.duration,
-            repeat: Infinity,
-            delay: flake.delay,
-            ease: 'linear',
+            animation: `cardSnowfall ${flake.duration}s linear infinite`,
+            animationDelay: `${flake.delay}s`,
+            willChange: 'transform',
           }}
         >
           ❄️
-        </motion.div>
+        </div>
       ))}
+      <style jsx>{`
+        @keyframes cardSnowfall {
+          to {
+            transform: translateY(120px) translateX(10px) rotate(360deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour les toiles d'araignée sur les cartes (Halloween)
+// Composant pour les toiles d'araignée - OPTIMISÉ
 const SpiderWebEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire de 3 à 1 toile
   const webs = useMemo(() =>
-    Array.from({ length: 3 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `web-${i}`,
-      x: 20 + Math.random() * 60,
-      y: 20 + Math.random() * 60,
+      x: 50 + Math.random() * 20,
+      y: 50 + Math.random() * 20,
       rotation: Math.random() * 360,
-      scale: 0.3 + Math.random() * 0.4,
-    })), []
+      scale: 0.4 + Math.random() * 0.3,
+    })), [reducedMotion]
   );
+
+  if (reducedMotion || webs.length === 0) return null;
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
       {webs.map((web) => (
-        <motion.div
+        <div
           key={web.id}
-          className="absolute text-gray-400/20"
+          className="absolute text-gray-400/10"
           style={{
             left: `${web.x}%`,
             top: `${web.y}%`,
             transform: `rotate(${web.rotation}deg) scale(${web.scale})`,
             fontSize: '20px',
-          }}
-          animate={{
-            opacity: [0.1, 0.3, 0.1],
-            scale: [web.scale, web.scale * 1.1, web.scale],
-          }}
-          transition={{
-            duration: 4 + Math.random() * 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
+            animation: 'webPulse 6s ease-in-out infinite',
+            willChange: 'opacity',
           }}
         >
           🕸️
-        </motion.div>
+        </div>
       ))}
+      <style jsx>{`
+        @keyframes webPulse {
+          0%, 100% { opacity: 0.1; }
+          50% { opacity: 0.2; }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour les feuilles qui tombent (Automne)
+// Composant pour les feuilles qui tombent - OPTIMISÉ
 const FallingLeavesEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire de 5 à 2 feuilles
   const leaves = useMemo(() =>
-    Array.from({ length: 5 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 0 : 2 }).map((_, i) => ({
       id: `leaf-${i}`,
       x: Math.random() * 100,
       delay: Math.random() * 4,
-      duration: 4 + Math.random() * 3,
-      rotation: Math.random() * 720,
-      color: ['#dc2626', '#ea580c', '#d97706', '#65a30d'][Math.floor(Math.random() * 4)],
-    })), []
+      duration: 5 + Math.random() * 2,
+      rotation: Math.random() * 360,
+      color: ['#dc2626', '#ea580c', '#d97706'][Math.floor(Math.random() * 3)],
+    })), [reducedMotion]
   );
 
+  if (reducedMotion || leaves.length === 0) return null;
+
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl" style={{ willChange: 'transform' }}>
       {leaves.map((leaf) => (
-        <motion.div
+        <div
           key={leaf.id}
           className="absolute"
           style={{
             left: `${leaf.x}%`,
             top: '-10px',
-            fontSize: '14px',
+            fontSize: '12px',
             color: leaf.color,
-          }}
-          animate={{
-            y: [0, 140],
-            x: [0, Math.random() * 30 - 15],
-            rotate: leaf.rotation,
-            opacity: [0, 0.8, 0],
-          }}
-          transition={{
-            duration: leaf.duration,
-            repeat: Infinity,
-            delay: leaf.delay,
-            ease: 'easeIn',
+            animation: `leafFall ${leaf.duration}s ease-in infinite`,
+            animationDelay: `${leaf.delay}s`,
+            willChange: 'transform',
           }}
         >
           🍂
-        </motion.div>
+        </div>
       ))}
+      <style jsx>{`
+        @keyframes leafFall {
+          to {
+            transform: translateY(140px) translateX(15px) rotate(360deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour les pétales de fleurs (Printemps)
+// Composant pour les pétales de fleurs - OPTIMISÉ
 const FlowerPetalsEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire de 6 à 2 pétales
   const petals = useMemo(() =>
-    Array.from({ length: 6 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 0 : 2 }).map((_, i) => ({
       id: `petal-${i}`,
       x: Math.random() * 100,
       delay: Math.random() * 3,
-      duration: 3 + Math.random() * 2,
+      duration: 4 + Math.random() * 2,
       rotation: Math.random() * 360,
-      emoji: ['🌸', '🌺', '🌹', '🌷'][Math.floor(Math.random() * 4)],
-    })), []
+      emoji: ['🌸', '🌺'][Math.floor(Math.random() * 2)],
+    })), [reducedMotion]
   );
 
+  if (reducedMotion || petals.length === 0) return null;
+
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl" style={{ willChange: 'transform' }}>
       {petals.map((petal) => (
-        <motion.div
+        <div
           key={petal.id}
-          className="absolute text-pink-300/60"
+          className="absolute text-pink-300/40"
           style={{
             left: `${petal.x}%`,
             top: '-10px',
-            fontSize: '12px',
-          }}
-          animate={{
-            y: [0, 120],
-            x: [0, Math.sin(petal.rotation / 180 * Math.PI) * 20],
-            rotate: petal.rotation,
-            opacity: [0, 0.7, 0],
-            scale: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: petal.duration,
-            repeat: Infinity,
-            delay: petal.delay,
-            ease: 'easeOut',
+            fontSize: '10px',
+            animation: `petalFall ${petal.duration}s ease-out infinite`,
+            animationDelay: `${petal.delay}s`,
+            willChange: 'transform',
           }}
         >
           {petal.emoji}
-        </motion.div>
+        </div>
       ))}
+      <style jsx>{`
+        @keyframes petalFall {
+          to {
+            transform: translateY(120px) translateX(20px) rotate(360deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour les étoiles filantes (Été)
+// Composant pour les étoiles filantes - OPTIMISÉ
 const ShootingStarsEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire de 3 à 1 étoile
   const stars = useMemo(() =>
-    Array.from({ length: 3 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `star-${i}`,
       startX: Math.random() * 100,
-      startY: 10 + Math.random() * 40,
+      startY: 20 + Math.random() * 30,
       endX: Math.random() * 100,
-      endY: 60 + Math.random() * 30,
+      endY: 60 + Math.random() * 20,
       delay: Math.random() * 8,
-      duration: 1.5 + Math.random() * 1,
-    })), []
+      duration: 2 + Math.random() * 1,
+    })), [reducedMotion]
   );
 
+  if (reducedMotion || stars.length === 0) return null;
+
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl" style={{ willChange: 'transform' }}>
       {stars.map((star) => (
-        <motion.div
+        <div
           key={star.id}
           className="absolute text-yellow-300"
           style={{
             left: `${star.startX}%`,
             top: `${star.startY}%`,
-            fontSize: '8px',
-          }}
-          animate={{
-            x: `${star.endX - star.startX}vw`,
-            y: `${star.endY - star.startY}vh`,
-            opacity: [0, 1, 0],
-            scale: [0, 1, 0],
-          }}
-          transition={{
-            duration: star.duration,
-            repeat: Infinity,
-            delay: star.delay,
-            ease: 'easeOut',
+            fontSize: '6px',
+            animation: `starShoot ${star.duration}s ease-out infinite`,
+            animationDelay: `${star.delay}s`,
+            willChange: 'transform',
           }}
         >
           ⭐
-        </motion.div>
+        </div>
       ))}
+      <style jsx>{`
+        @keyframes starShoot {
+          to {
+            transform: translate(${stars[0]?.endX ? stars[0].endX - stars[0].startX : 0}vw, ${stars[0]?.endY ? stars[0].endY - stars[0].startY : 0}vh);
+            opacity: 0;
+            scale: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour les lucioles (Été)
+// Composant pour les lucioles - OPTIMISÉ
 const FirefliesEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire de 4 à 2 lucioles
   const fireflies = useMemo(() =>
-    Array.from({ length: 4 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 0 : 2 }).map((_, i) => ({
       id: `firefly-${i}`,
       x: Math.random() * 100,
       y: Math.random() * 100,
       delay: Math.random() * 2,
-    })), []
+    })), [reducedMotion]
   );
+
+  if (reducedMotion || fireflies.length === 0) return null;
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
       {fireflies.map((firefly) => (
-        <motion.div
+        <div
           key={firefly.id}
           className="absolute w-1 h-1 bg-yellow-300 rounded-full"
           style={{
             left: `${firefly.x}%`,
             top: `${firefly.y}%`,
-          }}
-          animate={{
-            opacity: [0, 1, 0],
-            scale: [0, 1.5, 0],
-            x: [0, Math.random() * 20 - 10],
-            y: [0, Math.random() * 20 - 10],
-          }}
-          transition={{
-            duration: 2 + Math.random(),
-            repeat: Infinity,
-            delay: firefly.delay,
-            ease: 'easeInOut',
+            animation: 'fireflyGlow 3s ease-in-out infinite',
+            animationDelay: `${firefly.delay}s`,
+            willChange: 'opacity, transform',
           }}
         />
       ))}
+      <style jsx>{`
+        @keyframes fireflyGlow {
+          0%, 100% {
+            opacity: 0;
+            transform: scale(0);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.5);
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Composant pour les étincelles (Nouvel An Chinois)
+// Composant pour les étincelles - OPTIMISÉ
 const SparklesEffect = () => {
+  const reducedMotion = usePerformanceMode();
+  
+  // Réduire de 3 à 1 étincelle
   const sparkles = useMemo(() =>
-    Array.from({ length: 3 }).map((_, i) => ({
+    Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `sparkle-${i}`,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
+      x: 50 + Math.random() * 20,
+      y: 50 + Math.random() * 20,
       delay: Math.random() * 3,
-      color: ['#ff0000', '#ffff00', '#ff00ff', '#00ffff'][Math.floor(Math.random() * 4)],
-    })), []
+      color: ['#ff0000', '#ffff00', '#ff00ff'][Math.floor(Math.random() * 3)],
+    })), [reducedMotion]
   );
+
+  if (reducedMotion || sparkles.length === 0) return null;
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
       {sparkles.map((sparkle) => (
-        <motion.div
+        <div
           key={sparkle.id}
           className="absolute text-lg"
           style={{
             left: `${sparkle.x}%`,
             top: `${sparkle.y}%`,
             color: sparkle.color,
-          }}
-          animate={{
-            scale: [0, 1.5, 0],
-            rotate: [0, 180, 360],
-            opacity: [0, 1, 0],
-          }}
-          transition={{
-            duration: 2 + Math.random(),
-            repeat: Infinity,
-            delay: sparkle.delay,
-            ease: 'easeInOut',
+            animation: 'sparklePulse 3s ease-in-out infinite',
+            animationDelay: `${sparkle.delay}s`,
+            willChange: 'transform, opacity',
           }}
         >
           ✨
-        </motion.div>
+        </div>
       ))}
+      <style jsx>{`
+        @keyframes sparklePulse {
+          0%, 100% {
+            transform: scale(0) rotate(0deg);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.5) rotate(180deg);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
 export function CardEffects() {
   const { currentTheme } = useTheme();
+  const reducedMotion = usePerformanceMode();
+
+  // Si l'utilisateur préfère réduire les animations, désactiver tous les effets
+  if (reducedMotion) {
+    return null;
+  }
 
   switch (currentTheme) {
     case 'christmas':
