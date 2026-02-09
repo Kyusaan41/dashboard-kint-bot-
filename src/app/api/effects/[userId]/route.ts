@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "User ID manquant" }, { status: 400 });
         }
         
-        // Cet endpoint doit être créé sur votre bot pour retourner les effets actifs d'un utilisateur
+        // Cet endpoint doit être créér sur votre bot pour retourner les effets actifs d'un utilisateur
         const res = await fetch(`${BOT_API_URL}/effects/${userId}`);
         
         if (!res.ok) {
