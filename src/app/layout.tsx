@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./nyx-theme.css"; // NyxBot Dark Purple Theme
+import "./nyx-modern-theme.css"; // NyxBot Modern Theme
 import Providers from "./providers";
 import BanGuard from "@/components/BanGuard";
 import { Analytics } from "@vercel/analytics/react";
