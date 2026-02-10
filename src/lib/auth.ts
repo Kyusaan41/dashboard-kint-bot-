@@ -34,17 +34,17 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
-            if (user) {
-                token.id = user.id;
-                token.role = user.role;
+        async jwt({ token, account }) {
+            if (account) {
+                token.accessToken = account.access_token;
+                token.id = token.sub || '';
             }
             return token;
         },
         async session({ session, token }: { session: Session; token: JWT }) {
             if (session.user) {
-                session.user.id = token.id;
-                session.user.role = token.role;
+                session.user.id = token.id as string;
+                session.user.role = token.role as string;
             }
             return session;
         },
