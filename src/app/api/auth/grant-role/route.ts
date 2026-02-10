@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No guildId provided' }, { status: 400 });
     }
 
-    const roleEndpoint = process.env.DASHBOARD_ROLE_ENDPOINT || (process.env.SERVER_URL ? `${process.env.SERVER_URL.replace(/\/+$/,'')}/api/dashboard/grant-role` : null);
+    const roleEndpoint = process.env.DASHBOARD_ROLE_ENDPOINT || (process.env.SERVER_URL ? `${process.env.SERVER_URL.replace(/\/+$/,'')}/api/grant-role` : null);
     
     if (!roleEndpoint) {
       console.warn('[grant-role] no SERVER_URL or DASHBOARD_ROLE_ENDPOINT configured');
