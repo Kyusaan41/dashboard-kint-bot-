@@ -3,6 +3,83 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 
+// Types pour les décorations
+interface TreeDecoration {
+  id: string;
+  type: 'tree';
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+}
+
+interface LightDecoration {
+  id: string;
+  type: 'light';
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+}
+
+interface BaubleDecoration {
+  id: string;
+  type: 'bauble';
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+}
+
+interface PumpkinDecoration {
+  id: string;
+  type: 'pumpkin';
+  x: number;
+  y: number;
+  size: number;
+}
+
+interface BatDecoration {
+  id: string;
+  type: 'bat';
+  x: number;
+  y: number;
+  size: number;
+}
+
+interface WebDecoration {
+  id: string;
+  type: 'web';
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+}
+
+interface LanternDecoration {
+  id: string;
+  type: 'lantern';
+  x: number;
+  y: number;
+  size: number;
+}
+
+interface DragonDecoration {
+  id: string;
+  type: 'dragon';
+  x: number;
+  y: number;
+  size: number;
+}
+
+interface FireworkDecoration {
+  id: string;
+  type: 'firework';
+  x: number;
+  y: number;
+  size: number;
+}
+
 // Hook pour détecter les performances
 const usePerformanceMode = () => {
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -24,11 +101,11 @@ const ChristmasDecorations = () => {
   const reducedMotion = usePerformanceMode();
   
   // Réduire drastiquement : 3 sapins -> 1, 6 lumières -> 2, 4 boules -> 1
-  const decorations = useMemo(() => [
+  const decorations: (TreeDecoration | LightDecoration | BaubleDecoration)[] = useMemo(() => [
     // Un seul sapin
     ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `bg-tree-${i}`,
-      type: 'tree',
+      type: 'tree' as const,
       x: 50 + Math.random() * 20,
       y: 70 + Math.random() * 20,
       size: 50 + Math.random() * 20,
@@ -37,7 +114,7 @@ const ChristmasDecorations = () => {
     // 2 lumières seulement
     ...Array.from({ length: reducedMotion ? 0 : 2 }).map((_, i) => ({
       id: `light-${i}`,
-      type: 'light',
+      type: 'light' as const,
       x: 20 + (i * 60) + Math.random() * 20,
       y: 30 + Math.random() * 40,
       size: 5 + Math.random() * 3,
@@ -46,7 +123,7 @@ const ChristmasDecorations = () => {
     // 1 boule seulement
     ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `bauble-${i}`,
-      type: 'bauble',
+      type: 'bauble' as const,
       x: 50 + Math.random() * 30,
       y: 40 + Math.random() * 30,
       size: 12 + Math.random() * 4,
@@ -142,24 +219,24 @@ const HalloweenDecorations = () => {
   const reducedMotion = usePerformanceMode();
   
   // Réduire : 2 citrouilles -> 1, 3 chauves-souris -> 1, 2 toiles -> 1
-  const decorations = useMemo(() => [
+  const decorations: (PumpkinDecoration | BatDecoration | WebDecoration)[] = useMemo(() => [
     ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `pumpkin-${i}`,
-      type: 'pumpkin',
+      type: 'pumpkin' as const,
       x: 50 + Math.random() * 30,
       y: 75 + Math.random() * 15,
       size: 35 + Math.random() * 15,
     })),
     ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `bat-${i}`,
-      type: 'bat',
+      type: 'bat' as const,
       x: Math.random() * 100,
       y: 10 + Math.random() * 30,
       size: 20 + Math.random() * 10,
     })),
     ...Array.from({ length: reducedMotion ? 0 : 1 }).map((_, i) => ({
       id: `web-${i}`,
-      type: 'web',
+      type: 'web' as const,
       x: Math.random() * 100,
       y: Math.random() * 100,
       size: 30 + Math.random() * 20,
