@@ -15,6 +15,11 @@ export const authOptions: NextAuthOptions = {
         DiscordProvider({
             clientId: process.env.DISCORD_CLIENT_ID!,
             clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+            authorization: {
+                params: {
+                    scope: 'identify email guilds',
+                },
+            },
             profile(profile: DiscordProfile): User {
                 // --- CORRECTION : On nettoie les IDs pour enlever les espaces ---
                 const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '')

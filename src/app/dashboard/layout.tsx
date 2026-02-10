@@ -4,6 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import FeedbackWidget from '@/components/FeedbackWidget';
+import RoleGranter from '@/components/RoleGranter';
 import { useEffect, useState } from 'react';
 import { subscribeToItemEvents, fetchEvents } from '@/utils/api';
 import InteractionPopup from '@/components/InteractionPopup';
@@ -359,6 +360,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       <FeedbackWidget />
+      <RoleGranter />
     </div>
   );
 }
