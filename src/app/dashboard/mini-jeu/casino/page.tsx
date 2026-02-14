@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback, useLayoutEffect } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Zap, Trophy, Crown, Target, Flame, Sparkles, Star, Coins, TrendingUp, TrendingDown, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { CASINO_ENDPOINTS } from '@/config/api';
@@ -11,11 +10,6 @@ import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 // Slot Machine page using real currency via /api/currency/me
 
-// ✨ Effet d'aurore boréale en arrière-plan (désactivé pour performance)
-const AuroraBackground = ({ isDevilMode }: { isDevilMode: boolean }) => {
-    // Désactivé pour éviter le lag
-    return null;
-};
 
 // Particule individuelle pour l'aurore (désactivée pour performance)
 const AuroraParticle = ({ color, index }: { color: string, index: number }) => {
@@ -217,10 +211,6 @@ function useWindowSizeLocal() {
 }
 
 // Confetti component (désactivé pour performance)
-const Confetti = () => {
-    // Désactivé pour éviter le lag
-    return null;
-};
 
 // Composant pour une seule pièce (désactivé pour performance)
 const Coin = () => {

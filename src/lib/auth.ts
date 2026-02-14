@@ -24,16 +24,9 @@ export const authOptions: NextAuthOptions = {
                 // --- CORRECTION : On nettoie les IDs pour enlever les espaces ---
                 const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '')
                     .split(',')
-                    .map(id => id.trim()); // Ajout de .trim() pour enlever les espaces avant/aprÃ¨s
-
-                console.log('=== AUTH DEBUG ===');
-                console.log('Profile ID:', profile.id);
-                console.log('Admin IDs:', adminIds);
-                console.log('Is admin?', adminIds.includes(profile.id));
+                    .map(id => id.trim()); // Ajout de .trim() pour enlever les espaces avant/après
 
                 const userRole = adminIds.includes(profile.id) ? 'admin' : 'user';
-
-                console.log('Assigned role:', userRole);
 
                 return {
                     id: profile.id,

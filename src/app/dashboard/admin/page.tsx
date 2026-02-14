@@ -162,13 +162,6 @@ export default function AdminPage() {
     };
 
     useEffect(() => {
-        console.log('=== ADMIN DEBUG ===');
-        console.log('Session status:', status);
-        console.log('Session user:', session?.user);
-        console.log('User role:', session?.user?.role);
-        console.log('User ID:', session?.user?.id);
-        console.log('Admin IDs from env:', process.env.NEXT_PUBLIC_ADMIN_IDS);
-        
         if (status === 'authenticated') {
             if (session?.user?.role !== 'admin') {
                 console.log('❌ Redirection vers dashboard - rôle non admin');
