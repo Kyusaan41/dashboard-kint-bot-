@@ -26,7 +26,14 @@ export const authOptions: NextAuthOptions = {
                     .split(',')
                     .map(id => id.trim()); // Ajout de .trim() pour enlever les espaces avant/aprÃ¨s
 
+                console.log('=== AUTH DEBUG ===');
+                console.log('Profile ID:', profile.id);
+                console.log('Admin IDs:', adminIds);
+                console.log('Is admin?', adminIds.includes(profile.id));
+
                 const userRole = adminIds.includes(profile.id) ? 'admin' : 'user';
+
+                console.log('Assigned role:', userRole);
 
                 return {
                     id: profile.id,

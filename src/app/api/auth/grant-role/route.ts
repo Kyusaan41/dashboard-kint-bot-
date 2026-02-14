@@ -18,7 +18,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No guildId provided' }, { status: 400 });
     }
 
-    const roleEndpoint = process.env.DASHBOARD_ROLE_ENDPOINT || (process.env.SERVER_URL ? `${process.env.SERVER_URL.replace(/\/+$/,'')}/api/grant-role` : null);
+    const serverUrl = process.env.SERVER_URL || '';
+    const roleEndpoint = process.env.DASHBOARD_ROLE_ENDPOINT || (serverUrl ? `${serverUrl.replace(/\/+$$/, '')}/api/grant-role` : null);
+    console.log('[grant-role] Using SERVER_URL:', serverUrl);
+    console.log('[grant-role] Final roleEndpoint:', roleEndpoint);
     
     if (!roleEndpoint) {
       console.warn('[grant-role] no SERVER_URL or DASHBOARD_ROLE_ENDPOINT configured');
@@ -37,7 +40,7 @@ export async function POST(request: Request) {
 
     const payloadForBot = { token: payloadB64, sig: hmac };
     
-    console.log('[grant-role] calling bot role endpoint', { guildId, userId: session.user.id });
+    console.log('[grant-role] calling bot role endpoint', { roleEndpoint, guildId, userId: session.user.id });
     
     const botRes = await fetch(roleEndpoint, {
       method: 'POST',
