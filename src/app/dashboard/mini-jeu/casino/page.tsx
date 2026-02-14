@@ -234,6 +234,34 @@ const CoinRain = ({ amount }: { amount: number }) => {
     return null;
 };
 
+// Free Spin Unlock Animation (simplifiée pour performance)
+const FreeSpinUnlockAnimation = () => {
+    return (
+        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+            <motion.div
+                className="relative z-10 text-center"
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{
+                    scale: [0, 1.3, 1.1, 1],
+                    rotate: [-180, 10, -10, 0],
+                    opacity: [0, 1, 1, 1, 0],
+                }}
+                transition={{ duration: 3, ease: 'easeOut' }}
+            >
+                <div className="bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 text-white px-12 py-8 rounded-3xl border-4 border-yellow-300 shadow-2xl">
+                    <div className="text-6xl font-black mb-4">
+                        🎉 FREE SPINS ! 🎉
+                    </div>
+                    <div className="text-3xl font-bold">3 Victoires Consécutives !</div>
+                    <div className="text-5xl font-black mt-4 text-yellow-200">
+                        +3 TOURS GRATUITS
+                    </div>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
 // Laughing emojis effect when losing (désactivé pour performance)
 const LaughingEmojis = () => {
     // Désactivé pour éviter le lag
