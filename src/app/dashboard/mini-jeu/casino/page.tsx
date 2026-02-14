@@ -7,6 +7,7 @@ import { CASINO_ENDPOINTS } from '@/config/api';
 import Link from 'next/link';
 import { WithMaintenanceCheck } from '@/components/WithMaintenanceCheck';
 import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Slot Machine page using real currency via /api/currency/me
 
@@ -211,6 +212,16 @@ function useWindowSizeLocal() {
 }
 
 // Confetti component (désactivé pour performance)
+const Confetti = () => {
+    // Désactivé pour éviter le lag
+    return null;
+};
+
+// Aurora background component
+const AuroraBackground = ({ isDevilMode }: { isDevilMode: boolean }) => {
+    // Désactivé pour éviter le lag
+    return null;
+};
 
 // Composant pour une seule pièce (désactivé pour performance)
 const Coin = () => {
