@@ -163,8 +163,14 @@ export default function AdminPage() {
 
     useEffect(() => {
         if (status === 'authenticated') {
+            console.log('[DEBUG ADMIN PAGE] Session:', session);
+            console.log('[DEBUG ADMIN PAGE] User ID:', session?.user?.id);
+            console.log('[DEBUG ADMIN PAGE] User Role:', session?.user?.role);
+            console.log('[DEBUG ADMIN PAGE] Admin IDs from env:', (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '').split(',').map(id => id.trim()));
+            
             if (session?.user?.role !== 'admin') {
                 console.log('❌ Redirection vers dashboard - rôle non admin');
+                console.log('   Rôle actuel:', session?.user?.role);
                 router.push('/dashboard');
             } else {
                 console.log('✅ Accès admin autorisé');

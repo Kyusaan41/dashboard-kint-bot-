@@ -24,9 +24,14 @@ export const authOptions: NextAuthOptions = {
                 // --- CORRECTION : On nettoie les IDs pour enlever les espaces ---
                 const adminIds = (process.env.NEXT_PUBLIC_ADMIN_IDS ?? '')
                     .split(',')
-                    .map(id => id.trim()); // Ajout de .trim() pour enlever les espaces avant/après
+                    .map(id => id.trim()) // Ajout de .trim() pour enlever les espaces avant/après
+                    .filter(id => id.length > 0); // Filtrer les IDs vides
 
+                console.log('[DEBUG ADMIN] IDs admin configurés:', adminIds);
+                console.log('[DEBUG ADMIN] ID utilisateur Discord:', profile.id);
+                
                 const userRole = adminIds.includes(profile.id) ? 'admin' : 'user';
+                console.log('[DEBUG ADMIN] Rôle attribué:', userRole, '- Admin:', adminIds.includes(profile.id));
 
                 return {
                     id: profile.id,
@@ -39,10 +44,15 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async jwt({ token, account }) {
+        async jwt({ token, account, profile }) {
             if (account) {
                 token.accessToken = account.access_token;
                 token.id = token.sub || '';
+            }
+            // Préserver le rôle du profile Discord vers le token
+            if (profile && (profile as any).role) {
+                token.role = (profile as any).role;
+                console.log('[DEBUG JWT] Rôle ajouté au token:', token.role);
             }
             return token;
         },
