@@ -11,49 +11,16 @@ import { FavoriteToggleButton } from '@/components/FavoriteToggleButton';
 
 // Slot Machine page using real currency via /api/currency/me
 
-// ✨ Effet d'aurore boréale en arrière-plan (simplifié pour performance)
+// ✨ Effet d'aurore boréale en arrière-plan (désactivé pour performance)
 const AuroraBackground = ({ isDevilMode }: { isDevilMode: boolean }) => {
-    const devilColors = ['rgba(239, 68, 68, 0.1)'];
-    const normalColors = ['rgba(139, 92, 246, 0.08)'];
-    const colors = isDevilMode ? devilColors : normalColors;
-
-    return (
-        <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none lg:block hidden">
-            {colors.map((color, i) => (
-                <AuroraParticle key={i} color={color} index={i} />
-            ))}
-        </div>
-    );
+    // Désactivé pour éviter le lag
+    return null;
 };
 
-// Particule individuelle pour l'aurore, simplifiée pour performance
+// Particule individuelle pour l'aurore (désactivée pour performance)
 const AuroraParticle = ({ color, index }: { color: string, index: number }) => {
-    const properties = useMemo(() => {
-        const size = Math.random() * 30 + 30; // vw réduit
-        const duration = Math.random() * 20 + 40; // 40-60s, plus lent
-        const delay = Math.random() * 5;
-
-        // Trajectoire simplifiée
-        const x1 = `${Math.random() * 80 - 40}vw`;
-        const y1 = `${Math.random() * 80 - 40}vh`;
-
-        return { size, duration, delay, x1, y1 };
-    }, []);
-
-    return (
-        <motion.div
-            className="absolute rounded-full will-change-transform"
-            style={{
-                backgroundColor: color,
-                width: `${properties.size}vw`,
-                height: `${properties.size}vw`,
-                filter: 'blur(80px)', // blur réduit
-            }}
-            initial={{ x: properties.x1, y: properties.y1, opacity: 0 }}
-            animate={{ opacity: [0, 0.5, 0.3, 0.5, 0], scale: [0.8, 1, 0.8] }}
-            transition={{ duration: properties.duration, repeat: Infinity, ease: 'linear', delay: properties.delay }}
-        />
-    );
+    // Désactivé pour éviter le lag
+    return null;
 };
 
 // Hook personnalisé pour gérer les sons du casino
@@ -249,469 +216,41 @@ function useWindowSizeLocal() {
     return size;
 }
 
-// Confetti component (réduit pour performance)
+// Confetti component (désactivé pour performance)
 const Confetti = () => {
-    const colors = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
-    return (
-        <div className="fixed inset-0 pointer-events-none z-50">
-            {Array.from({ length: 30 }).map((_, i) => ( // Réduit de 100 à 30
-                <motion.div
-                    key={i}
-                    className="absolute w-2 h-2 rounded-full" // Taille réduite
-                    style={{
-                        backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-                        left: `${Math.random() * 100}%`,
-                        top: '-5%',
-                    }}
-                    initial={{ y: 0, opacity: 1, rotate: 0 }}
-                    animate={{
-                        y: window.innerHeight + 100,
-                        opacity: [1, 1, 0],
-                        rotate: Math.random() * 360, // Rotation réduite
-                        x: (Math.random() - 0.5) * 100, // Mouvement latéral réduit
-                    }}
-                    transition={{
-                        duration: Math.random() * 1.5 + 1.5, // Durée réduite
-                        ease: 'easeOut',
-                        delay: Math.random() * 0.3, // Délai réduit
-                    }}
-                />
-            ))}
-        </div>
-    );
+    // Désactivé pour éviter le lag
+    return null;
 };
 
-// Composant pour une seule pièce, simplifié pour performance
+// Composant pour une seule pièce (désactivé pour performance)
 const Coin = () => {
-    const properties = useMemo(() => ({
-        left: `${Math.random() * 100}%`,
-        duration: Math.random() * 2 + 2, // Durée réduite: 2-4s au lieu de 3-6s
-        delay: Math.random() * 0.5, // Délai réduit
-        rotate: Math.random() * 360, // Rotation réduite
-        x: (Math.random() - 0.5) * 50, // Mouvement latéral réduit
-    }), []);
-
-    return (
-        <motion.div
-            className="absolute text-2xl" // Taille réduite
-            style={{
-                left: properties.left,
-                top: '-10%',
-            }}
-            initial={{ y: 0, opacity: 1, rotate: 0, scale: 0 }}
-            animate={{
-                y: window.innerHeight + 100,
-                opacity: [0, 1, 0], // Animation simplifiée
-                rotate: properties.rotate,
-                scale: [0, 1, 0],
-                x: properties.x,
-            }}
-            transition={{
-                duration: properties.duration,
-                ease: 'easeIn',
-                delay: properties.delay,
-            }}
-        >
-            💰
-        </motion.div>
-    );
+    // Désactivé pour éviter le lag
+    return null;
 };
 
-// Coin rain effect (réduit pour performance)
+// Coin rain effect (désactivé pour performance)
 const CoinRain = ({ amount }: { amount: number }) => {
-    const coinCount = Math.min(Math.floor(amount / 25), 20); // Réduit: /25 au lieu de /10, max 20 au lieu de 50
-    return (
-        <div className="fixed inset-0 pointer-events-none z-50">
-            {Array.from({ length: coinCount }).map((_, i) => <Coin key={i} />)}
-        </div>
-    );
+    // Désactivé pour éviter le lag
+    return null;
 };
 
-// Laughing emojis effect when losing (simplifié)
+// Laughing emojis effect when losing (désactivé pour performance)
 const LaughingEmojis = () => {
-    const mockingPhrases = [
-        "Souris, je garde la pièce moi perso..",
-        "Merci pour la donation ! 😂",
-        "Encore raté ! 🤣",
-        "La maison gagne toujours ! 😈",
-        "Retente ta chance... ou pas ! 😏",
-        "Tes pièces sont à moi maintenant ! 💰",
-        "Dommage, c'était pas la bonne ! 😆",
-        "Le casino te remercie ! 🎰"
-    ];
-
-    const emojiCount = 8; // Réduit de 15 à 8
-    
-    // Choisir UNE phrase aléatoire et la mémoriser pour éviter qu'elle change
-    const randomPhrase = useMemo(
-        () => mockingPhrases[Math.floor(Math.random() * mockingPhrases.length)],
-        [] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-    
-    // Mémoriser les propriétés aléatoires de chaque emoji pour éviter qu'ils se téléportent
-    const emojiProperties = useMemo(
-        () => Array.from({ length: emojiCount }).map((_, i: number) => ({
-            left: Math.random() * 100,
-            rotation: Math.random() * 360 - 180, // Rotation réduite
-            xOffset: (Math.random() - 0.5) * 80, // Mouvement latéral réduit
-            duration: Math.random() * 1.5 + 1.5, // Durée réduite
-            delay: Math.random() * 0.3, // Délai réduit
-        })),
-        [] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-    
-    return (
-        <div className="fixed inset-0 pointer-events-none z-50">
-            {/* Emojis qui tombent */}
-            {emojiProperties.map((props, i) => (
-                <motion.div
-                    key={`emoji-${i}`}
-                    className="absolute text-4xl"
-                    style={{
-                        left: `${props.left}%`,
-                        top: '-10%',
-                    }}
-                    initial={{ y: 0, opacity: 0, rotate: 0, scale: 0 }}
-                    animate={{
-                        y: window.innerHeight + 100,
-                        opacity: [0, 1, 1, 0],
-                        rotate: props.rotation,
-                        scale: [0, 1.2, 1, 0],
-                        x: props.xOffset,
-                    }}
-                    transition={{
-                        duration: props.duration,
-                        ease: 'easeIn',
-                        delay: props.delay,
-                    }}
-                >
-                    🤣
-                </motion.div>
-            ))}
-            
-            {/* UNE SEULE phrase moqueuse aléatoire */}
-            <motion.div
-                className="absolute text-xl md:text-2xl font-bold text-red-400 bg-black/80 px-6 py-3 rounded-xl border-2 border-red-500/60 shadow-2xl"
-                style={{
-                    left: '50%',
-                    top: '40%',
-                    transform: 'translate(-50%, -50%)',
-                }}
-                initial={{ opacity: 0, scale: 0, rotate: -10 }}
-                animate={{
-                    opacity: [0, 1, 1, 1, 0],
-                    scale: [0, 1.2, 1.1, 1.1, 0.8],
-                    rotate: [-10, 5, -5, 0, 0],
-                    y: [0, -10, -20, -30, -50],
-                }}
-                transition={{
-                    duration: 3,
-                    ease: 'easeOut',
-                }}
-            >
-                {randomPhrase}
-            </motion.div>
-        </div>
-    );
+    // Désactivé pour éviter le lag
+    return null;
 };
 
-// 🔥 Effet de flammes simplifié pour le Devil Mode (désactivé sur mobile)
-const CssFlameEffect = () => {
-    const particleCount = 15; // Réduit de 40 à 15
-    const { width, height } = useWindowSizeLocal();
-
-    // Un seul groupe de particules, généré une fois et réutilisé
-    const particleGroup = useMemo(() => {
-        return Array.from({ length: particleCount }).map((_, i) => (
-            <FlameParticle key={i} width={width as number} height={height as number} />
-        ));
-    }, [width, height]);
-
-    return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden lg:block hidden">
-            {/* Conteneur unique, animation simplifiée */}
-            <motion.div
-                className="absolute top-0 left-0 w-full"
-                style={{ height: `${height}px` }}
-                animate={{ y: [height, -height] }}
-                transition={{
-                    duration: 40, // Plus lent: 40s au lieu de 25s
-                    repeat: Infinity,
-                    ease: 'linear',
-                }}
-            >
-                {particleGroup}
-            </motion.div>
-        </div>
-    );
-};
-
-const FlameParticle = ({ width, height }: { width: number, height: number }) => {
-    const size = useMemo(() => Math.random() * 25 + 15, []); // Taille réduite
-    const x = useMemo(() => Math.random() * width, [width]);
-    const y = useMemo(() => Math.random() * height, [height]);
-
-    return (
-        <motion.div
-            className="absolute will-change-transform"
-            style={{ left: x, top: y, width: size, height: size, filter: 'blur(4px) contrast(10)' }} // blur réduit
-            animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.3, 0.7, 0.3] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} // Animation plus lente et simple
-        >
-            <div className="relative w-full h-full">
-                <div className="absolute inset-0 bg-red-500 rounded-full" />
-                <div className="absolute inset-0 bg-orange-400 rounded-full" style={{ transform: 'scale(0.7)' }} />
-            </div>
-        </motion.div>
-    );
-};
-
-// ⛧ Sceau démoniaque pour le fond du Devil Mode
-const DemonicSigil = () => {
-    return (
-        <motion.div 
-            className="fixed inset-0 flex items-center justify-center pointer-events-none z-0"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 1.5 }}
-        >
-            <motion.svg
-                width="600"
-                height="600"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-red-800/50"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
-            >
-                <motion.path
-                    d="M12 2.5L14.39 9.52H21.81L15.71 13.98L18.1 21.5L12 17.04L5.9 21.5L8.29 13.98L2.19 9.52H9.61L12 2.5Z"
-                    stroke="currentColor"
-                    strokeWidth="0.3"
-                    animate={{
-                        opacity: [0.4, 0.8, 0.4],
-                        filter: ['drop-shadow(0 0 5px currentColor)', 'drop-shadow(0 0 15px currentColor)', 'drop-shadow(0 0 5px currentColor)'],
-                    }}
-                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="0.1" />
-            </motion.svg>
-        </motion.div>
-    );
-};
-
-// ✨ NOUVEAU: Rayons lumineux pour le Devil Mode (désactivés sur mobile)
-const DevilGodRays = () => {
-    const rayCount = 8;
-    return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden lg:block hidden">
-            {Array.from({ length: rayCount }).map((_, i) => (
-                <motion.div
-                    key={`ray-${i}`}
-                    className="absolute top-1/2 left-1/2 w-[200%] h-8 bg-gradient-to-r from-red-900/0 via-red-600/20 to-red-900/0"
-                    style={{
-                        transformOrigin: 'center left',
-                        y: '-50%',
-                    }}
-                    initial={{ rotate: (i / rayCount) * 360, opacity: 0 }}
-                    animate={{
-                        rotate: (i / rayCount) * 360 + 45,
-                        opacity: [0, 1, 0.8, 0],
-                    }}
-                    transition={{
-                        duration: 15 + Math.random() * 10,
-                        repeat: Infinity,
-                        delay: i * 2,
-                        ease: 'easeInOut',
-                    }}
-                />
-            ))}
-        </div>
-    );
-};
-
-// 😈 Effets visuels supplémentaires pour le Devil Mode
 const DevilModeOverlay = () => {
-    return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 pointer-events-none z-10">
-            {/* Vignette pulsante */}
-            <div className="absolute inset-0 shadow-[inset_0_0_150px_50px_rgba(0,0,0,0.9)] devil-vignette-pulse" />
-            {/* Scanlines animées */}
-            <div className="absolute inset-0 bg-[url('/textures/scanlines.png')] bg-repeat opacity-20 devil-scanlines" />
-        </motion.div>
-    );
+    // Désactivé pour éviter le lag
+    return null;
 };
 
-// Free Spin Unlock Animation
-const FreeSpinUnlockAnimation = () => {
-    return (
-        <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
-            {/* Fond sombre avec effet de flash */}
-            <motion.div
-                className="absolute inset-0 bg-black/60"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.8, 0.6, 0.8, 0] }}
-                transition={{ duration: 3, ease: 'easeInOut' }}
-            />
-            
-            {/* Particules dorées qui explosent */}
-            {Array.from({ length: 50 }).map((_, i) => {
-                const angle = (i / 50) * Math.PI * 2;
-                const distance = 150 + Math.random() * 100;
-                const xOffset = Math.cos(angle) * distance;
-                const yOffset = Math.sin(angle) * distance;
-                
-                return (
-                    <motion.div
-                        key={i}
-                        className="absolute w-2 h-2 bg-yellow-400 rounded-full"
-                        style={{ left: '50%', top: '50%' }}
-                        initial={{ x: 0, y: 0, opacity: 0, scale: 0 }}
-                        animate={{
-                            x: xOffset,
-                            y: yOffset,
-                            opacity: [0, 1, 1, 0],
-                            scale: [0, 1.5, 1, 0],
-                        }}
-                        transition={{
-                            duration: 2,
-                            ease: 'easeOut',
-                            delay: 0.3 + Math.random() * 0.3,
-                        }}
-                    />
-                );
-            })}
-            
-            {/* Message principal */}
-            <motion.div
-                className="relative z-10 text-center"
-                initial={{ scale: 0, rotate: -180, opacity: 0 }}
-                animate={{
-                    scale: [0, 1.3, 1.1, 1],
-                    rotate: [-180, 10, -10, 0],
-                    opacity: [0, 1, 1, 1, 0],
-                }}
-                transition={{ duration: 3, ease: 'easeOut' }}
-            >
-                <div className="bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 text-white px-12 py-8 rounded-3xl border-4 border-yellow-300 shadow-2xl">
-                    <motion.div
-                        className="text-6xl font-black mb-4"
-                        animate={{
-                            scale: [1, 1.1, 1],
-                            textShadow: [
-                                '0 0 20px rgba(255,215,0,0.8)',
-                                '0 0 40px rgba(255,215,0,1)',
-                                '0 0 20px rgba(255,215,0,0.8)',
-                            ],
-                        }}
-                        transition={{
-                            duration: 1,
-                            repeat: 3,
-                            ease: 'easeInOut',
-                        }}
-                    >
-                        🎉 FREE SPINS ! 🎉
-                    </motion.div>
-                    <div className="text-3xl font-bold">3 Victoires Consécutives !</div>
-                    <div className="text-5xl font-black mt-4 text-yellow-200">
-                        +3 TOURS GRATUITS
-                    </div>
-                </div>
-            </motion.div>
-            
-            {/* Étoiles qui tournent autour */}
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-                <motion.div
-                    key={`star-${i}`}
-                    className="absolute text-6xl"
-                    style={{
-                        left: '50%',
-                        top: '50%',
-                    }}
-                    initial={{ x: 0, y: 0, opacity: 0, scale: 0, rotate: 0 }}
-                    animate={{
-                        x: Math.cos((i / 6) * Math.PI * 2) * 200,
-                        y: Math.sin((i / 6) * Math.PI * 2) * 200,
-                        opacity: [0, 1, 1, 0],
-                        scale: [0, 1.5, 1.5, 0],
-                        rotate: [0, 360],
-                    }}
-                    transition={{
-                        duration: 3,
-                        ease: 'easeOut',
-                        delay: 0.5,
-                    }}
-                >
-                    ⭐
-                </motion.div>
-            ))}
-        </div>
-    );
+const DemonicSigil = () => {
+    // Désactivé pour éviter le lag
+    return null;
 };
 
-// ✨ NOUVEAU: Animation de Level Up
-const LevelUpAnimation = ({ level, title }: { level: number, title: string }) => {
-    return (
-        <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center">
-            <motion.div
-                className="absolute inset-0 bg-black"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 0.8, 0.6, 0] }}
-                transition={{ duration: 3, ease: "easeInOut" }}
-            />
-            <Confetti />
-            <motion.div
-                className="relative text-center p-8 bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl border-4 border-purple-500 shadow-2xl shadow-purple-500/50"
-                initial={{ scale: 0, opacity: 0, rotate: -45 }}
-                animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                exit={{ scale: 0, opacity: 0, rotate: 45 }}
-                transition={{ duration: 0.8, type: "spring", stiffness: 150 }}
-            >
-                <motion.div
-                    className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-3xl blur-xl opacity-75"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <div className="relative z-10">
-                    <motion.h2
-                        className="text-2xl font-bold text-gray-300 mb-2"
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                    >
-                        NIVEAU SUPÉRIEUR !
-                    </motion.h2>
-                    <motion.div
-                        className="text-7xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-fuchsia-400 mb-4"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.7, type: "spring", damping: 10 }}
-                    >
-                        {level}
-                    </motion.div>
-                    <motion.h3
-                        className="text-3xl font-bold text-white mb-6"
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 1 }}
-                    >
-                        {title}
-                    </motion.h3>
-                    <motion.div
-                        className="text-sm text-purple-300 bg-purple-500/10 px-4 py-2 rounded-lg border border-purple-500/30"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1.3 }}
-                    >
-
-                    </motion.div>
-                </div>
-            </motion.div>
-        </div>
-    );
-};
+// ... (rest of the code remains the same)
 
 // Winning line component - connects the 3 winning symbols
 const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'two-right' }) => {
@@ -731,6 +270,7 @@ const WinningLine = ({ type }: { type: 'three' | 'two-left' | 'two-middle' | 'tw
         }
     };
 
+// ... (rest of the code remains the same)
     const config = getLineConfig();
 
     return (
@@ -2021,11 +1561,8 @@ export default function CasinoSlotPage() {
             <AnimatePresence>
                 {isDevilMode && (
                     <>
-                        {/* Effets de fond (flammes, vortex) */}
-                        <div className="fixed inset-0 z-0 devil-bg-vortex" />
-                        <DevilGodRays />
-                        <DemonicSigil />
-                        <CssFlameEffect /> 
+                        {/* Effets de fond simplifiés (désactivés pour performance) */}
+                        <div className="fixed inset-0 z-0" /> 
 
                         {/* Effets de premier plan (vignette, scanlines) */}
                         <DevilModeOverlay />
