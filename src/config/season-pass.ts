@@ -68,10 +68,10 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
 
   // Générer les récompenses normales avec variété
   for (let i = 1; i <= 100; i++) {
-    // Paliers multiples de 10 = 5 orbes
+    // Paliers multiples de 10 = 5 orbes (10 paliers × 5 = 50 orbes total pour le normal)
     if (i % 10 === 0) {
       normalRewards.push({
-        id: `normal_wishes_5`,
+        id: `normal_orbs_5`,
         type: 'orbs',
         amount: 5,
         name: '5 Orbes',
@@ -80,7 +80,7 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
       continue
     }
 
-    // Choisir un type de récompense basé sur le niveau (sans XP)
+    // Choisir un type de récompense basé sur le niveau (sans orbes)
     let rewardType: string
     let amountIndex: number
 
@@ -90,18 +90,18 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length)
     } else if (i <= 50) {
-      // Niveaux 26-50 : Mélange équilibré
-      const types = ['tokens', 'currency', 'orbs', 'tokens', 'currency']
+      // Niveaux 26-50 : Mélange équitable (sans orbes)
+      const types = ['tokens', 'currency', 'tokens', 'currency']
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length) + 2
     } else if (i <= 75) {
-      // Niveaux 51-75 : Plus de variété
-      const types = ['currency', 'orbs', 'tokens', 'currency', 'orbs']
+      // Niveaux 51-75 : Plus de variété (sans orbes)
+      const types = ['currency', 'tokens', 'currency', 'tokens']
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length) + 4
     } else {
-      // Niveaux 76-100 : Récompenses finales riches
-      const types = ['tokens', 'currency', 'orbs', 'tokens', 'currency', 'orbs']
+      // Niveaux 76-100 : Récompenses finales riches (sans orbes)
+      const types = ['tokens', 'currency', 'tokens', 'currency']
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length) + 6
     }
@@ -136,14 +136,14 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
 
   // Générer les récompenses VIP avec beaucoup plus de générosité
   for (let i = 1; i <= 100; i++) {
-    // Paliers multiples de 10 = 10 wishes
+    // Paliers multiples de 10 = 5 orbes (10 paliers × 5 = 50 orbes total pour le VIP)
     if (i % 10 === 0) {
       vipRewards.push({
-        id: `vip_wishes_10`,
+        id: `vip_orbs_5`,
         type: 'orbs',
-        amount: 10,
-        name: '10 Orbes (VIP)',
-        description: '10 orbes pour le Gacha (VIP)'
+        amount: 5,
+        name: '5 Orbes (VIP)',
+        description: '5 orbes pour le Gacha (VIP)'
       })
       continue
     }
@@ -157,18 +157,18 @@ function generateProgressiveRewards(): { normal: SeasonPassReward[], vip: Season
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length) + 2
     } else if (i <= 60) {
-      // Niveaux 31-60 : Mélange très généreux
-      const types = ['tokens', 'currency', 'orbs', 'tokens', 'currency']
+      // Niveaux 31-60 : Mélange très généreux (sans orbes)
+      const types = ['tokens', 'currency', 'tokens', 'currency']
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length) + 4
     } else if (i <= 85) {
-      // Niveaux 61-85 : Récompenses élevées
-      const types = ['currency', 'orbs', 'tokens', 'currency', 'orbs', 'tokens']
+      // Niveaux 61-85 : Récompenses élevées (sans orbes)
+      const types = ['currency', 'tokens', 'currency', 'tokens']
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length) + 6
     } else {
-      // Niveaux 86-100 : Récompenses maximales
-      const types = ['tokens', 'currency', 'orbs', 'tokens', 'currency', 'orbs']
+      // Niveaux 86-100 : Récompenses maximales (sans orbes)
+      const types = ['tokens', 'currency', 'tokens', 'currency']
       rewardType = types[(i - 1) % types.length]
       amountIndex = Math.floor((i - 1) / types.length) + 8
     }
