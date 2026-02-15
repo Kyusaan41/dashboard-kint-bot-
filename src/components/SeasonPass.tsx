@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { SeasonPassData, SeasonPassTier } from '@/types/season-pass'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trophy, Crown, Star, ChevronLeft, ChevronRight, Sparkles, Coins, Gem, Zap, Award, Target, Flame, Diamond, Heart, Shield, Medal, TrendingUp } from 'lucide-react'
@@ -268,17 +268,53 @@ export default function SeasonPass({ className }: SeasonPassProps) {
   const [claiming, setClaiming] = useState<string | null>(null)
   const [selectedTier, setSelectedTier] = useState<SeasonPassTier | null>(null)
   const [showPointsTooltip, setShowPointsTooltip] = useState(false)
+  const tiersContainerRef = useRef<HTMLDivElement>(null)
 
   const tiersPerPage = 5
   const totalPages = data ? Math.ceil(data.seasonPass.tiers.length / tiersPerPage) : 0
 
-  // Calculate current tier and initial page
-  const currentTierLevel = data ? Math.max(0, ...data.seasonPass.tiers
-    .filter(tier => tier.claimed || (data.isVip && tier.vipClaimed))
-    .map(tier => tier.level)) : 0
+  // Calculate current tier - show the next tier to claim (unclaimed but accessible with current points)
+  const currentTierLevel = useMemo(() => {
+    if (!data) return 0
+    const currentPoints = data.seasonPass.userProgress.currentPoints
+    const tiers = data.seasonPass.tiers
+    
+    // Find the next unclaimed tier that is accessible with current points
+    const nextAccessibleTier = tiers.find(tier => 
+      !tier.claimed && currentPoints >= tier.requiredPoints
+    )
+    
+    // If there's an accessible unclaimed tier, return its level
+    if (nextAccessibleTier) {
+      return nextAccessibleTier.level
+    }
+    
+    // Otherwise, return the highest claimed tier
+    const claimedTier = tiers
+      .filter(tier => tier.claimed || (data.isVip && tier.vipClaimed))
+      .sort((a, b) => b.level - a.level)[0]
+    
+    return claimedTier ? claimedTier.level : 0
+  }, [data])
 
-  const initialPage = data ? Math.floor((currentTierLevel - 1) / tiersPerPage) : 0
+  const initialPage = data ? Math.max(0, Math.floor((currentTierLevel - 1) / tiersPerPage)) : 0
   const [currentPage, setCurrentPage] = useState(initialPage)
+
+  // Auto-scroll to current tier on load and update page when data changes
+  useEffect(() => {
+    if (data) {
+      const newPage = Math.max(0, Math.floor((currentTierLevel - 1) / tiersPerPage))
+      setCurrentPage(newPage)
+      
+      // Scroll to the current tier section
+      const timer = setTimeout(() => {
+        if (tiersContainerRef.current) {
+          tiersContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [data, currentTierLevel])
 
   useEffect(() => {
     fetchSeasonPassData()
@@ -312,6 +348,49 @@ export default function SeasonPass({ className }: SeasonPassProps) {
       setLoading(false)
     }
   }
+
+  const claimAllRewards = async () => {
+    if (!data) return
+
+    setClaiming('all')
+    try {
+      const response = await fetch('/api/season-pass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'claim_all',
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert(`✅ Récompenses réclamées !\n${result.claimedNormal} récompense(s) normale(s)\n${result.claimedVip} récompense(s) VIP`)
+        await fetchSeasonPassData()
+      } else {
+        const error = await response.json()
+        alert(`Erreur: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error claiming all rewards:', error)
+      alert('Erreur lors de la réclamation des récompenses')
+    } finally {
+      setClaiming(null)
+    }
+  }
+
+  // Calculate how many tiers can be claimed
+  const claimableTiersCount = useMemo(() => {
+    if (!data) return 0
+    const currentPoints = data.seasonPass.userProgress.currentPoints
+    return data.seasonPass.tiers.filter(tier => {
+      const hasEnoughPoints = currentPoints >= tier.requiredPoints
+      const normalUnclaimed = !tier.claimed
+      const vipUnclaimed = data.isVip && tier.vipReward && !tier.vipClaimed
+      return hasEnoughPoints && (normalUnclaimed || vipUnclaimed)
+    }).length
+  }, [data])
 
   const claimReward = async (tier: SeasonPassTier, isVip: boolean, uniqueId: string) => {
     if (!data) return
@@ -654,7 +733,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="flex items-center justify-between mb-6"
+        className="flex items-center justify-between mb-4"
       >
         <button
           onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
@@ -674,6 +753,27 @@ export default function SeasonPass({ className }: SeasonPassProps) {
           <ChevronLeft className="w-4 h-4" />
           Précédent
         </button>
+
+        {/* Bouton Tout réclamer - section récompenses */}
+        {claimableTiersCount > 0 && (
+          <button
+            onClick={claimAllRewards}
+            disabled={claiming === 'all'}
+            className="px-4 py-2 bg-gray-700/80 hover:bg-gray-600 text-gray-200 text-sm rounded-lg border border-gray-500/30 flex items-center gap-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {claiming === 'all' ? (
+              <>
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+                Réclamation...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Tout réclammer ({claimableTiersCount})
+              </>
+            )}
+          </button>
+        )}
 
         <div className="flex items-center gap-2">
           {Array.from({ length: totalPages }).map((_, i) => (
@@ -711,6 +811,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
 
       {/* Section Récompenses Standard */}
       <motion.div
+        ref={tiersContainerRef}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}

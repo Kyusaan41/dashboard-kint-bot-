@@ -299,6 +299,71 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Réclamer tous les paliers accessibles
+    if (action === 'claim_all') {
+      try {
+        // Vérifier si l'utilisateur est VIP
+        const isVipUser = await checkUserIsVip(userId)
+
+        // Obtenir les points de l'utilisateur
+        const userPoints = await getUserPoints(userId)
+
+        // Obtenir le season pass
+        const seasonPass = await getSeasonPassForUser(userId, userPoints, isVipUser)
+
+        // Trouver tous les paliers accessibles et non réclamés
+        const claimableTiers = seasonPass.tiers.filter(tier => {
+          const hasEnoughPoints = userPoints >= tier.requiredPoints
+          const normalUnclaimed = !tier.claimed
+          const vipUnclaimed = isVipUser && tier.vipReward && !tier.vipClaimed
+          return hasEnoughPoints && (normalUnclaimed || vipUnclaimed)
+        })
+
+        if (claimableTiers.length === 0) {
+          return NextResponse.json({ error: 'No tiers available to claim' }, { status: 400 })
+        }
+
+        let claimedNormal = 0
+        let claimedVip = 0
+        let failedClaims = 0
+
+        // Réclamer chaque palier
+        for (const tier of claimableTiers) {
+          // Réclamer la récompense normale
+          if (!tier.claimed && userPoints >= tier.requiredPoints) {
+            const success = await claimReward(userId, tier.id, tier.normalReward, false)
+            if (success) {
+              claimedNormal++
+            } else {
+              failedClaims++
+            }
+          }
+
+          // Réclamer la récompense VIP si applicable
+          if (isVipUser && tier.vipReward && !tier.vipClaimed && userPoints >= tier.requiredPoints) {
+            const success = await claimReward(userId, tier.id, tier.vipReward, true)
+            if (success) {
+              claimedVip++
+            } else {
+              failedClaims++
+            }
+          }
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: `Successfully claimed ${claimedNormal} normal and ${claimedVip} VIP rewards`,
+          claimedNormal,
+          claimedVip,
+          failedClaims,
+          totalClaimed: claimedNormal + claimedVip
+        })
+      } catch (error) {
+        console.error('[SEASON-PASS] Error claiming all rewards:', error)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      }
+    }
+
     // Gestion des réclamations de récompenses (logique existante)
 
     if (!tierId) {
