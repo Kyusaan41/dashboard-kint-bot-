@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react'
 import { SeasonPassData, SeasonPassTier } from '@/types/season-pass'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trophy, Crown, Star, ChevronLeft, ChevronRight, Sparkles, Coins, Gem, Zap, Award, Target, Flame, Diamond, Heart, Shield, Medal, TrendingUp } from 'lucide-react'
+import { Trophy, Crown, Star, ChevronLeft, ChevronRight, Sparkles, Coins, Gem, Zap, Award, Target, Flame, Diamond, Heart, Shield, Medal } from 'lucide-react'
 import { useTheme } from '@/context/ThemeContext'
 
 interface LeaderboardEntry {
@@ -20,6 +20,10 @@ const SeasonPassLeaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
+
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded(prev => !prev)
+  }, [])
 
   useEffect(() => {
     fetchLeaderboard()
@@ -73,7 +77,7 @@ const SeasonPassLeaderboard = () => {
       className="bg-gray-800/30 backdrop-blur-sm border border-gray-600/20 rounded-lg p-3 mb-6"
     >
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={toggleExpanded}
         className="w-full flex items-center justify-between text-left hover:bg-gray-700/20 rounded-md p-2 transition-colors"
       >
         <div className="flex items-center gap-2">
@@ -217,6 +221,10 @@ export default function SeasonPass({ className }: SeasonPassProps) {
   const initialPage = data ? Math.max(0, Math.floor((currentTierLevel - 1) / tiersPerPage)) : 0
   const [currentPage, setCurrentPage] = useState(initialPage)
 
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page)
+  }, [])
+
   useEffect(() => {
     if (data) {
       const newPage = Math.max(0, Math.floor((currentTierLevel - 1) / tiersPerPage))
@@ -249,7 +257,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
     }
   }
 
-  const claimAllRewards = async () => {
+  const claimAllRewards = useCallback(async () => {
     if (!data) return
 
     setClaiming('all')
@@ -278,7 +286,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
     } finally {
       setClaiming(null)
     }
-  }
+  }, [data])
 
   const claimableTiersCount = useMemo(() => {
     if (!data) return 0
@@ -291,7 +299,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
     }).length
   }, [data])
 
-  const claimReward = async (tier: SeasonPassTier, isVip: boolean, uniqueId: string) => {
+  const claimReward = useCallback(async (tier: SeasonPassTier, isVip: boolean, uniqueId: string) => {
     if (!data) return
 
     setClaiming(uniqueId)
@@ -319,7 +327,7 @@ export default function SeasonPass({ className }: SeasonPassProps) {
     } finally {
       setClaiming(null)
     }
-  }
+  }, [data])
 
   const currentTiers = useMemo(() => {
     if (!data) return []
@@ -801,7 +809,8 @@ interface RewardCardProps {
   delay: number
 }
 
-function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, claiming, onSelect, delay }: RewardCardProps) {
+// Composant de carte de récompense optimisé avec React.memo
+const RewardCard = memo(function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, claiming, onSelect, delay }: RewardCardProps) {
   const canClaim = currentPoints >= tier.requiredPoints && (isVip ? !tier.vipClaimed && isVipUser : !tier.claimed)
   const isClaimed = isVip ? tier.vipClaimed : tier.claimed
 
@@ -952,4 +961,4 @@ function RewardCard({ tier, reward, isVip, currentPoints, isVipUser, onClaim, cl
       </div>
     </motion.div>
   )
-}
+})
